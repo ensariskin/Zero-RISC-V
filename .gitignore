@@ -56,3 +56,6 @@ lib_*
 
 # Ignore object dump files
 *.dump
+
+# Ignore dvt files
+**/.dvt/
