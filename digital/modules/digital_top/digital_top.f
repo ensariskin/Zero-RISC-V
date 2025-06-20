@@ -7,8 +7,8 @@
 -f D:/Ensar/Tez/RV32I/digital/modules/common/common.f
 
 # 2. Pipeline stages in execution order
--f D:/Ensar/Tez/RV32I/digital/modules/instruction_fetch/instruction_fetch.f
--f D:/Ensar/Tez/RV32I/digital/modules/instruction_decode/instruction_decode.f
+-f D:/Ensar/Tez/RV32I/digital/modules/fetch_stage/fetch_stage.f
+-f D:/Ensar/Tez/RV32I/digital/modules/decode_stage/decode_stage.f
 -f D:/Ensar/Tez/RV32I/digital/modules/execute/execute.f
 -f D:/Ensar/Tez/RV32I/digital/modules/mem/mem.f
 -f D:/Ensar/Tez/RV32I/digital/modules/write_back/write_back.f
@@ -20,4 +20,4 @@
 -f D:/Ensar/Tez/RV32I/digital/modules/hazard/hazard.f
 
 # Top-level module files
-D:/Ensar/Tez/RV32I/digital/modules/digital_top/src/TOP_Pipelined_design.sv
+D:/Ensar/Tez/RV32I/digital/modules/digital_top/src/rv32i_core.sv

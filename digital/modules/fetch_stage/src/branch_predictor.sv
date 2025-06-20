@@ -1,30 +1,30 @@
 `timescale 1ns/1ns
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
+// Company:
+// Engineer:
+//
 // Create Date: 17.06.2022 02:07:03
-// Design Name: 
+// Design Name:
 // Module Name: Branch_predictor
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
+// Project Name:
+// Target Devices:
+// Tool Versions:
+// Description:
+//
+// Dependencies:
+//
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
-// 
+//
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module Branch_predictor#(parameter size = 32)(
+module branch_predictor #(parameter size = 32)(
     input [size-1 : 0] instruction,
     input [size-1 : 0] IMM,
-    input isValid,
-    output Predicted_MPC,
+    input isValid, // wil be used to update the branch predictor state
+    output branch_prediction, // 1 : taken , 0 : not taken
 	output JALR);
 
 	wire J;
@@ -32,8 +32,8 @@ module Branch_predictor#(parameter size = 32)(
 
 	assign J = instruction[6] & instruction[5] & ~instruction[4] & instruction[3] & instruction[2];
 	assign B = instruction[6] & instruction[5] & ~instruction[4] & ~instruction[3] & ~instruction[2];
-    
-   assign Predicted_MPC = J | (B & 1'b1);
+
+    assign branch_prediction = J | (B & 1'b1);
 	assign JALR = (instruction[6] & instruction[5] & ~instruction[4] & ~instruction[3] & instruction[2]);
 
 endmodule
