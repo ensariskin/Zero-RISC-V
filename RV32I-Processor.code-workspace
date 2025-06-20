@@ -6,7 +6,7 @@
     ],
     "settings": {
         "files.associations": {
-            "*.v": "verilog",
+            "*.v": "systemverilog",
             "*.vh": "verilog"
         },
         "editor.formatOnSave": false,
