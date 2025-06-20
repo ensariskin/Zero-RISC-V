@@ -1,6 +1,6 @@
 # RV32I Digital Design Files
 
-This directory contains the core implementation files for the RISC-V RV32I pipelined processor. The design uses a consistent timescale of `100 ps / 1 ps` across all modules for accurate simulation.
+This directory contains the core implementation files for the RISC-V RV32I pipelined processor. The design is implemented in SystemVerilog and follows a standard 5-stage pipeline architecture (Fetch, Decode, Execute, Memory, Writeback).
 
 ## Directory Structure
 
@@ -9,19 +9,19 @@ This directory contains the core implementation files for the RISC-V RV32I pipel
 The `modules` directory contains the implementation of individual processor components organized by pipeline stage and functionality:
 
 - **digital_top/**: Top-level integration of all modules
-  - Contains `TOP_Pipelined_design.v` which instantiates and connects all processor components
+  - Contains `TOP_Pipelined_design.sv` which instantiates and connects all processor components
 
 - **common/**: Reusable building blocks used throughout the design
   - Basic components like multiplexers, adders, and flip-flops
   - Parameterized designs for flexibility and reuse
 
-- **instruction_fetch/**: Instruction Fetch (IF) stage components
-  - Program counter implementations (basic and enhanced)
+- **fetch_stage/**: Instruction Fetch (IF) stage components
+  - Program counter implementation and control
   - Branch predictor
-  - Immediate value decoder
+  - Early-stage immediate value decoder
 
-- **instruction_decode/**: Instruction Decode (ID) stage components
-  - Instruction decoder
+- **decode_stage/**: Instruction Decode (ID) stage components
+  - RV32I instruction decoder
   - Register file
   - Control signal generation
 
@@ -84,10 +84,18 @@ The `testbench` directory contains verification-related files:
 4. The simulation configuration in `sim` directory runs the testbenches
 5. Waveforms are generated in the `waves` directory for analysis
 
-## Timing Configuration
-
-All design files use a standardized timescale of `100 ps / 1 ps` for consistent simulation behavior. This ensures accurate timing relationships between modules during simulation.
-
 ## File Lists (.f files)
 
 Each module directory contains a `.f` file (e.g., `common.f`, `execute.f`) that lists all source files in that module. These are included by the main `processor.f` file to build the complete design.
+
+## Pipeline Design
+
+The processor implements a standard 5-stage RISC-V pipeline:
+
+1. **Fetch Stage**: Retrieves instructions from memory and implements branch prediction
+2. **Decode Stage**: Decodes instructions, reads register values, and generates control signals
+3. **Execute Stage**: Performs ALU operations, branch condition evaluation, and address calculation
+4. **Memory Stage**: Handles memory access operations (load/store)
+5. **Writeback Stage**: Writes results back to the register file
+
+The design includes hazard detection and data forwarding to handle pipeline hazards and dependencies.

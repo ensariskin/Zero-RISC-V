@@ -1,42 +1,53 @@
-# Instruction Fetch (IF) Stage
+# Fetch Stage
 
-The Instruction Fetch (IF) stage is responsible for fetching instructions from memory and managing the program counter. All components in this stage use a standardized timescale of `100 ps / 1 ps` for consistent simulation behavior.
+The Fetch Stage is responsible for retrieving instructions from memory and managing the program counter. This stage forms the first part of the 5-stage RISC-V pipeline.
 
 ## Components
 
-### IF.v
+### fetch_stage.sv
 
-Top-level module for the Instruction Fetch stage that integrates all IF components.
+Top-level module for the Fetch Stage that integrates all fetch components and interfaces with the instruction memory.
 
-### PC_new.v
+### program_counter_ctrl.sv
 
-Enhanced program counter with the following capabilities:
+Advanced program counter control with the following capabilities:
 - Branch prediction handling
 - Jump and link register (JALR) instruction support
 - Pipeline bubble (stall) handling
 - Branch misprediction recovery
 
-### PC.v
-
-Basic program counter implementation that:
-- Increments PC by 4 in normal operation
-- Can load branch/jump target addresses
-
-### Branch_predictor.v
+### branch_predictor.sv
 
 Branch prediction unit that:
 - Analyzes instruction opcodes to detect branch/jump instructions
 - Predicts whether branches will be taken
+- Identifies JALR instructions for special handling
 - Helps reduce branch penalties in the pipeline
 
-### ES_IMM_Decoder.v
+### early_stage_immediate_decoder.sv
 
-Extracts and sign-extends immediate values from instructions for use in address calculations.
+Extracts and sign-extends immediate values from instructions for:
+- Branch/jump target address calculation
+- Early handling of immediate values in the pipeline
 
 ## Operation
 
-1. The PC provides the address to fetch the instruction from memory
-2. The Branch_predictor analyzes the fetched instruction to predict branch outcomes
-3. The ES_IMM_Decoder extracts immediate values for branch target calculations
-4. The next PC value is calculated based on prediction (PC+4 or branch target)
+1. The program counter provides the address to fetch the instruction from memory
+2. The branch predictor analyzes the fetched instruction to predict branch/jump outcomes
+3. The immediate decoder extracts immediate values for target address calculations
+4. The next PC value is calculated based on prediction (sequential or branch target)
 5. All relevant values are passed to the IF/ID pipeline register
+
+## Signals
+
+- **Predicted_MPC**: Indicates when a branch or jump is predicted taken
+- **JALR**: Special signal for handling Jump And Link Register instructions
+- **IMM**: Extended immediate value for address calculations
+- **PCplus**: PC+4 value for sequential execution and link register storage
+
+## Control Flow
+
+The fetch stage implements early branch prediction to minimize branch penalties. It detects:
+- Unconditional jumps (JAL): Always predicted taken
+- Conditional branches: Predicted using a simple static prediction scheme
+- Register-based jumps (JALR): Special handling for indirect jumps

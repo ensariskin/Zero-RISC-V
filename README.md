@@ -1,6 +1,6 @@
 # RISC-V RV32I Pipelined Processor
 
-This repository contains the implementation of a 5-stage pipelined processor based on the RISC-V RV32I instruction set architecture. The design is optimized for performance and area efficiency while supporting the complete RV32I base instruction set.
+This repository contains the implementation of a 5-stage pipelined processor based on the RISC-V RV32I instruction set architecture. The design is implemented in SystemVerilog and optimized for performance and area efficiency while supporting the complete RV32I base instruction set.
 
 ## Project Structure
 
@@ -11,21 +11,22 @@ digital/
 ├── modules/
 │   ├── digital_top/              # Top-level integration
 │   │   └── src/
-│   │       └── TOP_Pipelined_design.v
+│   │       └── TOP_Pipelined_design.sv
 │   │
-│   ├── instruction_fetch/        # Instruction Fetch (IF) stage
+│   ├── fetch_stage/              # Instruction Fetch (IF) stage
 │   │   └── src/
-│   │       ├── IF.v
-│   │       ├── PC_new.v          # Enhanced program counter with branch prediction
-│   │       ├── PC.v              # Basic program counter
+│   │       ├── fetch_stage.sv    # Top-level fetch stage module
+│   │       ├── program_counter_ctrl.sv  # Enhanced program counter with branch prediction
+│   │       ├── branch_predictor.sv      # Branch prediction logic
+│   │       └── early_stage_immediate_decoder.sv  # Immediate decoder
 │   │       ├── Branch_predictor.v
 │   │       └── ES_IMM_Decoder.v
 │   │
-│   ├── instruction_decode/       # Instruction Decode (ID) stage
+│   ├── decode_stage/            # Instruction Decode (ID) stage
 │   │   └── src/
-│   │       ├── ID.v
-│   │       ├── Instruction_decoder.v
-│   │       └── RegisterFile.v
+│   │       ├── decode_stage.sv
+│   │       ├── rv32i_decoder.sv
+│   │       └── RegisterFile.sv
 │   │
 │   ├── execute/                  # Execute (EX) stage
 │   │   └── src/
