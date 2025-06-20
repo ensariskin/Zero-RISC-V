@@ -45,6 +45,9 @@ _info
 _lib*
 lib_*
 
+# Ignore DVT (Design Verification Tools) files
+.dvt/
+
 # Ignore vivado/synthesis temporary files
 .Xil/
 *.jou
