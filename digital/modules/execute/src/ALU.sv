@@ -29,8 +29,8 @@ module ALU#(parameter size = 32)(
     output logic Z,
     output logic N);
 
-    wire [size-1:0] arithmetic_out;
-    wire [size-1:0] logical_out;
+    logic [size-1:0] arithmetic_out;
+    logic [size-1:0] logical_out;
 
     arithmetic_unit #(.size(size)) arithmetic(
         .A(A),
