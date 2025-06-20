@@ -35,7 +35,7 @@ module WB#(parameter size = 32)(
     defparam Final_mux.mem_width = size;
     defparam Final_mux.mem_depth = 4;
 
-    Parametric_mux Final_mux(
+    parametric_mux Final_mux(
         .addr(Control_Signal_i[1:0]),
         .data_in({{size{1'b0}},PCplus_i,MEM_result_i,FU_i}),
         .data_out(Final_Result));

@@ -4,7 +4,7 @@ This directory contains common hardware building blocks that are used throughout
 
 ## Components
 
-### Parametric_mux.v
+### parametric_mux.v
 
 A parameterizable multiplexer that:
 - Supports variable data widths

@@ -1,6 +1,6 @@
 `timescale 1ns/1ns
 
-module Parametric_mux#(parameter mem_width = 16, parameter mem_depth = 16)(
+module parametric_mux#(parameter mem_width = 16, parameter mem_depth = 16)(
     input [$clog2(mem_depth)-1 : 0] addr,
     input [mem_width*mem_depth-1 : 0] data_in,
     output [mem_width-1 : 0] data_out );

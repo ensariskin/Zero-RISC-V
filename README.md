@@ -59,7 +59,7 @@ digital/
 │   │
 │   └── common/                   # Common components
 │       └── src/
-│           ├── Parametric_mux.v
+│           ├── parametric_mux.v
 │           ├── D_FF_block.v
 │           ├── new_DFF_block.v
 │           ├── RCA.v             # Ripple Carry Adder

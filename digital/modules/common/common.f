@@ -1,5 +1,5 @@
 # Common modules/components
-D:/Ensar/Tez/RV32I/digital/modules/common/src/Parametric_mux.sv
+D:/Ensar/Tez/RV32I/digital/modules/common/src/parametric_mux.sv
 D:/Ensar/Tez/RV32I/digital/modules/common/src/Parametric_decoder.sv
 D:/Ensar/Tez/RV32I/digital/modules/common/src/D_FF_block.sv
 D:/Ensar/Tez/RV32I/digital/modules/common/src/D_FF_async_rst.sv

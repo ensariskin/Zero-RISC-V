@@ -48,7 +48,7 @@ module ALU#(parameter size = 32)(
         .Sel(Sel[1:0]),
         .S(logical_out));
 
-    Parametric_mux # (.mem_width(size), .mem_depth(2)) out_mux(
+    parametric_mux # (.mem_width(size), .mem_depth(2)) out_mux(
         .addr(Sel[2]),
         .data_in({logical_out, arithmetic_out}),
         .data_out(S));
