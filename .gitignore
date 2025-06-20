@@ -5,6 +5,7 @@
 *.vcd.gz
 *.vpd
 *.evcd
+*.env
 
 # Ignore compiled object files and binaries
 *.o
@@ -62,3 +63,7 @@ lib_*
 
 # Ignore dvt files
 **/.dvt/
+
+# Ignore specific environment files
+digital/sim/run/dsim.env
+digital/sim/run/dvlcom.env

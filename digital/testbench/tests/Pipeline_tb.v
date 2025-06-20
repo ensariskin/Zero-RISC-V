@@ -49,7 +49,7 @@ module Pipeline_tb();
 	reg CE_1,HS_1,HR_1, POR_1;
 	wire RDY_1;
 
-	Pipelined_design UUT(
+	rv32i_core UUT(
 		.clk(clk),
 		.reset(reset),
 		.instruction_i(32'h0),
