@@ -20,4 +20,4 @@
 -f D:/Ensar/Tez/RV32I/digital/modules/hazard/hazard.f
 
 # Top-level module files
-D:/Ensar/Tez/RV32I/digital/modules/digital_top/src/TOP_Pipelined_design.v
+D:/Ensar/Tez/RV32I/digital/modules/digital_top/src/TOP_Pipelined_design.sv
