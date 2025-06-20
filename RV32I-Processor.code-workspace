@@ -3,41 +3,41 @@
         {
             "path": "."
         }
-    ],
-    "settings": {
+    ],    "settings": {
         "files.associations": {
-            "*.v": "systemverilog",
-            "*.vh": "verilog"
+            "*.v": "verilog",
+            "*.vh": "verilog",
+            "*.sv": "systemverilog"
         },
         "editor.formatOnSave": false,
         "editor.tabSize": 4,
         "editor.insertSpaces": true,
         "files.trimTrailingWhitespace": true,
         "files.insertFinalNewline": true,
-        "files.trimFinalNewlines": true,
-        "search.exclude": {
+        "files.trimFinalNewlines": true,        "search.exclude": {
             "**/dsim_work": true,
             "**/*.vcd": true,
-            "**/*.wlf": true
+            "**/*.wlf": true,
+            "**/.dvt": true,
+            "**/doc/changelogs": false
         },
         "git.enableSmartCommit": true,
         "git.confirmSync": false
     },
     "extensions": {
-        "recommendations": [
-            "mshr-h.veriloghdl",
+        "recommendations": [            "mshr-h.veriloghdl",
             "mhutchie.git-graph",
             "eamodio.gitlens",
             "donjayamanne.githistory",
             "streetsidesoftware.code-spell-checker",
-            "wavetrace.wavetrace"
+            "wavetrace.wavetrace",
+            "davidanson.vscode-markdownlint"
         ]
     },
     "launch": {
         "version": "0.2.0",
         "configurations": []
-    },
-    "tasks": {
+    },    "tasks": {
         "version": "2.0.0",
         "tasks": []
     }
