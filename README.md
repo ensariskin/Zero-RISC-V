@@ -150,3 +150,25 @@ The simulation environment uses:
 - **Processor_Datasheet.pdf**: Comprehensive processor documentation and specifications
 - **RISCV technical notes.xlsx**: Includes technical details and implementation notes
 - **Design Weakness.docx**: Documents current limitations and areas for improvement
+
+## Development Workflow
+
+This project uses Git for version control and GitHub for remote repository hosting:
+
+- **Repository URL**: [https://github.com/ensariskin/Zero-RISC-V](https://github.com/ensariskin/Zero-RISC-V)
+- **Main Branch**: `master` contains the stable, tested implementation
+- **Issue Tracking**: Use GitHub Issues for bug reports and feature requests
+- **Development Process**:
+  1. Create feature branches for new development
+  2. Use descriptive commit messages
+  3. Submit pull requests for code review
+  4. Merge only after tests pass
+
+### Contribution Guidelines
+
+When contributing to this project:
+1. Create a branch named for your feature or fix
+2. Follow the established coding style
+3. Add or update tests for your changes
+4. Update documentation
+5. Submit a pull request with a clear description
