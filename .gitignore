@@ -1,0 +1,58 @@
+# Ignore simulation output files
+*.vcd
+*.wlf
+*.fsdb
+*.vcd.gz
+*.vpd
+*.evcd
+
+# Ignore compiled object files and binaries
+*.o
+*.so
+*.hex
+*.elf
+*.bin
+
+# Ignore simulation work directories
+**/dsim_work/
+**/work/
+**/metrics.db
+
+# Ignore log files
+*.log
+
+# Ignore backup files
+*~
+*.bak
+*.swp
+
+# Ignore system and IDE files
+.DS_Store
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Ignore waveform databases
+*.wdb
+*.db
+
+# Ignore ModelSim/QuestaSim generated files
+transcript
+*.wlf
+*.ini
+vsim.dbg
+_info
+_lib*
+lib_*
+
+# Ignore vivado/synthesis temporary files
+.Xil/
+*.jou
+*.str
+
+# Ignore coverage and synthesis reports that can be regenerated
+*/coverage/
+*/reports/
+
+# Ignore object dump files
+*.dump
