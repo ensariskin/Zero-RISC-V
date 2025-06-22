@@ -10,8 +10,10 @@ module dff_block_negedge_write #(parameter mem_width = 16, parameter mem_depth =
     output logic [mem_width*mem_depth-1 : 0] data_out);
 
     genvar i;
+    assign data_out[mem_width : 0] = 'h0;
+
     generate
-    for(i = 0; i < mem_depth; i = i+1) begin
+    for(i = 1; i < mem_depth; i = i+1) begin
 
         dff_sync_reset_negedge_write #(.mem_width(mem_width)) dff(
         .clk(clk),
