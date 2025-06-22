@@ -62,7 +62,7 @@ digital/
 │       └── src/
 │           ├── parametric_mux.v
 │           ├── D_FF_block.v
-│           ├── new_DFF_block.v
+│           ├── dff_block.v
 │           ├── RCA.v             # Ripple Carry Adder
 │           ├── CSA.v             # Carry Save Adder
 │           ├── FA.v              # Full Adder

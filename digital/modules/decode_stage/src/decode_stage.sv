@@ -70,16 +70,16 @@ module decode_stage #(parameter size = 32)(
         .MB(MB),
         .FS(FS));
 
-    RegisterFile RegFile(
+    register_file RegFile(
         .clk(clk),
         .reset(reset),
         .we(Control_Signal_WB[0]),
-        .Rin(DATA_in_WB),
-        .A_select(RA),
-        .B_select(RB),
-        .D_addr(Control_Signal_WB[5:1]),
-        .A_out(A),
-        .B_out(B_data));
+        .rd_in(DATA_in_WB),
+        .a_select(RA),
+        .b_select(RB),
+        .write_addr(Control_Signal_WB[5:1]),
+        .a_out(A),
+        .b_out(B_data));
 
     parametric_mux Mux_B(
         .addr(MB),

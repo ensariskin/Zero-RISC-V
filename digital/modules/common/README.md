@@ -19,7 +19,7 @@ Basic D Flip-Flop blocks that:
 - Include reset capability (synchronous or asynchronous variants)
 - Feature parameterized data width for flexibility
 
-### new_DFF_block.v
+### dff_block.v
 
 Enhanced D Flip-Flop block with:
 - Additional control features
