@@ -63,7 +63,7 @@ lib_*
 
 # Ignore dvt files
 **/.dvt/
-
+digital/sim/
 # Ignore specific environment files
 digital/sim/run/dsim.env
 digital/sim/run/dvlcom.env
