@@ -1,5 +1,5 @@
 # Pipeline Register module files
-D:/Ensar/Tez/RV32I/digital/modules/pipeline_register/src/IF_ID.sv
-D:/Ensar/Tez/RV32I/digital/modules/pipeline_register/src/ID_EX.sv
-D:/Ensar/Tez/RV32I/digital/modules/pipeline_register/src/EX_MEM.sv
-D:/Ensar/Tez/RV32I/digital/modules/pipeline_register/src/MEM_WB.sv
+D:/Ensar/Tez/RV32I/digital/modules/pipeline_register/src/if_to_id.sv
+D:/Ensar/Tez/RV32I/digital/modules/pipeline_register/src/id_to_ex.sv
+D:/Ensar/Tez/RV32I/digital/modules/pipeline_register/src/ex_to_mem.sv
+D:/Ensar/Tez/RV32I/digital/modules/pipeline_register/src/mem_to_wb.sv

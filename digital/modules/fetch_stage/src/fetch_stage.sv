@@ -4,44 +4,44 @@ module fetch_stage#(parameter size = 32)(
     input  logic clk,
     input  logic reset,
     input  logic buble,
-    input  logic [size-1 : 0] instruction_i,
     input  logic isValid,
+    input  logic [size-1 : 0] instruction_i,
+
 	input  logic [size-1 : 0] Correct_PC,
     output logic [size-1 : 0] instruction_o,
     output logic [size-1 : 0] ins_address,
-    output logic [size-1 : 0] IMM,
+    output logic [size-1 : 0] imm_o,
     output logic [size-1 : 0] PCplus,
     output Predicted_MPC);
 
-    wire w_Predicted_MPC;
-    wire [size-1 : 0] w_IMM;
-	wire JALR;
+    logic jump;
+    logic [size-1 : 0] imm;
+	logic jalr;
 
     early_stage_immediate_decoder  early_stage_imm_dec(
         .instruction(instruction_i),
-        .IMM_out(w_IMM));
+        .IMM_out(imm));
 
-    branch_predictor branch_predictor(
+    jump_controller #(.size(size)) jump_controller(
         .instruction(instruction_i),
-        .IMM(w_IMM),
-        .isValid(isValid),
-        .branch_prediction(w_Predicted_MPC),
-		.JALR(JALR));
+        //.isValid(isValid),
+        .jump(jump),
+		.jalr(jalr));
 
     program_counter_ctrl PC(
         .clk(clk),
         .reset(reset),
         .buble(buble),
-        .MPC(w_Predicted_MPC),
-		.JALR(JALR),
-		.Correct_PC(Correct_PC),
-		.isValid(isValid),
-        .IMM(w_IMM),
-        .PC_Addr(ins_address),
-        .PC_save(PCplus));
+        .jump(jump),
+		.jalr(jalr),
+		.correct_pc(Correct_PC),
+		.misprediction(isValid),
+        .imm_i(imm),
+        .pc_addr(ins_address),
+        .pc_save(PCplus));
 
     assign instruction_o = instruction_i;
-    assign IMM = w_IMM;
-    assign Predicted_MPC = w_Predicted_MPC;
+    assign imm_o = imm;
+    assign Predicted_MPC = jump;
 
 endmodule
