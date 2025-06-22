@@ -105,7 +105,7 @@ module rv32i_core #(parameter size = 32)(
 		.Correct_PC(PC_EX_o),
         .instruction_o(instruction_IF_o),
         .ins_address(ins_address),
-        .IMM(IMM_IF_o),
+        .imm_o(IMM_IF_o),
         .PCplus(PCPlus_IF_o),
         .Predicted_MPC(Predicted_MPC_IF_o));
 
@@ -128,18 +128,18 @@ module rv32i_core #(parameter size = 32)(
         .reset(reset),
         .buble(buble),
         .i_instruction(instruction_ID_i),
-        .IMM_i(IMM_ID_i),
-        .PCplus_i(PCPlus_ID_i),
-        .Predicted_MPC_i(Predicted_MPC_ID_i),
+        .immediate_i(IMM_ID_i),
+        .pc_plus_i(PCPlus_ID_i),
+        .branch_perediction_i(Predicted_MPC_ID_i),
         .Control_Signal_WB(Control_Signal_WB_o),
         .DATA_in_WB(Final_Result_WB_o),
-        .Predicted_MPC_o(Predicted_MPC_ID_o),
-        .A(A_ID_o),
-        .B(B_ID_o),
-        .RAM_DATA(RAM_DATA_ID_o),
-        .PCplus_o(PCplus_ID_o),
-        .Control_Signal(Control_Signal_ID_o),
-        .Branch_sel(Branch_sel_ID_o));
+        .branch_prediction_o(Predicted_MPC_ID_o),
+        .data_a(A_ID_o),
+        .data_b(B_ID_o),
+        .store_data(RAM_DATA_ID_o),
+        .pc_plus_o(PCplus_ID_o),
+        .control_signal(Control_Signal_ID_o),
+        .branch_sel(Branch_sel_ID_o));
 
     id_to_ex ID_EX(
         .clk(clk),

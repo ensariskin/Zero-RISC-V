@@ -20,20 +20,19 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module branch_predictor #(parameter size = 32)(
-    input [size-1 : 0] instruction,
-    input [size-1 : 0] IMM,
-    input isValid, // wil be used to update the branch predictor state
-    output branch_prediction, // 1 : taken , 0 : not taken
-	output JALR);
+module jump_controller #(parameter size = 32)(
+    input  logic [size-1 : 0] instruction,
+    //input isValid, // wil be used to update the branch predictor state
+    output logic jump, // 1 : taken , 0 : not taken
+	output logic jalr);
 
-	wire J;
-	wire B;
+	wire j_type;
+	wire b_type;
 
-	assign J = instruction[6] & instruction[5] & ~instruction[4] & instruction[3] & instruction[2];
-	assign B = instruction[6] & instruction[5] & ~instruction[4] & ~instruction[3] & ~instruction[2];
+	assign j_type = instruction[6:0] == 7'b1101111; // JAL instruction
+	assign b_type = instruction[6:0] == 7'b1100011; // B-type instructions
 
-    assign branch_prediction = J | (B & 1'b1);
-	assign JALR = (instruction[6] & instruction[5] & ~instruction[4] & ~instruction[3] & instruction[2]);
+    assign jump = j_type | (b_type & 1'b1);
+	assign jalr = instruction[6:0] == 7'b1100111; // JALR instruction
 
 endmodule

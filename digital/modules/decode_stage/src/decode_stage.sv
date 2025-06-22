@@ -21,78 +21,47 @@ module decode_stage #(parameter size = 32)(
     input logic reset,
     input logic buble,
     input logic [size-1 : 0] i_instruction,
-    input logic [size-1 : 0] IMM_i,
-    input logic [size-1 : 0] PCplus_i,
-    input logic Predicted_MPC_i,
+    input logic [size-1 : 0] immediate_i,
+    input logic [size-1 : 0] pc_plus_i,
+    input logic branch_perediction_i,
     input logic [5:0] Control_Signal_WB,
     input logic [size-1:0] DATA_in_WB,
 
-    output logic Predicted_MPC_o,
-    output logic [size-1 : 0] A,
-    output logic [size-1 : 0] B,
-    output logic [size-1 : 0] RAM_DATA,
-    output logic [size-1 : 0] PCplus_o,
-    output logic [25 : 0] Control_Signal,
-    output logic [2:0] Branch_sel);
+    output logic branch_prediction_o,
+    output logic [size-1 : 0] data_a,
+    output logic [size-1 : 0] data_b,
+    output logic [size-1 : 0] store_data,
+    output logic [size-1 : 0] pc_plus_o,
+    output logic [25 : 0] control_signal,
+    output logic [2:0] branch_sel);
 
-
-
-    wire [size-1 : 0] B_data;
-    wire [4:0] RD, RB, RA;
-    wire [3:0] FS;
-    wire [2:0] Mem_Type_Sel;
-    wire WE;
-    wire MR;
-    wire MD;
-    wire MB;
-
-
-    defparam RegFile.mem_width = size;
-    defparam RegFile.mem_depth = size;
-
-    defparam Mux_B.mem_width = size;
-    defparam Mux_B.mem_depth = 2;
-
-    defparam Hazard.mem_width = 26;
-    defparam Hazard.mem_depth = 2;
+    logic [size-1 : 0] reg_b_value;
 
     rv32i_decoder #(.size(size)) decoder(
         .instruction(i_instruction),
-        .IMM_sel(),
-        .Branch_sel(Branch_sel),
-        .Mem_type_sel(Mem_Type_Sel),
-        .A_select(RA),
-        .B_select(RB),
-        .D_addr(RD),
-        .we(WE),
-        .MR(MR),
-        .MD(MD),
-        .MB(MB),
-        .FS(FS));
+        .buble(buble),
+        .branch_sel(branch_sel),
+        .control_word(control_signal)
+        );
 
-    register_file RegFile(
+    register_file #(.mem_width(size),.mem_depth(size)) RegFile(
         .clk(clk),
         .reset(reset),
         .we(Control_Signal_WB[0]),
         .rd_in(DATA_in_WB),
-        .a_select(RA),
-        .b_select(RB),
+        .a_select(control_signal[15:11]),
+        .b_select(control_signal[20:16]),
         .write_addr(Control_Signal_WB[5:1]),
-        .a_out(A),
-        .b_out(B_data));
+        .a_out(data_a),
+        .b_out(reg_b_value));
 
-    parametric_mux Mux_B(
-        .addr(MB),
-        .data_in({IMM_i,B_data}),
-        .data_out(B));
-
-    parametric_mux Hazard(
-        .addr(buble),
-        .data_in({26'd0,{{RD,RB,RA,FS,WE,MR,MD,MB,Mem_Type_Sel} & {26{i_instruction[0]}}}}),
-        .data_out(Control_Signal));
+    parametric_mux #(.mem_width(size), .mem_depth(2)) Mux_B(
+        .addr(control_signal[3]),
+        .data_in({immediate_i, reg_b_value}),
+        .data_out(data_b));
 
 
-    assign Predicted_MPC_o = Predicted_MPC_i;
-    assign RAM_DATA = B_data;
-    assign PCplus_o = PCplus_i;
+    assign branch_prediction_o = branch_perediction_i;
+    assign store_data = reg_b_value;
+    assign pc_plus_o = pc_plus_i;
 endmodule

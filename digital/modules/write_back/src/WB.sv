@@ -37,7 +37,7 @@ module WB#(parameter size = 32)(
 
     parametric_mux Final_mux(
         .addr(Control_Signal_i[1:0]),
-        .data_in({{size{1'b0}},PCplus_i,MEM_result_i,FU_i}),
+        .data_in({{size{1'b0}}, PCplus_i, MEM_result_i, FU_i}),
         .data_out(Final_Result));
 
 

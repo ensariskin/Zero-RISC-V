@@ -24,46 +24,47 @@ module program_counter_ctrl #(parameter size = 32)(
 	input  logic clk,
 	input  logic reset,
 	input  logic buble,
-	input  logic MPC,
-	input  logic JALR,
-	input  logic [size-1 : 0] IMM,
-	input  logic [size-1 : 0] Correct_PC,
-	input  logic isValid,
-	output logic [size-1 : 0] PC_Addr,
-	output logic [size-1 : 0] PC_save);
+	input  logic jump,
+	input  logic jalr,
+	input  logic [size-1 : 0] imm_i,
+	input  logic [size-1 : 0] correct_pc,
+	input  logic 			  misprediction,
+	output logic [size-1 : 0] pc_addr,
+	output logic [size-1 : 0] pc_save);
 
-    logic [size-1 : 0] PC_current_val;
-    logic [size-1 : 0] PC_new_val;
-	logic [size-1 : 0] PC_plus_four;
-   	logic [size-1 : 0] PC_plus_imm;
-	logic [size-1 : 0] PC_plus;
+    logic [size-1 : 0] pc_current_val;
+    logic [size-1 : 0] pc_new_val;
+	logic [size-1 : 0] pc_plus_four;
+   	logic [size-1 : 0] pc_plus_imm;
+	logic [size-1 : 0] pc_plus;
 
+	// TODO : what shhould be the value of pc_new_val when jalr is 1?
 	always @(posedge clk or negedge reset) begin
 		if (!reset) begin
-			PC_current_val <= {size{1'b0}};
+			pc_current_val <= {size{1'b0}};
 		end else if (!buble) begin
-			PC_current_val <= PC_new_val;
+			pc_current_val <= pc_new_val;
 		end
 	end
 
-	assign PC_plus_four = PC_current_val + 32'd1; // 32'd4
-	assign PC_plus_imm  = PC_current_val + IMM;
+	assign pc_plus_four = pc_current_val + 32'd1; // 32'd4
+	assign pc_plus_imm  = pc_current_val + imm_i; // TODO : What if pc + imm is not fit in size bits?
 
 	parametric_mux #(.mem_width(size), .mem_depth(2)) immeadiate_mux(  // next pc value
-		.addr(MPC),
-		.data_in({PC_plus_imm, PC_plus_four}),
-		.data_out(PC_plus));
+		.addr(jump),
+		.data_in({pc_plus_imm, pc_plus_four}),
+		.data_out(pc_plus));
 
 	parametric_mux #(.mem_width(size), .mem_depth(2)) out_mux(         // pc value to save
-		.addr(MPC|JALR),
-		.data_in({PC_plus_four, PC_plus_imm}),
-		.data_out(PC_save));
+		.addr(jump| jalr),
+		.data_in({pc_plus_four, pc_plus_imm}),
+		.data_out(pc_save));
 
 	parametric_mux #(.mem_width(size), .mem_depth(2)) correction_mux(  // correct pc value in case of branch misprediction
-		.addr(isValid),
-		.data_in({PC_plus, Correct_PC}),
-		.data_out(PC_new_val));
+		.addr(misprediction),
+		.data_in({correct_pc, pc_plus}),
+		.data_out(pc_new_val));
 
-	assign PC_Addr = PC_current_val;
+	assign pc_addr = pc_current_val;
 
 endmodule
