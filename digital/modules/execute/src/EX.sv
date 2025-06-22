@@ -2,9 +2,9 @@
 
 
 module EX#(parameter size = 32)(
-    input clk,
+    /*input clk,
     input reset,
-
+    */
     input Predicted_MPC_i,
     input [size-1 : 0] A_i,
     input [size-1 : 0] B_i,

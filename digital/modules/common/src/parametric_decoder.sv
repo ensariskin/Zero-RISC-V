@@ -1,6 +1,6 @@
 `timescale 1ns/1ns
 
-module parametric_decoder #(parameter mem_depth = 8)(
+module parametric_decoder#(parameter mem_depth = 8)(
     input  logic [$clog2(mem_depth)-1 : 0] addr,
     output logic [mem_depth-1:0] dec_out );
 

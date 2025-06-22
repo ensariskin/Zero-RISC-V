@@ -32,23 +32,22 @@ module program_counter_ctrl #(parameter size = 32)(
 	output logic [size-1 : 0] PC_Addr,
 	output logic [size-1 : 0] PC_save);
 
-    wire [size-1 : 0] PC_current_val;
-    wire [size-1 : 0] PC_new_val;
-	wire [size-1 : 0] PC_plus_four;
-   	wire [size-1 : 0] PC_plus_imm;
-	wire [size-1 : 0] PC_plus;
+    logic [size-1 : 0] PC_current_val;
+    logic [size-1 : 0] PC_new_val;
+	logic [size-1 : 0] PC_plus_four;
+   	logic [size-1 : 0] PC_plus_imm;
+	logic [size-1 : 0] PC_plus;
 
-	D_FF_async_rst #(.mem_width(size)) pc_reg(
-		.clk(clk),
-        .reset(reset),
-        .Rin(PC_new_val),
-        .we(~buble),
-        .Rout(PC_current_val));
-
+	always @(posedge clk or negedge reset) begin
+		if (!reset) begin
+			PC_current_val <= {size{1'b0}};
+		end else if (!buble) begin
+			PC_current_val <= PC_new_val;
+		end
+	end
 
 	assign PC_plus_four = PC_current_val + 32'd1; // 32'd4
 	assign PC_plus_imm  = PC_current_val + IMM;
-
 
 	parametric_mux #(.mem_width(size), .mem_depth(2)) immeadiate_mux(  // next pc value
 		.addr(MPC),

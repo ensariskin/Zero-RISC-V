@@ -19,7 +19,7 @@ module FA(
         .y(s0),
         .cout(c1),
         .s(s));
-    
+
     assign cout = c0 | c1;
 
 endmodule
