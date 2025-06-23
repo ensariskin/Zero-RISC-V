@@ -15,6 +15,6 @@ source_files:
     library_name: dut
     file_list: relative-to-file
   - language: verilog
-    path: ..\..\testbench\tests\Pipeline_tb.v
+    path: ..\..\testbench\tests\Pipeline_tb.sv
 library_search_paths:
   - $STD_LIBS\ieee93
