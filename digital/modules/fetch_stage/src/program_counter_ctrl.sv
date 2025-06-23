@@ -29,7 +29,7 @@ module program_counter_ctrl #(parameter size = 32)(
 	input  logic [size-1 : 0] imm_i,
 	input  logic [size-1 : 0] correct_pc,
 	input  logic 			  misprediction,
-	output logic [size-1 : 0] pc_addr,
+	output logic [size-1 : 0] current_pc,
 	output logic [size-1 : 0] pc_save);
 
     logic [size-1 : 0] pc_current_val;
@@ -65,6 +65,6 @@ module program_counter_ctrl #(parameter size = 32)(
 		.data_in({correct_pc, pc_plus}),
 		.data_out(pc_new_val));
 
-	assign pc_addr = pc_current_val;
+	assign current_pc = pc_current_val;
 
 endmodule

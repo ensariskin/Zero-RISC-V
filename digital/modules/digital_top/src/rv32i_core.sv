@@ -21,95 +21,95 @@
 
 
 module rv32i_core #(parameter size = 32)(
-    input clk,
-    input reset,
-    input [size-1 : 0] instruction_i,
-    input [size-1 : 0] MEM_result_i,
-    output [size-1 : 0] ins_address,
-    output [size-1 : 0] RAM_DATA_o,
-    output [size-1 : 0] RAM_Addr_o,
-    output [2:0] RAM_DATA_control,
-    output RAM_rw);
+    input  logic clk,
+    input  logic reset,
+    input  logic [size-1 : 0] instruction_i,
+    input  logic [size-1 : 0] MEM_result_i,
+    output logic [size-1 : 0] ins_address,
+    output logic [size-1 : 0] RAM_DATA_o,
+    output logic [size-1 : 0] RAM_Addr_o,
+    output logic [2:0] RAM_DATA_control,
+    output logic RAM_rw);
 
-    // main pipeline wires
+    // main pipeline logics
 
-    wire [size-1:0] instruction_IF_o;
-    wire [size-1:0] IMM_IF_o;
-    wire [size-1:0] PCPlus_IF_o;
-    wire Predicted_MPC_IF_o;
+    logic [size-1:0] instruction_IF_o;
+    logic [size-1:0] IMM_IF_o;
+    logic [size-1:0] PCPlus_IF_o;
+    logic Predicted_MPC_IF_o;
 
-    wire [size-1:0] instruction_ID_i;
-    wire [size-1:0] IMM_ID_i;
-    wire [size-1:0] PCPlus_ID_i;
-    wire Predicted_MPC_ID_i;
+    logic [size-1:0] instruction_ID_i;
+    logic [size-1:0] IMM_ID_i;
+    logic [size-1:0] PCPlus_ID_i;
+    logic Predicted_MPC_ID_i;
 
-    wire Predicted_MPC_ID_o;
-    wire [size-1 : 0] A_ID_o;
-    wire [size-1 : 0] B_ID_o;
-    wire [size-1 : 0] RAM_DATA_ID_o;
-    wire [size-1 : 0] PCplus_ID_o;
-    wire [25 : 0] Control_Signal_ID_o;
-    wire [2:0] Branch_sel_ID_o;
+    logic Predicted_MPC_ID_o;
+    logic [size-1 : 0] A_ID_o;
+    logic [size-1 : 0] B_ID_o;
+    logic [size-1 : 0] RAM_DATA_ID_o;
+    logic [size-1 : 0] PCplus_ID_o;
+    logic [25 : 0] Control_Signal_ID_o;
+    logic [2:0] Branch_sel_ID_o;
 
-    wire Predicted_MPC_EX_i;
-    wire [size-1 : 0] A_EX_i;
-    wire [size-1 : 0] B_EX_i;
-    wire [size-1 : 0] RAM_DATA_EX_i;
-    wire [size-1 : 0] PCplus_EX_i;
-    wire [25 : 0] Control_Signal_EX_i;
-    wire [2:0] Branch_sel_EX_i;
-
-
-    wire [size-1 : 0] FU_EX_o;
-    wire [size-1 : 0] RAM_DATA_EX_o;
-    wire [size-1 : 0] PCplus_EX_o;
-    wire [11 : 0] Control_Signal_EX_o;
-
-    wire [size-1 : 0] FU_MEM_i;
-    wire [size-1 : 0] RAM_DATA_MEM_i;
-    wire [size-1 : 0] PCplus_MEM_i;
-    wire [11 : 0] Control_Signal_MEM_i;
+    logic Predicted_MPC_EX_i;
+    logic [size-1 : 0] A_EX_i;
+    logic [size-1 : 0] B_EX_i;
+    logic [size-1 : 0] RAM_DATA_EX_i;
+    logic [size-1 : 0] PCplus_EX_i;
+    logic [25 : 0] Control_Signal_EX_i;
+    logic [2:0] Branch_sel_EX_i;
 
 
-    wire [size-1 : 0] FU_MEM_o;
-    wire [size-1 : 0] MEM_result_MEM_o;
-    wire [size-1 : 0] PCplus_MEM_o;
-    wire [7 : 0] Control_Signal_MEM_o;
+    logic [size-1 : 0] FU_EX_o;
+    logic [size-1 : 0] RAM_DATA_EX_o;
+    logic [size-1 : 0] PCplus_EX_o;
+    logic [11 : 0] Control_Signal_EX_o;
 
-    wire [size-1 : 0] FU_WB_i;
-    wire [size-1 : 0] MEM_result_WB_i;
-    wire [size-1 : 0] PCplus_WB_i;
-    wire [7 : 0] Control_Signal_WB_i;
+    logic [size-1 : 0] FU_MEM_i;
+    logic [size-1 : 0] RAM_DATA_MEM_i;
+    logic [size-1 : 0] PCplus_MEM_i;
+    logic [11 : 0] Control_Signal_MEM_i;
 
-    wire [size-1 : 0] Final_Result_WB_o;
-    wire [5 : 0] Control_Signal_WB_o;
+
+    logic [size-1 : 0] FU_MEM_o;
+    logic [size-1 : 0] MEM_result_MEM_o;
+    logic [size-1 : 0] PCplus_MEM_o;
+    logic [7 : 0] Control_Signal_MEM_o;
+
+    logic [size-1 : 0] FU_WB_i;
+    logic [size-1 : 0] MEM_result_WB_i;
+    logic [size-1 : 0] PCplus_WB_i;
+    logic [7 : 0] Control_Signal_WB_i;
+
+    logic [size-1 : 0] Final_Result_WB_o;
+    logic [5 : 0] Control_Signal_WB_o;
 
     //
-    wire isValid;
-    wire buble;
-    wire [4:0] RA_DF, RB_DF, RD_MEM, RD_WB;
-    wire WE_MEM, WE_WB;
-    //wire isLoadMem;
-    wire [1:0] A_sel_DF;
-    wire [1:0] B_sel_DF;
+    logic isValid;
+    logic buble;
+    logic [4:0] RA_DF, RB_DF, RD_MEM, RD_WB;
+    logic WE_MEM, WE_WB;
+    //logic isLoadMem;
+    logic [1:0] A_sel_DF;
+    logic [1:0] B_sel_DF;
 
-	wire [size-1 : 0] PC_EX_o;
+	logic [size-1 : 0] PC_EX_o;
 
 
-    fetch_stage Ins_Fetch(
+    fetch_stage Ins_Fetch(  // reformatting is done
         .clk(clk),
         .reset(reset),
         .buble(buble),
         .instruction_i(instruction_i),
-        .isValid(isValid),
-		.Correct_PC(PC_EX_o),
+        .misprediction(isValid),
+		.correct_pc(PC_EX_o),
         .instruction_o(instruction_IF_o),
-        .ins_address(ins_address),
+        .current_pc(ins_address),
         .imm_o(IMM_IF_o),
-        .PCplus(PCPlus_IF_o),
-        .Predicted_MPC(Predicted_MPC_IF_o));
+        .pc_save(PCPlus_IF_o),
+        .branch_prediction(Predicted_MPC_IF_o));
 
-     if_to_id IF_ID(
+    if_to_id IF_ID(  // reformatting is done
         .clk(clk),
         .reset(reset),
         .buble(buble),
@@ -131,8 +131,8 @@ module rv32i_core #(parameter size = 32)(
         .immediate_i(IMM_ID_i),
         .pc_plus_i(PCPlus_ID_i),
         .branch_perediction_i(Predicted_MPC_ID_i),
-        .Control_Signal_WB(Control_Signal_WB_o),
-        .DATA_in_WB(Final_Result_WB_o),
+        .control_signal_wb(Control_Signal_WB_o),
+        .data_in_wb(Final_Result_WB_o),
         .branch_prediction_o(Predicted_MPC_ID_o),
         .data_a(A_ID_o),
         .data_b(B_ID_o),
@@ -145,20 +145,21 @@ module rv32i_core #(parameter size = 32)(
         .clk(clk),
         .reset(reset),
 		.flush(~isValid),
-        .Predicted_MPC_i(Predicted_MPC_ID_o),
-        .A_i(A_ID_o),
-        .B_i(B_ID_o),
-        .RAM_DATA_i(RAM_DATA_ID_o),
-        .PCplus_i(PCplus_ID_o),
-        .Control_Signal_i(Control_Signal_ID_o),
-        .Branch_sel_i(Branch_sel_ID_o),
-        .Predicted_MPC_o(Predicted_MPC_EX_i),
-        .A_o(A_EX_i),
-        .B_o(B_EX_i),
-        .RAM_DATA_o(RAM_DATA_EX_i),
-        .PCplus_o(PCplus_EX_i),
-        .Control_Signal_o(Control_Signal_EX_i),
-        .Branch_sel_o(Branch_sel_EX_i));
+        .branch_prediction_i(Predicted_MPC_ID_o),
+        .data_a_i(A_ID_o),
+        .data_b_i(B_ID_o),
+        .store_data_i(RAM_DATA_ID_o),
+        .pc_plus_i(PCplus_ID_o),
+        .control_signal_i(Control_Signal_ID_o),
+        .branch_sel_i(Branch_sel_ID_o),
+
+        .branch_prediction_o(Predicted_MPC_EX_i),
+        .data_a_o(A_EX_i),
+        .data_b_o(B_EX_i),
+        .store_data_o(RAM_DATA_EX_i),
+        .pc_plus_o(PCplus_EX_i),
+        .control_signal_o(Control_Signal_EX_i),
+        .branch_sel_o(Branch_sel_EX_i));
 
     EX EX(
         //.clk(clk),
