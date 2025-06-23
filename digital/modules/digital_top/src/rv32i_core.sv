@@ -85,7 +85,7 @@ module rv32i_core #(parameter size = 32)(
     logic [5 : 0] Control_Signal_WB_o;
 
     //
-    logic isValid;
+    logic misprediction;
     logic buble;
     logic [4:0] RA_DF, RB_DF, RD_MEM, RD_WB;
     logic WE_MEM, WE_WB;
@@ -93,16 +93,15 @@ module rv32i_core #(parameter size = 32)(
     logic [1:0] A_sel_DF;
     logic [1:0] B_sel_DF;
 
-	logic [size-1 : 0] PC_EX_o;
-
+	logic [size-1 : 0] correct_pc;
 
     fetch_stage Ins_Fetch(  // reformatting is done
         .clk(clk),
         .reset(reset),
         .buble(buble),
         .instruction_i(instruction_i),
-        .misprediction(isValid),
-		.correct_pc(PC_EX_o),
+        .misprediction(misprediction),
+		.correct_pc(correct_pc),
         .instruction_o(instruction_IF_o),
         .current_pc(ins_address),
         .imm_o(IMM_IF_o),
@@ -113,7 +112,7 @@ module rv32i_core #(parameter size = 32)(
         .clk(clk),
         .reset(reset),
         .buble(buble),
-		.flush(~isValid),
+		.flush(misprediction),
         .instruction_i(instruction_IF_o),
         .imm_i(IMM_IF_o),
         .pc_plus_i(PCPlus_IF_o),
@@ -144,7 +143,7 @@ module rv32i_core #(parameter size = 32)(
     id_to_ex ID_EX(
         .clk(clk),
         .reset(reset),
-		.flush(~isValid),
+		.flush(misprediction),
         .branch_prediction_i(Predicted_MPC_ID_o),
         .data_a_i(A_ID_o),
         .data_b_i(B_ID_o),
@@ -161,30 +160,31 @@ module rv32i_core #(parameter size = 32)(
         .control_signal_o(Control_Signal_EX_i),
         .branch_sel_o(Branch_sel_EX_i));
 
-    EX EX(
+    execute_stage EX(
         //.clk(clk),
         //.reset(reset),
 
-        .Predicted_MPC_i(Predicted_MPC_EX_i),
-        .A_i(A_EX_i),
-        .B_i(B_EX_i),
-        .RAM_DATA_i(RAM_DATA_EX_i),
-        .PCplus_i(PCplus_EX_i),
-        .Control_Signal_i(Control_Signal_EX_i),
-        .Branch_sel(Branch_sel_EX_i),
-        .Data_MEM(FU_MEM_i),
-        .Data_WB(Final_Result_WB_o),
-        .A_sel(A_sel_DF),
-        .B_sel(B_sel_DF),
+        .branch_prediction_i(Predicted_MPC_EX_i),
+        .data_a_i(A_EX_i),
+        .data_b_i(B_EX_i),
+        .store_data_i(RAM_DATA_EX_i),
+        .pc_plus_i(PCplus_EX_i),
+        .control_signal_i(Control_Signal_EX_i),
+        .branch_sel(Branch_sel_EX_i),
 
-        .FU_o(FU_EX_o),
-        .RAM_DATA_o(RAM_DATA_EX_o),
-        .PCplus_o(PCplus_EX_o),
-        .Control_Signal_o(Control_Signal_EX_o),
-        .RA(RA_DF),
-        .RB(RB_DF),
-        .isValid(isValid),
-		.Correct_PC(PC_EX_o));
+        .data_from_mem(FU_MEM_i),
+        .data_from_wb(Final_Result_WB_o),
+        .data_a_forward_sel(A_sel_DF),
+        .data_b_forward_sel(B_sel_DF),
+
+        .function_unit_o(FU_EX_o),
+        .store_data_o(RAM_DATA_EX_o),
+        .pc_plus_o(PCplus_EX_o),
+        .control_signal_o(Control_Signal_EX_o),
+        .rs1_addr(RA_DF),
+        .rs2_addr(RB_DF),
+        .misprediction_o(misprediction),
+		.correct_pc(correct_pc));
 
     ex_to_mem EX_MEM(
         .clk(clk),
