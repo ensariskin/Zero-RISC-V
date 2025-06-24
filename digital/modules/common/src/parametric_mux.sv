@@ -1,9 +1,9 @@
 `timescale 1ns/1ns
 
 module parametric_mux#(parameter mem_width = 16, parameter mem_depth = 16)(
-    input [$clog2(mem_depth)-1 : 0] addr,
-    input [mem_width*mem_depth-1 : 0] data_in,
-    output [mem_width-1 : 0] data_out );
+    input  logic [$clog2(mem_depth) - 1 : 0] addr,
+    input  logic [mem_width*mem_depth-1 : 0] data_in,
+    output logic [mem_width-1           : 0] data_out );
 
     logic [mem_width-1:0] inner_data [0:mem_depth-1] ;
     genvar i ;

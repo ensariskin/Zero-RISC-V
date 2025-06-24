@@ -27,11 +27,12 @@ module Pipeline_tb();
 	 parameter Ins_initFile    = "/home/miskin/Desktop/ensar_iskin/Homeworks/HW8/sim/tb/init_ins.hex";
 
 	 */
-	parameter size = 32;
+	//parameter size = 32;
 	parameter PERIOD = 10ns;
 
 	reg clk = 1'b1;
 	reg reset;
+	/*
 	wire [size-1 : 0] instruction;
 	wire [size-1 : 0] Data_in;
 	wire [size-1 : 0] Data_out;
@@ -48,7 +49,7 @@ module Pipeline_tb();
 
 	reg CE_1,HS_1,HR_1, POR_1;
 	wire RDY_1;
-
+	*/
 	rv32i_core UUT(
 		.clk(clk),
 		.reset(reset),

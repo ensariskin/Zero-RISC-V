@@ -24,8 +24,10 @@ module decode_stage #(parameter size = 32)(
     input logic [size-1 : 0] immediate_i,
     input logic [size-1 : 0] pc_plus_i,
     input logic branch_perediction_i,
-    input logic [5:0] Control_Signal_WB,
-    input logic [size-1:0] DATA_in_WB,
+
+    //Signal from writeback stage
+    input logic [5:0] control_signal_wb,
+    input logic [size-1:0] data_in_wb, // TODO : consider renaming
 
     output logic branch_prediction_o,
     output logic [size-1 : 0] data_a,
@@ -40,18 +42,18 @@ module decode_stage #(parameter size = 32)(
     rv32i_decoder #(.size(size)) decoder(
         .instruction(i_instruction),
         .buble(buble),
-        .branch_sel(branch_sel),
-        .control_word(control_signal)
-        );
+        .branch_sel(branch_sel),      // TODO : consider moving branch_sel to control signals
+        .control_word(control_signal) // TODO : consider using interface for control signals
+    );
 
     register_file #(.mem_width(size),.mem_depth(size)) RegFile(
         .clk(clk),
         .reset(reset),
-        .we(Control_Signal_WB[0]),
-        .rd_in(DATA_in_WB),
+        .we(control_signal_wb[0]),
+        .rd_in(data_in_wb),
         .a_select(control_signal[15:11]),
         .b_select(control_signal[20:16]),
-        .write_addr(Control_Signal_WB[5:1]),
+        .write_addr(control_signal_wb[5:1]),
         .a_out(data_a),
         .b_out(reg_b_value));
 

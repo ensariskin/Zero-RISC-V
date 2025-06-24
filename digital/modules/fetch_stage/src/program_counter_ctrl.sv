@@ -26,19 +26,21 @@ module program_counter_ctrl #(parameter size = 32)(
 	input  logic buble,
 	input  logic jump,
 	input  logic jalr,
+	input  logic auipc,
 	input  logic [size-1 : 0] imm_i,
 	input  logic [size-1 : 0] correct_pc,
 	input  logic 			  misprediction,
-	output logic [size-1 : 0] pc_addr,
+	output logic [size-1 : 0] current_pc,
 	output logic [size-1 : 0] pc_save);
 
     logic [size-1 : 0] pc_current_val;
     logic [size-1 : 0] pc_new_val;
 	logic [size-1 : 0] pc_plus_four;
    	logic [size-1 : 0] pc_plus_imm;
+	logic [size-1 : 0] rs1_plus_imm_prediction;
 	logic [size-1 : 0] pc_plus;
 
-	// TODO : what shhould be the value of pc_new_val when jalr is 1?
+
 	always @(posedge clk or negedge reset) begin
 		if (!reset) begin
 			pc_current_val <= {size{1'b0}};
@@ -48,14 +50,19 @@ module program_counter_ctrl #(parameter size = 32)(
 	end
 
 	assign pc_plus_four = pc_current_val + 32'd1; // 32'd4
-	assign pc_plus_imm  = pc_current_val + imm_i; // TODO : What if pc + imm is not fit in size bits?
+	assign pc_plus_imm  = pc_current_val + imm_i;
+	// TODO : use rs1 value instead of pc_current_val, how can we predict rs1 value? or should we wait until execuete stage calculate correct result
+	assign rs1_plus_imm_prediction = pc_current_val + imm_i;
 
-	parametric_mux #(.mem_width(size), .mem_depth(2)) immeadiate_mux(  // next pc value
-		.addr(jump),
-		.data_in({pc_plus_imm, pc_plus_four}),
+	// next pc value, TODO : handle jalr case
+	parametric_mux #(.mem_width(size), .mem_depth(4)) immeadiate_mux(
+		.addr({jalr, jump}),
+		.data_in({rs1_plus_imm_prediction, rs1_plus_imm_prediction, pc_plus_imm, pc_plus_four}),
 		.data_out(pc_plus));
 
-	parametric_mux #(.mem_width(size), .mem_depth(2)) out_mux(         // pc value to save
+
+	// pc value to save, if JAL or JALR save PC + 4, if auipc save PC + imm
+	parametric_mux #(.mem_width(size), .mem_depth(2)) out_mux(
 		.addr(jump| jalr),
 		.data_in({pc_plus_four, pc_plus_imm}),
 		.data_out(pc_save));
@@ -65,6 +72,8 @@ module program_counter_ctrl #(parameter size = 32)(
 		.data_in({correct_pc, pc_plus}),
 		.data_out(pc_new_val));
 
-	assign pc_addr = pc_current_val;
+	assign current_pc = pc_current_val;
+
+	// TODO : We can store some pc values in case of JAL, JALR instruction then we can use them in case of new JALR calculation
 
 endmodule
