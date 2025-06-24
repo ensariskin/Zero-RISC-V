@@ -26,7 +26,7 @@ module program_counter_ctrl #(parameter size = 32)(
 	input  logic buble,
 	input  logic jump,
 	input  logic jalr,
-	input  logic auipc,
+
 	input  logic [size-1 : 0] imm_i,
 	input  logic [size-1 : 0] correct_pc,
 	input  logic 			  misprediction,
