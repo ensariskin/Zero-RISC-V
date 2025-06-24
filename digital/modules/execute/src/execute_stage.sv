@@ -17,14 +17,18 @@ module execute_stage #(parameter size = 32)(
     input  logic [size-1 : 0] data_from_wb,
     input  logic [1 : 0] data_a_forward_sel,
     input  logic [1 : 0] data_b_forward_sel,
-    input  logic [2:0] branch_sel,
+    input  logic [2 : 0] branch_sel,
 
+    // does we need really all these outputs? TODO : select function unit output or pc_plus (and rename it pc_save) output
     output logic [size-1 : 0] function_unit_o,
     output logic [size-1 : 0] store_data_o,
     output logic [size-1 : 0] pc_plus_o,
+
     output logic [11 : 0] control_signal_o,
-    output logic [4:0] rs1_addr,
+
+    output logic [4:0] rs1_addr,    // we can move them to id_to_execute module
     output logic [4:0] rs2_addr,
+
     output logic misprediction_o,
 	output logic [size-1 : 0] correct_pc);
 
@@ -45,15 +49,15 @@ module execute_stage #(parameter size = 32)(
         .data_out(data_b));
 
 
-   FU #(.size(size)) Func_Unit(
-		.A(data_a),
-		.B(data_b),
-		.Sel(control_signal_i[10:7]),
-		.S(function_unit_o),
-		.C(),
-		.V(),
-		.N(N),
-		.Z(Z));
+    function_unit_alu_shifter #(.size(size)) func_unit(
+        .data_a(data_a),
+        .data_b(data_b),
+        .func_sel(control_signal_i[10:7]),
+        .data_result(function_unit_o),
+        .carry_out(),
+        .overflow(),
+        .negative(N),
+        .zero(Z));
 
     Branch_Controller branch_controller(
         .Branch_sel(branch_sel),
@@ -66,7 +70,6 @@ module execute_stage #(parameter size = 32)(
 		.addr(isJALR),
 		.data_in({function_unit_o, pc_plus_i}),
 		.data_out(correct_pc));
-
 
     assign store_data_o = store_data_i;
     assign pc_plus_o = pc_plus_i;

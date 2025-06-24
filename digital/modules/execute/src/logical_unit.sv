@@ -20,27 +20,24 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module logical_unit#(parameter size = 32)(
-    input [size-1:0] A,
-    input [size-1:0] B,
-    input [1:0] Sel,
-    output [size-1:0] S);
+module logical_unit #(parameter size = 32)(
 
+    input  logic [size-1:0] data_a,
+    input  logic [size-1:0] data_b,
+    input  logic [1:0] func_sel,   // 0 : xor, 1 : or, 2 : and, 3 : reserved
+    output logic [size-1:0] data_result);
 
-    wire [size-1:0] xor_w;
-    wire [size-1:0] or_w;
-    wire [size-1:0] and_w;
+    logic [size-1:0] xor_result;
+    logic [size-1:0] or_result;
+    logic [size-1:0] and_result;
 
+    assign xor_result = data_a ^ data_b;
+    assign or_result  = data_a | data_b;
+    assign and_result = data_a & data_b;
 
-    assign xor_w = A ^ B;
-    assign or_w  = A | B;
-    assign and_w = A & B;
-
-    defparam out_mux.mem_width = size;
-    defparam out_mux.mem_depth = 4;
-    parametric_mux out_mux(
-        .addr(Sel),
-        .data_in({{size{1'b0}},and_w,or_w,xor_w}),
-        .data_out(S));
+    parametric_mux #(.mem_width(size), .mem_depth(4)) out_mux(
+        .addr(func_sel),
+        .data_in({{size{1'b0}}, and_result, or_result, xor_result}),
+        .data_out(data_result));
 
 endmodule

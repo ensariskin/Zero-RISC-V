@@ -19,39 +19,39 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 
-module ALU#(parameter size = 32)(
-    input logic [size-1:0] A,
-    input logic [size-1:0] B,
-    input logic [2:0] Sel,
-    output logic [size-1:0] S,
-    output logic C,
-    output logic V,
-    output logic Z,
-    output logic N);
+module alu #(parameter size = 32)(
+    input logic [size-1:0] data_a,
+    input logic [size-1:0] data_b,
+    input logic [2:0] func_sel,   // 0 : add, 1 : sub, 2 : slt, 3 : sltu, 4 : xor, 5 : or, 6 : and, 7 : reserved
+    output logic [size-1:0] data_result,
+    output logic carry_out,
+    output logic overflow,
+    output logic zero,
+    output logic negative);
 
     logic [size-1:0] arithmetic_out;
     logic [size-1:0] logical_out;
 
     arithmetic_unit #(.size(size)) arithmetic(
-        .A(A),
-        .B(B),
-        .Sel(Sel[1:0]),
-        .S(arithmetic_out),
-        .C(C),
-        .V(V),
-        .Z(Z),
-        .N(N));
+        .data_a(data_a),
+        .data_b(data_b),
+        .func_sel(func_sel[1:0]),         // 0 : add, 1 : sub, 2 : slt, 3 : sltu
+        .data_result(arithmetic_out),
+        .carry_out(carry_out),               // TODO se them 0 in case of logical operation
+        .overflow(overflow),
+        .zero(zero),
+        .negative(negative));
 
     logical_unit #(.size(size)) logical(
-        .A(A),
-        .B(B),
-        .Sel(Sel[1:0]),
-        .S(logical_out));
+        .data_a(data_a),
+        .data_b(data_b),
+        .func_sel(func_sel[1:0]),
+        .data_result(logical_out));
 
     parametric_mux # (.mem_width(size), .mem_depth(2)) out_mux(
-        .addr(Sel[2]),
+        .addr(func_sel[2]),
         .data_in({logical_out, arithmetic_out}),
-        .data_out(S));
+        .data_out(data_result));
 
 
 endmodule
