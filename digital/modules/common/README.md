@@ -1,58 +1,71 @@
 # Common Components
 
-This directory contains common hardware building blocks that are used throughout the processor design. All components use a standardized timescale of `100 ps / 1 ps` for consistent simulation behavior.
+This directory contains common hardware building blocks that are used throughout the processor design. All components have been modernized to SystemVerilog for improved typing, interfaces, and parameterization.
 
 ## Components
 
-### parametric_mux.v
+### parametric_mux.sv
 
-A parameterizable multiplexer that:
-- Supports variable data widths
+A modernized parameterizable multiplexer that:
+- Supports variable data widths with SystemVerilog typing
 - Supports variable number of inputs
 - Is used for data selection throughout the design
+- Features improved interface clarity
 
-### D_FF_block.v and D_FF_async_rst.v
+### parametric_decoder.sv
 
-Basic D Flip-Flop blocks that:
-- Serve as storage elements for pipeline registers
-- Provide synchronous data transfer between pipeline stages
-- Include reset capability (synchronous or asynchronous variants)
-- Feature parameterized data width for flexibility
+A flexible decoder module that:
+- Converts encoded inputs to one-hot or binary outputs
+- Supports variable input and output widths
+- Includes parameterized configurations
 
-### dff_block.v
+### dff_block_negedge_write.sv
 
 Enhanced D Flip-Flop block with:
-- Additional control features
-- Used in newer parts of the design for improved functionality
-- May include clock gating or other power-saving features
+- Standardized naming and interfaces
+- Optimized for negedge write operations
+- Used in pipeline registers throughout the design
+- Features SystemVerilog logic type for improved type safety
 
-### RCA.v (Ripple Carry Adder)
+### dff_sync_reset_negedge_write.sv
+
+Advanced D Flip-Flop with synchronous reset:
+- Provides controlled reset functionality
+- Uses negedge write timing for consistent operation
+- Features improved parameter handling
+- Implements modern SystemVerilog best practices
+
+### RCA.sv (Ripple Carry Adder)
 
 Implements multi-bit binary addition with:
-- Carry propagation
+- SystemVerilog logic typed inputs and outputs
 - Used for address calculation and arithmetic operations
 - Building block for more complex arithmetic units
+- Improved parameterization
 
-### CSA.v (Carry Save Adder)
+### CSA.sv (Carry Save Adder)
 
 An optimized adder design for:
 - Higher performance multi-operand addition
 - Used in more complex arithmetic operations
 - Reduces carry propagation delay
+- Enhanced interface clarity
 
-### FA.v (Full Adder)
+### FA.sv (Full Adder)
 
 Basic building block that:
 - Adds three single-bit inputs (A, B, Carry-in)
 - Produces Sum and Carry-out
 - Used as a component in larger adder structures
+- Modernized with SystemVerilog
 
-### HA.v (Half Adder)
+### HA.sv (Half Adder)
 
 Simplest adder unit that:
 - Adds two single-bit inputs (A, B)
 - Produces Sum and Carry-out
 - Used in the construction of Full Adders
+- Updated with consistent naming conventions
 
 ## Usage
 
@@ -64,9 +77,12 @@ These common components are instantiated throughout the processor design:
 ## Design Philosophy
 
 The common components follow these principles:
-- Parameterizable designs for flexibility
+- Modern SystemVerilog architecture with improved typing
+- Parameterizable designs for maximum flexibility
+- Standardized naming conventions throughout all components
 - Reusable modules to reduce code duplication
-- Well-defined interfaces for easy integration
+- Well-defined interfaces with explicit port declarations
 - Optimized for specific use cases where needed
-- Consistent timescale (`100 ps / 1 ps`) for reliable simulation behavior
+- Consistent use of SystemVerilog `logic` type for better type safety
 - Thoroughly verified individual components
+- Comprehensive commenting for improved maintainability

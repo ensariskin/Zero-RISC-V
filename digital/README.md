@@ -79,7 +79,7 @@ The `testbench` directory contains verification-related files:
 ## Design and Simulation Flow
 
 1. Individual modules are implemented in their respective directories
-2. The `TOP_Pipelined_design.v` integrates all modules into a complete processor
+2. The `rv32i_core.sv` integrates all modules into a complete processor
 3. Testbenches in the `testbench` directory verify functionality
 4. The simulation configuration in `sim` directory runs the testbenches
 5. Waveforms are generated in the `waves` directory for analysis
