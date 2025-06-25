@@ -95,8 +95,8 @@ module rv32i_decoder #(parameter size = 32)(
                 u_type = 1'b0;
                 j_type = 1'b0;
 
-                load = 1'b1;
-                jalr = 1'b0;
+                load = 1'b0;
+                jalr = 1'b1;
                 save_pc = 1'b1;
             end
             7'b0100011: // S-type
