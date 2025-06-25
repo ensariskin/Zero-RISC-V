@@ -70,3 +70,4 @@ digital/sim/run/dvlcom.env
 
 # Ignore diff files
 doc/changelogs/temp_diff.txt
+*.todo
