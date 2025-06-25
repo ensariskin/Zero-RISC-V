@@ -10,11 +10,14 @@ Top-level module for the Fetch Stage that integrates all fetch components and in
 
 ### program_counter_ctrl.sv
 
-Advanced program counter control with the following capabilities:
-- Branch prediction handling
-- Jump and link register (JALR) instruction support
-- Pipeline bubble (stall) handling
-- Branch misprediction recovery
+Enhanced program counter control with the following capabilities:
+- Improved branch prediction handling
+- Enhanced Jump and Link Register (JALR) instruction support with additional prediction path
+- AUIPC instruction support for PC-relative addressing
+- Pipeline bubble (stall) handling with minimal performance impact
+- Branch misprediction recovery with optimized logic
+- PC+immediate calculation enhancement for improved accuracy
+- Framework for potential PC value caching in jump operations
 
 ### branch_predictor.sv
 
@@ -47,7 +50,11 @@ Extracts and sign-extends immediate values from instructions for:
 
 ## Control Flow
 
-The fetch stage implements early branch prediction to minimize branch penalties. It detects:
-- Unconditional jumps (JAL): Always predicted taken
-- Conditional branches: Predicted using a simple static prediction scheme
-- Register-based jumps (JALR): Special handling for indirect jumps
+The fetch stage implements enhanced branch prediction to minimize branch penalties. It features:
+- Unconditional jumps (JAL): Always predicted taken with optimized PC calculation
+- Conditional branches: Predicted using static prediction with improved target calculation
+- Register-based jumps (JALR): Enhanced handling with additional prediction path
+- AUIPC support: Proper handling of PC-relative addressing
+- PC value preservation: Improved mechanics for storing and retrieving PC+4
+- Potential performance optimizations: Framework for future PC value caching
+- Comprehensive error detection and recovery mechanisms

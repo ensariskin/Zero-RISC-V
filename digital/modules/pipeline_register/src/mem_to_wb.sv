@@ -24,14 +24,12 @@ module mem_to_wb#(parameter size = 32)(
     input  logic clk,
     input  logic reset,
 
-    input  logic [size-1 : 0] func_unit_i,
-    input  logic [size-1 : 0] mem_result_i,
-    input  logic [size-1 : 0] pc_plus_i,
+    input  logic [size-1 : 0] ex_stage_result_i,
+    input  logic [size-1 : 0] mem_stage_result_i,
     input  logic [7 : 0] control_signal_i,
 
-    output logic [size-1 : 0] func_unit_o,
-    output logic [size-1 : 0] mem_result_o,
-    output logic [size-1 : 0] pc_plus_o,
+    output logic [size-1 : 0] ex_stage_result_o,
+    output logic [size-1 : 0] mem_stage_result_o,
     output logic [7 : 0] control_signal_o);
 
 
@@ -39,14 +37,14 @@ module mem_to_wb#(parameter size = 32)(
     always @(posedge clk or negedge reset)
     begin
         if (!reset) begin
-            func_unit_o      <= 0;
-            mem_result_o     <= 0;
-            pc_plus_o        <= 0;
+            ex_stage_result_o      <= 0;
+            mem_stage_result_o     <= 0;
             control_signal_o <= 0;
-        end else begin
-            func_unit_o      <= func_unit_i;
-            mem_result_o     <= mem_result_i;
-            pc_plus_o        <= pc_plus_i;
+        end
+        else
+        begin
+            ex_stage_result_o  <= ex_stage_result_i;
+            mem_stage_result_o <= mem_stage_result_i;
             control_signal_o <= control_signal_i;
         end
     end

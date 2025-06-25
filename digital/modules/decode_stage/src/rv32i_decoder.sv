@@ -40,7 +40,7 @@ module rv32i_decoder #(parameter size = 32)(
     assign d_addr        = we ? instruction[11:7] : 'h0;       // destination register address
     assign a_select      = (u_type & j_type)? 'h0 : instruction[19:15];   // operand A address selection
     assign b_select      = instruction[24:20];                            // operand B address selection
-    assign mem_width_sel = s_type & load ? func3[14:12] : 'h0;      // memory width selection for load/store instructions
+    assign mem_width_sel = s_type & load ? func3 : 'h0;      // memory width selection for load/store instructions
 
     always_comb
     begin
@@ -95,8 +95,8 @@ module rv32i_decoder #(parameter size = 32)(
                 u_type = 1'b0;
                 j_type = 1'b0;
 
-                load = 1'b1;
-                jalr = 1'b0;
+                load = 1'b0;
+                jalr = 1'b1;
                 save_pc = 1'b1;
             end
             7'b0100011: // S-type
@@ -175,6 +175,7 @@ module rv32i_decoder #(parameter size = 32)(
 
                 load = 1'b0;
                 jalr = 1'b0;
+                save_pc = 1'b0;
             end
         endcase
     end

@@ -53,13 +53,16 @@ module Pipeline_tb();
 	rv32i_core UUT(
 		.clk(clk),
 		.reset(reset),
-		.instruction_i(32'h0),
-		.MEM_result_i(Data_in),
-		.RAM_DATA_o(Data_out),
-		.RAM_Addr_o(Addr_out),
+
 		.ins_address(PC_Addr),
-		.RAM_DATA_control(Mem_type_sel),
-		.RAM_rw(Mem_write));
+		.instruction_i(32'h0),
+
+		.data_mem_rw(Mem_write),
+		.data_mem_addr_o(Addr_out),
+		.data_mem_data_wr_data(Data_out),
+		.data_mem_data_rd_data(Data_in),
+		.data_mem_control(Mem_type_sel)
+		);
 	/*
 	 Data_organizer Processor_to_Memory(
 	 .data_in(Data_out),

@@ -1,6 +1,15 @@
 # RISC-V RV32I Pipelined Processor
 
-This repository contains the implementation of a 5-stage pipelined processor based on the RISC-V RV32I instruction set architecture. The design is implemented in SystemVerilog and optimized for performance and area efficiency while supporting the complete RV32I base instruction set.
+This repository contai│   ├── common/                   # Common components
+│       └── src/
+│           ├── parametric_mux.sv
+│           ├── parametric_decoder.sv
+│           ├── dff_block_negedge_write.sv # Renamed flip-flop block
+│           ├── dff_sync_reset_negedge_write.sv # New flip-flop variant
+│           ├── RCA.sv             # Ripple Carry Adder
+│           ├── CSA.sv             # Carry Save Adder
+│           ├── FA.sv              # Full Adder
+│           └── HA.sv              # Half Adderplementation of a 5-stage pipelined processor based on the RISC-V RV32I instruction set architecture. The design is implemented in SystemVerilog and optimized for performance and area efficiency while supporting the complete RV32I base instruction set.
 
 ## Project Structure
 
@@ -11,16 +20,14 @@ digital/
 ├── modules/
 │   ├── digital_top/              # Top-level integration
 │   │   └── src/
-│   │       └── TOP_Pipelined_design.sv
+│   │       └── rv32i_core.sv     # Top-level processor core module
 │   │
 │   ├── fetch_stage/              # Instruction Fetch (IF) stage
 │   │   └── src/
 │   │       ├── fetch_stage.sv    # Top-level fetch stage module
-│   │       ├── program_counter_ctrl.sv  # Enhanced program counter with branch prediction
+│   │       ├── program_counter_ctrl.sv  # Enhanced program counter with improved JALR and AUIPC support
 │   │       ├── branch_predictor.sv      # Branch prediction logic
 │   │       └── early_stage_immediate_decoder.sv  # Immediate decoder
-│   │       ├── Branch_predictor.v
-│   │       └── ES_IMM_Decoder.v
 │   │
 │   ├── decode_stage/            # Instruction Decode (ID) stage
 │   │   └── src/
@@ -30,33 +37,33 @@ digital/
 │   │
 │   ├── execute/                  # Execute (EX) stage
 │   │   └── src/
-│   │       ├── EX.v
-│   │       ├── FU.v              # Functional Unit (main ALU)
-│   │       ├── arithmetic_unit.v
-│   │       ├── logical_unit.v
-│   │       ├── shifter.v
-│   │       ├── Branch_Controller.v
-│   │       └── Zero_comparator.v
+│   │       ├── execute_stage.sv  # Top-level execute stage module (renamed from EX.v)
+│   │       ├── function_unit_alu_shifter.sv # Unified functional unit (replaces FU.sv)
+│   │       ├── alu.sv            # Modernized ALU (renamed from ALU.sv)
+│   │       ├── arithmetic_unit.sv
+│   │       ├── logical_unit.sv
+│   │       ├── shifter.sv
+│   │       └── Branch_Controller.sv
 │   │
 │   ├── mem/                      # Memory Access (MEM) stage
 │   │   └── src/
-│   │       └── MEM.v
+│   │       └── MEM.sv            # Memory stage module
 │   │
 │   ├── write_back/               # Write Back (WB) stage
 │   │   └── src/
-│   │       └── WB.v
+│   │       └── WB.sv             # Write Back stage module
 │   │
 │   ├── pipeline_register/        # Pipeline registers
 │   │   └── src/
-│   │       ├── IF_ID.v
-│   │       ├── ID_EX.v
-│   │       ├── EX_MEM.v
-│   │       └── MEM_WB.v
+│   │       ├── if_to_id.sv       # Pipeline registers (renamed for consistency)
+│   │       ├── id_to_ex.sv
+│   │       ├── ex_to_mem.sv
+│   │       └── mem_to_wb.sv
 │   │
 │   ├── hazard/                   # Pipeline hazard handling
 │   │   └── src/
-│   │       ├── Data_Forward.v    # Data forwarding unit
-│   │       └── Hazard_Detection.v
+│   │       ├── Data_Forward.sv   # Data forwarding unit
+│   │       └── hazard_detection_unit.sv # Hazard detection (renamed)
 │   │
 │   └── common/                   # Common components
 │       └── src/
@@ -103,30 +110,34 @@ This project implements a 5-stage pipelined RISC-V RV32I processor with the foll
 
 ### Special Components
 
-- **PC_new.v**: Enhanced program counter with branch prediction support, JALR instruction handling, and pipeline stall capability
-- **Branch_predictor.v**: Predicts branch outcomes to minimize pipeline stalls
-- **Data_Forward.v**: Implements data forwarding to reduce data hazards
-- **Hazard_Detection.v**: Detects and handles pipeline hazards
+- **program_counter_ctrl.sv**: Enhanced program counter with improved JALR handling, AUIPC support, and branch prediction capability
+- **branch_predictor.sv**: Predicts branch outcomes to minimize pipeline stalls
+- **function_unit_alu_shifter.sv**: Unified execution unit for arithmetic, logical, and shift operations
+- **Data_Forward.sv**: Implements data forwarding to reduce data hazards
+- **hazard_detection_unit.sv**: Detects and handles pipeline hazards
 
 ## Implementation Details
 
-### PC Implementation (PC_new.v vs PC.v)
+### Program Counter Implementation
 
-The project includes two PC implementations:
+The project now uses a unified enhanced program counter implementation:
 
-- **PC.v**: Basic program counter that increments by 4 or takes branch targets
-- **PC_new.v**: Enhanced PC with:
+- **program_counter_ctrl.sv**: Modern SystemVerilog implementation with:
   - Branch prediction support
-  - JALR instruction handling
-  - Branch misprediction recovery
+  - Enhanced JALR instruction handling with additional prediction path
+  - AUIPC instruction support
+  - Branch misprediction recovery with improved logic
   - Pipeline stall capabilities
+  - Optimized PC value calculation
 
-### Functional Unit (FU.v)
+### Function Unit Architecture
 
-The central ALU implementation supports all RV32I arithmetic and logical operations through:
-- **arithmetic_unit.v**: Handles addition, subtraction, and comparison
-- **logical_unit.v**: Implements AND, OR, XOR, etc.
-- **shifter.v**: Performs logical and arithmetic shifts
+The central ALU implementation has been modernized with a consolidated approach:
+- **function_unit_alu_shifter.sv**: Unified module that integrates ALU and shifter operations
+- **alu.sv**: Handles all arithmetic and logical operations with improved interfaces
+- **arithmetic_unit.sv**: Handles addition, subtraction, and comparison with enhanced signed/unsigned handling
+- **logical_unit.sv**: Implements AND, OR, XOR, etc. with standardized interfaces
+- **shifter.sv**: Performs logical and arithmetic shifts
 
 ### Memory Interface
 

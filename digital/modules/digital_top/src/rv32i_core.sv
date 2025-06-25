@@ -23,13 +23,16 @@
 module rv32i_core #(parameter size = 32)(
     input  logic clk,
     input  logic reset,
-    input  logic [size-1 : 0] instruction_i,
-    input  logic [size-1 : 0] MEM_result_i,
+
     output logic [size-1 : 0] ins_address,
-    output logic [size-1 : 0] RAM_DATA_o,
-    output logic [size-1 : 0] RAM_Addr_o,
-    output logic [2:0] RAM_DATA_control,
-    output logic RAM_rw);
+    input  logic [size-1 : 0] instruction_i,
+
+    output logic data_mem_rw,
+    output logic [size-1 : 0] data_mem_addr_o,
+    output logic [size-1 : 0] data_mem_data_wr_data,
+    input  logic [size-1 : 0] data_mem_data_rd_data,
+    output logic [2:0]        data_mem_control
+    );
 
     // main pipeline logics
 
@@ -59,26 +62,20 @@ module rv32i_core #(parameter size = 32)(
     logic [25 : 0] Control_Signal_EX_i;
     logic [2:0] Branch_sel_EX_i;
 
-
-    logic [size-1 : 0] FU_EX_o;
+    logic [size-1 : 0] execution_result;
     logic [size-1 : 0] RAM_DATA_EX_o;
-    logic [size-1 : 0] PCplus_EX_o;
     logic [11 : 0] Control_Signal_EX_o;
 
     logic [size-1 : 0] FU_MEM_i;
     logic [size-1 : 0] RAM_DATA_MEM_i;
-    logic [size-1 : 0] PCplus_MEM_i;
     logic [11 : 0] Control_Signal_MEM_i;
-
 
     logic [size-1 : 0] FU_MEM_o;
     logic [size-1 : 0] MEM_result_MEM_o;
-    logic [size-1 : 0] PCplus_MEM_o;
     logic [7 : 0] Control_Signal_MEM_o;
 
     logic [size-1 : 0] FU_WB_i;
     logic [size-1 : 0] MEM_result_WB_i;
-    logic [size-1 : 0] PCplus_WB_i;
     logic [7 : 0] Control_Signal_WB_i;
 
     logic [size-1 : 0] Final_Result_WB_o;
@@ -177,10 +174,10 @@ module rv32i_core #(parameter size = 32)(
         .data_a_forward_sel(A_sel_DF),
         .data_b_forward_sel(B_sel_DF),
 
-        .function_unit_o(FU_EX_o),
+        .calculated_result_o(execution_result),
         .store_data_o(RAM_DATA_EX_o),
-        .pc_plus_o(PCplus_EX_o),
         .control_signal_o(Control_Signal_EX_o),
+
         .rs1_addr(RA_DF),
         .rs2_addr(RB_DF),
         .misprediction_o(misprediction),
@@ -189,62 +186,54 @@ module rv32i_core #(parameter size = 32)(
     ex_to_mem EX_MEM(
         .clk(clk),
         .reset(reset),
-        .FU_i(FU_EX_o),
-        .RAM_DATA_i(RAM_DATA_EX_o),
-        .PCplus_i(PCplus_EX_o),
-        .Control_Signal_i(Control_Signal_EX_o),
+        .executed_result_i(execution_result),
+        .store_data_i(RAM_DATA_EX_o),
+        .control_signal_i(Control_Signal_EX_o),
 
-        .FU_o(FU_MEM_i),
-        .RAM_DATA_o(RAM_DATA_MEM_i),
-        .PCplus_o(PCplus_MEM_i),
-        .Control_Signal_o(Control_Signal_MEM_i));
+        .executed_result_o(FU_MEM_i),
+        .store_data_o(RAM_DATA_MEM_i),
+        .control_signal_o(Control_Signal_MEM_i));
 
-    MEM MEM(
-        .FU_i(FU_MEM_i),
-        .RAM_DATA_i(RAM_DATA_MEM_i),
-        .PCplus_i(PCplus_MEM_i),
-        .MEM_result_i(MEM_result_i),
-        .Control_Signal_i(Control_Signal_MEM_i),
+    mem_stage MEM(
+        .execute_result_i(FU_MEM_i),
+        .store_data_i(RAM_DATA_MEM_i),
+        .control_signal_i(Control_Signal_MEM_i),
 
-        .RAM_DATA_o(RAM_DATA_o),
-        .RAM_DATA_control(RAM_DATA_control),
-        .RAM_rw(RAM_rw),
+        .load_data_i(data_mem_data_rd_data),
 
-        .RD_MEM(RD_MEM),
-        .WE_MEM(WE_MEM),
+        .store_data_o(data_mem_data_wr_data),
+        .data_mem_width_sel(data_mem_control),
+        .data_mem_rw(data_mem_rw),
 
-        .FU_o(FU_MEM_o),
-        .MEM_result_o(MEM_result_MEM_o),
-        .PCplus_o(PCplus_MEM_o),
-        .Control_Signal_o(Control_Signal_MEM_o));
+        .execute_result_o(FU_MEM_o),
+        .load_data_o(MEM_result_MEM_o),
+
+        .control_signal_o(Control_Signal_MEM_o),
+        .mem_stage_destination(RD_MEM),
+        .mem_stage_we(WE_MEM)
+        );
 
     mem_to_wb MEM_WB(
         .clk(clk),
         .reset(reset),
 
-        .func_unit_i(FU_MEM_o),
-        .mem_result_i(MEM_result_MEM_o),
-        .pc_plus_i(PCplus_MEM_o),
+        .ex_stage_result_i(FU_MEM_o),
+        .mem_stage_result_i(MEM_result_MEM_o),
         .control_signal_i(Control_Signal_MEM_o),
 
-        .func_unit_o(FU_WB_i),
-        .mem_result_o(MEM_result_WB_i),
-        .pc_plus_o(PCplus_WB_i),
+        .ex_stage_result_o(FU_WB_i),
+        .mem_stage_result_o(MEM_result_WB_i),
         .control_signal_o(Control_Signal_WB_i));
 
+    write_back_stage WB(
+        .ex_stage_result_i(FU_WB_i),
+        .mem_stage_result_i(MEM_result_WB_i),
+        .control_signal_i(Control_Signal_WB_i),
 
-    WB WB(
-        .FU_i(FU_WB_i),
-        .MEM_result_i(MEM_result_WB_i),
-        .PCplus_i(PCplus_WB_i),
-        .Control_Signal_i(Control_Signal_WB_i),
-
-
-        .RD_WB(RD_WB),
-        .WE_WB(WE_WB),
-        .Final_Result(Final_Result_WB_o),
-        .Control_Signal_o(Control_Signal_WB_o));
-
+        .wb_stage_destination(RD_WB),
+        .wb_stage_we(WE_WB),
+        .wb_result_o(Final_Result_WB_o),
+        .control_signal_o(Control_Signal_WB_o));
 
     Data_Forward DF(
         .RA(RA_DF),
@@ -266,5 +255,5 @@ module rv32i_core #(parameter size = 32)(
         .RB_ID(Control_Signal_ID_o[20:16]),
         .buble(buble));
 
-    assign RAM_Addr_o = FU_MEM_o;
+    assign data_mem_addr_o = FU_MEM_o;
 endmodule
