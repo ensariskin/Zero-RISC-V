@@ -1,186 +1,217 @@
 # RISC-V RV32I Pipelined Processor
 
-This repository contai│   ├── common/                   # Common components
-│       └── src/
-│           ├── parametric_mux.sv
-│           ├── parametric_decoder.sv
-│           ├── dff_block_negedge_write.sv # Renamed flip-flop block
-│           ├── dff_sync_reset_negedge_write.sv # New flip-flop variant
-│           ├── RCA.sv             # Ripple Carry Adder
-│           ├── CSA.sv             # Carry Save Adder
-│           ├── FA.sv              # Full Adder
-│           └── HA.sv              # Half Adderplementation of a 5-stage pipelined processor based on the RISC-V RV32I instruction set architecture. The design is implemented in SystemVerilog and optimized for performance and area efficiency while supporting the complete RV32I base instruction set.
+An educational 32-bit RISC-V processor implementation targeting the RV32I instruction set architecture. This project explores a 5-stage pipelined design with hazard detection, data forwarding, and verification components.
 
-## Project Structure
+[![SystemVerilog](https://img.shields.io/badge/SystemVerilog-IEEE%201800-blue.svg)](https://en.wikipedia.org/wiki/SystemVerilog)
+[![RISC-V](https://img.shields.io/badge/RISC--V-RV32I-green.svg)](https://riscv.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-The project is organized according to the processor's design hierarchy:
+## 🏗️ Architecture Overview
+
+This RISC-V processor implements a classic 5-stage pipeline architecture:
+
+1. **Instruction Fetch (IF)** - Program counter management and instruction memory interface
+2. **Instruction Decode (ID)** - Instruction decoding, register file access, and control signal generation
+3. **Execute (EX)** - ALU operations, branch condition evaluation, and address calculation
+4. **Memory Access (MEM)** - Data memory interface and load/store operations
+5. **Write Back (WB)** - Register file write-back and result selection
+
+### Key Features
+
+- 🎯 **RV32I ISA Implementation** - Working towards complete base integer instruction support
+- ⚙️ **5-Stage Pipeline** - Classic pipeline design with hazard handling mechanisms
+- 🔄 **Data Forwarding** - Implementation of data hazard resolution techniques
+- 🔀 **Branch Prediction** - Basic branch prediction components
+- 🛡️ **Hazard Detection** - Pipeline hazard detection and management
+- 🧩 **Modular Design** - Organized SystemVerilog modules for clarity
+- 🧪 **Test Infrastructure** - Test suite for verification and validation
+
+## 📁 Project Structure
 
 ```
-digital/
-├── modules/
-│   ├── digital_top/              # Top-level integration
-│   │   └── src/
-│   │       └── rv32i_core.sv     # Top-level processor core module
-│   │
-│   ├── fetch_stage/              # Instruction Fetch (IF) stage
-│   │   └── src/
-│   │       ├── fetch_stage.sv    # Top-level fetch stage module
-│   │       ├── program_counter_ctrl.sv  # Enhanced program counter with improved JALR and AUIPC support
-│   │       ├── branch_predictor.sv      # Branch prediction logic
-│   │       └── early_stage_immediate_decoder.sv  # Immediate decoder
-│   │
-│   ├── decode_stage/            # Instruction Decode (ID) stage
-│   │   └── src/
-│   │       ├── decode_stage.sv
-│   │       ├── rv32i_decoder.sv
-│   │       └── RegisterFile.sv
-│   │
-│   ├── execute/                  # Execute (EX) stage
-│   │   └── src/
-│   │       ├── execute_stage.sv  # Top-level execute stage module (renamed from EX.v)
-│   │       ├── function_unit_alu_shifter.sv # Unified functional unit (replaces FU.sv)
-│   │       ├── alu.sv            # Modernized ALU (renamed from ALU.sv)
-│   │       ├── arithmetic_unit.sv
-│   │       ├── logical_unit.sv
-│   │       ├── shifter.sv
-│   │       └── Branch_Controller.sv
-│   │
-│   ├── mem/                      # Memory Access (MEM) stage
-│   │   └── src/
-│   │       └── MEM.sv            # Memory stage module
-│   │
-│   ├── write_back/               # Write Back (WB) stage
-│   │   └── src/
-│   │       └── WB.sv             # Write Back stage module
-│   │
-│   ├── pipeline_register/        # Pipeline registers
-│   │   └── src/
-│   │       ├── if_to_id.sv       # Pipeline registers (renamed for consistency)
-│   │       ├── id_to_ex.sv
-│   │       ├── ex_to_mem.sv
-│   │       └── mem_to_wb.sv
-│   │
-│   ├── hazard/                   # Pipeline hazard handling
-│   │   └── src/
-│   │       ├── Data_Forward.sv   # Data forwarding unit
-│   │       └── hazard_detection_unit.sv # Hazard detection (renamed)
-│   │
-│   └── common/                   # Common components
-│       └── src/
-│           ├── parametric_mux.v
-│           ├── D_FF_block.v
-│           ├── dff_block.v
-│           ├── RCA.v             # Ripple Carry Adder
-│           ├── CSA.v             # Carry Save Adder
-│           ├── FA.v              # Full Adder
-│           └── HA.v              # Half Adder
-│
-├── testbench/                    # Testbenches
-│   └── tb/
-│       ├── Pipeline_tb.v
-│       ├── RegisterFile_tb.v
-│       ├── PC_tb.v
-│       └── [...other testbenches]
-│
-└── sim/                          # Simulation files
-    └── [...simulation scripts and results]
-
-doc/
-├── Schematic.pdf                # Architecture schematic
-└── RISCV technical notes.xlsx   # Technical documentation
+RV32I/
+├── digital/                    # Core processor implementation
+│   ├── modules/               # SystemVerilog modules organized by functionality
+│   │   ├── common/           # Reusable building blocks (mux, adders, etc.)
+│   │   ├── fetch_stage/      # IF stage: PC control, branch predictor
+│   │   ├── decode_stage/     # ID stage: decoder, register file
+│   │   ├── execute/          # EX stage: ALU, branch controller
+│   │   ├── mem/              # MEM stage: memory interface
+│   │   ├── write_back/       # WB stage: writeback logic
+│   │   ├── pipeline_register/ # Pipeline registers (IF/ID, ID/EX, etc.)
+│   │   ├── hazard/           # Hazard detection and data forwarding
+│   │   └── digital_top/      # Top-level processor integration
+│   ├── sim/                  # Simulation environment and scripts
+│   └── testbench/            # Comprehensive test suite
+│       ├── tests/            # SystemVerilog testbenches
+│       └── hex/              # Test programs in hexadecimal format
+├── doc/                      # Documentation and design notes
+│   ├── changelogs/          # Development history and changes
+│   ├── Processor_Datasheet.pdf # Complete technical specification
+│   └── Schematic.pdf        # Processor block diagrams
+└── README.md                # This file
 ```
 
-## Design Overview
+## 🚀 Quick Start
 
-This project implements a 5-stage pipelined RISC-V RV32I processor with the following key features:
+### Prerequisites
 
-### Pipeline Stages
+- **SystemVerilog Simulator**: ModelSim, VCS, or similar tools
+- **Design Vision Tools (DVT)**: Recommended for SystemVerilog development
+- **Git**: For version control
 
-1. **Instruction Fetch (IF)**: Fetches instructions from memory and includes branch prediction capability
-2. **Instruction Decode (ID)**: Decodes instructions and reads register values
-3. **Execute (EX)**: Performs ALU operations, branch calculations, and address generation
-4. **Memory (MEM)**: Handles memory access operations (load/store)
-5. **Write Back (WB)**: Writes results back to the register file
+### Clone and Setup
 
-### Pipeline Hazard Handling
+```bash
+git clone <repository-url>
+cd RV32I
+```
 
-- **Data Forwarding**: Resolves data hazards by forwarding results from later pipeline stages to earlier ones
-- **Hazard Detection**: Detects and handles hazards that cannot be resolved by forwarding
-- **Branch Prediction**: Reduces branch penalties by predicting branch outcomes
+### Running Simulations
 
-### Special Components
+1. **Navigate to simulation directory:**
+   ```bash
+   cd digital/sim
+   ```
 
-- **program_counter_ctrl.sv**: Enhanced program counter with improved JALR handling, AUIPC support, and branch prediction capability
-- **branch_predictor.sv**: Predicts branch outcomes to minimize pipeline stalls
-- **function_unit_alu_shifter.sv**: Unified execution unit for arithmetic, logical, and shift operations
-- **Data_Forward.sv**: Implements data forwarding to reduce data hazards
-- **hazard_detection_unit.sv**: Detects and handles pipeline hazards
+2. **Run the processor simulation:**
+   ```bash
+   # Using the provided simulation environment
+   source dsim.env
+   ```
 
-## Implementation Details
+3. **View waveforms:**
+   ```bash
+   # Waveforms are generated in digital/sim/waves/waves.vcd
+   ```
 
-### Program Counter Implementation
+### Test Programs
 
-The project now uses a unified enhanced program counter implementation:
+The project includes test programs in `digital/testbench/hex/` for various scenarios:
 
-- **program_counter_ctrl.sv**: Modern SystemVerilog implementation with:
-  - Branch prediction support
-  - Enhanced JALR instruction handling with additional prediction path
-  - AUIPC instruction support
-  - Branch misprediction recovery with improved logic
-  - Pipeline stall capabilities
-  - Optimized PC value calculation
+- `init_ins.hex` - Basic instruction testing
+- `init_ins_branches.hex` - Branch instruction validation
+- `init_ins_jump.hex` - Jump instruction testing
+- `init_ins_load_use_hazard.hex` - Load-use hazard scenarios
+- `init_ins_jalr.hex` - JALR instruction testing
+- Additional specialized test cases for development
 
-### Function Unit Architecture
+## 🔧 Module Overview
 
-The central ALU implementation has been modernized with a consolidated approach:
-- **function_unit_alu_shifter.sv**: Unified module that integrates ALU and shifter operations
-- **alu.sv**: Handles all arithmetic and logical operations with improved interfaces
-- **arithmetic_unit.sv**: Handles addition, subtraction, and comparison with enhanced signed/unsigned handling
-- **logical_unit.sv**: Implements AND, OR, XOR, etc. with standardized interfaces
-- **shifter.sv**: Performs logical and arithmetic shifts
+### Core Modules
 
-### Memory Interface
+| Module | Location | Description |
+|--------|----------|-------------|
+| `rv32i_core` | `digital/modules/digital_top/` | Top-level processor integration |
+| `fetch_stage` | `digital/modules/fetch_stage/` | Instruction fetch and PC management |
+| `decode_stage` | `digital/modules/decode_stage/` | Instruction decode and register file |
+| `execute_stage` | `digital/modules/execute/` | ALU and execution logic |
+| `mem_stage` | `digital/modules/mem/` | Memory access stage |
+| `write_back_stage` | `digital/modules/write_back/` | Register writeback stage |
 
-The processor interfaces with external instruction and data memories, with support for different memory access types (byte, half-word, word) as specified by the RV32I ISA.
+### Support Modules
 
-## Simulation and Testing
+| Module | Location | Description |
+|--------|----------|-------------|
+| `rv32i_decoder` | `digital/modules/decode_stage/` | RV32I instruction decoder |
+| `register_file` | `digital/modules/decode_stage/` | 32-register register file |
+| `ALU` | `digital/modules/execute/` | Arithmetic Logic Unit |
+| `Data_Forward` | `digital/modules/hazard/` | Data forwarding unit |
+| `hazard_detection_unit` | `digital/modules/hazard/` | Pipeline hazard detection |
 
-The `testbench` directory contains various test cases including:
-- Basic functionality tests
-- Pipeline hazard tests
-- Branch and jump instruction tests
-- Load/store tests
+## 📊 Instruction Implementation Status
 
-The simulation environment uses:
-- **DSim Simulator**: Primary simulation tool with VCD waveform generation
-- **Surfer**: Waveform viewer for analyzing simulation results
-- **Timing**: All modules use a consistent timescale of `100 ps / 1 ps` for accurate simulation
+### RV32I Base Integer Instruction Set
 
-## Documentation
+| Category | Instructions | Implementation Status |
+|----------|--------------|----------------------|
+| **Arithmetic** | ADD, ADDI, SUB | 🟢 Implemented |
+| **Logical** | AND, ANDI, OR, ORI, XOR, XORI | 🟢 Implemented |
+| **Shift** | SLL, SLLI, SRL, SRLI, SRA, SRAI | 🟢 Implemented |
+| **Compare** | SLT, SLTI, SLTU, SLTIU | 🟢 Implemented |
+| **Branch** | BEQ, BNE, BLT, BGE, BLTU, BGEU | 🟢 Implemented |
+| **Jump** | JAL, JALR | 🟢 Implemented |
+| **Load** | LB, LH, LW, LBU, LHU | 🟢 Implemented |
+| **Store** | SB, SH, SW | 🟢 Implemented |
+| **Upper** | LUI, AUIPC | 🟢 Implemented |
 
-- **Schematic.pdf**: Contains the overall architecture diagram
-- **Processor_Datasheet.pdf**: Comprehensive processor documentation and specifications
-- **RISCV technical notes.xlsx**: Includes technical details and implementation notes
-- **Design Weakness.docx**: Documents current limitations and areas for improvement
+*Note: Implementation status reflects current development progress and may require additional testing and validation.*
 
-## Development Workflow
+## 🧪 Testing and Verification
 
-This project uses Git for version control and GitHub for remote repository hosting:
+### Test Suite Components
 
-- **Repository URL**: [https://github.com/ensariskin/Zero-RISC-V](https://github.com/ensariskin/Zero-RISC-V)
-- **Main Branch**: `master` contains the stable, tested implementation
-- **Issue Tracking**: Use GitHub Issues for bug reports and feature requests
-- **Development Process**:
-  1. Create feature branches for new development
-  2. Use descriptive commit messages
-  3. Submit pull requests for code review
-  4. Merge only after tests pass
+- **Pipeline Testing** - Verification of pipeline functionality
+- **Hazard Testing** - Testing of data hazards, control hazards, and structural hazards
+- **Instruction Testing** - Individual instruction validation
+- **Integration Testing** - System-level integration verification
+- **Edge Case Testing** - Boundary conditions and error scenarios
 
-### Contribution Guidelines
+### Running Tests
 
-When contributing to this project:
-1. Create a branch named for your feature or fix
-2. Follow the established coding style
-3. Add or update tests for your changes
-4. Update documentation
-5. Submit a pull request with a clear description
+```bash
+cd digital/testbench
+# Individual module tests available in tests/ directory
+# Test programs in hex/ directory for instruction memory loading
+```
+
+*Note: Test coverage and validation are ongoing development efforts.*
+
+## 📈 Design Characteristics
+
+- **Pipeline Depth**: 5 stages
+- **Target Clock Frequency**: Design-dependent (not yet characterized)
+- **Expected CPI**: Approaching 1.0 (with effective hazard handling)
+- **Memory Interface**: Configurable width and timing
+- **Hazard Handling**: Designed for 1-cycle stall on load-use hazards
+
+*Note: Performance metrics are theoretical and require further characterization through synthesis and testing.*
+
+## 🔄 Recent Development
+
+See `doc/changelogs/` for detailed development history. Recent work includes:
+
+- 🔧 Improved JALR instruction handling in decoder
+- 🔧 Enhanced memory width selection for load/store operations
+- 🔧 Refined control signal consistency
+- 🔧 Updated file format standardization
+
+## 📚 Documentation
+
+- **[Processor Datasheet](doc/Processor_Datasheet.pdf)** - Complete technical specification
+- **[Schematic Diagrams](doc/Schematic.pdf)** - Visual processor architecture
+- **[Design Notes](doc/)** - Additional design documentation and notes
+- **[Module READMEs](digital/)** - Individual module documentation
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow SystemVerilog coding standards and best practices
+- Include testbenches for new modules when possible
+- Update documentation for significant changes
+- Conduct thorough testing before major commits
+
+## 📄 License
+
+This project is available under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- RISC-V Foundation for the open instruction set architecture specification
+- SystemVerilog and digital design community for resources and best practices
+- Academic references and industry publications on processor design
+
+## 📞 Contact
+
+For questions, suggestions, or contributions, please open an issue on GitHub or contact the project maintainer.
+
+---
+
+**Note**: This processor is primarily designed for educational and research purposes. Additional verification, optimization, and validation would be needed for any production or commercial use.
