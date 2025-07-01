@@ -5,7 +5,7 @@ module HA(
     input y,
     output cout,
     output s);
-    
+
     assign cout = x & y;
     assign s = x ^ y;
 endmodule
