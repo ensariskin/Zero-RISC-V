@@ -7,7 +7,7 @@ design_root_dir: ..\
 simulations:
   - name: top_level
     options: >-
-      -timescale 1ns/1ns -top work.Pipeline_tb -L dut +acc -waves
+      -timescale 1ps/1fs -top work.Pipeline_tb -L dut +acc -waves
       ../waves/waves.vcd
 source_files:
   - language: verilog
