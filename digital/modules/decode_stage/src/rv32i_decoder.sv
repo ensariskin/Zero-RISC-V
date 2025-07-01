@@ -209,7 +209,7 @@ module rv32i_decoder #(parameter size = 32)(
             else
             begin
                 case(func3)
-                    3'b000: function_select =  instruction[30] ? 4'b0001 : 4'b0000; // ADD/SUB
+                    3'b000: function_select =  r_type ? {3'd0, instruction[30]} : 4'b0000; // ADD/SUB
                     3'b100: function_select = 4'b0100; // XOR
                     3'b110: function_select = 4'b0101; // OR
                     3'b111: function_select = 4'b0110; // AND
