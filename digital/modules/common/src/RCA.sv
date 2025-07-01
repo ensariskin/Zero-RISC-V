@@ -7,13 +7,13 @@ module RCA#(parameter size = 32)(x,y,ci,cout,s);
     input        ci;
     output       cout;
     output [size-1:0] s;
-    
-    
+
+
     wire [size:0] c;
     assign c[0] = ci;
     assign cout = c[size];
     genvar i;
-    
+
     generate
         for(i=0;i < size;i=i+1) begin
             FA full_adder(
@@ -22,7 +22,7 @@ module RCA#(parameter size = 32)(x,y,ci,cout,s);
                 .ci(c[i]),
                 .cout(c[i+1]),
                 .s(s[i]));
-        end  
+        end
     endgenerate
-   
+
 endmodule
