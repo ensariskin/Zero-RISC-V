@@ -36,23 +36,10 @@ module rv32i_core #(parameter size = 32)(
 
     // main pipeline logics
 
-    logic [size-1:0] instruction_IF_o;
-    logic [size-1:0] IMM_IF_o;
-    logic [size-1:0] PCPlus_IF_o;
-    logic Predicted_MPC_IF_o;
-
     logic [size-1:0] instruction_ID_i;
     logic [size-1:0] IMM_ID_i;
     logic [size-1:0] PCPlus_ID_i;
     logic Predicted_MPC_ID_i;
-
-    logic Predicted_MPC_ID_o;
-    logic [size-1 : 0] A_ID_o;
-    logic [size-1 : 0] B_ID_o;
-    logic [size-1 : 0] RAM_DATA_ID_o;
-    logic [size-1 : 0] PCplus_ID_o;
-    logic [25 : 0] Control_Signal_ID_o;
-    logic [2:0] Branch_sel_ID_o;
 
     logic Predicted_MPC_EX_i;
     logic [size-1 : 0] A_EX_i;
@@ -98,22 +85,9 @@ module rv32i_core #(parameter size = 32)(
         .buble(buble),
         .instruction_i(instruction_i),
         .misprediction(misprediction),
+        .flush(misprediction),
 		.correct_pc(correct_pc),
-        .instruction_o(instruction_IF_o),
         .current_pc(ins_address),
-        .imm_o(IMM_IF_o),
-        .pc_save(PCPlus_IF_o),
-        .branch_prediction(Predicted_MPC_IF_o));
-
-    if_to_id IF_ID(  // reformatting is done
-        .clk(clk),
-        .reset(reset),
-        .buble(buble),
-		.flush(misprediction),
-        .instruction_i(instruction_IF_o),
-        .imm_i(IMM_IF_o),
-        .pc_plus_i(PCPlus_IF_o),
-        .branch_prediction_i(Predicted_MPC_IF_o),
         .instruction_o(instruction_ID_i),
         .imm_o(IMM_ID_i),
         .pc_plus_o(PCPlus_ID_i),
@@ -127,28 +101,9 @@ module rv32i_core #(parameter size = 32)(
         .immediate_i(IMM_ID_i),
         .pc_plus_i(PCPlus_ID_i),
         .branch_perediction_i(Predicted_MPC_ID_i),
+        .flush(misprediction),
         .control_signal_wb(Control_Signal_WB_o),
         .data_in_wb(Final_Result_WB_o),
-        .branch_prediction_o(Predicted_MPC_ID_o),
-        .data_a(A_ID_o),
-        .data_b(B_ID_o),
-        .store_data(RAM_DATA_ID_o),
-        .pc_plus_o(PCplus_ID_o),
-        .control_signal(Control_Signal_ID_o),
-        .branch_sel(Branch_sel_ID_o));
-
-    id_to_ex ID_EX(
-        .clk(clk),
-        .reset(reset),
-		.flush(misprediction),
-        .branch_prediction_i(Predicted_MPC_ID_o),
-        .data_a_i(A_ID_o),
-        .data_b_i(B_ID_o),
-        .store_data_i(RAM_DATA_ID_o),
-        .pc_plus_i(PCplus_ID_o),
-        .control_signal_i(Control_Signal_ID_o),
-        .branch_sel_i(Branch_sel_ID_o),
-
         .branch_prediction_o(Predicted_MPC_EX_i),
         .data_a_o(A_EX_i),
         .data_b_o(B_EX_i),
@@ -251,8 +206,8 @@ module rv32i_core #(parameter size = 32)(
         .reset(reset),
         .RD_EX(Control_Signal_EX_o[11:7]),
         .isLoad_EX(Control_Signal_EX_o[4]),
-        .RA_ID(Control_Signal_ID_o[15:11]),
-        .RB_ID(Control_Signal_ID_o[20:16]),
+        .RA_ID(Control_Signal_EX_i[15:11]),
+        .RB_ID(Control_Signal_EX_i[20:16]),
         .buble(buble));
 
     assign data_mem_addr_o = FU_MEM_o;
