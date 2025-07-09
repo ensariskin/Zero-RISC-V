@@ -39,37 +39,39 @@ module id_to_ex #(parameter size = 32)(
     output logic [size-1 : 0] pc_plus_o,
     output logic [25 : 0] control_signal_o,
     output logic [2:0] branch_sel_o);
+    
+    localparam D = 1; // Delay for simulation purposes
 
     always @(posedge clk or negedge reset) begin
         if (!reset) begin
-            branch_prediction_o <= 1'b0;
-            data_a_o <= {size{1'b0}};
-            data_b_o <= {size{1'b0}};
-            store_data_o <= {size{1'b0}};
-            pc_plus_o <= {size{1'b0}};
-            control_signal_o <= {26{1'b0}};
-            branch_sel_o <= 3'b000;
+            branch_prediction_o <= #D 1'b0;
+            data_a_o <= #D {size{1'b0}};
+            data_b_o <= #D {size{1'b0}};
+            store_data_o <= #D {size{1'b0}};
+            pc_plus_o <= #D {size{1'b0}};
+            control_signal_o <= #D {26{1'b0}};
+            branch_sel_o <= #D 3'b000;
         end
         else
         begin
             if(flush)
             begin
-                branch_prediction_o <= 1'b0;
-                data_a_o <= {size{1'b0}};
-                data_b_o <= {size{1'b0}};
-                store_data_o <= {size{1'b0}};
-                pc_plus_o <= {size{1'b0}};
-                control_signal_o <= {26{1'b0}};
-                branch_sel_o <= 3'b000;
+                branch_prediction_o <= #D 1'b0;
+                data_a_o <= #D {size{1'b0}};
+                data_b_o <= #D {size{1'b0}};
+                store_data_o <= #D {size{1'b0}};
+                pc_plus_o <= #D {size{1'b0}};
+                control_signal_o <= #D {26{1'b0}};
+                branch_sel_o <= #D 3'b000;
             end
             else    begin
-            branch_prediction_o <= branch_prediction_i;
-            data_a_o <= data_a_i;
-            data_b_o <= data_b_i;
-            store_data_o <= store_data_i;
-            pc_plus_o <= pc_plus_i;
-            control_signal_o <= control_signal_i;
-            branch_sel_o <= branch_sel_i;
+            branch_prediction_o <= #D branch_prediction_i;
+            data_a_o <= #D data_a_i;
+            data_b_o <= #D data_b_i;
+            store_data_o <= #D store_data_i;
+            pc_plus_o <= #D pc_plus_i;
+            control_signal_o <= #D control_signal_i;
+            branch_sel_o <= #D branch_sel_i;
             end
         end
     end

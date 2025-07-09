@@ -32,20 +32,20 @@ module mem_to_wb#(parameter size = 32)(
     output logic [size-1 : 0] mem_stage_result_o,
     output logic [7 : 0] control_signal_o);
 
-
+    localparam D = 1; // Delay for simulation purposes
 
     always @(posedge clk or negedge reset)
     begin
         if (!reset) begin
-            ex_stage_result_o      <= 0;
-            mem_stage_result_o     <= 0;
-            control_signal_o <= 0;
+            ex_stage_result_o      <= #D 0;
+            mem_stage_result_o     <= #D 0;
+            control_signal_o <= #D 0;
         end
         else
         begin
-            ex_stage_result_o  <= ex_stage_result_i;
-            mem_stage_result_o <= mem_stage_result_i;
-            control_signal_o <= control_signal_i;
+            ex_stage_result_o  <= #D ex_stage_result_i;
+            mem_stage_result_o <= #D mem_stage_result_i;
+            control_signal_o <= #D control_signal_i;
         end
     end
 

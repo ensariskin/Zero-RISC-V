@@ -2,9 +2,9 @@
 
 
 module execute_stage #(parameter size = 32)(
-    /*input clk,
+    input clk,
     input reset,
-    */
+    
     // TODO : critical!!! check the logic for JAL, JALR and AUIPC!!!!
     input  logic branch_prediction_i,
     input  logic [size-1 : 0] data_a_i,
@@ -17,6 +17,7 @@ module execute_stage #(parameter size = 32)(
     input  logic [size-1 : 0] data_from_wb,
     input  logic [1 : 0] data_a_forward_sel,
     input  logic [1 : 0] data_b_forward_sel,
+    input  logic [1 : 0] data_store_forward_sel, // for store data forwarding
     input  logic [2 : 0] branch_sel,
 
     output logic [size-1 : 0] store_data_o,
@@ -30,22 +31,34 @@ module execute_stage #(parameter size = 32)(
     output logic misprediction_o,
 	output logic [size-1 : 0] correct_pc);
 
+    localparam D = 1; // Delay for simulation purposes
+
     logic [size-1:0] data_a;
     logic [size-1:0] data_b;
     logic N,Z;
     logic Real_MPC;
 	logic isJALR;
     logic [size-1 : 0] function_unit_o;
+    
+    // Internal signals for EX/MEM pipeline register
+    logic [size-1 : 0] calculated_result_internal;
+    logic [size-1 : 0] store_data_internal;
+    logic [11 : 0] control_signal_internal;
 
     parametric_mux #(.mem_width(size), .mem_depth(4)) data_a_mux(
         .addr(data_a_forward_sel),
         .data_in({data_from_mem, data_from_wb, data_from_mem, data_a_i}),
         .data_out(data_a));
 
-   parametric_mux  #(.mem_width(size), .mem_depth(4)) dat_b_mux(
+    parametric_mux  #(.mem_width(size), .mem_depth(4)) dat_b_mux(
         .addr(data_b_forward_sel),
         .data_in({data_from_mem, data_from_wb, data_from_mem, data_b_i}),
         .data_out(data_b));
+
+    parametric_mux #(.mem_width(size), .mem_depth(4)) data_store_mux(
+        .addr(data_store_forward_sel),
+        .data_in({data_from_mem, data_from_wb, data_from_mem, store_data_i}),
+        .data_out(store_data_internal));
 
     function_unit_alu_shifter #(.size(size)) func_unit(
         .data_a(data_a),
@@ -72,11 +85,26 @@ module execute_stage #(parameter size = 32)(
     parametric_mux #(.mem_width(size), .mem_depth(2)) pc_mux(
         .addr(control_signal_i[5]),                             //save pc value or function unit output
         .data_in({pc_plus_i, function_unit_o}),
-        .data_out(calculated_result_o));
+        .data_out(calculated_result_internal));
 
-    assign store_data_o = store_data_i;
-    assign control_signal_o = {control_signal_i[25:21],control_signal_i[6:0]};
+    // Internal assignments
+    assign control_signal_internal = {control_signal_i[25:21],control_signal_i[6:0]};
+    
+    // Combinational outputs (not registered)
     assign rs1_addr = control_signal_i[15:11]; // todo we can handle this at top level
     assign rs2_addr = control_signal_i[20:16];
     assign misprediction_o =  (Real_MPC ^  branch_prediction_i);
+
+    // EX/MEM Pipeline Register
+    always @(posedge clk or negedge reset) begin
+        if (!reset) begin
+            calculated_result_o <= #D {size{1'b0}};
+            store_data_o <= #D {size{1'b0}};
+            control_signal_o <= #D 12'b0;
+        end else begin
+            calculated_result_o <= #D calculated_result_internal;
+            store_data_o <= #D store_data_internal;
+            control_signal_o <= #D control_signal_internal;
+        end
+    end
 endmodule

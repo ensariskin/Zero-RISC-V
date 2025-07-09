@@ -35,24 +35,26 @@ module if_to_id #(parameter size = 32)(
     output logic [size-1 : 0] pc_plus_o,
     output logic branch_prediction_o);
 
+    localparam D = 1; // Delay for simulation purposes
+    
     always @(posedge clk or negedge reset)
     begin
         if (!reset) begin
-            instruction_o <= 0;
-            imm_o <= 0;
-            pc_plus_o <= 0;
-            branch_prediction_o <= 0;
+            instruction_o <= #D 0;
+            imm_o <= #D 0;
+            pc_plus_o <= #D 0;
+            branch_prediction_o <= #D 0;
         end else if (~buble) begin
             if(flush) begin
-                instruction_o <= 0;
-                imm_o <= 0;
-                pc_plus_o <= 0;
-                branch_prediction_o <= 0;
+                instruction_o <= #D 0;
+                imm_o <= #D 0;
+                pc_plus_o <= #D 0;
+                branch_prediction_o <= #D 0;
             end else begin
-                instruction_o <= instruction_i;
-                imm_o <= imm_i;
-                pc_plus_o <= pc_plus_i;
-                branch_prediction_o <= branch_prediction_i;
+                instruction_o <= #D instruction_i;
+                imm_o <= #D imm_i;
+                pc_plus_o <= #D pc_plus_i;
+                branch_prediction_o <= #D branch_prediction_i;
             end
         end
     end

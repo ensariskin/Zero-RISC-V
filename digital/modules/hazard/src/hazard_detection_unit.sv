@@ -10,6 +10,8 @@ module hazard_detection_unit (
     input  logic [4:0] RB_ID,
     output logic buble );
 
+    localparam D = 1; // Delay for simulation purposes
+
     logic [4:0] RD_RA;
     logic [4:0] RD_RB;
     logic isRA;
@@ -23,8 +25,8 @@ module hazard_detection_unit (
     always@(negedge clk or negedge reset)
     begin
         if (!reset)
-            buble <= 1'b0;
+            buble <= #D 1'b0;
         else
-            buble <= isLoad_EX & (isRA | isRB);
+            buble <= #D isLoad_EX & (isRA | isRB);
     end
 endmodule

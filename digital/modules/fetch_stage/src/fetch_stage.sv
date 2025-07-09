@@ -6,7 +6,7 @@ module fetch_stage#(parameter size = 32)(
     input  logic buble,
     input  logic misprediction,
     input  logic [size-1 : 0] instruction_i,
-
+    input  logic instruction_valid,
     // Pipeline control signals
     input  logic flush,
 
@@ -18,6 +18,8 @@ module fetch_stage#(parameter size = 32)(
     output logic [size-1 : 0] imm_o,
     output logic [size-1 : 0] pc_plus_o,
     output logic branch_prediction_o);
+    
+    localparam D = 1; // Delay for simulation purposes
 
     // Internal signals
     logic jump;
@@ -41,6 +43,7 @@ module fetch_stage#(parameter size = 32)(
         .clk(clk),
         .reset(reset),
         .buble(buble),
+        .instruction_valid(instruction_valid),
         .jump(jump),
 		.jalr(jalr),
 		.correct_pc(correct_pc),
@@ -53,21 +56,21 @@ module fetch_stage#(parameter size = 32)(
     always @(posedge clk or negedge reset)
     begin
         if (!reset) begin
-            instruction_o <= 0;
-            imm_o <= 0;
-            pc_plus_o <= 0;
-            branch_prediction_o <= 0;
+            instruction_o <= #D 0;
+            imm_o <= #D 0;
+            pc_plus_o <= #D 0;
+            branch_prediction_o <= #D 0;
         end else if (~buble) begin
             if(flush) begin
-                instruction_o <= 0;
-                imm_o <= 0;
-                pc_plus_o <= 0;
-                branch_prediction_o <= 0;
+                instruction_o <= #D 0;
+                imm_o <= #D 0;
+                pc_plus_o <= #D 0;
+                branch_prediction_o <= #D 0;
             end else begin
-                instruction_o <= instruction_i;
-                imm_o <= imm;
-                pc_plus_o <= pc_plus_internal;
-                branch_prediction_o <= jump;
+                instruction_o <= #D instruction_i;
+                imm_o <= #D imm;
+                pc_plus_o <= #D pc_plus_internal;
+                branch_prediction_o <= #D jump;
             end
         end
     end

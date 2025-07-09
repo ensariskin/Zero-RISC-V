@@ -32,16 +32,18 @@ module ex_to_mem #(parameter size = 32)(
     output logic [size-1 : 0] store_data_o,
     output logic [11 : 0] control_signal_o);
 
+    localparam D = 1; // Delay for simulation purposes
+    
     always @(posedge clk or negedge reset) begin
         if (!reset) begin
-            executed_result_o <= {size{1'b0}};
-            store_data_o <= {size{1'b0}};
-            control_signal_o <= {12{1'b0}};
+            executed_result_o <= #D {size{1'b0}};
+            store_data_o <= #D {size{1'b0}};
+            control_signal_o <= #D {12{1'b0}};
         end
         else begin
-            executed_result_o <= executed_result_i;
-            store_data_o <= store_data_i;
-            control_signal_o <= control_signal_i;
+            executed_result_o <= #D executed_result_i;
+            store_data_o <= #D store_data_i;
+            control_signal_o <= #D control_signal_i;
         end
     end
 

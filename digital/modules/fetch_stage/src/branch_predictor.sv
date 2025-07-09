@@ -29,10 +29,10 @@ module jump_controller #(parameter size = 32)(
 	wire j_type;
 	wire b_type;
 
-	assign j_type = instruction[6:0] == 7'b1101111; // JAL instruction
-	assign b_type = instruction[6:0] == 7'b1100011; // B-type instructions
+	assign j_type = instruction[6:0] === 7'b1101111; // JAL instruction
+	assign b_type = instruction[6:0] === 7'b1100011; // B-type instructions
 
-    assign jump = j_type | (b_type & 1'b1);
-	assign jalr = instruction[6:0] == 7'b1100111; // JALR instruction
+   assign jump = j_type | (b_type & 1'b1);
+	assign jalr = instruction[6:0] === 7'b1100111; // JALR instruction
 
 endmodule
