@@ -7,7 +7,7 @@ design_root_dir: ..\
 simulations:
   - name: top_level
     options: >-
-      -timescale 1ps/1fs -top work.Pipeline_tb -L dut +acc -waves
+      -timescale 1ns/1ns -top work.dv_top -L dut +acc -dump-agg -waves
       ../waves/waves.vcd
 source_files:
   - language: verilog
@@ -15,6 +15,8 @@ source_files:
     library_name: dut
     file_list: relative-to-file
   - language: verilog
-    path: ..\..\testbench\tests\Pipeline_tb.sv
+    path: ..\..\testbench\riscv_dv_tb\dv_top.sv
+  - language: verilog
+    path: ..\..\testbench\riscv_dv_tb\barebones_top_tb.v
 library_search_paths:
   - $STD_LIBS\ieee93

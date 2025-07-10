@@ -24,32 +24,35 @@ module program_counter_ctrl #(parameter size = 32)(
 	input  logic clk,
 	input  logic reset,
 	input  logic buble,
+	input  logic instruction_valid, 
 	input  logic jump,
 	input  logic jalr,
 
 	input  logic [size-1 : 0] imm_i,
 	input  logic [size-1 : 0] correct_pc,
-	input  logic 			  misprediction,
+	input  logic 			     misprediction,
 	output logic [size-1 : 0] current_pc,
 	output logic [size-1 : 0] pc_save);
 
-    logic [size-1 : 0] pc_current_val;
-    logic [size-1 : 0] pc_new_val;
+	localparam D = 1; // Delay for simulation purposes
+
+   logic [size-1 : 0] pc_current_val;
+   logic [size-1 : 0] pc_new_val;
 	logic [size-1 : 0] pc_plus_four;
-   	logic [size-1 : 0] pc_plus_imm;
+   logic [size-1 : 0] pc_plus_imm;
 	logic [size-1 : 0] rs1_plus_imm_prediction;
 	logic [size-1 : 0] pc_plus;
 
 
 	always @(posedge clk or negedge reset) begin
 		if (!reset) begin
-			pc_current_val <= {size{1'b0}};
-		end else if (!buble) begin
-			pc_current_val <= pc_new_val;
+			pc_current_val <= #D {size{1'b0}};
+		end else if (~buble) begin
+			pc_current_val <= #D pc_new_val;
 		end
 	end
 
-	assign pc_plus_four = pc_current_val + 32'd1; // 32'd4
+	assign pc_plus_four = pc_current_val + 32'd4; // 32'd4
 	assign pc_plus_imm  = pc_current_val + imm_i;
 	// TODO : use rs1 value instead of pc_current_val, how can we predict rs1 value? or should we wait until execuete stage calculate correct result
 	assign rs1_plus_imm_prediction = pc_current_val + imm_i;
@@ -72,7 +75,7 @@ module program_counter_ctrl #(parameter size = 32)(
 		.data_in({correct_pc, pc_plus}),
 		.data_out(pc_new_val));
 
-	assign current_pc = pc_current_val;
+	assign current_pc = reset ? buble? pc_current_val : pc_new_val : 'h0;
 
 	// TODO : We can store some pc values in case of JAL, JALR instruction then we can use them in case of new JALR calculation
 

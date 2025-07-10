@@ -37,10 +37,10 @@ module rv32i_decoder #(parameter size = 32)(
     assign use_immediate = i_type | s_type | u_type | j_type;
     assign we            = r_type | i_type | u_type | j_type;  // write enable for register file
 
-    assign d_addr        = we ? instruction[11:7] : 'h0;       // destination register address
-    assign a_select      = (u_type & j_type)? 'h0 : instruction[19:15];   // operand A address selection
-    assign b_select      = instruction[24:20];                            // operand B address selection
-    assign mem_width_sel = s_type & load ? func3 : 'h0;      // memory width selection for load/store instructions
+    assign d_addr        =  we ? instruction[11:7] : 'h0;       // destination register address
+    assign a_select      = (u_type | j_type) ? 'h0 : instruction[19:15];   // operand A address selection
+    assign b_select      = instruction[24:20];                            // operand B address selection TODO: set to 'h0 for unused cases
+    assign mem_width_sel = (s_type | load) ? func3 : 'h0;      // memory width selection for load/store instructions
 
     always_comb
     begin
@@ -239,7 +239,7 @@ module rv32i_decoder #(parameter size = 32)(
             function_select = 4'b0000; // Invalid instruction
     end
 
-    assign control_word = buble ? 26'd0 : {
+    assign control_word = {
         d_addr,          // 25:21
         b_select,        // 20:16
         a_select,        // 15:11

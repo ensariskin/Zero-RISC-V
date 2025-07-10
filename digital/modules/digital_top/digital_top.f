@@ -21,3 +21,4 @@
 
 # Top-level module files
 D:/Ensar/Tez/RV32I/digital/modules/digital_top/src/rv32i_core.sv
+D:/Ensar/Tez/RV32I/digital/modules/digital_top/src/rv32i_core_wb.sv

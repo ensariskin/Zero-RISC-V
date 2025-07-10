@@ -9,7 +9,9 @@ module Data_Forward(
     input WE_MEM,
     input WE_WB,
     output [1:0] A_sel,
-    output [1:0] B_sel);
+    output [1:0] B_sel,
+    output [1:0] store_data_sel
+    );
     
     
     wire RA_RD_MEM;         //1 means different, 0 means same
@@ -28,15 +30,18 @@ module Data_Forward(
     assign RB_RD_MEM_exor = RB ^ RD_MEM;
     assign RB_RD_WB_exor = RB ^ RD_WB;
     
-    assign RA_RD_MEM = RA_RD_MEM_exor[4] | RA_RD_MEM_exor[3] | RA_RD_MEM_exor[2] | RA_RD_MEM_exor[1] | RA_RD_MEM_exor[0]; 
-    assign RA_RD_WB = RA_RD_WB_exor[4] | RA_RD_WB_exor[3] | RA_RD_WB_exor[2] | RA_RD_WB_exor[1] | RA_RD_WB_exor[0];
-    assign RB_RD_MEM = RB_RD_MEM_exor[4] | RB_RD_MEM_exor[3] | RB_RD_MEM_exor[2] | RB_RD_MEM_exor[1] | RB_RD_MEM_exor[0]; 
-    assign RB_RD_WB = RB_RD_WB_exor[4] | RB_RD_WB_exor[3] | RB_RD_WB_exor[2] | RB_RD_WB_exor[1] | RB_RD_WB_exor[0];  
+    assign RA_RD_MEM = RA == 5'D0 ?  1'b1 : |RA_RD_MEM_exor; //exclude x0 register
+    assign RA_RD_WB  = RA == 5'D0 ?  1'b1 : |RA_RD_WB_exor; 
+    assign RB_RD_MEM = RB == 5'D0 ?  1'b1 : |RB_RD_MEM_exor; 
+    assign RB_RD_WB  = RB == 5'D0 ?  1'b1 : |RB_RD_WB_exor;
    
     assign A_sel[0] = WE_MEM & ~RA_RD_MEM;
     assign A_sel[1] = WE_WB & ~RA_RD_WB;
    
     assign B_sel[0] = WE_MEM & ~RB_RD_MEM & ~MB;
-    assign B_sel[1] = WE_WB & ~RB_RD_WB & ~MB;
+    assign B_sel[1] = WE_WB  & ~RB_RD_WB  & ~MB;
+
+    assign store_data_sel[0] = WE_MEM & ~RB_RD_MEM & MB;
+    assign store_data_sel[1] = WE_WB  & ~RB_RD_WB  & MB;
     
 endmodule
