@@ -61,6 +61,9 @@ module rv32i_core #(parameter size = 32)(
     logic [size-1 : 0] Final_Result_WB_o;
     logic [5 : 0] Control_Signal_WB_o;
 
+    logic [4:0] rs1_id;
+    logic [4:0] rs2_id;
+
     //
     logic misprediction;
     logic buble;
@@ -105,7 +108,10 @@ module rv32i_core #(parameter size = 32)(
         .store_data_o(RAM_DATA_EX_i),
         .pc_plus_o(PCplus_EX_i),
         .control_signal_o(Control_Signal_EX_i),
-        .branch_sel_o(Branch_sel_EX_i));
+        .branch_sel_o(Branch_sel_EX_i),
+        .rs1_addr(rs1_id),
+        .rs2_addr(rs2_id)
+        );
 
     execute_stage EX(
         .clk(clk),
@@ -156,7 +162,7 @@ module rv32i_core #(parameter size = 32)(
 
     write_back_stage WB(
         .ex_stage_result_i(FU_WB_i),
-        .mem_stage_result_i(MEM_result_WB_i),
+        .mem_stage_result_i(data_mem_data_rd_data),
         .control_signal_i(Control_Signal_WB_i),
 
         .wb_stage_destination(RD_WB),
@@ -179,10 +185,10 @@ module rv32i_core #(parameter size = 32)(
     hazard_detection_unit HD(
         .clk(clk),
         .reset(reset),
-        .RD_EX(Control_Signal_MEM_i[11:7]),
-        .isLoad_EX(Control_Signal_MEM_i[4]),
-        .RA_ID(Control_Signal_EX_i[15:11]),
-        .RB_ID(Control_Signal_EX_i[20:16]),
+        .RD_EX(Control_Signal_EX_i[25:21]),
+        .isLoad_EX(Control_Signal_EX_i[4]),
+        .RA_ID(rs1_id),
+        .RB_ID(rs2_id),
         .buble(buble));
 
     assign data_mem_addr_o = FU_MEM_i;

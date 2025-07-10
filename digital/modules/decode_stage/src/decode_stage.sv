@@ -39,7 +39,11 @@ module decode_stage #(parameter size = 32)(
     output logic [size-1 : 0] store_data_o,
     output logic [size-1 : 0] pc_plus_o,
     output logic [25 : 0] control_signal_o,
-    output logic [2:0] branch_sel_o);
+    output logic [2:0] branch_sel_o,
+    
+    output logic [4:0] rs1_addr,
+    output logic [4:0] rs2_addr
+    );
 
     localparam D = 1; // Delay for simulation purposes
     
@@ -55,9 +59,13 @@ module decode_stage #(parameter size = 32)(
 
     rv32i_decoder #(.size(size)) decoder(
         .instruction(i_instruction),
+        .buble(buble),
         .branch_sel(branch_sel_internal),      // TODO : consider moving branch_sel to control signals
         .control_word(control_signal_internal) // TODO : consider using interface for control signals
     );
+
+    assign rs1_addr = control_signal_internal[15:11];
+    assign rs2_addr = control_signal_internal[20:16];
 
     register_file #(.mem_width(size),.mem_depth(size)) RegFile(
         .clk(clk),
@@ -91,7 +99,7 @@ module decode_stage #(parameter size = 32)(
             control_signal_o <= #D {26{1'b0}};
             branch_sel_o <= #D 3'b000;
         end else begin
-            if(flush) begin
+            if(flush | buble) begin // todo insert addi x0, x0, 0
                 branch_prediction_o <= #D 1'b0;
                 data_a_o <= #D {size{1'b0}};
                 data_b_o <= #D {size{1'b0}};
@@ -100,15 +108,13 @@ module decode_stage #(parameter size = 32)(
                 control_signal_o <= #D {26{1'b0}};
                 branch_sel_o <= #D 3'b000;
             end else begin
-                if(~buble) begin
-                    branch_prediction_o <= #D branch_prediction_internal;
-                    data_a_o <= #D data_a_internal;
-                    data_b_o <= #D data_b_internal;
-                    store_data_o <= #D store_data_internal;
-                    pc_plus_o <= #D pc_plus_internal;
-                    control_signal_o <= #D control_signal_internal;
-                    branch_sel_o <= #D branch_sel_internal;
-                end
+                branch_prediction_o <= #D branch_prediction_internal;
+                data_a_o <= #D data_a_internal;
+                data_b_o <= #D data_b_internal;
+                store_data_o <= #D store_data_internal;
+                pc_plus_o <= #D pc_plus_internal;
+                control_signal_o <= #D control_signal_internal;
+                branch_sel_o <= #D branch_sel_internal;
             end
         end
     end

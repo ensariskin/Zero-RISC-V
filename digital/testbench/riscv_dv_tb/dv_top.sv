@@ -15,7 +15,7 @@ module dv_top;
 
     // Parameters
     parameter CLK_PERIOD = 10;          // 100MHz clock
-    parameter TIMEOUT_CYCLES = 10000;  // Simulation timeout
+    parameter TIMEOUT_CYCLES = 100000;  // Simulation timeout
     parameter DATA_WIDTH = 32;
     parameter ADDR_WIDTH = 32;
     
@@ -431,6 +431,198 @@ module dv_top;
         $display("Instruction base address: 0x%08x", INST_BASE_ADDR);
         $display("Data base address: 0x%08x", DATA_BASE_ADDR);
         $display("Simulation started at time %t", $time);
+    end
+
+    // Enhanced monitoring - direct access to fetch stage and PC module
+    logic [31:0] fetch_pc;           // PC from fetch stage 
+    logic [31:0] fetch_instruction;  // Current instruction being fetched
+    logic [31:0] pc_ctrl_current;    // PC from program counter control module
+    logic [31:0] pc_ctrl_save;       // PC save value from program counter module
+    logic fetch_jump;                // Jump signal from fetch stage
+    logic fetch_jalr;                // JALR signal from fetch stage
+    logic [31:0] fetch_imm;          // Immediate from fetch stage
+    
+    // Connect to fetch stage internals
+    assign fetch_pc = dut.Ins_Fetch.current_pc;
+    assign fetch_instruction = dut.Ins_Fetch.instruction_i;
+    assign pc_ctrl_current = dut.Ins_Fetch.PC.current_pc;
+    assign pc_ctrl_save = dut.Ins_Fetch.PC.pc_save;
+    assign fetch_jump = dut.Ins_Fetch.jump;
+    assign fetch_jalr = dut.Ins_Fetch.jalr;
+    assign fetch_imm = dut.Ins_Fetch.imm;
+    
+    // PC and instruction monitoring
+    always @(posedge clk) begin
+        if (rst_n) begin
+            // Monitor PC changes
+            if (fetch_pc != 32'h0) begin
+                $display("[%0t] PC: 0x%08x, Instr: 0x%08x, Jump: %b, JALR: %b, IMM: 0x%08x", 
+                         $time, fetch_pc, fetch_instruction, fetch_jump, fetch_jalr, fetch_imm);
+            end
+            
+            // Monitor critical store instruction (the one that should write to array[0])
+            if (fetch_pc == 32'hba0 && fetch_instruction == 32'hf8f42623) begin
+                $display("[%0t] *** CRITICAL STORE DETECTED at PC=0x%08x ***", $time, fetch_pc);
+                $display("    Instruction: 0x%08x (sw a5,-116(s0))", fetch_instruction);
+                $display("    Data Memory Write: %b", data_mem_rw);
+                $display("    Data Memory Address: 0x%08x", data_mem_addr_o);  
+                $display("    Data Memory Write Data: 0x%08x", data_mem_data_wr_data);
+                $display("    Data Memory Control: 0x%x", data_mem_control);
+                
+                // Also monitor the Wishbone adapter signals
+                $display("    WB Cycle: %b, WB Strobe: %b, WB We: %b", data_wb_cyc, data_wb_stb, data_wb_we);
+                $display("    WB Address: 0x%08x, WB Data: 0x%08x", data_wb_adr, data_wb_dat_o);
+                $display("    WB Sel: 0x%x, WB Ack: %b", data_wb_sel, data_wb_ack);
+            end
+            
+            // Monitor all store instructions for debugging
+            if (data_mem_rw && (|data_mem_control)) begin
+                $display("[%0t] STORE: PC=0x%08x, Addr=0x%08x, Data=0x%08x, Control=0x%x", 
+                         $time, fetch_pc, data_mem_addr_o, data_mem_data_wr_data, data_mem_control);
+            end
+            
+            // Monitor all load instructions for debugging  
+            if (!data_mem_rw && (|data_mem_control)) begin
+                $display("[%0t] LOAD: PC=0x%08x, Addr=0x%08x, Data=0x%08x, Control=0x%x", 
+                         $time, fetch_pc, data_mem_addr_o, data_mem_data_rd_data, data_mem_control);
+            end
+        end
+    end
+    
+    // Memory content monitoring - specifically watch array[0] location
+    logic [31:0] array_base_addr;
+    logic [31:0] array_0_addr;
+    logic [31:0] stack_pointer;
+    
+    // Calculate expected addresses (based on assembly analysis)
+    // s0 should be sp + 160, array[0] should be at s0 - 116
+    assign stack_pointer = 32'h7ffc;  // From assembly: sp initialized to 0x7ffc
+    assign array_base_addr = stack_pointer + 160 - 116;  // s0 - 116
+    assign array_0_addr = array_base_addr;
+    
+    always @(posedge clk) begin
+        if (rst_n && data_mem_rw && (data_mem_addr_o == array_0_addr)) begin
+            $display("[%0t] *** ARRAY[0] WRITE DETECTED ***", $time);
+            $display("    Address: 0x%08x (Expected: 0x%08x)", data_mem_addr_o, array_0_addr);
+            $display("    Data: 0x%08x", data_mem_data_wr_data);
+            $display("    PC: 0x%08x", fetch_pc);
+        end
+    end
+
+    // Register file monitoring (for debugging)
+    logic [31:0] reg_s0_value;  // Frame pointer (s0/x8)
+    logic [31:0] reg_a5_value;  // Register a5 (x15) - used in the critical store
+    
+    // Monitor register file values (if accessible)
+    // Note: You may need to adjust these paths based on your register file implementation
+    assign reg_s0_value = dut.ID.RegFile.registers.s0.data_out[287:256];   // s0 register (x8)
+    assign reg_a5_value = dut.ID.RegFile.registers.a5.data_out[479:448];   // a5 register (x15)
+    
+    // Pipeline stage monitoring
+    logic [31:0] id_pc, ex_pc, mem_pc, wb_pc_internal;
+    logic [31:0] id_instr, ex_instr, mem_instr, wb_instr_internal;
+    
+    assign id_pc = dut.PCPlus_ID_i - 4;  // ID stage PC
+    assign ex_pc = dut.PCplus_EX_i - 4;  // EX stage PC  
+    assign mem_pc = dut.FU_MEM_i;        // MEM stage result (might contain PC)
+    assign wb_pc_internal = dut.FU_WB_i; // WB stage result
+    
+    assign id_instr = dut.instruction_ID_i;
+    assign ex_instr = dut.A_EX_i;  // This might not be instruction, adjust if needed
+    assign mem_instr = dut.RAM_DATA_MEM_i;
+    assign wb_instr_internal = dut.MEM_result_WB_i;
+    
+    // Enhanced debugging for the critical store
+    always @(posedge clk) begin
+        if (rst_n && fetch_pc == 32'hba0) begin
+            $display("[%0t] *** DEBUGGING PC=0x%08x ***", $time, fetch_pc);
+            $display("    s0 register value: 0x%08x", reg_s0_value);
+            $display("    a5 register value: 0x%08x", reg_a5_value);
+            $display("    Expected store address: 0x%08x (s0-116)", reg_s0_value - 116);
+            $display("    Actual store address: 0x%08x", data_mem_addr_o);
+            $display("    Address match: %b", (data_mem_addr_o == (reg_s0_value - 116)));
+            $display("    Pipeline - ID PC: 0x%08x, EX PC: 0x%08x", id_pc, ex_pc);
+            $display("    Control signals - WB: 0x%02x, MEM: 0x%03x", dut.Control_Signal_WB_i, dut.Control_Signal_MEM_i);
+        end
+    end
+    
+    // Monitor Wishbone data memory transactions
+    always @(posedge clk) begin
+        if (rst_n && data_wb_cyc && data_wb_stb) begin
+            $display("[%0t] WB Data Transaction: Addr=0x%08x, Data=0x%08x, We=%b, Sel=0x%x", 
+                     $time, data_wb_adr, data_wb_dat_o, data_wb_we, data_wb_sel);
+            if (data_wb_ack) begin
+                $display("    WB ACK received, Read Data=0x%08x", data_wb_dat_i);
+            end
+        end
+    end
+
+    
+    // End of simulation summary
+    final begin
+        $display("=== SIMULATION SUMMARY ===");
+        $display("Total cycles: %d", cycle_count);
+        $display("Final PC: 0x%08x", fetch_pc);
+        $display("Test passed: %b", test_passed);
+        $display("Test failed: %b", test_failed);
+        
+        // Check array[0] value at end of simulation
+        $display("Array[0] final value: 0x%08x (at calculated addr 0x%08x)", 
+                 data_memory.mem[(reg_s0_value - 116) >> 2], reg_s0_value - 116);
+    end
+
+    // Simple execution tracking - log every PC change
+    logic [31:0] prev_pc;
+    integer instruction_count;
+    
+    initial begin
+        prev_pc = 0;
+        instruction_count = 0;
+    end
+    
+    always @(posedge clk) begin
+        if (rst_n && fetch_pc != prev_pc && fetch_pc != 0) begin
+            instruction_count = instruction_count + 1;
+            $display("[%0d] PC: 0x%08x -> 0x%08x, Instr: 0x%08x", 
+                     instruction_count, prev_pc, fetch_pc, fetch_instruction);
+            prev_pc = fetch_pc;
+            
+            // Stop after reasonable number of instructions for debugging
+            if (instruction_count > 100000) begin
+                $display("*** STOPPING after %d instructions for debugging ***", instruction_count);
+                $display("Last PC: 0x%08x, Last Instruction: 0x%08x", fetch_pc, fetch_instruction);
+                $finish;
+            end
+        end
+    end
+    
+    // Track if processor gets stuck
+    logic [31:0] stuck_counter;
+    logic [31:0] last_active_pc;
+    
+    initial stuck_counter = 0;
+    
+    always @(posedge clk) begin
+        if (rst_n) begin
+            if (fetch_pc == last_active_pc) begin
+                stuck_counter = stuck_counter + 1;
+                if (stuck_counter > 10) begin
+                    $display("[%0t] *** PROCESSOR APPEARS STUCK at PC=0x%08x ***", $time, fetch_pc);
+                    $display("Instruction: 0x%08x", fetch_instruction);
+                    $display("Stuck for %d cycles", stuck_counter);
+                    
+                    // Show processor state
+                    $display("Reset: %b, Bubble: %b, Misprediction: %b", 
+                             rst_n, dut.buble, dut.misprediction);
+                    $display("Instruction valid: %b", dut.instruction_valid);
+                    
+                    $finish;
+                end
+            end else begin
+                stuck_counter = 0;
+                last_active_pc = fetch_pc;
+            end
+        end
     end
 
 endmodule

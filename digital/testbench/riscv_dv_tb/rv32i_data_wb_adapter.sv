@@ -31,7 +31,7 @@ module rv32i_data_wb_adapter (
     input  logic        wb_err_i
 );
     localparam D = 1; // Delay for simulation purposes
-    
+    logic [2:0] core_sel_i_d1;
     // Convert RV32I memory control to wishbone byte enables
     // core_sel_i[1:0]: 00=byte, 01=halfword, 10=word
     // core_sel_i[2]: 0=signed, 1=unsigned (for loads)
@@ -54,10 +54,17 @@ module rv32i_data_wb_adapter (
     assign wb_adr_o = core_addr_i;
     assign wb_dat_o = core_data_i;
     
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            core_sel_i_d1 <= #D 3'd2;
+        end else begin
+            core_sel_i_d1 <= #D core_sel_i; // Capture the signed/unsigned bit
+        end
+    end
     // Core output with data organization
     data_organizer #(.size(32)) data_org (
         .data_in(wb_dat_i),
-        .Type_sel(core_sel_i),
+        .Type_sel(core_sel_i_d1),
         .data_out(core_data_o)
     );
 

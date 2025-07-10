@@ -62,7 +62,7 @@ module fetch_stage#(parameter size = 32)(
             branch_prediction_o <= #D 0;
         end else if (~buble) begin
             if(flush) begin
-                instruction_o <= #D 0;
+                instruction_o <= #D 32'h00000013;
                 imm_o <= #D 0;
                 pc_plus_o <= #D 0;
                 branch_prediction_o <= #D 0;
