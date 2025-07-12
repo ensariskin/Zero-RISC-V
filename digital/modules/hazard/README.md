@@ -1,52 +1,81 @@
-# Hazard Handling Components
+# Pipeline Hazard Management
 
-This directory contains modules that detect and handle pipeline hazards in the processor. All components use a standardized timescale of `100 ps / 1 ps` for consistent simulation behavior.
+This directory contains comprehensive hazard detection and resolution mechanisms for the RISC-V pipeline processor. These components ensure correct instruction execution despite pipeline dependencies and resource conflicts.
 
-## Components
+## Module Components
 
 ### Data_Forward.v
 
-The Data Forwarding Unit:
-- Detects data dependencies between instructions in different pipeline stages
-- Forwards results from later pipeline stages to earlier ones
-- Resolves Read-After-Write (RAW) hazards without pipeline stalls
-- Supports forwarding from:
-  - MEM stage to EX stage
-  - WB stage to EX stage
+Data forwarding unit implementing hardware-based hazard resolution:
+- Read-after-write (RAW) hazard detection across pipeline stages
+- Automatic result forwarding from later to earlier stages
+- Priority-based forwarding path selection
+- Operand multiplexer control for execution stage
+- Support for multiple concurrent forwarding operations
+- Forwarding path coverage:
+  - Memory stage to Execute stage forwarding
+  - Write-back stage to Execute stage forwarding
 
 ### Hazard_Detection.v
 
-The Hazard Detection Unit:
-- Detects hazards that cannot be resolved by forwarding
-- Handles load-use hazards (when an instruction uses the result of a load immediately)
-- Inserts pipeline bubbles (stalls) when necessary
-- Coordinates with the control unit to ensure proper pipeline operation
+Hazard detection unit providing comprehensive pipeline hazard identification:
+- Load-use hazard detection and stall insertion
+- Structural hazard identification and resolution
+- Control hazard coordination with branch prediction
+- Pipeline bubble generation for hazard mitigation
+- Stall signal generation for pipeline stage coordination
+- Exception and interrupt hazard handling support
 
-## Operation
+## Hazard Resolution Mechanisms
 
-### Data Forwarding
+### Data Forwarding Operation
 
-1. Monitors register addresses in different pipeline stages
-2. Detects when a source register in EX stage matches a destination register in MEM or WB stage
-3. Controls multiplexers in the EX stage to select forwarded data instead of register file output
-4. Prioritizes forwarding from the nearest stage (MEM has priority over WB)
+The data forwarding unit operates through the following process:
 
-### Hazard Detection
+1. **Dependency Analysis**: Continuous monitoring of register addresses across pipeline stages
+2. **Conflict Detection**: Identification of read-after-write dependencies
+3. **Forwarding Path Selection**: Determination of appropriate forwarding source
+4. **Multiplexer Control**: Generation of control signals for operand selection
+5. **Priority Resolution**: Handling of multiple simultaneous forwarding requirements
 
-1. Monitors the pipeline for potential hazards
-2. For load-use hazards:
-   - Detects when an instruction in ID stage needs the result of a load in EX stage
-   - Stalls the pipeline by:
-     - Holding IF and ID stage registers
-     - Inserting a bubble in the EX stage
-3. Works with the branch prediction and correction mechanism for control hazards
+### Hazard Detection Process
 
-## Key Features
+The hazard detection unit implements:
 
-- Minimizes pipeline stalls for improved performance
-- Ensures correct execution despite data dependencies
-- Coordinates with branch prediction for control hazards
-- Maintains pipeline integrity during hazardous conditions
-- Low-latency detection and resolution logic
-- Comprehensive hazard coverage for all RV32I instructions
-- Uses consistent `100 ps / 1 ps` timescale for accurate simulation
+1. **Load-Use Detection**: Identification of immediate load result dependencies
+2. **Stall Signal Generation**: Pipeline stall control for unresolvable hazards
+3. **Bubble Insertion**: NOP injection for pipeline timing correction
+4. **Stage Coordination**: Synchronization of stall signals across pipeline stages
+5. **Recovery Management**: Pipeline restart after hazard resolution
+
+## Forwarding Path Configuration
+
+### Forward from Memory Stage
+- **Source**: Memory access stage result output
+- **Destination**: Execute stage operand inputs
+- **Control**: Register address comparison logic
+- **Priority**: Higher priority over write-back forwarding
+
+### Forward from Write-Back Stage  
+- **Source**: Write-back stage result output
+- **Destination**: Execute stage operand inputs
+- **Control**: Register address comparison logic
+- **Priority**: Lower priority than memory stage forwarding
+
+## Hazard Type Coverage
+
+The hazard management system addresses:
+
+- **Data Hazards**: Read-after-write dependencies between instructions
+- **Load-Use Hazards**: Immediate use of load instruction results
+- **Control Hazards**: Branch and jump instruction pipeline disruption
+- **Structural Hazards**: Resource conflict prevention and management
+
+## Performance Impact
+
+Hazard management mechanisms are optimized for:
+
+- **Minimal Stall Frequency**: Maximum utilization of data forwarding
+- **Fast Hazard Detection**: Single-cycle hazard identification
+- **Efficient Recovery**: Rapid pipeline restart after stall periods
+- **Forwarding Priority**: Intelligent forwarding path selection for optimal performance

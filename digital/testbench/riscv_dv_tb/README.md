@@ -1,6 +1,6 @@
 # RV32I Core RISC-V DV Testbench
 
-This directory contains a modern SystemVerilog testbench for the RV32I core with Wishbone interfaces and execution tracing capability, designed for integration with RISC-V DV verification framework.
+This directory contains a SystemVerilog testbench for the RV32I core implementation with Wishbone bus interfaces and execution tracing capability. The testbench is designed for integration with the RISC-V DV verification framework.
 
 ## Features
 

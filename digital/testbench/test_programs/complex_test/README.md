@@ -1,33 +1,40 @@
 # Complex Test Program
 
-This directory contains a comprehensive test program designed to thoroughly exercise the RV32I processor with various challenging scenarios.
+This directory contains a comprehensive test program designed to thoroughly exercise the RISC-V RV32I processor implementation through challenging computational scenarios and complex control flow patterns.
 
-## Test Features
+## Test Program Features
 
-The `complex_test.c` program includes:
+The complex_test.c program implements the following verification components:
 
-### 1. Nested Loop Testing (3 levels deep)
-- Triple nested loops with varying iteration counts
-- Complex conditional logic within nested structures
-- Tests branch prediction and loop handling
+### 1. Nested Loop Structure Testing (3-level depth)
+- Triple-nested loop iterations with variable bounds
+- Complex conditional logic within nested loop structures
+- Branch prediction mechanism validation across multiple nesting levels
+- Loop counter management and termination condition testing
 
-### 2. Multiple If-Else Blocks
-- Deep conditional nesting (up to 4 levels)
-- Complex boolean conditions
-- Mixed arithmetic and logical operations in conditions
+### 2. Multi-Level Conditional Processing
+- Deep conditional nesting structures (up to 4 levels)
+- Complex boolean expression evaluation
+- Mixed arithmetic and logical operation conditions
+- Conditional branch instruction coverage testing
 
-### 3. Array and Matrix Operations
-- 1D array initialization and processing
-- 3x3 matrix operations
-- Memory access patterns testing
+### 3. Array and Matrix Operation Implementation
+- Single-dimensional array initialization and processing algorithms
+- 3x3 matrix mathematical operations
+- Memory access pattern validation and optimization testing
+- Sequential and random memory access pattern evaluation
 
-### 4. Arithmetic Operations
-- Addition, subtraction, multiplication, division
-- Modulo operations
-- Mixed arithmetic expressions
+### 4. Comprehensive Arithmetic Testing
+- Addition, subtraction, multiplication, and division operations
+- Modulo operation implementation and validation
+- Mixed arithmetic expression evaluation
+- Integer overflow and underflow condition handling
 
-### 5. Control Flow Testing
-- Break and continue statements
+### 5. Advanced Control Flow Validation
+- Break and continue statement implementation
+- Early loop termination condition handling
+- Control transfer instruction testing
+- Exception and edge case processing
 - Complex branching scenarios
 - Loop exit conditions
 
@@ -49,10 +56,10 @@ This will:
 
 ## Usage
 
-The generated `complex_test.hex` file can be loaded into your processor simulation:
+The generated `complex_test.hex` file can be loaded into processor simulation:
 
 ```bash
-# Using your simulator
+# Using simulator
 <simulator> +load_hex +hex_file=complex_test.hex
 ```
 

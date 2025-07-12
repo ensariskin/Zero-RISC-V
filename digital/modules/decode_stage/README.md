@@ -1,60 +1,84 @@
-# Decode Stage
+# Instruction Decode Stage
 
-The Decode Stage is responsible for interpreting instructions, reading register values, and generating control signals for the execution pipeline. This stage represents the second phase of the RISC-V 5-stage pipeline.
+The Instruction Decode stage implements the second pipeline stage, responsible for instruction interpretation, register file access, and control signal generation. This stage forms the critical control path for the RISC-V processor pipeline.
 
-## Components
+## Module Components
 
 ### decode_stage.sv
 
-Top-level module for the Decode Stage that integrates the instruction decoder, register file, and control signal generation:
-- Processes instructions from the fetch stage
-- Reads register values
-- Controls operand forwarding
-- Generates control signals for subsequent pipeline stages
-- Handles bubble insertion for hazard handling
+Top-level decode stage integration module providing:
+- Instruction processing from IF/ID pipeline register
+- Register file interface management
+- Control signal aggregation and distribution
+- Data forwarding control logic
+- Pipeline bubble insertion for hazard management
+- Operand preparation for execution stage
 
 ### rv32i_decoder.sv
 
-RISC-V instruction decoder that:
-- Parses RV32I instruction formats
-- Identifies instruction types (R, I, S, B, U, J)
-- Extracts register addresses
-- Generates control signals for execution units
-- Determines branch type and memory operation type
-- Sets up data path configurations for different instructions
+Complete RISC-V RV32I instruction decoder featuring:
+- Full instruction format parsing (R, I, S, B, U, J-type)
+- Instruction type identification and classification
+- Register address field extraction (rd, rs1, rs2)
+- Immediate value extraction and sign extension
+- Control signal generation for all pipeline stages
+- ALU operation code determination
+- Memory operation type specification
+- Branch and jump instruction handling
 
 ### RegisterFile.sv
 
-Register file implementation that:
-- Stores 32 general-purpose registers (x0-x31)
-- Provides two read ports for operand access
-- Handles write-back from the WB stage
-- Maintains x0 as hardwired zero
+32-entry register file implementation providing:
+- 32 general-purpose registers (x0 through x31)
+- Dual-port read capability for simultaneous operand access
+- Single-port write interface with write-back stage
+- Hardwired zero register (x0) implementation
+- Concurrent read/write operation support
+- Register forwarding logic integration
 
-## Operation
+## Stage Operation
 
-1. The instruction from the IF/ID pipeline register is decoded by the rv32i_decoder
-2. Register addresses are extracted and sent to the RegisterFile
-3. Register values are read from the RegisterFile
-4. Control signals are generated based on the instruction type
-5. All operands and control signals are passed to the ID/EX pipeline register
+The decode stage performs the following operations each clock cycle:
 
-## Key Signals
+1. **Instruction Reception**: Accepts instruction word from IF/ID pipeline register
+2. **Instruction Decoding**: Parses instruction fields and determines operation type
+3. **Register Address Extraction**: Identifies source and destination register addresses
+4. **Register File Access**: Reads operand values from specified source registers
+5. **Immediate Processing**: Extracts and sign-extends immediate values as required
+6. **Control Signal Generation**: Creates control word for pipeline stage coordination
+7. **Pipeline Handoff**: Transfers operands and control signals to ID/EX pipeline register
 
-- **Control_Signal**: A 26-bit control word containing:
-  - Register addresses (RD, RA, RB)
-  - ALU function select (FS)
-  - Memory and register write enables
-  - Operand selection controls
-  - Memory type selection
+## Control Signal Architecture
 
-- **Branch_sel**: Determines branch handling in later stages
+### Primary Control Word (26-bit)
+The decode stage generates a comprehensive control signal containing:
 
-## Features
+- **Register Addresses**: Destination (rd), source registers (rs1, rs2)
+- **ALU Function Select**: 4-bit operation code for arithmetic/logic unit
+- **Memory Control**: Read/write enables and operation type specification
+- **Register Write Enable**: Write-back stage register file control
+- **Operand Selection**: Multiplexer control for operand routing
+- **Branch Control**: Branch condition and target address selection
 
-- Support for all RV32I instruction types
-- Handling of immediate values for different instruction formats
-- Generation of specialized control signals for the ALU
-- Support for memory access operations
-- Hazard detection through "bubble" insertion
-- Proper handling of JALR and branch instructions
+### Branch Selection Signal
+- **Branch_sel**: Branch type identification for execution stage processing
+
+## Instruction Support
+
+The decode stage provides complete support for:
+
+- **R-type Instructions**: Register-register arithmetic and logical operations
+- **I-type Instructions**: Immediate arithmetic, loads, and JALR
+- **S-type Instructions**: Store operations with immediate addressing
+- **B-type Instructions**: Conditional branch operations
+- **U-type Instructions**: Upper immediate operations (LUI, AUIPC)
+- **J-type Instructions**: Unconditional jump operations (JAL)
+
+## Hazard Management
+
+The decode stage incorporates hazard detection mechanisms:
+
+- **Pipeline Bubble Insertion**: Stall signal generation for load-use hazards
+- **Data Dependency Detection**: Identification of register dependencies
+- **Control Hazard Handling**: Support for branch prediction resolution
+- **Forwarding Path Control**: Configuration of data forwarding multiplexers

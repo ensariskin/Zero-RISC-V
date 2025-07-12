@@ -1,12 +1,12 @@
 # RISC-V RV32I Pipelined Processor
 
-An educational 32-bit RISC-V processor implementation targeting the RV32I instruction set architecture. This project explores a 5-stage pipelined design with hazard detection, data forwarding, and verification components.
+A complete implementation of a 32-bit RISC-V processor targeting the RV32I base integer instruction set architecture. This project implements a 5-stage pipelined design with comprehensive hazard detection, data forwarding mechanisms, and extensive verification infrastructure.
 
 [![SystemVerilog](https://img.shields.io/badge/SystemVerilog-IEEE%201800-blue.svg)](https://en.wikipedia.org/wiki/SystemVerilog)
 [![RISC-V](https://img.shields.io/badge/RISC--V-RV32I-green.svg)](https://riscv.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 This RISC-V processor implements a classic 5-stage pipeline architecture:
 
@@ -18,15 +18,15 @@ This RISC-V processor implements a classic 5-stage pipeline architecture:
 
 ### Key Features
 
-- 🎯 **RV32I ISA Implementation** - Working towards complete base integer instruction support
-- ⚙️ **5-Stage Pipeline** - Classic pipeline design with hazard handling mechanisms
-- 🔄 **Data Forwarding** - Implementation of data hazard resolution techniques
-- 🔀 **Branch Prediction** - Basic branch prediction components
-- 🛡️ **Hazard Detection** - Pipeline hazard detection and management
-- 🧩 **Modular Design** - Organized SystemVerilog modules for clarity
-- 🧪 **Test Infrastructure** - Test suite for verification and validation
+- **Complete RV32I ISA Implementation** - Full support for the RISC-V base integer instruction set
+- **5-Stage Pipeline Architecture** - Classic pipeline design with hazard handling mechanisms
+- **Data Forwarding Unit** - Hardware-based data hazard resolution
+- **Branch Prediction Support** - Infrastructure for branch prediction implementation
+- **Comprehensive Hazard Detection** - Pipeline hazard detection and stall management
+- **Modular SystemVerilog Design** - Well-organized module hierarchy for maintainability
+- **Extensive Test Infrastructure** - Comprehensive test suite for verification and validation
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 RV32I/
@@ -52,7 +52,7 @@ RV32I/
 └── README.md                # This file
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -96,7 +96,7 @@ The project includes test programs in `digital/testbench/hex/` for various scena
 - `init_ins_jalr.hex` - JALR instruction testing
 - Additional specialized test cases for development
 
-## 🔧 Module Overview
+## Module Overview
 
 ### Core Modules
 
@@ -119,25 +119,25 @@ The project includes test programs in `digital/testbench/hex/` for various scena
 | `Data_Forward` | `digital/modules/hazard/` | Data forwarding unit |
 | `hazard_detection_unit` | `digital/modules/hazard/` | Pipeline hazard detection |
 
-## 📊 Instruction Implementation Status
+## Instruction Implementation Status
 
 ### RV32I Base Integer Instruction Set
 
 | Category | Instructions | Implementation Status |
 |----------|--------------|----------------------|
-| **Arithmetic** | ADD, ADDI, SUB | 🟢 Implemented |
-| **Logical** | AND, ANDI, OR, ORI, XOR, XORI | 🟢 Implemented |
-| **Shift** | SLL, SLLI, SRL, SRLI, SRA, SRAI | 🟢 Implemented |
-| **Compare** | SLT, SLTI, SLTU, SLTIU | 🟢 Implemented |
-| **Branch** | BEQ, BNE, BLT, BGE, BLTU, BGEU | 🟢 Implemented |
-| **Jump** | JAL, JALR | 🟢 Implemented |
-| **Load** | LB, LH, LW, LBU, LHU | 🟢 Implemented |
-| **Store** | SB, SH, SW | 🟢 Implemented |
-| **Upper** | LUI, AUIPC | 🟢 Implemented |
+| **Arithmetic** | ADD, ADDI, SUB | Implemented |
+| **Logical** | AND, ANDI, OR, ORI, XOR, XORI | Implemented |
+| **Shift** | SLL, SLLI, SRL, SRLI, SRA, SRAI | Implemented |
+| **Compare** | SLT, SLTI, SLTU, SLTIU | Implemented |
+| **Branch** | BEQ, BNE, BLT, BGE, BLTU, BGEU | Implemented |
+| **Jump** | JAL, JALR | Implemented |
+| **Load** | LB, LH, LW, LBU, LHU | Implemented |
+| **Store** | SB, SH, SW | Implemented |
+| **Upper** | LUI, AUIPC | Implemented |
 
 *Note: Implementation status reflects current development progress and may require additional testing and validation.*
 
-## 🧪 Testing and Verification
+## Testing and Verification
 
 ### Test Suite Components
 
@@ -157,7 +157,7 @@ cd digital/testbench
 
 *Note: Test coverage and validation are ongoing development efforts.*
 
-## 📈 Design Characteristics
+## Design Characteristics
 
 - **Pipeline Depth**: 5 stages
 - **Target Clock Frequency**: Design-dependent (not yet characterized)
@@ -167,28 +167,28 @@ cd digital/testbench
 
 *Note: Performance metrics are theoretical and require further characterization through synthesis and testing.*
 
-## 🔄 Recent Development
+## Recent Development
 
 See `doc/changelogs/` for detailed development history. Recent work includes:
 
-- 🔧 Improved JALR instruction handling in decoder
-- 🔧 Enhanced memory width selection for load/store operations
-- 🔧 Refined control signal consistency
-- 🔧 Updated file format standardization
+- Improved JALR instruction handling in decoder
+- Enhanced memory width selection for load/store operations
+- Refined control signal consistency
+- Updated file format standardization
 
-## 📚 Documentation
+## Documentation
 
 - **[Processor Datasheet](doc/Processor_Datasheet.pdf)** - Complete technical specification
 - **[Schematic Diagrams](doc/Schematic.pdf)** - Visual processor architecture
 - **[Design Notes](doc/)** - Additional design documentation and notes
 - **[Module READMEs](digital/)** - Individual module documentation
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -m 'Add new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
 5. Open a Pull Request
 
 ### Development Guidelines
@@ -198,17 +198,17 @@ See `doc/changelogs/` for detailed development history. Recent work includes:
 - Update documentation for significant changes
 - Conduct thorough testing before major commits
 
-## 📄 License
+## License
 
 This project is available under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - RISC-V Foundation for the open instruction set architecture specification
 - SystemVerilog and digital design community for resources and best practices
 - Academic references and industry publications on processor design
 
-## 📞 Contact
+## Contact
 
 For questions, suggestions, or contributions, please open an issue on GitHub or contact the project maintainer.
 

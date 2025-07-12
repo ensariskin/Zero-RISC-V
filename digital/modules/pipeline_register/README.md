@@ -1,55 +1,86 @@
-# Pipeline Registers
+# Pipeline Register Implementation
 
-The pipeline registers separate the different stages of the processor pipeline, storing intermediate results and control signals. All registers use a standardized timescale of `100 ps / 1 ps` for consistent simulation behavior.
+The pipeline registers provide temporal storage between pipeline stages, maintaining data and control signal integrity throughout the 5-stage processor pipeline. These registers enable pipelined operation and support hazard management mechanisms.
 
-## Components
+## Register Components
 
 ### IF_ID.v
 
-The Instruction Fetch to Instruction Decode pipeline register:
-- Stores fetched instruction
-- Preserves PC+4 value for JAL/JALR instructions
-- Holds immediate value from the decoder
-- Maintains branch prediction information
-- Supports pipeline flush during branch misprediction
+Instruction Fetch to Instruction Decode pipeline register featuring:
+- 32-bit instruction word storage from fetch stage
+- Program counter plus four (PC+4) value preservation
+- Immediate value storage from early decode logic
+- Branch prediction state maintenance
+- Pipeline flush capability for branch misprediction recovery
+- Stall signal support for hazard management
 
 ### ID_EX.v
 
-The Instruction Decode to Execute pipeline register:
-- Stores register values (A and B operands)
-- Preserves control signals for later stages
-- Holds immediate values and PC+4 for address calculation
-- Maintains branch selection and prediction information
-- Supports pipeline flush signals
+Instruction Decode to Execute pipeline register providing:
+- Dual operand storage (A and B register values)
+- Complete control signal preservation for subsequent stages
+- Immediate value and PC+4 storage for address calculations
+- Branch type and prediction information maintenance
+- Register address forwarding for hazard detection
+- Pipeline flush and stall control support
 
 ### EX_MEM.v
 
-The Execute to Memory Access pipeline register:
-- Stores ALU results from the execute stage
-- Holds data for memory operations
-- Preserves control signals for memory and write-back stages
-- Maintains PC+4 for JAL/JALR instructions
-- Includes memory operation control signals
+Execute to Memory Access pipeline register implementing:
+- ALU computation result storage
+- Store data preservation for memory write operations
+- Memory access control signal maintenance
+- PC+4 value storage for jump and link operations
+- Register write control signal forwarding
+- Branch resolution and correction signal handling
 
 ### MEM_WB.v
 
-The Memory Access to Write Back pipeline register:
-- Stores ALU results and memory load data
-- Preserves control signals for the write-back stage
-- Maintains PC+4 for JAL/JALR instructions
-- Includes register write-back control signals
+Memory Access to Write-Back pipeline register featuring:
+- ALU result and memory load data storage
+- Write-back control signal preservation
+- Destination register address maintenance
+- PC+4 value storage for link register operations
+- Register write enable signal forwarding
+- Final stage control signal management
 
-## Operation
+## Pipeline Register Operation
 
-1. At each clock edge, pipeline registers capture all necessary data from the previous stage
-2. Signals are maintained until the next clock edge when they are passed to the next stage
-3. During pipeline stalls, values may be preserved for multiple cycles
-4. During pipeline flushes, registers may be cleared to remove incorrect speculative execution
+Pipeline registers execute the following functions each clock cycle:
 
-## Key Features
+1. **Data Capture**: Synchronous capture of input signals on clock edge
+2. **Signal Preservation**: Maintenance of captured values until next clock cycle
+3. **Control Propagation**: Forward control signals to subsequent pipeline stages
+4. **Hazard Support**: Enable stall and flush operations for hazard management
+5. **Reset Handling**: Asynchronous reset capability for initialization
 
-- Synchronous operation with the system clock
-- Asynchronous reset capability
-- Support for pipeline stalls (bubbles)
-- Support for pipeline flushes during branch mispredictions
-- Preservation of all necessary signals between pipeline stages
+## Pipeline Control Mechanisms
+
+### Stall Control
+- **Pipeline Bubble Insertion**: Support for load-use hazard stalls
+- **Multi-Cycle Operation**: Accommodation of memory access delays
+- **Dependency Resolution**: Coordination with hazard detection units
+
+### Flush Control
+- **Branch Misprediction Recovery**: Clearing of incorrect speculative instructions
+- **Exception Handling**: Pipeline state restoration capabilities
+- **Control Flow Correction**: Rapid pipeline state correction
+
+## Signal Categories
+
+The pipeline registers manage several signal categories:
+
+- **Data Signals**: Instruction words, operand values, computation results
+- **Address Signals**: Program counter values, memory addresses, register addresses
+- **Control Signals**: ALU operations, memory controls, register write enables
+- **Status Signals**: Branch predictions, hazard indicators, exception flags
+
+## Implementation Characteristics
+
+Pipeline registers are designed with:
+
+- **Synchronous Operation**: Single clock domain throughout pipeline
+- **Minimal Propagation Delay**: Optimized for high-frequency operation
+- **Robust Reset Behavior**: Reliable initialization and error recovery
+- **Synthesis Optimization**: Efficient FPGA and ASIC implementation
+- **Timing Closure**: Balanced pipeline stage delays for maximum frequency

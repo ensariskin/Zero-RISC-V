@@ -1,60 +1,86 @@
-# Fetch Stage
+# Instruction Fetch Stage
 
-The Fetch Stage is responsible for retrieving instructions from memory and managing the program counter. This stage forms the first part of the 5-stage RISC-V pipeline.
+The Instruction Fetch stage implements the first pipeline stage of the RISC-V processor, responsible for instruction retrieval from memory and program counter management. This stage provides the foundation for the 5-stage pipeline architecture.
 
-## Components
+## Module Components
 
 ### fetch_stage.sv
 
-Top-level module for the Fetch Stage that integrates all fetch components and interfaces with the instruction memory.
+Top-level fetch stage integration module providing:
+- Instruction memory interface management
+- Component instantiation and interconnection
+- Signal routing between fetch stage components
+- Pipeline stage output generation
 
 ### program_counter_ctrl.sv
 
-Enhanced program counter control with the following capabilities:
-- Improved branch prediction handling
-- Enhanced Jump and Link Register (JALR) instruction support with additional prediction path
-- AUIPC instruction support for PC-relative addressing
-- Pipeline bubble (stall) handling with minimal performance impact
-- Branch misprediction recovery with optimized logic
-- PC+immediate calculation enhancement for improved accuracy
-- Framework for potential PC value caching in jump operations
+Program counter control unit implementing:
+- Sequential program counter increment logic
+- Branch target address calculation
+- Jump instruction target address handling
+- JALR (Jump and Link Register) instruction support
+- AUIPC (Add Upper Immediate to PC) instruction handling
+- Pipeline stall and bubble management
+- Branch misprediction recovery mechanisms
+- PC+4 calculation for link register operations
 
 ### branch_predictor.sv
 
-Branch prediction unit that:
-- Analyzes instruction opcodes to detect branch/jump instructions
-- Predicts whether branches will be taken
-- Identifies JALR instructions for special handling
-- Helps reduce branch penalties in the pipeline
+Branch prediction unit featuring:
+- Instruction opcode analysis for branch/jump detection
+- Static branch prediction algorithm implementation
+- JALR instruction identification and special handling
+- Branch penalty reduction optimization
+- Prediction accuracy monitoring capabilities
 
 ### early_stage_immediate_decoder.sv
 
-Extracts and sign-extends immediate values from instructions for:
-- Branch/jump target address calculation
-- Early handling of immediate values in the pipeline
+Immediate value extraction and processing unit:
+- Instruction immediate field decoding
+- Sign extension for various immediate formats
+- Early immediate value availability for address calculation
+- Support for all RISC-V immediate encoding formats
 
-## Operation
+## Stage Operation
 
-1. The program counter provides the address to fetch the instruction from memory
-2. The branch predictor analyzes the fetched instruction to predict branch/jump outcomes
-3. The immediate decoder extracts immediate values for target address calculations
-4. The next PC value is calculated based on prediction (sequential or branch target)
-5. All relevant values are passed to the IF/ID pipeline register
+The fetch stage executes the following sequence each clock cycle:
 
-## Signals
+1. **Instruction Address Generation**: Program counter provides memory address for instruction fetch
+2. **Instruction Retrieval**: Interface with instruction memory to obtain instruction word
+3. **Branch Prediction**: Analysis of instruction to predict control flow changes
+4. **Immediate Decoding**: Extraction and processing of immediate values for address calculation
+5. **Next PC Calculation**: Determination of subsequent program counter value based on prediction
+6. **Pipeline Handoff**: Transfer of instruction and control information to IF/ID pipeline register
 
-- **Predicted_MPC**: Indicates when a branch or jump is predicted taken
-- **JALR**: Special signal for handling Jump And Link Register instructions
-- **IMM**: Extended immediate value for address calculations
-- **PCplus**: PC+4 value for sequential execution and link register storage
+## Control Signals
 
-## Control Flow
+### Output Signals
+- **Predicted_MPC**: Branch or jump prediction indication signal
+- **JALR**: Jump and Link Register instruction identification
+- **IMM**: Sign-extended immediate value for address calculations
+- **PCplus**: PC+4 value for sequential execution and return address storage
 
-The fetch stage implements enhanced branch prediction to minimize branch penalties. It features:
-- Unconditional jumps (JAL): Always predicted taken with optimized PC calculation
-- Conditional branches: Predicted using static prediction with improved target calculation
-- Register-based jumps (JALR): Enhanced handling with additional prediction path
-- AUIPC support: Proper handling of PC-relative addressing
-- PC value preservation: Improved mechanics for storing and retrieving PC+4
-- Potential performance optimizations: Framework for future PC value caching
-- Comprehensive error detection and recovery mechanisms
+### Internal Control
+- **Branch Target**: Calculated branch destination address
+- **Jump Target**: Calculated jump destination address
+- **Stall Control**: Pipeline stall management for hazard handling
+- **Prediction Valid**: Branch prediction validity indication
+
+## Performance Optimization
+
+The fetch stage incorporates several performance enhancement mechanisms:
+
+- **Static Branch Prediction**: Reduces average branch penalty through prediction
+- **Early Address Calculation**: Minimizes critical path delay for target address generation
+- **JALR Optimization**: Specialized handling for register-based jump instructions
+- **Pipeline Efficiency**: Maintains single-cycle instruction fetch under normal conditions
+- **Stall Minimization**: Efficient bubble handling to reduce performance impact
+- **Prediction Recovery**: Fast recovery mechanisms for branch mispredictions
+
+## Memory Interface
+
+The instruction fetch stage interfaces with instruction memory through:
+- **Address Bus**: 32-bit instruction address output
+- **Data Bus**: 32-bit instruction word input
+- **Control Signals**: Memory enable and timing control
+- **Ready Signal**: Memory response indication for multi-cycle operations
