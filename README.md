@@ -63,7 +63,7 @@ RV32I/
 ### Clone and Setup
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/ensariskin/Zero-RISC-V.git
 cd RV32I
 ```
 
