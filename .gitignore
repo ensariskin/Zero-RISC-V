@@ -72,3 +72,6 @@ digital/sim/run/dvlcom.env
 doc/changelogs/temp_diff.txt
 *.todo
 tools/*
+
+# Specifically ignore riscv-dv directory
+tools/riscv-dv/
