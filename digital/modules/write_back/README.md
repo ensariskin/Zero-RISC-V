@@ -1,44 +1,63 @@
-# Write Back (WB) Stage
+# Write-Back Stage
 
-The Write Back (WB) stage is the final stage in the pipeline, responsible for writing results back to the register file. All components in this stage use a standardized timescale of `100 ps / 1 ps` for consistent simulation behavior.
+The Write-Back stage implements the final pipeline stage, responsible for result selection and register file update operations. This stage completes the instruction execution cycle and provides data forwarding for hazard resolution.
 
-## Components
+## Module Components
 
 ### WB.v
 
-The Write Back module that:
-- Selects the appropriate data source to write back to registers
-- Generates final register write signals
-- Forwards write-back data to earlier pipeline stages for hazard resolution
+Write-back control and data selection module providing:
+- Result multiplexing from multiple data sources
+- Register file write control signal generation
+- Write-back data forwarding to earlier pipeline stages
+- Final instruction completion processing
+- Register write address and data management
 
-## Operation
+## Stage Operation
 
-The WB stage selects between several possible data sources:
-1. ALU result from the EX stage
-2. Data loaded from memory in the MEM stage
-3. PC+4 for link instructions (JAL, JALR)
-4. Other calculated values based on instruction type
+The write-back stage performs the following operations:
 
-## Key Features
+1. **Data Source Selection**: Multiplexes between available result sources
+2. **Register Write Control**: Determines register file write enable conditions
+3. **Address Validation**: Ensures correct destination register addressing
+4. **Data Forwarding**: Provides results to forwarding network for hazard resolution
+5. **Write Completion**: Completes register file update transaction
 
-- Data source selection via multiplexers
-- Register write control signal generation
-- Write-back data forwarding to resolve data hazards
-- Final processing of control signals
-- Single-cycle write-back operation
-- Uses consistent `100 ps / 1 ps` timescale for accurate simulation
+## Data Source Multiplexing
 
-## Data Selection
+The write-back stage selects the final result from multiple sources:
 
-The WB stage uses a multiplexer to select the final result from:
-- FU_i: ALU result from EX stage
-- MEM_result_i: Data from memory
-- PCplus_i: PC+4 value (for JAL/JALR)
-- Zero (for special cases)
+- **ALU Result**: Arithmetic and logical operation results from execution stage
+- **Memory Data**: Load operation data retrieved from memory access stage  
+- **PC+4 Value**: Return address storage for jump and link operations (JAL, JALR)
+- **Upper Immediate**: Immediate values for LUI and AUIPC instructions
+- **Zero Value**: Special case handling for non-register-writing instructions
 
 ## Register Write Control
 
-Control signals from previous stages determine:
-- Whether a register write is performed (WE_WB)
-- Which register to write to (RD_WB)
-- What value is written back
+Write-back control logic manages:
+
+- **Write Enable Generation**: Control signal (WE_WB) determining register file update
+- **Destination Address**: Register address (RD_WB) for write-back operation
+- **Data Validation**: Ensures write data integrity and proper formatting
+- **Zero Register Protection**: Prevents writes to hardwired zero register (x0)
+
+## Data Forwarding Integration
+
+The write-back stage supports data forwarding mechanisms:
+
+- **Forward to Execute**: Provides results for execution stage operand forwarding
+- **Forward to Decode**: Supplies data for decode stage dependency resolution
+- **Hazard Resolution**: Enables single-cycle resolution of read-after-write hazards
+- **Pipeline Efficiency**: Maintains maximum pipeline throughput
+
+## Instruction Type Support
+
+The write-back stage handles all instruction categories:
+
+- **Arithmetic Instructions**: Register write-back of computation results
+- **Logic Instructions**: Bitwise operation result storage
+- **Load Instructions**: Memory data write-back to destination registers
+- **Jump Instructions**: Return address storage for link operations
+- **Branch Instructions**: No register write-back required
+- **Store Instructions**: No register write-back required

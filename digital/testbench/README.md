@@ -1,99 +1,109 @@
-# Testbench Components
+# Verification and Testing Infrastructure
 
-This directory contains testbench files used to verify the functionality of the RISC-V RV32I processor design. All testbenches use a standardized timescale of `100 ps / 1 ps` for consistent and accurate simulation results.
+This directory contains comprehensive verification components for the RISC-V RV32I processor implementation. All testbenches utilize a standardized timescale of 100 ps / 1 ps for precise simulation timing and consistent results across different simulation environments.
 
-## Test Files
+## SystemVerilog Testbenches
 
 ### Pipeline_tb.v
 
-Comprehensive testbench for the complete pipelined processor that:
-- Verifies the entire pipeline operation
-- Tests various instruction sequences
-- Validates hazard handling mechanisms
-- Checks branch prediction functionality
+Complete processor verification testbench providing:
+- Full pipeline operation validation
+- Instruction sequence execution verification
+- Hazard detection and handling verification
+- Data forwarding mechanism testing
+- Branch prediction functionality assessment
 
 ### RegisterFile_tb.v
 
-Testbench for the register file that:
-- Verifies read and write operations
-- Tests concurrent read/write behavior
-- Validates that x0 remains zero
-- Checks timing requirements
+Register file verification testbench covering:
+- Dual-port read operation verification
+- Single-port write operation testing
+- Concurrent read/write operation validation
+- Zero register (x0) immutability verification
+- Timing constraint compliance checking
 
 ### PC_tb.v
 
-Program Counter testbench that:
-- Tests normal PC increment operation
-- Verifies branch and jump behavior
-- Validates reset functionality
-- Checks PC update timing
+Program counter verification testbench including:
+- Sequential instruction fetch verification
+- Branch target address calculation testing
+- Jump instruction address update validation
+- Reset state initialization verification
+- PC update timing requirement checking
 
 ### Controller_tb.v
 
-Tests the control unit to ensure:
-- Proper control signal generation for all instructions
-- Correct handling of different instruction formats
-- Appropriate ALU operation selection
+Control unit verification testbench ensuring:
+- Instruction decode accuracy for all RV32I instructions
+- Control signal generation correctness
+- ALU operation code assignment verification
+- Pipeline control signal propagation testing
 
 ### Datapath_tb.v
 
-Verifies the processor datapath:
-- Tests data flow through all pipeline stages
-- Validates ALU operations
-- Checks memory interface operation
-- Verifies register file integration
+Processor datapath verification covering:
+- Inter-stage data flow validation
+- ALU functional unit operation verification
+- Memory interface protocol compliance
+- Register file integration testing
+- Pipeline register operation verification
 
 ### Single_cycle_processor_tb.v
 
-Reference testbench for the single-cycle design:
-- Provides comparison baseline for the pipelined design
-- Tests basic instruction functionality
+Reference implementation testbench for:
+- Single-cycle design validation
+- Instruction functionality baseline testing
+- Performance comparison reference
 
 ### NVRAM_tb.v
 
-Verifies the non-volatile memory model used in simulation:
-- Tests read/write operations
-- Validates memory initialization
-- Checks timing characteristics
+Non-volatile memory model verification including:
+- Memory read/write operation validation
+- Initialization sequence verification
+- Access timing characteristic testing
+- Data persistence verification
 
-## Test Data
+## Test Program Memory Images
 
-### init_ins.hex
+### Core Test Programs
 
-Primary instruction memory initialization file containing a test program.
+- **init_ins.hex**: Primary instruction memory initialization containing comprehensive instruction testing sequences
+- **init_data.hex**: Data memory initialization for load/store operation validation
 
-### init_data.hex
+### Specialized Verification Programs
 
-Data memory initialization file for testing load/store operations.
+- **init_ins_branches.hex**: Branch instruction comprehensive testing including conditional and unconditional branches
+- **init_ins_jump.hex**: Jump instruction verification covering JAL and JALR operations
+- **init_ins_jalr.hex**: Jump-and-link-register specific instruction testing
+- **init_ins_raw_error.hex**: Read-after-write hazard detection and handling verification
+- **init_ins_load_use_hazard.hex**: Load-use hazard detection and pipeline stall verification
+- **init_ins_structural_error.hex**: Structural hazard detection and resource conflict handling
 
-### Specialized Test Files
+## Verification Methodology
 
-- **init_ins_branches.hex**: Tests branch instruction functionality
-- **init_ins_jump.hex**: Tests jump instruction functionality
-- **init_ins_jalr.hex**: Tests jump-and-link-register functionality
-- **init_ins_raw_error.hex**: Tests Read-After-Write hazard handling
-- **init_ins_load_use_hazard.hex**: Tests load-use hazard handling
-- **init_ins_structural_error.hex**: Tests structural hazard handling
+Testbench execution follows standardized verification procedures:
 
-## Test Methodology
+1. **Design Under Test Initialization**: Reset sequence and initial state establishment
+2. **Stimulus Application**: Test vector application according to verification plan
+3. **Output Monitoring**: Continuous monitoring of processor outputs and internal signals
+4. **Timing Verification**: Clock edge timing and setup/hold time validation
+5. **Result Analysis**: Automated checking and manual inspection of simulation results
+6. **Coverage Analysis**: Functional and code coverage assessment
 
-The testbenches follow these general steps:
-1. Initialize the design under test
-2. Apply stimulus according to test scenario
-3. Monitor outputs for correctness
-4. Verify timing requirements
-5. Report test results
+## Simulation Environment
 
-## Running Tests
+### Primary Simulation Platform
+- **DSim Simulator**: Primary simulation environment with advanced debugging capabilities
+- **Waveform Generation**: VCD format output for comprehensive signal analysis
+- **Surfer Waveform Viewer**: Integrated waveform analysis and debugging tool
 
-Simulation is primarily performed using DSim:
-- **DSim Simulator**: Main simulation environment with VCD waveform generation
-- **Surfer**: Waveform viewer for analyzing simulation results
-- **Simulation Configuration**: Configuration is specified in `risc_v.dpf`
-- **Timescale**: All testbenches use consistent `100 ps / 1 ps` timescale
+### Simulation Configuration
+- **Project File**: risc_v.dpf contains complete simulation configuration
+- **Timescale Standard**: 100 ps / 1 ps across all verification components
+- **Memory Models**: Behavioral memory models for instruction and data storage
 
-Additional supported simulators include:
-- ModelSim/QuestaSim
-- Vivado Simulator
-- VCS
-- Icarus Verilog
+### Alternative Simulation Support
+- ModelSim/QuestaSim compatibility
+- Vivado Simulator support
+- Synopsys VCS compatibility
+- Open-source Icarus Verilog support

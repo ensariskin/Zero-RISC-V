@@ -1,0 +1,224 @@
+# Makefile for Extreme Complex RV32I Test Program
+# This makefile compiles the extreme complex C test into RISC-V assembly and hex format
+
+# RISC-V Toolchain Configuration
+RISCV_PREFIX = riscv32-unknown-elf-
+CC = $(RISCV_PREFIX)gcc
+OBJCOPY = $(RISCV_PREFIX)objcopy
+OBJDUMP = $(RISCV_PREFIX)objdump
+SIZE = $(RISCV_PREFIX)size
+
+# Target Configuration
+TARGET = extreme_complex_test
+SOURCE = extreme_complex_test.c
+ELF_FILE = $(TARGET).elf
+HEX_FILE = $(TARGET).hex
+BIN_FILE = $(TARGET).bin
+ASM_FILE = $(TARGET).s
+MAP_FILE = $(TARGET).map
+DISASM_FILE = $(TARGET).disasm
+
+# Compiler Flags for RV32I
+CFLAGS = -march=rv32i -mabi=ilp32 -nostdlib -nostartfiles -ffreestanding
+CFLAGS += -O2 -Wall -Wextra -g
+CFLAGS += -fno-builtin -fno-stack-protector
+CFLAGS += -static -fno-common
+CFLAGS += -ffunction-sections -fdata-sections
+
+# Linker Flags
+LDFLAGS = -T ../linksc.ld -nostdlib -nostartfiles -static
+LDFLAGS += -Wl,--gc-sections -Wl,-Map=$(MAP_FILE)
+LDFLAGS += -Wl,--print-memory-usage
+
+.PHONY: all clean hex asm disasm analyze stats help build
+
+# Default target
+all: build
+
+# Main build target (compatible with existing structure)
+build: $(ELF_FILE) $(BIN_FILE) $(HEX_FILE)
+	@echo "Build complete for $(TARGET)"
+
+# Compile to ELF
+$(ELF_FILE): $(SOURCE)
+	@echo "Compiling $(SOURCE) for RV32I..."
+	@echo "Using compiler flags: $(CFLAGS)"
+	@echo "Using linker flags: $(LDFLAGS)"
+	$(CC) $(SOURCE) ../crt0.s $(CFLAGS) $(LDFLAGS) -o $(ELF_FILE)
+	@echo "ELF file created: $(ELF_FILE)"
+
+# Convert ELF to binary format
+$(BIN_FILE): $(ELF_FILE)
+	@echo "Converting ELF to binary format..."
+	$(OBJCOPY) -O binary -j .init -j .text -j .rodata $(ELF_FILE) $(BIN_FILE)
+	@echo "Binary file created: $(BIN_FILE)"
+
+# Create HEX file using rom_generator
+$(HEX_FILE): $(BIN_FILE)
+	@echo "Generating HEX file using rom_generator..."
+	@../rom_generator $(BIN_FILE) || echo "rom_generator not available, skipping hex generation"
+
+# Create assembly output
+$(ASM_FILE): $(SOURCE)
+	@echo "Generating assembly output..."
+	$(CC) $(CFLAGS) -S $(SOURCE) -o $(ASM_FILE)
+	@echo "Assembly file created: $(ASM_FILE)"
+
+# Create disassembly
+disasm: $(ELF_FILE)
+	@echo "Creating disassembly..."
+	$(OBJDUMP) -d $(ELF_FILE) > $(TARGET).s
+	@echo "Disassembly created: $(TARGET).s"
+
+# Quick targets
+hex: $(HEX_FILE)
+asm: $(ASM_FILE)
+
+# Analyze the compiled program
+analyze: $(ELF_FILE)
+	@echo "=== Program Analysis ==="
+	@echo "File sizes:"
+	@ls -la $(ELF_FILE) $(BIN_FILE) 2>/dev/null || true
+	@echo ""
+	@echo "Memory usage:"
+	@$(SIZE) $(ELF_FILE) 2>/dev/null || echo "Size information not available"
+	@echo ""
+	@echo "Section information:"
+	@$(OBJDUMP) -h $(ELF_FILE) 2>/dev/null || echo "Section information not available"
+
+# Show instruction statistics
+stats: $(ELF_FILE)
+	@echo "=== Instruction Statistics ==="
+	@echo "Total instructions:"
+	@$(OBJDUMP) -d $(ELF_FILE) | grep -E "^\s*[0-9a-f]+:" | wc -l 2>/dev/null || echo "Could not count instructions"
+	@echo ""
+	@echo "Most common instructions:"
+	@$(OBJDUMP) -d $(ELF_FILE) | grep -E "^\s*[0-9a-f]+:" | awk '{print $$3}' | sort | uniq -c | sort -nr | head -10 2>/dev/null || echo "Could not analyze instructions"
+
+# Show program complexity metrics
+complexity: $(SOURCE)
+	@echo "=== Program Complexity Metrics ==="
+	@echo "Lines of code:"
+	@wc -l $(SOURCE)
+	@echo ""
+	@echo "Function count:"
+	@grep -c "^[a-zA-Z_][a-zA-Z0-9_]*\s*(" $(SOURCE) || echo "0"
+	@echo ""
+	@echo "Loop count (estimated):"
+	@grep -c -E "(for|while)\s*\(" $(SOURCE) || echo "0"
+	@echo ""
+	@echo "Conditional count (estimated):"
+	@grep -c -E "(if|else|switch)\s*" $(SOURCE) || echo "0"
+	@echo ""
+	@echo "Array declarations:"
+	@grep -c -E "(int|char)\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\[" $(SOURCE) || echo "0"
+	@echo ""
+	@echo "Algorithm implementations detected:"
+	@grep -c -i "dijkstra\|topological\|knapsack\|edit.distance\|heap.sort\|kmp\|sieve\|fibonacci\|minimax\|bloom" $(SOURCE) || echo "0"
+
+# Create comprehensive test report
+report: all analyze stats complexity
+	@echo "" > test_report.txt
+	@echo "=== EXTREME COMPLEX TEST COMPILATION REPORT ===" >> test_report.txt
+	@echo "Generated on: `date`" >> test_report.txt
+	@echo "Source file: $(SOURCE)" >> test_report.txt
+	@echo "Target: RV32I RISC-V Processor" >> test_report.txt
+	@echo "" >> test_report.txt
+	@echo "Compilation successful: YES" >> test_report.txt
+	@echo "Files generated:" >> test_report.txt
+	@echo "  - $(ELF_FILE)" >> test_report.txt
+	@echo "  - $(BIN_FILE)" >> test_report.txt
+	@echo "  - $(HEX_FILE)" >> test_report.txt
+	@echo "" >> test_report.txt
+	@$(MAKE) --no-print-directory complexity >> test_report.txt 2>&1
+	@echo "" >> test_report.txt
+	@$(MAKE) --no-print-directory analyze >> test_report.txt 2>&1
+	@echo "" >> test_report.txt
+	@$(MAKE) --no-print-directory stats >> test_report.txt 2>&1
+	@echo "Report saved to: test_report.txt"
+
+# Clean build artifacts
+clean:
+	@echo "Cleaning build artifacts..."
+	rm -f $(ELF_FILE) $(BIN_FILE) $(HEX_FILE) $(ASM_FILE) $(MAP_FILE) $(DISASM_FILE)
+	rm -f test_report.txt
+	@echo "Clean complete."
+
+# Debug build with more information
+debug: CFLAGS += -g3 -DDEBUG
+debug: build
+	@echo "Debug build complete with symbols"
+
+# Optimized build for performance testing
+release: CFLAGS += -O3 -DNDEBUG
+release: CFLAGS := $(filter-out -O2,$(CFLAGS))
+release: build
+	@echo "Release build complete with optimization"
+
+# Create simulation-ready files
+sim: build
+	@echo "Creating simulation-ready files..."
+	@cp $(HEX_FILE) init_extreme_complex.hex 2>/dev/null || echo "HEX file not available for simulation"
+	@echo "Simulation files prepared"
+
+# Verify compilation and basic checks
+verify: $(ELF_FILE)
+	@echo "=== Build Verification ==="
+	@echo "✓ ELF file exists: $(ELF_FILE)"
+	@test -f $(BIN_FILE) && echo "✓ Binary file exists: $(BIN_FILE)" || echo "✗ Binary file missing"
+	@test -f $(HEX_FILE) && echo "✓ HEX file exists: $(HEX_FILE)" || echo "✗ HEX file missing"
+	@echo "✓ Basic verification complete"
+
+# Help target
+help:
+	@echo "=== Extreme Complex Test Makefile ==="
+	@echo "Available targets:"
+	@echo "  build     - Build all targets (default)"
+	@echo "  all       - Same as build"
+	@echo "  hex       - Generate HEX file only"
+	@echo "  asm       - Generate assembly file only"
+	@echo "  disasm    - Generate disassembly"
+	@echo "  analyze   - Analyze compiled program"
+	@echo "  stats     - Show instruction statistics"
+	@echo "  complexity- Show code complexity metrics"
+	@echo "  report    - Generate comprehensive report"
+	@echo "  verify    - Verify build outputs"
+	@echo "  debug     - Build with debug information"
+	@echo "  release   - Build with optimization"
+	@echo "  sim       - Prepare simulation files"
+	@echo "  clean     - Remove all build artifacts"
+	@echo "  help      - Show this help message"
+	@echo ""
+	@echo "Compiler: $(CC)"
+	@echo "Target Architecture: RV32I"
+	@echo "Source: $(SOURCE)"
+	@echo ""
+	@echo "Algorithm implementations included:"
+	@echo "  - Dijkstra's shortest path algorithm"
+	@echo "  - Topological sorting with DFS"
+	@echo "  - 0/1 Knapsack dynamic programming"
+	@echo "  - Edit distance (Levenshtein) algorithm"
+	@echo "  - Advanced heap sort implementation"
+	@echo "  - KMP string matching algorithm"
+	@echo "  - Sieve of Eratosthenes prime generation"
+	@echo "  - Matrix exponentiation for Fibonacci"
+	@echo "  - XOR linear basis and bit manipulation"
+	@echo "  - Minimax algorithm for game theory"
+	@echo "  - Bloom filter implementation"
+	@echo "  - Extended Euclidean algorithm"
+	@echo "  - And many more advanced algorithms..."
+
+# Check if required files exist
+check-deps:
+	@echo "=== Dependency Check ==="
+	@test -f ../linksc.ld && echo "✓ Linker script found: ../linksc.ld" || echo "✗ Linker script missing: ../linksc.ld"
+	@test -f ../crt0.s && echo "✓ Startup code found: ../crt0.s" || echo "✗ Startup code missing: ../crt0.s"
+	@test -f ../rom_generator && echo "✓ ROM generator found: ../rom_generator" || echo "✗ ROM generator missing: ../rom_generator"
+	@which $(CC) > /dev/null 2>&1 && echo "✓ Compiler found: $(CC)" || echo "✗ Compiler not found: $(CC)"
+
+# Quick build and test
+quick: check-deps build verify
+	@echo "✓ Quick build and verification complete!"
+
+.SUFFIXES:
+.DELETE_ON_ERROR:

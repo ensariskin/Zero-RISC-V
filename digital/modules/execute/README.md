@@ -1,79 +1,112 @@
-# Execute (EX) Stage
+# Execution Stage
 
-The Execute (EX) stage is the computational core of the processor where arithmetic, logical, and control operations are performed. All components in this stage have been modernized with SystemVerilog and follow consistent interface conventions.
+The Execution stage serves as the computational core of the RISC-V processor, performing arithmetic, logical, shift, and branch operations. This stage implements the third pipeline stage where instruction execution occurs.
 
-## Components
+## Module Components
 
 ### execute_stage.sv
 
-Top-level module for the Execute stage that integrates all EX components and handles data forwarding inputs with standardized signal naming and parameterization.
+Top-level execution stage integration module featuring:
+- Component instantiation and interconnection
+- Data forwarding path integration
+- Operand multiplexing and selection
+- Result and control signal routing to pipeline registers
+- Branch target address calculation
+- Jump and Link Register (JALR) address computation
 
 ### function_unit_alu_shifter.sv
 
-Unified functional unit that:
-- Consolidates ALU and shifter operations into a single module
-- Provides cleaner interfaces and signal flow
-- Improves parameter handling for better modularity
-- Enhances flag generation and propagation
+Unified arithmetic and shift functional unit providing:
+- Integrated ALU and shifter operation execution
+- Operation selection based on instruction encoding
+- Standardized SystemVerilog interface design
+- Optimized critical path timing
+- Comprehensive flag generation and status indication
 
 ### alu.sv
 
-Modern ALU implementation that:
-- Performs arithmetic operations
-- Executes logical operations
-- Sets condition flags
-- Uses standardized interfaces with consistent naming
+Arithmetic Logic Unit implementation featuring:
+- Complete arithmetic operation support
+- Full logical operation implementation
+- Condition flag generation (zero, negative, overflow)
+- Signed and unsigned operation handling
+- Optimized combinational logic design
 
 ### arithmetic_unit.sv
 
-Implements:
-- Addition and subtraction
-- Comparison operations (SLT, SLTU) with improved signed/unsigned handling
-- Optimized zero detection logic
-- Comprehensive operation documentation
+Dedicated arithmetic processing unit implementing:
+- Addition and subtraction operations
+- Set-less-than comparison (SLT, SLTU)
+- Signed and unsigned comparison logic
+- Zero detection and flag generation
+- Overflow detection for arithmetic operations
 
 ### logical_unit.sv
 
-Performs bitwise logical operations:
-- AND
-- OR
-- XOR
-- Enhanced operation selection clarity
+Bitwise logical operation unit providing:
+- AND, OR, XOR logical operations
+- Bit manipulation functionality
+- Fast combinational logic implementation
+- Operation selection and control interface
 
 ### shifter.sv
 
-Implements shift operations:
-- Logical left shift (SLL)
-- Logical right shift (SRL)
-- Arithmetic right shift (SRA)
+Shift operation unit implementing:
+- Logical left shift (SLL) operations
+- Logical right shift (SRL) operations  
+- Arithmetic right shift (SRA) operations
+- Shift amount processing and validation
+- Optimized barrel shifter design
 
 ### Branch_Controller.sv
 
-Makes branch decisions based on:
-- Branch type (BEQ, BNE, BLT, BGE, BLTU, BGEU)
-- ALU flags (zero, negative)
-- Verifies branch prediction from the IF stage
+Branch condition evaluation unit featuring:
+- Branch instruction type detection (BEQ, BNE, BLT, BGE, BLTU, BGEU)
+- Condition evaluation based on ALU flags
+- Branch prediction verification
+- Branch target address validation
+- Misprediction detection and correction signal generation
 
-## Operation
+## Stage Operation
 
-1. The execute stage receives operands from ID stage or via forwarding paths
-2. The function_unit_alu_shifter performs the operation specified by the control signals
-3. Branch conditions are evaluated by the Branch_Controller
-4. Branch prediction is verified, and correction signals generated if needed
-5. Results and control signals are passed to the ex_to_mem pipeline register
+The execution stage performs the following sequence each clock cycle:
 
-## Key Features
+1. **Operand Reception**: Receives operands from decode stage or forwarding paths
+2. **Operation Selection**: Determines operation type based on control signals
+3. **Functional Unit Execution**: Performs arithmetic, logical, or shift operations
+4. **Flag Generation**: Computes condition flags for branch evaluation
+5. **Branch Evaluation**: Determines branch outcomes and target addresses
+6. **Prediction Verification**: Validates branch predictions from fetch stage
+7. **Result Forwarding**: Provides results to forwarding network and memory stage
 
-- Consolidated arithmetic, logical, and shift operations in cleaner hierarchy
-- Enhanced flag generation and propagation
-- Standardized interfaces with consistent signal naming:
-  - `data_a`/`data_b` instead of `A`/`B`
-  - `data_result` instead of `S`
-  - `func_sel` instead of `Sel`
-- Improved parameter handling for better modularity
-- Optimized zero detection mechanism
-- Branch target calculation with improved accuracy
-- Branch prediction validation
-- JALR calculation with enhanced handling
-- Single-cycle execution for all operations
-- Comprehensive signal documentation
+## Data Forwarding Integration
+
+The execution stage incorporates comprehensive data forwarding mechanisms:
+
+- **Operand Multiplexing**: Selection between register file and forwarded data
+- **Forward Path A**: Forwarding for first source operand (rs1)
+- **Forward Path B**: Forwarding for second source operand (rs2)
+- **Dependency Resolution**: Automatic handling of data dependencies
+- **Hazard Mitigation**: Reduction of pipeline stall requirements
+
+## Operation Support
+
+The execution stage supports all RV32I operations:
+
+- **Arithmetic Operations**: ADD, SUB, ADDI with overflow handling
+- **Logical Operations**: AND, OR, XOR, ANDI, ORI, XORI  
+- **Shift Operations**: SLL, SRL, SRA, SLLI, SRLI, SRAI
+- **Comparison Operations**: SLT, SLTU, SLTI, SLTIU
+- **Branch Operations**: BEQ, BNE, BLT, BGE, BLTU, BGEU
+- **Jump Operations**: JAL, JALR address calculation
+- **Upper Immediate**: LUI, AUIPC computation
+
+## Performance Characteristics
+
+The execution stage is optimized for:
+
+- **Single-Cycle Execution**: All operations complete in one clock cycle
+- **Critical Path Optimization**: Minimized delay through functional units
+- **Resource Sharing**: Efficient utilization of arithmetic and logic resources
+- **Pipeline Efficiency**: Maintains maximum throughput under normal operation
+- **Branch Penalty Reduction**: Fast branch resolution and prediction verification

@@ -1,71 +1,64 @@
-# Top-Level Design
+# Top-Level Processor Integration
 
-This directory contains the top-level module for the RISC-V RV32I pipelined processor. All components use a standardized timescale of `100 ps / 1 ps` for consistent simulation behavior.
+This directory contains the top-level integration module for the complete RISC-V RV32I pipelined processor implementation. This module serves as the primary interface and coordination point for all processor components.
 
-## Components
+## Module Components
 
 ### TOP_Pipelined_design.v
 
-The top-level integration module that:
-- Connects all pipeline stages
-- Integrates hazard handling components
-- Manages pipeline control signals
-- Interfaces with external memory
-- Coordinates the overall pipeline operation
+Complete processor integration module providing:
+- Full 5-stage pipeline instantiation and interconnection
+- Pipeline register integration and signal routing
+- Hazard detection and data forwarding coordination
+- Memory interface management and control
+- Clock and reset distribution throughout processor
+- External interface definition and signal management
 
-## Architecture
+## Processor Architecture Integration
 
-The TOP_Pipelined_design.v integrates the following major components:
+The top-level module integrates the complete processor architecture:
 
-1. **Pipeline Stages**:
-   - Instruction Fetch (IF)
-   - Instruction Decode (ID)
-   - Execute (EX)
-   - Memory Access (MEM)
-   - Write Back (WB)
+### Pipeline Stage Integration
+- **Instruction Fetch Stage**: Program counter management and instruction retrieval
+- **Instruction Decode Stage**: Instruction decoding and register file access
+- **Execute Stage**: Arithmetic, logical, and branch operation execution
+- **Memory Access Stage**: Data memory interface and load/store operations
+- **Write-Back Stage**: Result selection and register file update
 
-2. **Pipeline Registers**:
-   - IF_ID: Between Fetch and Decode stages
-   - ID_EX: Between Decode and Execute stages
-   - EX_MEM: Between Execute and Memory stages
-   - MEM_WB: Between Memory and Write Back stages
+### Pipeline Register Management
+- **IF_ID Register**: Instruction and control signal storage between fetch and decode
+- **ID_EX Register**: Operand and control signal storage between decode and execute
+- **EX_MEM Register**: Result and control signal storage between execute and memory
+- **MEM_WB Register**: Final result storage between memory access and write-back
 
-3. **Hazard Handling**:
-   - Data_Forward: Resolves data hazards through forwarding
-   - Hazard_Detection: Identifies and handles pipeline stalls
+### Hazard Resolution Integration
+- **Data Forwarding Unit**: Hardware-based data dependency resolution
+- **Hazard Detection Unit**: Pipeline stall control and bubble insertion
+- **Branch Prediction Interface**: Control hazard minimization support
 
-## Interface
+## External Interface Specification
 
-The top module has the following external interfaces:
+### Clock and Reset Interface
+- **clk**: Primary system clock input for synchronized operation
+- **reset**: Asynchronous reset signal for processor initialization
 
-- **Clock and Reset**:
-  - `clk`: System clock
-  - `reset`: Asynchronous reset
+### Instruction Memory Interface
+- **instruction_i**: 32-bit instruction word input from instruction memory
+- **ins_address**: 32-bit instruction address output to instruction memory
 
-- **Instruction Memory Interface**:
-  - `instruction_i`: Instruction input from memory
-  - `ins_address`: Address to instruction memory
+### Data Memory Interface
+- **MEM_result_i**: 32-bit data input from data memory for load operations
+- **RAM_DATA_o**: 32-bit data output to data memory for store operations
+- **RAM_Addr_o**: 32-bit address output to data memory
+- **RAM_DATA_control**: Memory access type control (byte, halfword, word)
+- **RAM_rw**: Read/write control signal for memory operations
 
-- **Data Memory Interface**:
-  - `MEM_result_i`: Data input from memory
-  - `RAM_DATA_o`: Data output to memory
-  - `RAM_Addr_o`: Address output to memory
-  - `RAM_DATA_control`: Data width and sign control
-  - `RAM_rw`: Read/write control signal
+## Signal Flow Management
 
-## Signal Flow
+The top-level module coordinates:
 
-The TOP_Pipelined_design.v manages the flow of:
-- Instructions through the pipeline stages
-- Data between register file and memory
-- Control signals for each stage
-- Hazard detection and resolution signals
-- Branch prediction and correction signals
-
-## Integration Points
-
-This module serves as the critical integration point for:
-- Connecting pipeline stages in sequence
-- Establishing bypass paths for data forwarding
-- Managing pipeline stalling for hazards
-- Handling branch misprediction recovery
+- **Instruction Pipeline Flow**: Sequential instruction progression through pipeline stages
+- **Data Path Management**: Operand and result routing between processor components
+- **Control Signal Distribution**: Control information propagation across pipeline stages
+- **Hazard Signal Coordination**: Stall and forwarding signal management
+- **Memory Access Coordination**: Instruction and data memory interface timing

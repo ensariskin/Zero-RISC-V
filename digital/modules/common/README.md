@@ -1,88 +1,92 @@
-# Common Components
+# Common Hardware Components
 
-This directory contains common hardware building blocks that are used throughout the processor design. All components have been modernized to SystemVerilog for improved typing, interfaces, and parameterization.
+This directory contains fundamental hardware building blocks utilized throughout the RISC-V processor implementation. All components are implemented in SystemVerilog with modern design practices including parameterization, strong typing, and standardized interfaces.
 
-## Components
+## Component Library
 
 ### parametric_mux.sv
 
-A modernized parameterizable multiplexer that:
-- Supports variable data widths with SystemVerilog typing
-- Supports variable number of inputs
-- Is used for data selection throughout the design
-- Features improved interface clarity
+Parameterizable multiplexer implementation featuring:
+- Configurable data width and input count parameters
+- SystemVerilog logic type for improved type safety
+- Utilized for data path selection and control signal routing
+- Optimized for synthesis and timing closure
 
 ### parametric_decoder.sv
 
-A flexible decoder module that:
-- Converts encoded inputs to one-hot or binary outputs
-- Supports variable input and output widths
-- Includes parameterized configurations
+Flexible decoder component providing:
+- Binary to one-hot output conversion
+- Configurable input and output width parameters
+- Support for enable/disable control signals
+- Used in control logic and address decoding
 
 ### dff_block_negedge_write.sv
 
-Enhanced D Flip-Flop block with:
-- Standardized naming and interfaces
-- Optimized for negedge write operations
-- Used in pipeline registers throughout the design
-- Features SystemVerilog logic type for improved type safety
+D Flip-Flop register block implementation:
+- Negative edge triggered write operation
+- Standardized interface definition
+- Employed in pipeline register stages
+- SystemVerilog enhanced for clarity and reliability
 
 ### dff_sync_reset_negedge_write.sv
 
-Advanced D Flip-Flop with synchronous reset:
-- Provides controlled reset functionality
-- Uses negedge write timing for consistent operation
-- Features improved parameter handling
-- Implements modern SystemVerilog best practices
+Synchronous reset D Flip-Flop implementation:
+- Controlled synchronous reset functionality
+- Negative edge write timing for pipeline consistency
+- Modern SystemVerilog parameter handling
+- Used in state machines and control registers
 
 ### RCA.sv (Ripple Carry Adder)
 
-Implements multi-bit binary addition with:
-- SystemVerilog logic typed inputs and outputs
-- Used for address calculation and arithmetic operations
-- Building block for more complex arithmetic units
-- Improved parameterization
+Multi-bit ripple carry adder providing:
+- Parameterizable bit width configuration
+- Full carry chain implementation
+- Utilized for address calculation and basic arithmetic
+- SystemVerilog logic type for all signal interfaces
 
 ### CSA.sv (Carry Save Adder)
 
-An optimized adder design for:
-- Higher performance multi-operand addition
-- Used in more complex arithmetic operations
-- Reduces carry propagation delay
-- Enhanced interface clarity
+Optimized carry save adder design featuring:
+- Reduced carry propagation delay characteristics
+- Multi-operand addition capability
+- Enhanced arithmetic performance
+- Used in complex computational units
 
 ### FA.sv (Full Adder)
 
-Basic building block that:
-- Adds three single-bit inputs (A, B, Carry-in)
-- Produces Sum and Carry-out
-- Used as a component in larger adder structures
-- Modernized with SystemVerilog
+Single-bit full adder implementation:
+- Three-input addition (A, B, Carry-in)
+- Sum and carry-out generation
+- Building block for larger arithmetic structures
+- Optimized gate-level implementation
 
 ### HA.sv (Half Adder)
 
-Simplest adder unit that:
-- Adds two single-bit inputs (A, B)
-- Produces Sum and Carry-out
-- Used in the construction of Full Adders
-- Updated with consistent naming conventions
+Basic two-input adder component:
+- Two single-bit input addition
+- Sum and carry output generation
+- Fundamental component for adder construction
+- Minimal gate delay implementation
 
-## Usage
+## Design Application
 
-These common components are instantiated throughout the processor design:
-- Multiplexers for data and control path selection
-- Flip-flops for pipeline registers and state storage
-- Adders for arithmetic operations and address calculations
+These components are integrated throughout the processor architecture:
 
-## Design Philosophy
+- **Data Path Selection**: Multiplexers route operands and results between pipeline stages
+- **Control Logic**: Decoders generate control signals from instruction encoding
+- **Pipeline Registers**: Flip-flops maintain state and data between pipeline stages
+- **Arithmetic Operations**: Adder components perform address calculation and arithmetic functions
+- **State Management**: Register components maintain processor state and control information
 
-The common components follow these principles:
-- Modern SystemVerilog architecture with improved typing
-- Parameterizable designs for maximum flexibility
-- Standardized naming conventions throughout all components
-- Reusable modules to reduce code duplication
-- Well-defined interfaces with explicit port declarations
-- Optimized for specific use cases where needed
-- Consistent use of SystemVerilog `logic` type for better type safety
-- Thoroughly verified individual components
-- Comprehensive commenting for improved maintainability
+## Design Principles
+
+The component library adheres to established design standards:
+
+- **SystemVerilog Implementation**: Modern HDL features for improved design clarity
+- **Parameterizable Architecture**: Configurable components for design flexibility
+- **Standardized Interfaces**: Consistent port naming and signal conventions
+- **Reusable Design Blocks**: Minimized code duplication through component reuse
+- **Type Safety**: Explicit SystemVerilog logic types for signal integrity
+- **Synthesis Optimization**: Components optimized for FPGA and ASIC implementation
+- **Verification Readiness**: Well-defined interfaces for comprehensive testing
+- **Documentation Standards**: Complete component documentation for maintainability

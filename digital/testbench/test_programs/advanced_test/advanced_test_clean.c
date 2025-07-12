@@ -170,9 +170,16 @@ int main() {
     checkpoint_extra[3] = accumulator;
     
     // Test 6: String-like Pattern Matching
-    int pattern[5] = {3, 7, 2, 9, 1};
+    int pattern[5]; 
+    pattern[0] = 3;
+    pattern[1] = 7;
+    pattern[2] = 2;
+    pattern[3] = 9;
+    pattern[4] = 1;
+    
     int matches = 0;
     
+
     for (i = 0; i <= 10; i++) {  // Search in first 10 elements of data_array
         int match_count = 0;
         for (j = 0; j < 5 && (i + j) < 15; j++) {
