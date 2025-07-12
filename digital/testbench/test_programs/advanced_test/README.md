@@ -80,7 +80,7 @@ This test should:
 ## Building and Running
 
 ```bash
-cd d:\Ensar\Tez\RV32I\digital\testbench\test_programs\advanced_test
+cd digital\testbench\test_programs\advanced_test
 make build
 ```
 
@@ -90,17 +90,17 @@ This will generate `advanced_test.hex` for processor simulation.
 
 The program stores results in multiple locations:
 - `data_array[0]` = final result
-- `processed_data[0]` = accumulator value  
+- `processed_data[0]` = accumulator value
 - `lookup_table[0]` = final_value
 
 These values can be monitored in simulation to verify correct execution.
 
 ## Success Criteria
 
-✅ **Processor completes execution**  
-✅ **Deterministic results** (same values each run)  
-✅ **Reasonable cycle count** (15,000-35,000 cycles)  
-✅ **No infinite loops** or hangs  
-✅ **Memory operations work** correctly  
+✅ **Processor completes execution**
+✅ **Deterministic results** (same values each run)
+✅ **Reasonable cycle count** (15,000-35,000 cycles)
+✅ **No infinite loops** or hangs
+✅ **Memory operations work** correctly
 
 This test validates that the processor can handle a wide variety of real-world computation patterns.

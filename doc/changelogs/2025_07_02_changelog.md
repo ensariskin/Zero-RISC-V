@@ -7,7 +7,7 @@ This changelog documents the completion of RISC-V verification environment setup
 ## RISC-V Verification Environment Setup
 
 ### Toolchain Installation
-- **RISC-V GNU Toolchain**: Installed at `/home/ensar/work/riscv-tools/` with RV32I target
+- **RISC-V GNU Toolchain**: Installed at ` /work/riscv-tools/` with RV32I target at WSL
 - **Spike ISS**: Built and verified for RV32I instruction simulation
 - **Proxy Kernel (pk)**: Configured with `rv32i_zicsr_zifencei` architecture
 - **RISC-V DV**: Installed in Python virtual environment for test generation
@@ -70,9 +70,7 @@ Verified instruction types include arithmetic, logical, memory, control flow, an
 3. Integrate RISC-V DV for automated test generation
 4. Perform comprehensive verification of processor design
 
-## File Locations
-- **Ubuntu/WSL**: `/home/ensar/work/` (tools and test programs)
-- **Windows**: `d:\Ensar\Tez\RV32I\` (main project)
+
 
 ---
 **Date**: July 2, 2025
