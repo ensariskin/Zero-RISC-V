@@ -1,0 +1,354 @@
+{
+  "todotree": {
+    "tree": [
+      {
+        "key": 1750874870782,
+        "children": [],
+        "todo": {
+          "content": "move pc or fu output mux into execute stage. This will reduce register usage",
+          "id": 1750874870782,
+          "level": "default",
+          "done": true,
+          "start": 1750874870782,
+          "focus": false,
+          "end": 1750883404708
+        }
+      },
+      {
+        "key": 1750874962765,
+        "children": [],
+        "todo": {
+          "content": "make changes for writeback stage",
+          "id": 1750874962765,
+          "level": "default",
+          "done": true,
+          "start": 1750874962765,
+          "focus": false,
+          "end": 1750883445251
+        }
+      },
+      {
+        "key": 1751397142760,
+        "children": [
+          {
+            "key": 1751405151576,
+            "children": [
+              {
+                "key": 1751405186349,
+                "children": [],
+                "todo": {
+                  "content": "generate elf file with toolchain",
+                  "id": 1751405186349,
+                  "level": "default",
+                  "done": true,
+                  "start": 1751405186349,
+                  "focus": false,
+                  "end": 1751405204791
+                }
+              }
+            ],
+            "todo": {
+              "content": "install gnu toolchain",
+              "id": 1751405151576,
+              "level": "default",
+              "done": true,
+              "start": 1751405151576,
+              "focus": false,
+              "end": 1751405208413
+            }
+          },
+          {
+            "key": 1751405162693,
+            "children": [],
+            "todo": {
+              "content": "install spike",
+              "id": 1751405162693,
+              "level": "default",
+              "done": true,
+              "start": 1751405162693,
+              "focus": false,
+              "end": 1751405209707
+            }
+          },
+          {
+            "key": 1751405211361,
+            "children": [
+              {
+                "key": 1751407411384,
+                "children": [],
+                "todo": {
+                  "content": "I needed pk to run generated code, (don't forget 64 bit is copied from 32 bit!!!!)",
+                  "id": 1751407411384,
+                  "level": "default",
+                  "done": true,
+                  "start": 1751407411384,
+                  "focus": false,
+                  "end": 1751407458632
+                }
+              }
+            ],
+            "todo": {
+              "content": "run generated elf file with spike",
+              "id": 1751405211361,
+              "level": "default",
+              "done": true,
+              "start": 1751405211361,
+              "focus": false,
+              "end": 1751407459146
+            }
+          },
+          {
+            "key": 1752416434943,
+            "children": [
+              {
+                "key": 1752416511643,
+                "children": [],
+                "todo": {
+                  "content": "simple codes",
+                  "id": 1752416511643,
+                  "level": "default",
+                  "done": true,
+                  "start": 1752416511643,
+                  "focus": false,
+                  "end": 1752416523677
+                }
+              },
+              {
+                "key": 1752416485991,
+                "children": [],
+                "todo": {
+                  "content": "normal codes",
+                  "id": 1752416485991,
+                  "level": "default",
+                  "done": true,
+                  "start": 1752416485991,
+                  "focus": false,
+                  "end": 1752416525029
+                }
+              },
+              {
+                "key": 1752416498199,
+                "children": [],
+                "todo": {
+                  "content": "complex codes",
+                  "id": 1752416498199,
+                  "level": "default",
+                  "done": true,
+                  "start": 1752416498199,
+                  "focus": false,
+                  "end": 1752416526203
+                }
+              }
+            ],
+            "todo": {
+              "content": "write c codes to test processor",
+              "id": 1752416434943,
+              "level": "default",
+              "done": true,
+              "start": 1752416434943,
+              "focus": false,
+              "end": 1752416527447
+            }
+          },
+          {
+            "key": 1751405169343,
+            "children": [
+              {
+                "key": 1752416529689,
+                "children": [],
+                "todo": {
+                  "content": "generates test",
+                  "id": 1752416529689,
+                  "level": "default",
+                  "done": true,
+                  "start": 1752416529689,
+                  "focus": false,
+                  "end": 1752416545023
+                }
+              }
+            ],
+            "todo": {
+              "content": "install risc dv",
+              "id": 1751405169343,
+              "level": "default",
+              "done": true,
+              "start": 1751405169343,
+              "focus": false,
+              "end": 1752416544067
+            }
+          },
+          {
+            "key": 1752416547831,
+            "children": [
+              {
+                "key": 1752416582765,
+                "children": [],
+                "todo": {
+                  "content": "Firstly try with Hornert's tracer",
+                  "id": 1752416582765,
+                  "level": "default",
+                  "done": false,
+                  "start": 1752416582765,
+                  "focus": true
+                }
+              }
+            ],
+            "todo": {
+              "content": "To use the riscdv test, integrate tracer module into your processor.",
+              "id": 1752416547831,
+              "level": "default",
+              "done": false,
+              "start": 1752416547831
+            }
+          }
+        ],
+        "todo": {
+          "content": "For now, current design is at some level. We need some test.",
+          "id": 1751397142760,
+          "level": "warning",
+          "done": false,
+          "start": 1751397142760,
+          "focus": true
+        }
+      },
+      {
+        "key": 1750874915717,
+        "children": [
+          {
+            "key": 1750874977363,
+            "children": [],
+            "todo": {
+              "content": "consider architectural changes to speed up memory access.",
+              "id": 1750874977363,
+              "level": "default",
+              "done": true,
+              "start": 1750874977363,
+              "focus": false,
+              "end": 1752416645494
+            }
+          },
+          {
+            "key": 1750874996919,
+            "children": [],
+            "todo": {
+              "content": "we need a test memory to test this stage",
+              "id": 1750874996919,
+              "level": "default",
+              "done": true,
+              "start": 1750874996919,
+              "focus": false,
+              "end": 1752416644327
+            }
+          },
+          {
+            "key": 1750883454304,
+            "children": [],
+            "todo": {
+              "content": "rtl code updae for clearer code",
+              "id": 1750883454304,
+              "level": "default",
+              "done": true,
+              "start": 1750883454304,
+              "focus": false,
+              "end": 1750883522149
+            }
+          }
+        ],
+        "todo": {
+          "content": "make changes for memory stage",
+          "id": 1750874915717,
+          "level": "default",
+          "done": true,
+          "start": 1750874915717,
+          "focus": false,
+          "end": 1752416646331
+        }
+      },
+      {
+        "key": 1750883406731,
+        "children": [
+          {
+            "key": 1750883421760,
+            "children": [],
+            "todo": {
+              "content": "remove save_pc signal after execute stage",
+              "id": 1750883421760,
+              "level": "default",
+              "done": false,
+              "start": 1750883421760
+            }
+          }
+        ],
+        "todo": {
+          "content": "create a interface for control signals at each stage",
+          "id": 1750883406731,
+          "level": "default",
+          "done": false,
+          "start": 1750883406731
+        }
+      },
+      {
+        "key": 1750883481138,
+        "children": [
+          {
+            "key": 1750883491188,
+            "children": [],
+            "todo": {
+              "content": "update toplevel for new port names",
+              "id": 1750883491188,
+              "level": "default",
+              "done": true,
+              "start": 1750883491188,
+              "focus": false,
+              "end": 1750883516685
+            }
+          },
+          {
+            "key": 1750883507834,
+            "children": [],
+            "todo": {
+              "content": "update top level signals",
+              "id": 1750883507834,
+              "level": "default",
+              "done": false,
+              "start": 1750883507834
+            }
+          }
+        ],
+        "todo": {
+          "content": "Top level adaptation",
+          "id": 1750883481138,
+          "level": "default",
+          "done": false,
+          "start": 1750883481138
+        }
+      }
+    ],
+    "expandKeys": [
+      1750874915717,
+      1750874870782,
+      1750883406731,
+      1750883481138,
+      1751405151576,
+      1751405211361,
+      1751407411384,
+      1751397142760,
+      1752416434943,
+      1751405169343,
+      1752416547831,
+      1750874996919
+    ],
+    "schema": "https://github.com/Saber2pr/vsc-ext-todolist/blob/master/src/api/type.ts#L3",
+    "add_mode": "bottom",
+    "virtual": false,
+    "timelines": [],
+    "showLine": false,
+    "playFontSize": 24,
+    "title": "RV32I",
+    "autoSort": false,
+    "showEndTime": false,
+    "simpleMode": false,
+    "lang": "en",
+    "version": "1752417339061"
+  }
+}

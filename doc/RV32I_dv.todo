@@ -1,0 +1,1031 @@
+{
+  "todotree": {
+    "tree": [
+      {
+        "key": 1730000000001,
+        "children": [
+          {
+            "key": 1730000000002,
+            "children": [],
+            "todo": {
+              "content": "Create a SystemVerilog testbench module that instantiates rv32i_core",
+              "id": 1730000000002,
+              "level": "default",
+              "done": true,
+              "start": 1730000000002,
+              "focus": false,
+              "end": 1752417351335
+            }
+          },
+          {
+            "key": 1730000000003,
+            "children": [],
+            "todo": {
+              "content": "Add instruction and data memory interfaces to testbench",
+              "id": 1730000000003,
+              "level": "default",
+              "done": true,
+              "start": 1730000000003,
+              "focus": false,
+              "end": 1752417352330
+            }
+          },
+          {
+            "key": 1730000000004,
+            "children": [],
+            "todo": {
+              "content": "Implement memory models (instruction ROM/RAM, data RAM)",
+              "id": 1730000000004,
+              "level": "default",
+              "done": true,
+              "start": 1730000000004,
+              "focus": false,
+              "end": 1752417355454
+            }
+          },
+          {
+            "key": 1730000000005,
+            "children": [],
+            "todo": {
+              "content": "Add clock generation and reset logic",
+              "id": 1730000000005,
+              "level": "default",
+              "done": true,
+              "start": 1730000000005,
+              "focus": false,
+              "end": 1752417357118
+            }
+          },
+          {
+            "key": 1730000000006,
+            "children": [],
+            "todo": {
+              "content": "Create trace logging interface to match RISC-V DV expectations",
+              "id": 1730000000006,
+              "level": "default",
+              "done": false,
+              "start": 1730000000006
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 1: Testbench Integration Setup",
+          "id": 1730000000001,
+          "level": "warning",
+          "done": false,
+          "start": 1730000000001,
+          "focus": true
+        }
+      },
+      {
+        "key": 1730000000007,
+        "children": [
+          {
+            "key": 1730000000008,
+            "children": [],
+            "todo": {
+              "content": "Review current memory interface (ins_address, instruction_i, data_mem_*)",
+              "id": 1730000000008,
+              "level": "default",
+              "done": true,
+              "start": 1730000000008,
+              "focus": false,
+              "end": 1752417389470
+            }
+          },
+          {
+            "key": 1730000000009,
+            "children": [],
+            "todo": {
+              "content": "Create memory controllers or adapters for standard memory models",
+              "id": 1730000000009,
+              "level": "default",
+              "done": true,
+              "start": 1730000000009,
+              "focus": false,
+              "end": 1752417392418
+            }
+          },
+          {
+            "key": 1730000000010,
+            "children": [],
+            "todo": {
+              "content": "Implement instruction fetch interface compatible with hex file loading",
+              "id": 1730000000010,
+              "level": "default",
+              "done": false,
+              "start": 1730000000010
+            }
+          },
+          {
+            "key": 1730000000011,
+            "children": [],
+            "todo": {
+              "content": "Implement data memory interface with proper read/write controls",
+              "id": 1730000000011,
+              "level": "default",
+              "done": false,
+              "start": 1730000000011,
+              "focus": false,
+              "end": 1752417378237
+            }
+          }
+        ],
+        "todo": {
+          "content": "Memory Interface Standardization",
+          "id": 1730000000007,
+          "level": "default",
+          "done": false,
+          "start": 1730000000007
+        }
+      },
+      {
+        "key": 1730000000012,
+        "children": [
+          {
+            "key": 1730000000013,
+            "children": [],
+            "todo": {
+              "content": "Create core configuration file (YAML) with RV32I ISA, memory map, privilege levels",
+              "id": 1730000000013,
+              "level": "default",
+              "done": false,
+              "start": 1730000000013
+            }
+          }
+        ],
+        "todo": {
+          "content": "Core Configuration",
+          "id": 1730000000012,
+          "level": "default",
+          "done": false,
+          "start": 1730000000012
+        }
+      },
+      {
+        "key": 1730000000014,
+        "children": [
+          {
+            "key": 1730000000015,
+            "children": [],
+            "todo": {
+              "content": "Create /tools/riscv-dv/target/rv32i_core/ directory structure",
+              "id": 1730000000015,
+              "level": "default",
+              "done": true,
+              "start": 1730000000015,
+              "focus": false,
+              "end": 1752417418679
+            }
+          },
+          {
+            "key": 1730000000016,
+            "children": [],
+            "todo": {
+              "content": "Create rv32i_core_setting.sv - Core configuration parameters",
+              "id": 1730000000016,
+              "level": "default",
+              "done": false,
+              "start": 1730000000016
+            }
+          },
+          {
+            "key": 1730000000017,
+            "children": [],
+            "todo": {
+              "content": "Create rv32i_core.yaml - Test generation configuration",
+              "id": 1730000000017,
+              "level": "default",
+              "done": false,
+              "start": 1730000000017
+            }
+          },
+          {
+            "key": 1730000000018,
+            "children": [],
+            "todo": {
+              "content": "Create rv32i_core_testlist.yaml - Supported test types",
+              "id": 1730000000018,
+              "level": "default",
+              "done": false,
+              "start": 1730000000018
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 2: RISC-V DV Integration - Create Target Directory Structure",
+          "id": 1730000000014,
+          "level": "warning",
+          "done": false,
+          "start": 1730000000014
+        }
+      },
+      {
+        "key": 1730000000019,
+        "children": [
+          {
+            "key": 1730000000020,
+            "children": [],
+            "todo": {
+              "content": "Create rv32i_core_tb_top.sv similar to other cores in riscv-dv",
+              "id": 1730000000020,
+              "level": "default",
+              "done": false,
+              "start": 1730000000020
+            }
+          },
+          {
+            "key": 1730000000021,
+            "children": [],
+            "todo": {
+              "content": "Integrate core with RISC-V DV testbench infrastructure",
+              "id": 1730000000021,
+              "level": "default",
+              "done": false,
+              "start": 1730000000021
+            }
+          },
+          {
+            "key": 1730000000022,
+            "children": [],
+            "todo": {
+              "content": "Add program loading mechanism (from .hex files)",
+              "id": 1730000000022,
+              "level": "default",
+              "done": false,
+              "start": 1730000000022
+            }
+          },
+          {
+            "key": 1730000000023,
+            "children": [],
+            "todo": {
+              "content": "Implement trace generation in RISC-V DV expected format",
+              "id": 1730000000023,
+              "level": "default",
+              "done": false,
+              "start": 1730000000023
+            }
+          }
+        ],
+        "todo": {
+          "content": "Testbench Top Module",
+          "id": 1730000000019,
+          "level": "default",
+          "done": false,
+          "start": 1730000000019
+        }
+      },
+      {
+        "key": 1730000000024,
+        "children": [
+          {
+            "key": 1730000000025,
+            "children": [],
+            "todo": {
+              "content": "Define supported RV32I instruction types for implementation",
+              "id": 1730000000025,
+              "level": "default",
+              "done": false,
+              "start": 1730000000025
+            }
+          },
+          {
+            "key": 1730000000026,
+            "children": [],
+            "todo": {
+              "content": "Configure memory layout and constraints",
+              "id": 1730000000026,
+              "level": "default",
+              "done": false,
+              "start": 1730000000026
+            }
+          },
+          {
+            "key": 1730000000027,
+            "children": [],
+            "todo": {
+              "content": "Set up exception/interrupt handling configuration (if supported)",
+              "id": 1730000000027,
+              "level": "default",
+              "done": false,
+              "start": 1730000000027
+            }
+          },
+          {
+            "key": 1730000000028,
+            "children": [],
+            "todo": {
+              "content": "Configure core-specific limitations or features",
+              "id": 1730000000028,
+              "level": "default",
+              "done": false,
+              "start": 1730000000028
+            }
+          }
+        ],
+        "todo": {
+          "content": "Core-Specific Test Configuration",
+          "id": 1730000000024,
+          "level": "default",
+          "done": false,
+          "start": 1730000000024
+        }
+      },
+      {
+        "key": 1730000000029,
+        "children": [
+          {
+            "key": 1730000000030,
+            "children": [],
+            "todo": {
+              "content": "Modify /tools/riscv-dv/run.py to add support for rv32i_core",
+              "id": 1730000000030,
+              "level": "default",
+              "done": false,
+              "start": 1730000000030
+            }
+          },
+          {
+            "key": 1730000000031,
+            "children": [],
+            "todo": {
+              "content": "Add simulator support (dsim/questasim/vcs)",
+              "id": 1730000000031,
+              "level": "default",
+              "done": false,
+              "start": 1730000000031
+            }
+          },
+          {
+            "key": 1730000000032,
+            "children": [],
+            "todo": {
+              "content": "Configure compilation flow for rv32i_core",
+              "id": 1730000000032,
+              "level": "default",
+              "done": false,
+              "start": 1730000000032
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 3: Simulator Integration - Update RISC-V DV Run Scripts",
+          "id": 1730000000029,
+          "level": "warning",
+          "done": false,
+          "start": 1730000000029
+        }
+      },
+      {
+        "key": 1730000000033,
+        "children": [
+          {
+            "key": 1730000000034,
+            "children": [],
+            "todo": {
+              "content": "Create compile script for core + testbench",
+              "id": 1730000000034,
+              "level": "default",
+              "done": false,
+              "start": 1730000000034
+            }
+          },
+          {
+            "key": 1730000000035,
+            "children": [],
+            "todo": {
+              "content": "Add core's SystemVerilog files to compilation list",
+              "id": 1730000000035,
+              "level": "default",
+              "done": false,
+              "start": 1730000000035
+            }
+          },
+          {
+            "key": 1730000000036,
+            "children": [],
+            "todo": {
+              "content": "Ensure all dependencies are included in compilation",
+              "id": 1730000000036,
+              "level": "default",
+              "done": false,
+              "start": 1730000000036
+            }
+          }
+        ],
+        "todo": {
+          "content": "Compilation Setup",
+          "id": 1730000000033,
+          "level": "default",
+          "done": false,
+          "start": 1730000000033
+        }
+      },
+      {
+        "key": 1730000000037,
+        "children": [
+          {
+            "key": 1730000000038,
+            "children": [],
+            "todo": {
+              "content": "Configure Spike to run with same program as rv32i_core",
+              "id": 1730000000038,
+              "level": "default",
+              "done": false,
+              "start": 1730000000038
+            }
+          },
+          {
+            "key": 1730000000039,
+            "children": [],
+            "todo": {
+              "content": "Set up automatic comparison between core trace and Spike trace",
+              "id": 1730000000039,
+              "level": "default",
+              "done": false,
+              "start": 1730000000039
+            }
+          },
+          {
+            "key": 1730000000040,
+            "children": [],
+            "todo": {
+              "content": "Create trace formatting scripts to match formats",
+              "id": 1730000000040,
+              "level": "default",
+              "done": false,
+              "start": 1730000000040
+            }
+          },
+          {
+            "key": 1730000000041,
+            "children": [],
+            "todo": {
+              "content": "Implement automated checking for instruction-by-instruction comparison",
+              "id": 1730000000041,
+              "level": "default",
+              "done": false,
+              "start": 1730000000041
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 4: Golden Model Integration - Spike Integration",
+          "id": 1730000000037,
+          "level": "warning",
+          "done": false,
+          "start": 1730000000037
+        }
+      },
+      {
+        "key": 1730000000042,
+        "children": [
+          {
+            "key": 1730000000043,
+            "children": [],
+            "todo": {
+              "content": "Create scripts to run same test on both core and Spike",
+              "id": 1730000000043,
+              "level": "default",
+              "done": false,
+              "start": 1730000000043
+            }
+          },
+          {
+            "key": 1730000000044,
+            "children": [],
+            "todo": {
+              "content": "Implement trace comparison logic",
+              "id": 1730000000044,
+              "level": "default",
+              "done": false,
+              "start": 1730000000044
+            }
+          },
+          {
+            "key": 1730000000045,
+            "children": [],
+            "todo": {
+              "content": "Add reporting mechanism for differences/failures",
+              "id": 1730000000045,
+              "level": "default",
+              "done": false,
+              "start": 1730000000045
+            }
+          },
+          {
+            "key": 1730000000046,
+            "children": [],
+            "todo": {
+              "content": "Set up regression test automation",
+              "id": 1730000000046,
+              "level": "default",
+              "done": false,
+              "start": 1730000000046
+            }
+          }
+        ],
+        "todo": {
+          "content": "Co-simulation Framework",
+          "id": 1730000000042,
+          "level": "default",
+          "done": false,
+          "start": 1730000000042
+        }
+      },
+      {
+        "key": 1730000000047,
+        "children": [
+          {
+            "key": 1730000000048,
+            "children": [],
+            "todo": {
+              "content": "Set up build environment in WSL for GNU toolchain usage",
+              "id": 1730000000048,
+              "level": "default",
+              "done": false,
+              "start": 1730000000048
+            }
+          },
+          {
+            "key": 1730000000049,
+            "children": [],
+            "todo": {
+              "content": "Create Makefile/scripts to compile generated assembly programs",
+              "id": 1730000000049,
+              "level": "default",
+              "done": false,
+              "start": 1730000000049
+            }
+          },
+          {
+            "key": 1730000000050,
+            "children": [],
+            "todo": {
+              "content": "Add hex file generation for core's memory loading",
+              "id": 1730000000050,
+              "level": "default",
+              "done": false,
+              "start": 1730000000050
+            }
+          },
+          {
+            "key": 1730000000051,
+            "children": [],
+            "todo": {
+              "content": "Configure ELF to hex conversion for memory map",
+              "id": 1730000000051,
+              "level": "default",
+              "done": false,
+              "start": 1730000000051
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 5: Test Program Handling - Cross-Platform Management",
+          "id": 1730000000047,
+          "level": "warning",
+          "done": false,
+          "start": 1730000000047
+        }
+      },
+      {
+        "key": 1730000000052,
+        "children": [
+          {
+            "key": 1730000000053,
+            "children": [],
+            "todo": {
+              "content": "Define core's memory map (instruction @ 0x1000, data @ ?)",
+              "id": 1730000000053,
+              "level": "default",
+              "done": false,
+              "start": 1730000000053
+            }
+          },
+          {
+            "key": 1730000000054,
+            "children": [],
+            "todo": {
+              "content": "Update linker scripts for test program compilation",
+              "id": 1730000000054,
+              "level": "default",
+              "done": false,
+              "start": 1730000000054
+            }
+          },
+          {
+            "key": 1730000000055,
+            "children": [],
+            "todo": {
+              "content": "Ensure compatibility with RISC-V DV generated programs",
+              "id": 1730000000055,
+              "level": "default",
+              "done": false,
+              "start": 1730000000055
+            }
+          }
+        ],
+        "todo": {
+          "content": "Memory Layout Configuration",
+          "id": 1730000000052,
+          "level": "default",
+          "done": false,
+          "start": 1730000000052
+        }
+      },
+      {
+        "key": 1730000000056,
+        "children": [
+          {
+            "key": 1730000000057,
+            "children": [],
+            "todo": {
+              "content": "Verify RISC-V GNU toolchain installation in WSL",
+              "id": 1730000000057,
+              "level": "default",
+              "done": true,
+              "start": 1730000000057,
+              "end": 1730000000057
+            }
+          },
+          {
+            "key": 1730000000058,
+            "children": [],
+            "todo": {
+              "content": "Verify Spike installation and operation in WSL",
+              "id": 1730000000058,
+              "level": "default",
+              "done": true,
+              "start": 1730000000058,
+              "end": 1730000000058
+            }
+          },
+          {
+            "key": 1730000000059,
+            "children": [],
+            "todo": {
+              "content": "Set up RISC-V DV environment variables",
+              "id": 1730000000059,
+              "level": "default",
+              "done": false,
+              "start": 1730000000059
+            }
+          },
+          {
+            "key": 1730000000060,
+            "children": [],
+            "todo": {
+              "content": "Test basic test generation and compilation flow",
+              "id": 1730000000060,
+              "level": "default",
+              "done": false,
+              "start": 1730000000060
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 6: WSL/Linux Environment Setup - Tool Chain Setup",
+          "id": 1730000000056,
+          "level": "warning",
+          "done": false,
+          "start": 1730000000056
+        }
+      },
+      {
+        "key": 1730000000061,
+        "children": [
+          {
+            "key": 1730000000062,
+            "children": [],
+            "todo": {
+              "content": "Create scripts to transfer test files between Windows and WSL",
+              "id": 1730000000062,
+              "level": "default",
+              "done": false,
+              "start": 1730000000062
+            }
+          },
+          {
+            "key": 1730000000063,
+            "children": [],
+            "todo": {
+              "content": "Set up automated workflow: Generate test (WSL) → Run sim (Windows) → Compare (WSL)",
+              "id": 1730000000063,
+              "level": "default",
+              "done": false,
+              "start": 1730000000063
+            }
+          },
+          {
+            "key": 1730000000064,
+            "children": [],
+            "todo": {
+              "content": "Configure path mappings between Windows and WSL environments",
+              "id": 1730000000064,
+              "level": "default",
+              "done": false,
+              "start": 1730000000064
+            }
+          }
+        ],
+        "todo": {
+          "content": "Cross-Platform Integration",
+          "id": 1730000000061,
+          "level": "default",
+          "done": false,
+          "start": 1730000000061
+        }
+      },
+      {
+        "key": 1730000000065,
+        "children": [
+          {
+            "key": 1730000000066,
+            "children": [],
+            "todo": {
+              "content": "Start with simple hand-written assembly tests",
+              "id": 1730000000066,
+              "level": "default",
+              "done": false,
+              "start": 1730000000066
+            }
+          },
+          {
+            "key": 1730000000067,
+            "children": [],
+            "todo": {
+              "content": "Verify basic arithmetic operations (ADD, SUB, AND, OR, XOR, etc.)",
+              "id": 1730000000067,
+              "level": "default",
+              "done": false,
+              "start": 1730000000067
+            }
+          },
+          {
+            "key": 1730000000068,
+            "children": [],
+            "todo": {
+              "content": "Test load/store operations",
+              "id": 1730000000068,
+              "level": "default",
+              "done": false,
+              "start": 1730000000068
+            }
+          },
+          {
+            "key": 1730000000069,
+            "children": [],
+            "todo": {
+              "content": "Verify branch and jump instructions",
+              "id": 1730000000069,
+              "level": "default",
+              "done": false,
+              "start": 1730000000069
+            }
+          },
+          {
+            "key": 1730000000070,
+            "children": [],
+            "todo": {
+              "content": "Test immediate instructions",
+              "id": 1730000000070,
+              "level": "default",
+              "done": false,
+              "start": 1730000000070
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 7: Verification Flow Development - Basic Verification Flow",
+          "id": 1730000000065,
+          "level": "warning",
+          "done": false,
+          "start": 1730000000065
+        }
+      },
+      {
+        "key": 1730000000071,
+        "children": [
+          {
+            "key": 1730000000072,
+            "children": [],
+            "todo": {
+              "content": "Configure RISC-V DV to generate RV32I-only tests",
+              "id": 1730000000072,
+              "level": "default",
+              "done": false,
+              "start": 1730000000072
+            }
+          },
+          {
+            "key": 1730000000073,
+            "children": [],
+            "todo": {
+              "content": "Start with basic arithmetic instruction generation",
+              "id": 1730000000073,
+              "level": "default",
+              "done": false,
+              "start": 1730000000073
+            }
+          },
+          {
+            "key": 1730000000074,
+            "children": [],
+            "todo": {
+              "content": "Gradually add more complex test types",
+              "id": 1730000000074,
+              "level": "default",
+              "done": false,
+              "start": 1730000000074
+            }
+          },
+          {
+            "key": 1730000000075,
+            "children": [],
+            "todo": {
+              "content": "Enable load/store instruction generation with proper constraints",
+              "id": 1730000000075,
+              "level": "default",
+              "done": false,
+              "start": 1730000000075
+            }
+          }
+        ],
+        "todo": {
+          "content": "Random Test Integration",
+          "id": 1730000000071,
+          "level": "default",
+          "done": false,
+          "start": 1730000000071
+        }
+      },
+      {
+        "key": 1730000000076,
+        "children": [
+          {
+            "key": 1730000000077,
+            "children": [],
+            "todo": {
+              "content": "Create automated test suite runner",
+              "id": 1730000000077,
+              "level": "default",
+              "done": false,
+              "start": 1730000000077
+            }
+          },
+          {
+            "key": 1730000000078,
+            "children": [],
+            "todo": {
+              "content": "Set up continuous integration for regression testing",
+              "id": 1730000000078,
+              "level": "default",
+              "done": false,
+              "start": 1730000000078
+            }
+          },
+          {
+            "key": 1730000000079,
+            "children": [],
+            "todo": {
+              "content": "Add test result reporting and analysis",
+              "id": 1730000000079,
+              "level": "default",
+              "done": false,
+              "start": 1730000000079
+            }
+          },
+          {
+            "key": 1730000000080,
+            "children": [],
+            "todo": {
+              "content": "Create debugging flow for failed tests",
+              "id": 1730000000080,
+              "level": "default",
+              "done": false,
+              "start": 1730000000080
+            }
+          }
+        ],
+        "todo": {
+          "content": "Regression Framework",
+          "id": 1730000000076,
+          "level": "default",
+          "done": false,
+          "start": 1730000000076
+        }
+      },
+      {
+        "key": 1730000000081,
+        "children": [
+          {
+            "key": 1730000000082,
+            "children": [],
+            "todo": {
+              "content": "Add functional coverage for RV32I instruction set",
+              "id": 1730000000082,
+              "level": "default",
+              "done": false,
+              "start": 1730000000082
+            }
+          },
+          {
+            "key": 1730000000083,
+            "children": [],
+            "todo": {
+              "content": "Implement code coverage collection for core",
+              "id": 1730000000083,
+              "level": "default",
+              "done": false,
+              "start": 1730000000083
+            }
+          },
+          {
+            "key": 1730000000084,
+            "children": [],
+            "todo": {
+              "content": "Create coverage reports and analysis",
+              "id": 1730000000084,
+              "level": "default",
+              "done": false,
+              "start": 1730000000084
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 8: Advanced Features - Coverage Analysis",
+          "id": 1730000000081,
+          "level": "warning",
+          "done": false,
+          "start": 1730000000081
+        }
+      },
+      {
+        "key": 1730000000085,
+        "children": [
+          {
+            "key": 1730000000086,
+            "children": [],
+            "todo": {
+              "content": "Generate longer random test sequences",
+              "id": 1730000000086,
+              "level": "default",
+              "done": false,
+              "start": 1730000000086
+            }
+          },
+          {
+            "key": 1730000000087,
+            "children": [],
+            "todo": {
+              "content": "Test corner cases and boundary conditions",
+              "id": 1730000000087,
+              "level": "default",
+              "done": false,
+              "start": 1730000000087
+            }
+          },
+          {
+            "key": 1730000000088,
+            "children": [],
+            "todo": {
+              "content": "Add stress tests for pipeline hazards and forwarding",
+              "id": 1730000000088,
+              "level": "default",
+              "done": false,
+              "start": 1730000000088
+            }
+          }
+        ],
+        "todo": {
+          "content": "Performance and Stress Testing",
+          "id": 1730000000085,
+          "level": "default",
+          "done": false,
+          "start": 1730000000085
+        }
+      }
+    ],
+    "expandKeys": [
+      1730000000012,
+      1730000000007,
+      1730000000014,
+      1730000000019,
+      1730000000024
+    ],
+    "schema": "https://github.com/Saber2pr/vsc-ext-todolist/blob/master/src/api/type.ts#L3",
+    "add_mode": "bottom",
+    "virtual": false,
+    "timelines": [],
+    "showLine": false,
+    "playFontSize": 24,
+    "title": "RV32I_dv",
+    "autoSort": false,
+    "showEndTime": false,
+    "simpleMode": false,
+    "lang": "en",
+    "version": "1752417437870"
+  }
+}

@@ -29,7 +29,11 @@ module execute_stage #(parameter size = 32)(
     output logic [4:0] rs2_addr,
 
     output logic misprediction_o,
-	output logic [size-1 : 0] correct_pc);
+	output logic [size-1 : 0] correct_pc,
+
+    tracer_interface.sink tracer_if_i,
+    tracer_interface.source tracer_if_o
+    );
 
     localparam D = 1; // Delay for simulation purposes
 
@@ -100,11 +104,42 @@ module execute_stage #(parameter size = 32)(
         if (!reset) begin
             calculated_result_o <= #D {size{1'b0}};
             store_data_o <= #D {size{1'b0}};
-            control_signal_o <= #D 12'b0;
+            control_signal_o <= #D 12'b0; 
         end else begin
             calculated_result_o <= #D calculated_result_internal;
             store_data_o <= #D store_data_internal;
             control_signal_o <= #D control_signal_internal;
+        end
+    end
+
+    always @(posedge clk or negedge reset) begin
+        if (!reset) begin
+            tracer_if_o.valid <= #D 1'b0;
+            tracer_if_o.pc <= #D 0;
+            tracer_if_o.instr <= #D 0;
+            tracer_if_o.reg_addr <= #D 0;
+            tracer_if_o.reg_data <= #D 0;
+            tracer_if_o.is_load <= #D 0;
+            tracer_if_o.is_store <= #D 0;
+            tracer_if_o.is_float <= #D 0;
+            tracer_if_o.mem_size <= #D 2'b00; // No memory operations in EX stage
+            tracer_if_o.mem_addr <= #D 32'b0; // No memory address in EX stage
+            tracer_if_o.mem_data <= #D 32'b0; // No memory data in EX stage
+            tracer_if_o.fpu_flags <= #D 32'b0; // No FPU flags in EX stage
+        end else begin
+            // Update tracer interface
+            tracer_if_o.valid    <= #D 1'b1; // Mark the tracer interface as valid
+            tracer_if_o.pc       <= #D tracer_if_i.pc;
+            tracer_if_o.instr    <= #D tracer_if_i.instr;
+            tracer_if_o.reg_addr <= #D tracer_if_i.reg_addr;
+            tracer_if_o.is_load  <= #D tracer_if_i.is_load;
+            tracer_if_o.is_store <= #D tracer_if_i.is_store;
+            tracer_if_o.is_float <= #D tracer_if_i.is_float;
+            tracer_if_o.mem_size <= #D tracer_if_i.mem_size;
+            tracer_if_o.mem_addr <= #D tracer_if_i.is_store | tracer_if_i.is_load ? calculated_result_internal : 32'b0; 
+            tracer_if_o.mem_data <= #D tracer_if_i.is_store ? store_data_internal : 32'b0; // Data to be stored in memory
+            tracer_if_o.reg_data <= #D !(tracer_if_i.is_store | tracer_if_i.is_load) ?  calculated_result_internal : 32'b0; // Data to be written back to register file
+            tracer_if_o.fpu_flags <= #D tracer_if_i.fpu_flags; // No FPU flags in EX stage
         end
     end
 endmodule

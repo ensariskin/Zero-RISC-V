@@ -18,4 +18,3 @@
 
 # Top-level module files
 /src/rv32i_core.sv
-/src/rv32i_core_wb.sv

@@ -31,6 +31,7 @@ module program_counter_ctrl #(parameter size = 32)(
 	input  logic [size-1 : 0] imm_i,
 	input  logic [size-1 : 0] correct_pc,
 	input  logic 			     misprediction,
+	output logic [size-1 : 0] inst_addr,
 	output logic [size-1 : 0] current_pc,
 	output logic [size-1 : 0] pc_save);
 
@@ -75,7 +76,8 @@ module program_counter_ctrl #(parameter size = 32)(
 		.data_in({correct_pc, pc_plus}),
 		.data_out(pc_new_val));
 
-	assign current_pc = reset ? buble? pc_current_val : pc_new_val : 'h0;
+	assign inst_addr = reset ? buble? pc_current_val : pc_new_val : 'h0;
+	assign current_pc = pc_current_val;
 
 	// TODO : We can store some pc values in case of JAL, JALR instruction then we can use them in case of new JALR calculation
 
