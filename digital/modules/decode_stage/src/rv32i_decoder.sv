@@ -253,7 +253,7 @@ module rv32i_decoder #(parameter size = 32)(
         mem_width_sel    // 2:0
     } ;
 
-    always_comb @(*)
+    always_comb
     begin
         tracer_if_o.valid     = 1'b1;
         tracer_if_o.pc        = tracer_if_i.pc; // PC from the tracer interface input

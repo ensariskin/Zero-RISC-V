@@ -47,6 +47,7 @@ module write_back_stage #(parameter size = 32)(
     assign wb_stage_destination = control_signal_i[7:3];
     assign wb_stage_we = control_signal_i[2];
     
+    /* 
     always @(posedge clk or negedge reset)
     begin
         if (!reset) begin
@@ -78,6 +79,27 @@ module write_back_stage #(parameter size = 32)(
             tracer_if_o.fpu_flags <= #D tracer_if_i.fpu_flags; // No FPU flags in EX stage
         end
     end
+    */
 
+    always_comb
+    begin
+        if(clk) begin
+            tracer_if_o.valid     =  1; // Mark the tracer interface as valid
+        end
+        else begin
+            tracer_if_o.valid     =  0; // Mark the tracer interface as valid
+            tracer_if_o.pc        =  tracer_if_i.pc;
+            tracer_if_o.instr     =  tracer_if_i.instr;
+            tracer_if_o.reg_addr  =  tracer_if_i.reg_addr;
+            tracer_if_o.is_load   =  tracer_if_i.is_load;
+            tracer_if_o.is_store  =  tracer_if_i.is_store;
+            tracer_if_o.is_float  =  tracer_if_i.is_float;
+            tracer_if_o.mem_size  =  tracer_if_i.mem_size;
+            tracer_if_o.mem_addr  =  tracer_if_i.mem_addr;
+            tracer_if_o.mem_data  =  tracer_if_i.is_load ? mem_stage_result_i : tracer_if_i.mem_data; 
+            tracer_if_o.reg_data  =  tracer_if_i.reg_data;
+            tracer_if_o.fpu_flags =  tracer_if_i.fpu_flags; // No FPU flags in EX stage
+        end
+    end
 
 endmodule

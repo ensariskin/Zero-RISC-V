@@ -145,7 +145,7 @@ module decode_stage #(parameter size = 32)(
             if(flush | buble) begin
                 // Reset tracer interface on flush or bubble
                 tracer_if_o.valid     <= #D 0;
-                tracer_if_o.pc        <= #D 0;
+                //tracer_if_o.pc        <= #D 0;
                 tracer_if_o.instr     <= #D 32'h00000013; // NOP instruction
                 tracer_if_o.reg_addr  <= #D 0;
                 tracer_if_o.reg_data  <= #D 0;
