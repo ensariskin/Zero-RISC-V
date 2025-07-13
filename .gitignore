@@ -8,11 +8,11 @@
 *.env
 
 # Ignore compiled object files and binaries
-*.o
-*.so
-*.hex
-*.elf
-*.bin
+#*.o
+#*.so
+#*.hex
+#*.elf
+#*.bin
 
 # Ignore simulation work directories
 **/dsim_work/
@@ -20,7 +20,7 @@
 **/metrics.db
 
 # Ignore log files
-*.log
+#*.log
 
 # Ignore backup files
 *~

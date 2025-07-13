@@ -1,0 +1,181 @@
+﻿================================================================================
+RV32I Hierarchical Simulation Log
+================================================================================
+Start Time    : 2025-07-14 00:22:00
+Test Category : advanced_test
+Test Instance : test5
+Test Name     : advanced_test_test5
+Run ID        : advanced_test_test5_2025_07_14_00_22_00
+Cycles        : 20000
+Hex File      : 
+Command       : dsim -timescale 1ns/1ns -top work.dv_top -L dut +acc -dump-agg -waves advanced_test/test5/waves/advanced_test_test5_2025_07_14_00_22_00.vcd +max_cycles=20000
+VCD File      : .\waves\advanced_test_test5_2025_07_14_00_22_00.vcd
+Working Dir   : ..\..
+================================================================================
+
+
+Simulation Output:
+================================================================================
+
+cmd.exe : Copyright (C) 2017-2025 Altair Engineering Inc. All rights reserved.
+At D:\Ensar\Tez\RV32I\digital\sim\run\sim_runner.ps1:105 char:19
++     $sim_output = & cmd /c $cmd 2>&1
++                   ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Copyright (C) 2...ights reserved.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+=N:[UsageMeter (2025-07-14 00:22:01 T³rkiye Standart Saati)] usage server initial connection
+=N:[License] 
+Licensed for Altair DSim Cloud.
+=N:[License] New lease granted.
+Analyzing...
+Elaborating...
+  Top-level modules:
+    $unit
+    dv_top
+  Found 45 unique specialization(s) of 39 design element(s).
+=W:[MultiBlockWrite]:
+    The following variables are written by at least one    
+    always_comb/latch/ff block, and some other block:      
+
+    mem_size     ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    mem_data     ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    fpu_flags    ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    valid        ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    instr        ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    is_float     ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    reg_data     ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    reg_addr     ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    is_store     ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    is_load      ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    pc           ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+    mem_addr     ..\..\modules\decode_stage\src\decode_stage.sv:129:5     
+                 ..\..\modules\decode_stage\src\rv32i_decoder.sv:256:5    
+                 ..\..\modules\write_back\src\write_back_stage.sv:84:5    
+                 ..\..\modules\mem\src\mem_stage.sv:83:5                  
+                 ..\..\modules\execute\src\execute_stage.sv:115:5         
+                 ..\..\modules\fetch_stage\src\fetch_stage.sv:84:5        
+
+Optimizing...
+Building models...
+PLI/VPI access: +rwb 
+Simulation time precision is 1ns.
+  [1/27] module $root: 134 functions, 315 basic blocks
+  [4/27] module dv_top#(10,1000000,32,32,65536,65536,4096,268435456): 52 functions, 234 basic blocks
+  [6/27] interface tracer_interface: 1 functions, 2 basic blocks
+  [7/27] module rv32i_core#(32): 37 functions, 147 basic blocks
+  [8/27] module rv32i_inst_wb_adapter: 7 functions, 27 basic blocks
+  [9/27] module rv32i_data_wb_adapter: 34 functions, 194 basic blocks
+  [10/27] module memory_2rw_wb#(4,32,14,16384): 31 functions, 176 basic blocks
+  [11/27] module rv32i_tracer: 3 functions, 29 basic blocks
+  [12/27] module fetch_stage#(32): 14 functions, 64 basic blocks
+  [13/27] module decode_stage#(32): 19 functions, 67 basic blocks
+  [14/27] module execute_stage#(32): 24 functions, 95 basic blocks
+  [15/27] module mem_stage#(32): 11 functions, 32 basic blocks
+  [16/27] module write_back_stage#(32): 6 functions, 31 basic blocks
+  [17/27] module Data_Forward: 15 functions, 170 basic blocks
+  [18/27] module hazard_detection_unit: 6 functions, 12 basic blocks
+  [19/27] module early_stage_immediate_decoder#(32): 14 functions, 45 basic blocks
+  [20/27] module jump_controller#(32): 5 functions, 18 basic blocks
+  [21/27] module program_counter_ctrl#(32): 23 functions, 94 basic blocks
+  [22/27] module rv32i_decoder#(32): 10 functions, 124 basic blocks
+  [23/27] module register_file#(32,32): 77 functions, 666 basic blocks
+  [24/27] module parametric_mux#(32,2): 3 functions, 12 basic blocks
+  [25/27] module parametric_mux#(32,4): 3 functions, 16 basic blocks
+  [26/27] module function_unit_alu_shifter#(32): 921 functions, 4835 basic blocks
+  [27/27] module Branch_Controller: 11 functions, 50 basic blocks
+Linking image.so...
+Using default typical min/typ/max.
+=S:Begin run-time elaboration and static initialization...
+=N:[dumpVCD] preparing VCD dump to 'advanced_test/test5/waves/advanced_test_test5_2025_07_14_00_22_00.vcd'.
+=N:[dump] Dump started at time 0
+=N:Starting event scheduler...
+RV32I Core RISC-V DV Testbench
+Instruction base address: 0x00001000
+Data base address: 0x10000000
+Simulation started at time                    0
+Loading default test program
+=W:[ReadMemAddr] ..\..\testbench\riscv_dv_tb\dv_top.sv:276:17: Too few data items, encountered EOF before end of sp
+ecified address range.
+Default test loaded from ../hex/init.hex
+Test program loaded at time                    1
+Reset released at time                   50
+Test execution started, max_cycles =      20000
+Test timeout after      20000 cycles
+TEST FAILED at time               200045
+=== SIMULATION SUMMARY ===
+Total cycles:       20014
+Final PC: 0x0000b2a8
+Test passed: 0
+Test failed: 1
+=T:Simulation terminated by $finish at time 200145 (..\..\testbench\riscv_dv_tb\dv_top.sv:347);
+  System timescale is 1ns / 1ns
+Run directory: D:\Ensar\Tez\RV32I\digital\sim\run
+  Altair DSim version: 2025.0.1 (b:R #c:53 h:1668cd8edb os:msys2_)
+  Random seed: (defaulted to 1)
