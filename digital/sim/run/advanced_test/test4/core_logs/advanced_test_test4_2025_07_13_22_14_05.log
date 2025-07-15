@@ -1,0 +1,91 @@
+﻿================================================================================
+RV32I Hierarchical Simulation Log
+================================================================================
+Start Time    : 2025-07-13 22:14:05
+Test Category : advanced_test
+Test Instance : test4
+Test Name     : advanced_test_test4
+Run ID        : advanced_test_test4_2025_07_13_22_14_05
+Cycles        : 20000
+Hex File      : 
+Command       : dsim -timescale 1ns/1ns -top work.dv_top -L dut +acc -dump-agg -waves advanced_test/test4/waves/advanced_test_test4_2025_07_13_22_14_05.vcd +max_cycles=20000
+VCD File      : .\waves\advanced_test_test4_2025_07_13_22_14_05.vcd
+Working Dir   : ..\..
+================================================================================
+
+
+Simulation Output:
+================================================================================
+
+cmd.exe : Copyright (C) 2017-2025 Altair Engineering Inc. All rights reserved.
+At D:\Ensar\Tez\RV32I\digital\sim\run\sim_runner.ps1:105 char:19
++     $sim_output = & cmd /c $cmd 2>&1
++                   ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Copyright (C) 2...ights reserved.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+=N:[UsageMeter (2025-07-13 22:14:05 T³rkiye Standart Saati)] usage server initial connection
+=N:[License] 
+Licensed for Altair DSim Cloud.
+=N:[License] New lease granted.
+Analyzing...
+Elaborating...
+  Top-level modules:
+    $unit
+    dv_top
+  Found 45 unique specialization(s) of 39 design element(s).
+=E:[WritingInputModport] <demotable>:
+    Illegal assignment to input modport item:    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:52:12    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:54:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:55:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:56:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:57:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:58:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:59:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:60:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:61:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:62:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:63:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:64:13    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:65:13    
+
+=W:[ReadingOutputModport]:
+    Illegal read from output modport item:    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:55:38    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:56:38    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:57:38    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:58:38    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:59:38    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:60:38    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:61:38    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:62:38    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:63:38    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:64:38    
+
+    ..\..\modules\write_back\src\write_back_stage.sv:65:38    
+
+  Altair DSim version: 2025.0.1 (b:R #c:53 h:1668cd8edb os:msys2_)

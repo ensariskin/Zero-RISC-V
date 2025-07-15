@@ -2,9 +2,11 @@
 
 module rv32i_decoder #(parameter size = 32)(
     input  logic [size-1 : 0] instruction,
-    input  logic buble,                      // bubble signal
+    //input  logic buble,                      // bubble signal
 	output logic [25:0] control_word,        // TODO : put branch_sel into contro
-    output logic [2:0] branch_sel            // branch selection
+    output logic [2:0] branch_sel,           // branch selection
+    tracer_interface.sink tracer_if_i,
+    tracer_interface.source tracer_if_o
     );
 
     logic r_type;
@@ -249,6 +251,22 @@ module rv32i_decoder #(parameter size = 32)(
         load,            // 4
         use_immediate,   // 3,
         mem_width_sel    // 2:0
-        } ;
+    } ;
+
+    always_comb
+    begin
+        tracer_if_o.valid     = 1'b1;
+        tracer_if_o.pc        = tracer_if_i.pc; // PC from the tracer interface input
+        tracer_if_o.instr     = tracer_if_i.instr;
+        tracer_if_o.reg_addr  = d_addr;
+        tracer_if_o.is_load   = load;
+        tracer_if_o.is_store  = s_type;
+        tracer_if_o.mem_size  = mem_width_sel[1:0]; // Memory size for load/store
+        tracer_if_o.is_float  = 1'b0; // No floating-point operations in this decoder
+        tracer_if_o.reg_data  = 'h0; // Data to be written back, set later in the pipeline
+        tracer_if_o.mem_addr  = 'h0; // Memory address, set later in the pipeline
+        tracer_if_o.mem_data  = 'h0; // Memory data, set later in the pipeline
+        tracer_if_o.fpu_flags = 'h0; // No FPU flags in this decoder
+    end
 
 endmodule

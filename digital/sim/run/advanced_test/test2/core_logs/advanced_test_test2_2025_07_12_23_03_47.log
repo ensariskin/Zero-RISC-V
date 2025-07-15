@@ -1,0 +1,72 @@
+﻿================================================================================
+RV32I Hierarchical Simulation Log
+================================================================================
+Start Time    : 2025-07-12 23:03:47
+Test Category : advanced_test
+Test Instance : test2
+Test Name     : advanced_test_test2
+Run ID        : advanced_test_test2_2025_07_12_23_03_47
+Cycles        : 1000000
+Hex File      : 
+Command       : dsim -timescale 1ns/1ns -top work.dv_top -L dut +acc -dump-agg -waves advanced_test/test2/waves/advanced_test_test2_2025_07_12_23_03_47.vcd +max_cycles=1000000
+VCD File      : .\waves\advanced_test_test2_2025_07_12_23_03_47.vcd
+Working Dir   : ..\..
+================================================================================
+
+
+Simulation Output:
+================================================================================
+
+cmd.exe : Copyright (C) 2017-2025 Altair Engineering Inc. All rights reserved.
+At D:\Ensar\Tez\RV32I\digital\sim\run\sim_runner.ps1:105 char:19
++     $sim_output = & cmd /c $cmd 2>&1
++                   ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Copyright (C) 2...ights reserved.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+=N:[UsageMeter (2025-07-12 23:03:48 T³rkiye Standart Saati)] usage server initial connection
+=N:[License] 
+Licensed for Altair DSim Cloud.
+=N:[License] New lease granted.
+Analyzing...
+Elaborating...
+  Top-level modules:
+    $unit
+    dv_top
+  Found 44 unique specialization(s) of 38 design element(s).
+Optimizing...
+Building models...
+PLI/VPI access: +rwb 
+Simulation time precision is 1ns.
+Linking image.so...
+Using default typical min/typ/max.
+=S:Begin run-time elaboration and static initialization...
+=N:[dumpVCD] preparing VCD dump to 'advanced_test/test2/waves/advanced_test_test2_2025_07_12_23_03_47.vcd'.
+=N:[dump] Dump started at time 0
+=N:Starting event scheduler...
+RV32I Core RISC-V DV Testbench
+Instruction base address: 0x00001000
+Data base address: 0x10000000
+Simulation started at time                    0
+Loading default test program
+=W:[ReadMemAddr] ..\..\testbench\riscv_dv_tb\dv_top.sv:284:17: Too few data items, encountered EOF before end of
+ specified address range.
+Default test loaded from ../hex/init.hex
+Test program loaded at time                    1
+Reset released at time                   50
+Test execution started, max_cycles =    1000000
+[2128715] *** PROCESSOR APPEARS STUCK at PC=0x00000040 ***
+Instruction: 0x0000006f
+Stuck for         11 cycles
+Reset: 1, Bubble: 0, Misprediction: 0
+Instruction valid: z
+=== SIMULATION SUMMARY ===
+Total cycles:      212871
+Final PC: 0x00000040
+Test passed: 0
+Test failed: 0
+  System timescale is 1ns / 1ns
+=T:Simulation terminated by $finish at time 2128715 (..\..\testbench\riscv_dv_tb\dv_top.sv:484);
+Run directory: D:\Ensar\Tez\RV32I\digital\sim\run
+  Altair DSim version: 2025.0.1 (b:R #c:53 h:1668cd8edb os:msys2_)
+  Random seed: (defaulted to 1)

@@ -63,19 +63,7 @@ module dv_top;
     logic data_wb_err;
     
     // Tracer signals
-    logic tr_valid;
-    logic [31:0] tr_pc;
-    logic [31:0] tr_instr;
-    logic [4:0] tr_reg_addr;
-    logic [31:0] tr_reg_data;
-    logic tr_load;
-    logic tr_store;
-    logic tr_is_float;
-    logic [1:0] tr_mem_size;
-    logic [31:0] tr_mem_addr;
-    logic [31:0] tr_mem_data;
-    logic [31:0] tr_fpu_flags;
-    
+    tracer_interface tracer_if();
     // Test control
     logic test_passed;
     logic test_failed;
@@ -120,7 +108,9 @@ module dv_top;
         .data_mem_addr_o(data_mem_addr_o),
         .data_mem_data_wr_data(data_mem_data_wr_data),
         .data_mem_data_rd_data(data_mem_data_rd_data),
-        .data_mem_control(data_mem_control)
+        .data_mem_control(data_mem_control),
+
+        .tracer_o(tracer_if)
     );
     
     // Instruction memory wishbone adapter
@@ -232,21 +222,23 @@ module dv_top;
         .port1_wb_clk_i(clk)
     );
     
+    logic [31:0] tr_pc;  // Tracer PC
+    assign tr_pc = tracer_if.pc + 32'h80000000;  // Adjust PC for RV32I
     // Execution tracer (adapted for RV32I core)
     rv32i_tracer tracer_inst (
-        .clk_i(clk),
-        .valid(tr_valid),
-        .pc(tr_pc),
-        .instr(tr_instr),
-        .reg_addr(tr_reg_addr),
-        .reg_data(tr_reg_data),
-        .is_load(tr_load),
-        .is_store(tr_store),
-        .is_float(tr_is_float),
-        .mem_size(tr_mem_size),
-        .mem_addr(tr_mem_addr),
-        .mem_data(tr_mem_data),
-        .fpu_flags(tr_fpu_flags)
+        .clk_i      (clk),
+        .valid      (tracer_if.valid),
+        .pc         (tr_pc),
+        .instr      (tracer_if.instr),
+        .reg_addr   (tracer_if.reg_addr),
+        .reg_data   (tracer_if.reg_data),
+        .is_load    (tracer_if.is_load),
+        .is_store   (tracer_if.is_store),
+        .is_float   (tracer_if.is_float),
+        .mem_size   (tracer_if.mem_size),
+        .mem_addr   (tracer_if.mem_addr),
+        .mem_data   (tracer_if.mem_data),
+        .fpu_flags  (tracer_if.fpu_flags)
     );
     
     // Test program loader
@@ -300,71 +292,7 @@ module dv_top;
         end
     end
     
-    // Trace signal generation
-    // Extract trace information from the core's available signals
-    
-    logic [31:0] wb_pc;
-    logic [31:0] wb_instruction;
-    logic [4:0] wb_reg_addr;
-    logic [31:0] wb_reg_data;
-    logic wb_reg_we;
-    logic mem_access;
-    logic mem_load, mem_store;
-    
-    // Create a simple PC tracking mechanism
-    // We'll track the PC through the pipeline stages by delaying the fetch PC
-    logic [31:0] pc_delay_1, pc_delay_2, pc_delay_3, pc_delay_4;
-    logic [31:0] inst_delay_1, inst_delay_2, inst_delay_3, inst_delay_4;
-    
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            pc_delay_1 <= #D 32'h0;
-            pc_delay_2 <= #D 32'h0;
-            pc_delay_3 <= #D 32'h0;
-            pc_delay_4 <= #D 32'h0;
-            inst_delay_1 <= #D 32'h0;
-            inst_delay_2 <= #D 32'h0;
-            inst_delay_3 <= #D 32'h0;
-            inst_delay_4 <= #D 32'h0;
-        end else begin
-            // Pipeline the PC and instruction through the stages
-            pc_delay_1 <= #D ins_address;
-            pc_delay_2 <= #D pc_delay_1;
-            pc_delay_3 <= #D pc_delay_2;
-            pc_delay_4 <= #D pc_delay_3;
-            
-            inst_delay_1 <= #D instruction_i;
-            inst_delay_2 <= #D inst_delay_1;
-            inst_delay_3 <= #D inst_delay_2;
-            inst_delay_4 <= #D inst_delay_3;
-        end
-    end
-    
-    // Extract writeback information from core outputs
-    assign wb_pc = pc_delay_4;  // PC corresponding to WB stage
-    assign wb_instruction = inst_delay_4;  // Instruction corresponding to WB stage
-    assign wb_reg_addr = dut.Control_Signal_WB_o[4:0];  // Extract register address from control signals
-    assign wb_reg_data = dut.Final_Result_WB_o;  // Register write data
-    assign wb_reg_we = dut.Control_Signal_WB_o[5];  // Write enable
-    
-    // Memory access detection
-    assign mem_access = data_mem_rw || (|data_mem_control);
-    assign mem_load = mem_access && !data_mem_rw;
-    assign mem_store = mem_access && data_mem_rw;
-    
-    // Connect trace signals to tracer
-    assign tr_valid = wb_reg_we && (wb_reg_addr != 5'b0);  // Valid when writing to non-zero register
-    assign tr_pc = wb_pc;
-    assign tr_instr = wb_instruction;
-    assign tr_reg_addr = wb_reg_addr;
-    assign tr_reg_data = wb_reg_data;
-    assign tr_load = mem_load;
-    assign tr_store = mem_store;
-    assign tr_is_float = 1'b0;  // RV32I has no floating point
-    assign tr_mem_size = data_mem_control[1:0];
-    assign tr_mem_addr = data_mem_addr_o;
-    assign tr_mem_data = data_mem_rw ? data_mem_data_wr_data : data_mem_data_rd_data;
-    assign tr_fpu_flags = 32'h0; // No FPU in RV32I
+
     
     // Test completion detection
     // Detect test completion based on various criteria
@@ -372,12 +300,6 @@ module dv_top;
     logic ecall_detected;
     logic test_signature_addr_hit;
     logic [31:0] max_cycles;
-    
-    // ECALL instruction detection (for test termination)
-    assign ecall_detected = (wb_instruction == 32'h00000073) && tr_valid;
-    
-    // Test signature write detection (common in RISC-V compliance tests)
-    assign test_signature_addr_hit = (data_mem_addr_o == 32'hF0000000) && data_mem_rw;
     
     initial begin
         test_passed = 0;

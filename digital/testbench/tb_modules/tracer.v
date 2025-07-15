@@ -15,11 +15,12 @@ module tracer(input clk_i,
 integer file_pointer;
 
 initial begin
-file_pointer = $fopen("../core_logs/trace.log", "w"); //The file is normally located in <vivado-dir>\HornetRISCV-vivado.sim\sim_1\behav\xsim, so let's use relative path to move it to the main folder
+file_pointer = $fopen("trace.log", "w"); //The file is normally located in <vivado-dir>\HornetRISCV-vivado.sim\sim_1\behav\xsim, so let's use relative path to move it to the main folder
     forever begin
         @(posedge valid); //This is required otherwise testbench ignores the update signal
         $fwrite(file_pointer, "0x%8h (0x%8h)", pc, instr);
         if (is_store) begin
+            
             if(mem_size == 2'b00) begin
                 $fwrite(file_pointer, " mem 0x%8h 0x%2h", mem_addr, mem_data);
             end
@@ -32,9 +33,8 @@ file_pointer = $fopen("../core_logs/trace.log", "w"); //The file is normally loc
         end
         else begin
             if (!is_float) begin
-                if (reg_addr == 0) begin
-                    //$fwrite(file_pointer, "0x%8h (0x%8h)", pc, instr); Do nothing, as we moved the pc/instr writing out of the if-else tree
-                end else begin
+                if (reg_addr != 0) begin
+                    
                     if (reg_addr > 9) begin
                         $fwrite(file_pointer, " x%0d 0x%8h", reg_addr, reg_data);
                         if (is_load) begin

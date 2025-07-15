@@ -40,12 +40,12 @@ module data_organizer #(parameter size = 32)(
     defparam MUX_mask2.mem_width = size;
 
 
-    Parametric_mux MUX_mask1(
+    parametric_mux MUX_mask1(
         .addr(size_sel),
         .data_in({{size{1'b1}},{size{1'b1}}, {(size/2){1'b0}},{(size/2){1'b1}}, {(size*3/4){1'b0}}, {(size/4){1'b1}}}),
         .data_out(mask1));
 
-    Parametric_mux MUX_mask2(
+    parametric_mux MUX_mask2(
         .addr(size_sel),
         .data_in({{size{1'b0}},{size{1'b0}}, {(size/2){(sign&data_in[15])}},{(size/2){1'b0}}, {(size*3/4){(sign&data_in[7])}}, {(size/4){1'b0}}}),
         .data_out(mask2));

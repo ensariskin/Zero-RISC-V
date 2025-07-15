@@ -19,7 +19,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 
-
 module rv32i_core #(parameter size = 32)(
     input  logic clk,
     input  logic reset,
@@ -32,7 +31,10 @@ module rv32i_core #(parameter size = 32)(
     output logic [size-1 : 0] data_mem_addr_o,
     output logic [size-1 : 0] data_mem_data_wr_data,
     input  logic [size-1 : 0] data_mem_data_rd_data,
-    output logic [2:0]        data_mem_control
+    output logic [2:0]        data_mem_control,
+    
+    // Tracer interface output from WB stage
+    tracer_interface tracer_o
     );
 
     // main pipeline logics
@@ -76,6 +78,12 @@ module rv32i_core #(parameter size = 32)(
 
 	logic [size-1 : 0] correct_pc;
 
+    // Tracer interfaces for pipeline stages
+    tracer_interface tracer_if_fetch_decode();
+    tracer_interface tracer_if_decode_execute();
+    tracer_interface tracer_if_execute_mem();
+    tracer_interface tracer_if_mem_wb();    
+
     fetch_stage Ins_Fetch(  // reformatting is done
         .clk(clk),
         .reset(reset),
@@ -84,12 +92,14 @@ module rv32i_core #(parameter size = 32)(
         .instruction_valid(instruction_valid),
         .misprediction(misprediction),
         .flush(misprediction),
-		.correct_pc(correct_pc),
-        .current_pc(ins_address),
+        .correct_pc(correct_pc),
+        .inst_addr(ins_address),
         .instruction_o(instruction_ID_i),
         .imm_o(IMM_ID_i),
         .pc_plus_o(PCPlus_ID_i),
-        .branch_prediction_o(Predicted_MPC_ID_i));
+        .branch_prediction_o(Predicted_MPC_ID_i),
+        .tracer_if(tracer_if_fetch_decode)
+    );
 
     decode_stage ID(
         .clk(clk),
@@ -110,10 +120,12 @@ module rv32i_core #(parameter size = 32)(
         .control_signal_o(Control_Signal_EX_i),
         .branch_sel_o(Branch_sel_EX_i),
         .rs1_addr(rs1_id),
-        .rs2_addr(rs2_id)
-        );
-
-    execute_stage EX(
+        .rs2_addr(rs2_id),
+        .tracer_if_i(tracer_if_fetch_decode),
+        .tracer_if_o(tracer_if_decode_execute)
+        );    
+        
+        execute_stage EX(
         .clk(clk),
         .reset(reset),
 
@@ -137,7 +149,10 @@ module rv32i_core #(parameter size = 32)(
         .rs1_addr(RA_DF),
         .rs2_addr(RB_DF),
         .misprediction_o(misprediction),
-		.correct_pc(correct_pc));
+        .correct_pc(correct_pc),
+        .tracer_if_i(tracer_if_decode_execute),
+        .tracer_if_o(tracer_if_execute_mem)
+    );
 
     mem_stage MEM(
         .clk(clk),
@@ -157,10 +172,14 @@ module rv32i_core #(parameter size = 32)(
 
         .control_signal_o(Control_Signal_WB_i),
         .mem_stage_destination(RD_MEM),
-        .mem_stage_we(WE_MEM)
+        .mem_stage_we(WE_MEM),
+        .tracer_if_i(tracer_if_execute_mem),
+        .tracer_if_o(tracer_if_mem_wb)
         );
 
     write_back_stage WB(
+        .clk(clk),
+        .reset(reset),
         .ex_stage_result_i(FU_WB_i),
         .mem_stage_result_i(data_mem_data_rd_data),
         .control_signal_i(Control_Signal_WB_i),
@@ -168,7 +187,10 @@ module rv32i_core #(parameter size = 32)(
         .wb_stage_destination(RD_WB),
         .wb_stage_we(WE_WB),
         .wb_result_o(Final_Result_WB_o),
-        .control_signal_o(Control_Signal_WB_o));
+        .control_signal_o(Control_Signal_WB_o),
+        .tracer_if_i(tracer_if_mem_wb),
+        .tracer_if_o(tracer_o)  // No connection needed for final stage
+    );
 
     Data_Forward DF(
         .RA(RA_DF),

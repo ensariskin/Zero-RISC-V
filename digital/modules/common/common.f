@@ -7,3 +7,4 @@ src/RCA.sv
 src/CSA.sv
 src/FA.sv
 src/HA.sv
+src/tracer_interface.sv

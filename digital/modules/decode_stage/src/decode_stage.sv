@@ -42,7 +42,10 @@ module decode_stage #(parameter size = 32)(
     output logic [2:0] branch_sel_o,
     
     output logic [4:0] rs1_addr,
-    output logic [4:0] rs2_addr
+    output logic [4:0] rs2_addr,
+
+    tracer_interface.sink tracer_if_i,
+    tracer_interface.source tracer_if_o
     );
 
     localparam D = 1; // Delay for simulation purposes
@@ -56,12 +59,15 @@ module decode_stage #(parameter size = 32)(
     logic [size-1 : 0] pc_plus_internal;
     logic [25 : 0] control_signal_internal;
     logic [2:0] branch_sel_internal;
+    tracer_interface tracer_if_internal();
 
     rv32i_decoder #(.size(size)) decoder(
         .instruction(i_instruction),
-        .buble(buble),
+        //.buble(buble),
         .branch_sel(branch_sel_internal),      // TODO : consider moving branch_sel to control signals
-        .control_word(control_signal_internal) // TODO : consider using interface for control signals
+        .control_word(control_signal_internal), // TODO : consider using interface for control signals
+        .tracer_if_i(tracer_if_i),
+        .tracer_if_o(tracer_if_internal) // Internal tracer interface for this stage
     );
 
     assign rs1_addr = control_signal_internal[15:11];
@@ -115,6 +121,55 @@ module decode_stage #(parameter size = 32)(
                 pc_plus_o <= #D pc_plus_internal;
                 control_signal_o <= #D control_signal_internal;
                 branch_sel_o <= #D branch_sel_internal;
+            end
+        end
+    end
+
+
+    always @(posedge clk or negedge reset) begin
+        if (!reset) begin
+            // Reset tracer interface
+                tracer_if_o.valid     <= #D 0;
+                tracer_if_o.pc        <= #D 0;
+                tracer_if_o.instr     <= #D 32'h00000013; // NOP instruction
+                tracer_if_o.reg_addr  <= #D 0;
+                tracer_if_o.reg_data  <= #D 0;
+                tracer_if_o.is_load   <= #D 0;
+                tracer_if_o.is_store  <= #D 0;
+                tracer_if_o.is_float  <= #D 0;
+                tracer_if_o.mem_size  <= #D 2'b00; // No memory operation
+                tracer_if_o.mem_addr  <= #D 32'b0; // No memory address
+                tracer_if_o.mem_data  <= #D 32'b0; // No memory data
+                tracer_if_o.fpu_flags <= #D 32'b0; // No FPU flags
+        end else begin  
+            if(flush | buble) begin
+                // Reset tracer interface on flush or bubble
+                tracer_if_o.valid     <= #D 0;
+                //tracer_if_o.pc        <= #D 0;
+                tracer_if_o.instr     <= #D 32'h00000013; // NOP instruction
+                tracer_if_o.reg_addr  <= #D 0;
+                tracer_if_o.reg_data  <= #D 0;
+                tracer_if_o.is_load   <= #D 0;
+                tracer_if_o.is_store  <= #D 0;
+                tracer_if_o.is_float  <= #D 0;
+                tracer_if_o.mem_size  <= #D 2'b00; // No memory operation
+                tracer_if_o.mem_addr  <= #D 32'b0; // No memory address
+                tracer_if_o.mem_data  <= #D 32'b0; // No memory data
+                tracer_if_o.fpu_flags <= #D 32'b0; // No FPU flags
+            end else begin
+                // Update tracer interface
+                tracer_if_o.valid    <= #D 1;
+                tracer_if_o.pc       <= #D tracer_if_internal.pc;
+                tracer_if_o.instr    <= #D tracer_if_internal.instr;
+                tracer_if_o.reg_addr <= #D tracer_if_internal.reg_addr;
+                tracer_if_o.is_load  <= #D tracer_if_internal.is_load;
+                tracer_if_o.is_store <= #D tracer_if_internal.is_store;
+                tracer_if_o.is_float <= #D tracer_if_internal.is_float;
+                tracer_if_o.mem_size <= #D tracer_if_internal.mem_size;
+                tracer_if_o.reg_data <= #D 0; 
+                tracer_if_o.mem_addr <= #D 0;
+                tracer_if_o.mem_data <= #D 0;
+                tracer_if_o.fpu_flags <= #D tracer_if_internal.fpu_flags;
             end
         end
     end

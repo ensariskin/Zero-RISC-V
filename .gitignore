@@ -8,11 +8,11 @@
 *.env
 
 # Ignore compiled object files and binaries
-*.o
-*.so
-*.hex
-*.elf
-*.bin
+#*.o
+#*.so
+#*.hex
+#*.elf
+#*.bin
 
 # Ignore simulation work directories
 **/dsim_work/
@@ -20,7 +20,7 @@
 **/metrics.db
 
 # Ignore log files
-*.log
+#*.log
 
 # Ignore backup files
 *~
@@ -63,15 +63,10 @@ lib_*
 
 # Ignore dvt files
 **/.dvt/
-digital/sim/
+#digital/sim/
 # Ignore specific environment files
 digital/sim/run/dsim.env
 digital/sim/run/dvlcom.env
-
-# Ignore diff files
-doc/changelogs/temp_diff.txt
-*.todo
-tools/*
 
 # Specifically ignore riscv-dv directory
 tools/riscv-dv/
