@@ -1,0 +1,10 @@
+=N:[UsageMeter (2025-07-14 22:10:27 Türkiye Standart Saati)] usage server initial connection
+=N:[License] 
+Licensed for Altair DSim Cloud.
+=N:[License] New lease granted.
+Analyzing...
+Elaborating...
+=E:[BadTop] No top-level element/configuration 'work.dv_top' found.
+  Top-level modules:
+    $unit
+  Altair DSim version: 2025.0.1 (b:R #c:53 h:1668cd8edb os:msys2_)
