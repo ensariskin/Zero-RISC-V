@@ -47,7 +47,7 @@ module program_counter_ctrl #(parameter size = 32)(
 
 	always @(posedge clk or negedge reset) begin
 		if (!reset) begin
-			pc_current_val <= #D {size{1'b0}};
+			pc_current_val <= #D 32'h80000000; // Reset PC to a known value, e.g., 0x80000000
 		end else if (~buble) begin
 			pc_current_val <= #D pc_new_val;
 		end
@@ -76,7 +76,7 @@ module program_counter_ctrl #(parameter size = 32)(
 		.data_in({correct_pc, pc_plus}),
 		.data_out(pc_new_val));
 
-	assign inst_addr = reset ? buble? pc_current_val : pc_new_val : 'h0;
+	assign inst_addr = reset ? (buble? pc_current_val : pc_new_val) : 32'h80000000;
 	assign current_pc = pc_current_val;
 
 	// TODO : We can store some pc values in case of JAL, JALR instruction then we can use them in case of new JALR calculation

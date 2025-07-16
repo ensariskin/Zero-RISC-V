@@ -158,18 +158,22 @@ module decode_stage #(parameter size = 32)(
                 tracer_if_o.fpu_flags <= #D 32'b0; // No FPU flags
             end else begin
                 // Update tracer interface
-                tracer_if_o.valid    <= #D 1;
-                tracer_if_o.pc       <= #D tracer_if_internal.pc;
-                tracer_if_o.instr    <= #D tracer_if_internal.instr;
-                tracer_if_o.reg_addr <= #D tracer_if_internal.reg_addr;
-                tracer_if_o.is_load  <= #D tracer_if_internal.is_load;
-                tracer_if_o.is_store <= #D tracer_if_internal.is_store;
-                tracer_if_o.is_float <= #D tracer_if_internal.is_float;
-                tracer_if_o.mem_size <= #D tracer_if_internal.mem_size;
-                tracer_if_o.reg_data <= #D 0; 
-                tracer_if_o.mem_addr <= #D 0;
-                tracer_if_o.mem_data <= #D 0;
-                tracer_if_o.fpu_flags <= #D tracer_if_internal.fpu_flags;
+                if(tracer_if_internal.valid) begin
+                    tracer_if_o.valid    <= #D 1;
+                    tracer_if_o.pc       <= #D tracer_if_internal.pc;
+                    tracer_if_o.instr    <= #D tracer_if_internal.instr;
+                    tracer_if_o.reg_addr <= #D tracer_if_internal.reg_addr;
+                    tracer_if_o.is_load  <= #D tracer_if_internal.is_load;
+                    tracer_if_o.is_store <= #D tracer_if_internal.is_store;
+                    tracer_if_o.is_float <= #D tracer_if_internal.is_float;
+                    tracer_if_o.mem_size <= #D tracer_if_internal.mem_size;
+                    tracer_if_o.reg_data <= #D 0; 
+                    tracer_if_o.mem_addr <= #D 0;
+                    tracer_if_o.mem_data <= #D 0;
+                    tracer_if_o.fpu_flags <= #D tracer_if_internal.fpu_flags;
+                end
+                else 
+                    tracer_if_o.valid    <= #D 0;
             end
         end
     end

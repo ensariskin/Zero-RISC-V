@@ -98,7 +98,7 @@ module fetch_stage#(parameter size = 32)(
             tracer_if.mem_data <= #D 0;
             tracer_if.fpu_flags <= #D 0;
         end else begin  
-            if(flush) begin
+            if(flush | buble) begin
                 // Reset tracer interface on flush
                 tracer_if.valid <= #D 0;
                 tracer_if.pc <= #D 0;
@@ -112,7 +112,7 @@ module fetch_stage#(parameter size = 32)(
                 tracer_if.mem_addr <= #D 32'b0; // No memory address
                 tracer_if.mem_data <= #D 32'b0; // No memory data
                 tracer_if.fpu_flags <= #D 32'b0; // No FPU flags
-            end else if(~buble) begin
+            end else begin
                 // Update tracer interface
                 tracer_if.valid <= #D 1;
                 tracer_if.pc <= #D current_pc;

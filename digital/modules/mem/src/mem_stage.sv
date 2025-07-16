@@ -83,7 +83,7 @@ module mem_stage #(parameter size = 32)(
     always @(posedge clk or negedge reset) begin
         if (!reset) begin
             tracer_if_o.valid <= #D 0;
-             tracer_if_o.pc      <= #D 0;
+            tracer_if_o.pc      <= #D 0;
             tracer_if_o.instr    <= #D 0;
             tracer_if_o.reg_addr <= #D 0;
             tracer_if_o.reg_data <= #D 0;
@@ -95,12 +95,12 @@ module mem_stage #(parameter size = 32)(
             tracer_if_o.mem_data <= #D 32'b0; // No memory data in MEM
             tracer_if_o.fpu_flags <= #D 32'b0; // No FPU flags in MEM
         end else begin
-            tracer_if_o.valid <= #D tracer_if_i.valid;
+            tracer_if_o.valid    <= #D tracer_if_i.valid;
             tracer_if_o.pc       <= #D tracer_if_i.pc;
             tracer_if_o.instr    <= #D tracer_if_i.instr;
             tracer_if_o.reg_addr <= #D tracer_if_i.reg_addr;
             tracer_if_o.reg_data <= #D tracer_if_i.reg_data;
-            tracer_if_o.is_load <= #D tracer_if_i.is_load;
+            tracer_if_o.is_load  <= #D tracer_if_i.is_load;
             tracer_if_o.is_store <= #D tracer_if_i.is_store;
             tracer_if_o.is_float <= #D tracer_if_i.is_float;
             tracer_if_o.mem_size <= #D tracer_if_i.mem_size;
