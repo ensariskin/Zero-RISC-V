@@ -37,16 +37,13 @@ file_pointer = $fopen("trace.log", "w"); //The file is normally located in <viva
                     
                     if (reg_addr > 9) begin
                         $fwrite(file_pointer, " x%0d 0x%8h", reg_addr, reg_data);
-                        if (is_load) begin
-                            $fwrite(file_pointer, " mem 0x%8h", mem_addr);
-                        end
+                        
                     end else begin
                         $fwrite(file_pointer, " x%0d  0x%8h", reg_addr, reg_data);
-                        if (is_load) begin
-                            $fwrite(file_pointer, " mem 0x%8h", mem_addr);
-                        end
                     end
                 end
+                if (is_load) 
+                    $fwrite(file_pointer, " mem 0x%8h", mem_addr);
             end
             else begin
                 if (fpu_flags != 0) $fwrite(file_pointer, " c1_fflags 0x%8h", fpu_flags);

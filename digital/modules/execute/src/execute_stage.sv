@@ -127,19 +127,23 @@ module execute_stage #(parameter size = 32)(
             tracer_if_o.mem_data <= #D 32'b0; // No memory data in EX stage
             tracer_if_o.fpu_flags <= #D 32'b0; // No FPU flags in EX stage
         end else begin
-            // Update tracer interface
-            tracer_if_o.valid    <= #D 1'b1; // Mark the tracer interface as valid
-            tracer_if_o.pc       <= #D tracer_if_i.pc;
-            tracer_if_o.instr    <= #D tracer_if_i.instr;
-            tracer_if_o.reg_addr <= #D tracer_if_i.reg_addr;
-            tracer_if_o.is_load  <= #D tracer_if_i.is_load;
-            tracer_if_o.is_store <= #D tracer_if_i.is_store;
-            tracer_if_o.is_float <= #D tracer_if_i.is_float;
-            tracer_if_o.mem_size <= #D tracer_if_i.mem_size;
-            tracer_if_o.mem_addr <= #D tracer_if_i.is_store | tracer_if_i.is_load ? calculated_result_internal : 32'b0; 
-            tracer_if_o.mem_data <= #D tracer_if_i.is_store ? store_data_internal : 32'b0; // Data to be stored in memory
-            tracer_if_o.reg_data <= #D !(tracer_if_i.is_store | tracer_if_i.is_load) ?  calculated_result_internal : 32'b0; // Data to be written back to register file
-            tracer_if_o.fpu_flags <= #D tracer_if_i.fpu_flags; // No FPU flags in EX stage
+            if(tracer_if_i.valid) begin
+                // Update tracer interface
+                tracer_if_o.valid    <= #D 1'b1; // Mark the tracer interface as valid
+                tracer_if_o.pc       <= #D tracer_if_i.pc;
+                tracer_if_o.instr    <= #D tracer_if_i.instr;
+                tracer_if_o.reg_addr <= #D tracer_if_i.reg_addr;
+                tracer_if_o.is_load  <= #D tracer_if_i.is_load;
+                tracer_if_o.is_store <= #D tracer_if_i.is_store;
+                tracer_if_o.is_float <= #D tracer_if_i.is_float;
+                tracer_if_o.mem_size <= #D tracer_if_i.mem_size;
+                tracer_if_o.mem_addr <= #D tracer_if_i.is_store | tracer_if_i.is_load ? calculated_result_internal : 32'b0; 
+                tracer_if_o.mem_data <= #D tracer_if_i.is_store ? store_data_internal : 32'b0; // Data to be stored in memory
+                tracer_if_o.reg_data <= #D !(tracer_if_i.is_store | tracer_if_i.is_load) ?  calculated_result_internal : 32'b0; // Data to be written back to register file
+                tracer_if_o.fpu_flags <= #D tracer_if_i.fpu_flags; // No FPU flags in EX stage
+            end
+            else
+                tracer_if_o.valid    <= #D 1'b0; // Mark the tracer interface as valid
         end
     end
 endmodule

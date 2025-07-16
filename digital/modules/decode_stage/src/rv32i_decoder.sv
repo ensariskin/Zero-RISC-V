@@ -255,7 +255,7 @@ module rv32i_decoder #(parameter size = 32)(
 
     always_comb
     begin
-        tracer_if_o.valid     = 1'b1;
+        tracer_if_o.valid     = tracer_if_i.valid; // Pass the valid signal from tracer_if_i
         tracer_if_o.pc        = tracer_if_i.pc; // PC from the tracer interface input
         tracer_if_o.instr     = tracer_if_i.instr;
         tracer_if_o.reg_addr  = d_addr;

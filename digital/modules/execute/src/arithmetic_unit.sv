@@ -53,7 +53,7 @@ module arithmetic_unit #(parameter size = 32)(
 
     parametric_mux #(.mem_width(1), .mem_depth(2)) n_mux(   // TODO : why do we need this mux?
         .addr((data_a[size-1] ^ data_b[size-1]) & usign),
-        .data_in({data_b[size-1], add_sub_out[size-1]}),
+        .data_in({data_b[size-1], add_sub_out[size-1]} ^ overflow),
         .data_out(negative));
 
     /* I don't think we need this zero comparator, is it really optimizing anything? TODO check it

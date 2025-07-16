@@ -222,13 +222,12 @@ module dv_top;
         .port1_wb_clk_i(clk)
     );
     
-    logic [31:0] tr_pc;  // Tracer PC
-    assign tr_pc = tracer_if.pc + 32'h80000000;  // Adjust PC for RV32I
+
     // Execution tracer (adapted for RV32I core)
     rv32i_tracer tracer_inst (
         .clk_i      (clk),
         .valid      (tracer_if.valid),
-        .pc         (tr_pc),
+        .pc         (tracer_if.pc),
         .instr      (tracer_if.instr),
         .reg_addr   (tracer_if.reg_addr),
         .reg_data   (tracer_if.reg_data),
@@ -272,9 +271,9 @@ module dv_top;
             // Load default test program for basic verification
             $display("Loading default test program");
             // You can specify a default hex file here or load from testbench directory
-            if ($fopen("../hex/init.hex", "r")) begin
-                $readmemh("../hex/init.hex", inst_memory.mem);
-                $display("Default test loaded from ../hex/init.hex");
+            if ($fopen("init.hex", "r")) begin
+                $readmemh("init.hex", inst_memory.mem);
+                $display("Default test loaded from init.hex");
             end else begin
                 $display("No default test found, using NOP instructions");
                 // Fill memory with NOP instructions (addi x0, x0, 0)
@@ -319,7 +318,7 @@ module dv_top;
             begin
                 // Wait for ECALL instruction (normal test termination)
                 wait(ecall_detected);
-                $display("ECALL detected at PC=0x%08x, test completed normally", tr_pc);
+                $display("ECALL detected at PC=0x%08x, test completed normally", tracer_if.pc);
                 test_passed = 1;
             end
             begin
