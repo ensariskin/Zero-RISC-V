@@ -11,10 +11,11 @@
 
 # Ignore compiled object files and binaries
 *.o
-#*.so
-#*.hex
+*.so
+*.hex
 *.elf
 *.bin
+*.s
 
 # Ignore simulation work directories
 **/dsim_work/
