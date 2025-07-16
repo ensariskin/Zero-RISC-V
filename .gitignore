@@ -6,13 +6,15 @@
 *.vpd
 *.evcd
 *.env
+*.obj
+*.sir
 
 # Ignore compiled object files and binaries
-#*.o
+*.o
 #*.so
 #*.hex
-#*.elf
-#*.bin
+*.elf
+*.bin
 
 # Ignore simulation work directories
 **/dsim_work/
@@ -70,3 +72,5 @@ digital/sim/run/dvlcom.env
 
 # Specifically ignore riscv-dv directory
 tools/riscv-dv/
+
+*.pyc
