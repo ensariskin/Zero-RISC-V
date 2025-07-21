@@ -1,0 +1,165 @@
+=N:[UsageMeter (2025-07-21 23:16:23 +0300)] Using /etc/ssl/certs as location of CA certificates to verify license server.
+=N:[UsageMeter (2025-07-21 23:16:23 +0300)] usage server initial connection
+=N:[License] 
+Licensed for Altair DSim Cloud.
+=N:[License] New lease granted.
+Analyzing...
+Elaborating...
+  Top-level modules:
+    $unit
+    dv_top
+  Found 47 unique specialization(s) of 39 design element(s).
+=W:[MultiBlockWrite]:
+    The following variables are written by at least one    
+    always_comb/latch/ff block, and some other block:      
+
+    reg_addr     /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    is_store     /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    is_float     /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    mem_size     /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    instr        /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    pc           /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    valid        /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    mem_addr     /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    fpu_flags    /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    mem_data     /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    reg_data     /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+    is_load      /mnt/d/Ensar/Tez/RV32I/digital/modules/fetch_stage/src/fetch_stage.sv:84:5        
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/rv32i_decoder.sv:256:5    
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/mem/src/mem_stage.sv:82:5                  
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/execute/src/execute_stage.sv:115:5         
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/decode_stage/src/decode_stage.sv:129:5     
+                 /mnt/d/Ensar/Tez/RV32I/digital/modules/write_back/src/write_back_stage.sv:58:5    
+
+Optimizing...
+Building models...
+PLI/VPI access: +rwb 
+Simulation time precision is 1ns.
+  [1/31] module $root: 134 functions, 315 basic blocks
+  [2/31] module $pkgs: 1 functions, 2 basic blocks
+  [3/31] CU scope $unit: 1 functions, 2 basic blocks
+  [4/31] module dv_top#(10,1000000,32,32,65536,4096,65536,4096,-2147483648,-2147479552): 73 functions, 338 basic blocks
+  [5/31] package std: 23 functions, 64 basic blocks
+  [6/31] interface tracer_interface: 1 functions, 2 basic blocks
+  [7/31] module rv32i_core#(32): 36 functions, 143 basic blocks
+  [8/31] module rv32i_inst_wb_adapter: 7 functions, 27 basic blocks
+  [9/31] module rv32i_data_wb_adapter: 26 functions, 120 basic blocks
+  [10/31] module memory_2rw_wb#(4,32,16,65536): 31 functions, 176 basic blocks
+  [11/31] module data_memory_selector#(4096,65536): 11 functions, 49 basic blocks
+  [12/31] module memory_2rw_wb#(4,32,10,1024): 31 functions, 176 basic blocks
+  [13/31] module memory_2rw_wb#(4,32,14,16384): 31 functions, 176 basic blocks
+  [14/31] module rv32i_tracer: 3 functions, 30 basic blocks
+  [15/31] module fetch_stage#(32): 14 functions, 64 basic blocks
+  [16/31] module decode_stage#(32): 20 functions, 71 basic blocks
+  [17/31] module execute_stage#(32): 26 functions, 105 basic blocks
+  [18/31] module mem_stage#(32): 9 functions, 35 basic blocks
+  [19/31] module write_back_stage#(32): 8 functions, 35 basic blocks
+  [20/31] module Data_Forward: 15 functions, 170 basic blocks
+  [21/31] module hazard_detection_unit: 6 functions, 12 basic blocks
+  [22/31] module early_stage_immediate_decoder#(32): 14 functions, 45 basic blocks
+  [23/31] module jump_controller#(32): 5 functions, 18 basic blocks
+  [24/31] module program_counter_ctrl#(32): 23 functions, 99 basic blocks
+  [25/31] module rv32i_decoder#(32): 10 functions, 124 basic blocks
+  [26/31] module register_file#(32,32): 77 functions, 666 basic blocks
+  [27/31] module parametric_mux#(32,2): 3 functions, 12 basic blocks
+  [28/31] module parametric_mux#(32,4): 3 functions, 16 basic blocks
+  [29/31] module function_unit_alu_shifter#(32): 920 functions, 4829 basic blocks
+  [30/31] module Branch_Controller: 11 functions, 50 basic blocks
+  [31/31] module data_organizer#(32): 16 functions, 84 basic blocks
+Linking image.so...
+Using default typical min/typ/max.
+=S:Begin run-time elaboration and static initialization...
+=N:[dumpVCD] preparing VCD dump to 'waves.vcd'.
+=N:[dump] Dump started at time 0
+=N:Starting event scheduler...
+RV32I Core RISC-V DV Testbench
+Instruction base address: 0x00001000
+Simulation started at time                    0
+Region 0 base address: 0x8000d048 (Size: 4096 bytes) , Region 0 end_address = 0x8000e047
+Region 1 base address: 0x8000e048 (Size: 65536 bytes) , Region 1 end_address = 0x8001e047
+Loading default test program
+=W:[ReadMemAddr] /mnt/d/Ensar/Tez/RV32I/digital/testbench/riscv_dv_tb/dv_top.sv:404:17: Too few data items, encountered EOF before end of specified address range.
+Default test loaded from inst_init.hex
+Test program loaded at time                    1
+Loading default region 0 data
+Loading default region 1 data
+Reset released at time                   50
+Test execution started, max_cycles =      25000
+ECALL detected at PC=0x8000601c, test completed normally
+TEST PASSED at time                61716
+=== SIMULATION SUMMARY ===
+Total cycles:        6182
+Final PC: 0x80006054
+Test passed: 1
+Test failed: 0
+=T:Simulation terminated by $finish at time 61816 (/mnt/d/Ensar/Tez/RV32I/digital/testbench/riscv_dv_tb/dv_top.sv:504);
+Run directory: /mnt/d/Ensar/Tez/RV32I/digital/sim/run/riscv_dv_test/test6/core_sim
+  System timescale is 1ns / 1ns
+  Altair DSim version: 2025.1.0 (b:R #c:449 h:df8da7d488 os:rocky_8.10)
+  Random seed: (defaulted to 1)

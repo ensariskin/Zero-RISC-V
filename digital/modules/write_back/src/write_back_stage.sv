@@ -24,8 +24,8 @@ module write_back_stage #(parameter size = 32)(
     input  logic clk,
     input  logic reset,
     input  logic [size-1 : 0] ex_stage_result_i,
-    input  logic [size-1 : 0] mem_stage_result_i,
-    input  logic [7 : 0] control_signal_i,
+    input  logic [size-1 : 0] load_data_i,
+    input  logic [10 : 0] control_signal_i,
 
     output logic [4:0] wb_stage_destination,
     output logic wb_stage_we,
@@ -37,17 +37,24 @@ module write_back_stage #(parameter size = 32)(
     tracer_interface.source tracer_if_o
     );
     localparam D = 1;
+    logic [size-1 : 0] load_data_internal;
+
+    data_organizer load_data_organizer (
+        .data_in(load_data_i),
+        .Type_sel(control_signal_i[2:0]),
+        .data_out(load_data_internal)
+    ); 
+
     parametric_mux #(.mem_width(size), .mem_depth(2)) Final_mux(
-        .addr(control_signal_i[0]),
-        .data_in({mem_stage_result_i, ex_stage_result_i}),
+        .addr(control_signal_i[3]),
+        .data_in({load_data_internal, ex_stage_result_i}),
         .data_out(wb_result_o));
 
 
-    assign control_signal_o = control_signal_i[7:2];
-    assign wb_stage_destination = control_signal_i[7:3];
-    assign wb_stage_we = control_signal_i[2];
+    assign control_signal_o = control_signal_i[10:5];
+    assign wb_stage_destination = control_signal_i[10:6];
+    assign wb_stage_we = control_signal_i[5];
     
-    /* 
     always @(posedge clk or negedge reset)
     begin
         if (!reset) begin
@@ -74,32 +81,10 @@ module write_back_stage #(parameter size = 32)(
             tracer_if_o.is_float  <= #D tracer_if_i.is_float;
             tracer_if_o.mem_size  <= #D tracer_if_i.mem_size;
             tracer_if_o.mem_addr  <= #D tracer_if_i.mem_addr;
-            tracer_if_o.mem_data  <= #D tracer_if_i.is_load ? mem_stage_result_i : tracer_if_i.mem_data; 
-            tracer_if_o.reg_data  <= #D tracer_if_i.reg_data;
+            tracer_if_o.mem_data  <= #D tracer_if_i.mem_data;
+            tracer_if_o.reg_data  <= #D tracer_if_i.is_load ? load_data_internal : tracer_if_i.reg_data; 
             tracer_if_o.fpu_flags <= #D tracer_if_i.fpu_flags; // No FPU flags in EX stage
         end
     end
-    */
-
-    always_comb
-    begin
-        if(!clk) begin
-            tracer_if_o.valid     =  1'b0; // Pass the valid signal from tracer_if_i
-        end
-        else begin
-            tracer_if_o.valid     =  tracer_if_i.valid; // Mark the tracer interface as valid
-            tracer_if_o.pc        =  tracer_if_i.pc;
-            tracer_if_o.instr     =  tracer_if_i.instr;
-            tracer_if_o.reg_addr  =  tracer_if_i.reg_addr;
-            tracer_if_o.is_load   =  tracer_if_i.is_load;
-            tracer_if_o.is_store  =  tracer_if_i.is_store;
-            tracer_if_o.is_float  =  tracer_if_i.is_float;
-            tracer_if_o.mem_size  =  tracer_if_i.mem_size;
-            tracer_if_o.mem_addr  =  tracer_if_i.mem_addr;
-            tracer_if_o.mem_data  =  tracer_if_i.mem_data;
-            tracer_if_o.reg_data  =  tracer_if_i.is_load ? mem_stage_result_i : tracer_if_i.reg_data; 
-            tracer_if_o.fpu_flags =  tracer_if_i.fpu_flags; // No FPU flags in EX stage
-        end
-    end
-
+    
 endmodule

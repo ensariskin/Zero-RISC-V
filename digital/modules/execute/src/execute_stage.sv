@@ -83,12 +83,12 @@ module execute_stage #(parameter size = 32)(
 
 	parametric_mux #(.mem_width(size), .mem_depth(2)) pc_correction_mux(
 		.addr(isJALR),
-		.data_in({function_unit_o, pc_plus_i}),
+		.data_in({{function_unit_o[31:2], 2'b00}, {pc_plus_i[31:2], 2'b00}}), // JALR or PC+4
 		.data_out(correct_pc));
 
     parametric_mux #(.mem_width(size), .mem_depth(2)) pc_mux(
         .addr(control_signal_i[5]),                             //save pc value or function unit output
-        .data_in({pc_plus_i, function_unit_o}),
+        .data_in({{pc_plus_i[31:2], 2'b00}, function_unit_o}),
         .data_out(calculated_result_internal));
 
     // Internal assignments
