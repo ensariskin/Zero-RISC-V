@@ -21,9 +21,17 @@ module dv_top;
     
     // Memory parameters
     parameter INST_MEM_SIZE = 32'h10000;  // 64KB instruction memory
-    parameter DATA_MEM_SIZE = 32'h10000;  // 64KB data memory
+    parameter REGION0_SIZE = 32'h1000;    // 4KB region 0 memory
+    parameter REGION1_SIZE = 32'h10000;   // 64KB region 1 memory  
     parameter INST_BASE_ADDR = 32'h00001000;
-    parameter DATA_BASE_ADDR = 32'h10000000;
+    
+    // Default region base addresses (can be overridden via plusargs)
+    parameter REGION0_BASE_ADDR_DEFAULT = 32'h80000000;  // Default Region 0 start address
+    parameter REGION1_BASE_ADDR_DEFAULT = 32'h80001000;  // Default Region 1 start address
+    
+    // Runtime configurable region base addresses
+    logic [31:0] region0_base_addr;
+    logic [31:0] region1_base_addr;
     localparam D = 1; // Delay for simulation purposes
     // Clock and reset
     logic clk;
@@ -50,7 +58,7 @@ module dv_top;
     logic [31:0] inst_wb_dat_i;
     logic inst_wb_err;
     
-    // Wishbone signals for data memory
+    // Wishbone signals for data memory selector
     logic data_wb_cyc;
     logic data_wb_stb;
     logic data_wb_we;
@@ -62,8 +70,53 @@ module dv_top;
     logic [31:0] data_wb_dat_i;
     logic data_wb_err;
     
+    // Wishbone signals for region 0 memory
+    logic region0_wb_cyc;
+    logic region0_wb_stb;
+    logic region0_wb_we;
+    logic [31:0] region0_wb_adr;
+    logic [31:0] region0_wb_dat_o;
+    logic [3:0] region0_wb_sel;
+    logic region0_wb_stall;
+    logic region0_wb_ack;
+    logic [31:0] region0_wb_dat_i;
+    logic region0_wb_err;
+    
+    // Wishbone signals for region 1 memory
+    logic region1_wb_cyc;
+    logic region1_wb_stb;
+    logic region1_wb_we;
+    logic [31:0] region1_wb_adr;
+    logic [31:0] region1_wb_dat_o;
+    logic [3:0] region1_wb_sel;
+    logic region1_wb_stall;
+    logic region1_wb_ack;
+    logic [31:0] region1_wb_dat_i;
+    logic region1_wb_err;
+    
     // Tracer signals
     tracer_interface tracer_if();
+    
+     // Simulation control and monitoring
+    initial begin
+        $display("RV32I Core RISC-V DV Testbench");
+        $display("Instruction base address: 0x%08x", INST_BASE_ADDR);
+        $display("Simulation started at time %t", $time);
+    end
+
+    // Initialize region base addresses from plusargs or use defaults
+    initial begin
+        if (!$value$plusargs("region0_base=%h", region0_base_addr)) begin
+            region0_base_addr = REGION0_BASE_ADDR_DEFAULT;
+            $display("Using default Region 0 base address: 0x%08x", region0_base_addr);
+
+        end
+        if (!$value$plusargs("region1_base=%h", region1_base_addr)) begin
+            region1_base_addr = REGION1_BASE_ADDR_DEFAULT;
+            $display("Using default Region 1 base address: 0x%08x", region1_base_addr);
+        end
+    end
+    
     // Test control
     logic test_passed;
     logic test_failed;
@@ -159,7 +212,7 @@ module dv_top;
     // Instruction memory model
     memory_2rw_wb #(
         .DATA_WIDTH(32),
-        .ADDR_WIDTH(14),  // 16KB memory (64K bytes / 4 bytes per word = 16K words = 2^14)
+        .ADDR_WIDTH(16),  // 16KB memory (64K bytes / 4 bytes per word = 16K words = 2^14)
         .NUM_WMASKS(4)
     ) inst_memory (
         .port0_wb_cyc_i(inst_wb_cyc),
@@ -189,25 +242,101 @@ module dv_top;
         .port1_wb_clk_i(clk)
     );
     
-    // Data memory model
+    // Data memory selector - routes requests to appropriate region
+    data_memory_selector data_mem_selector (
+        .clk(clk),
+        .rst_n(rst_n),
+        
+        // Core interface (from data wb adapter)
+        .core_wb_cyc_i(data_wb_cyc),
+        .core_wb_stb_i(data_wb_stb),
+        .core_wb_we_i(data_wb_we),
+        .core_wb_adr_i(data_wb_adr),
+        .core_wb_dat_i(data_wb_dat_o),
+        .core_wb_sel_i(data_wb_sel),
+        .core_wb_stall_o(data_wb_stall),
+        .core_wb_ack_o(data_wb_ack),
+        .core_wb_dat_o(data_wb_dat_i),
+        .core_wb_err_o(data_wb_err),
+        // Region 0 memory interface  
+        .region0_wb_cyc_o(region0_wb_cyc),
+        .region0_wb_stb_o(region0_wb_stb),
+        .region0_wb_we_o(region0_wb_we),
+        .region0_wb_adr_o(region0_wb_adr),
+        .region0_wb_dat_o(region0_wb_dat_o),
+        .region0_wb_sel_o(region0_wb_sel),
+        .region0_wb_stall_i(region0_wb_stall),
+        .region0_wb_ack_i(region0_wb_ack),
+        .region0_wb_dat_i(region0_wb_dat_i),
+        .region0_wb_err_i(region0_wb_err),
+        // Region 1 memory interface
+        .region1_wb_cyc_o(region1_wb_cyc),
+        .region1_wb_stb_o(region1_wb_stb),
+        .region1_wb_we_o(region1_wb_we),
+        .region1_wb_adr_o(region1_wb_adr),
+        .region1_wb_dat_o(region1_wb_dat_o),
+        .region1_wb_sel_o(region1_wb_sel),
+        .region1_wb_stall_i(region1_wb_stall),
+        .region1_wb_ack_i(region1_wb_ack),
+        .region1_wb_dat_i(region1_wb_dat_i),
+        .region1_wb_err_i(region1_wb_err),
+
+        .REGION0_BASE(region0_base_addr),
+        .REGION1_BASE(region1_base_addr)
+    );
+    
+    // Region 0 data memory (4KB = 1K words)
     memory_2rw_wb #(
         .DATA_WIDTH(32),
-        .ADDR_WIDTH(14),  // 16KB memory
+        .ADDR_WIDTH(10),  // 1K words = 4KB memory (2^10 = 1024 words)
         .NUM_WMASKS(4)
-    ) data_memory (
-        .port0_wb_cyc_i(data_wb_cyc),
-        .port0_wb_stb_i(data_wb_stb),
-        .port0_wb_we_i(data_wb_we),
-        .port0_wb_adr_i(data_wb_adr),  // Word-aligned address
-        .port0_wb_dat_i(data_wb_dat_o),
-        .port0_wb_sel_i(data_wb_sel),
-        .port0_wb_stall_o(data_wb_stall),
-        .port0_wb_ack_o(data_wb_ack),
-        .port0_wb_dat_o(data_wb_dat_i),
-        .port0_wb_err_o(data_wb_err),
+    ) region0_data_memory (
+        .port0_wb_cyc_i(region0_wb_cyc),
+        .port0_wb_stb_i(region0_wb_stb),
+        .port0_wb_we_i(region0_wb_we),
+        .port0_wb_adr_i(region0_wb_adr),  // Local address from selector
+        .port0_wb_dat_i(region0_wb_dat_o),
+        .port0_wb_sel_i(region0_wb_sel),
+        .port0_wb_stall_o(region0_wb_stall),
+        .port0_wb_ack_o(region0_wb_ack),
+        .port0_wb_dat_o(region0_wb_dat_i),
+        .port0_wb_err_o(region0_wb_err),
         .port0_wb_rst_i(~rst_n),
         .port0_wb_clk_i(clk),
-        // Port 1 unused for data memory in this simple setup
+        // Port 1 unused for region 0 memory
+        .port1_wb_cyc_i(1'b0),
+        .port1_wb_stb_i(1'b0),
+        .port1_wb_we_i(1'b0),
+        .port1_wb_adr_i(32'h0),
+        .port1_wb_dat_i(32'h0),
+        .port1_wb_sel_i(4'h0),
+        .port1_wb_stall_o(),
+        .port1_wb_ack_o(),
+        .port1_wb_dat_o(),
+        .port1_wb_err_o(),
+        .port1_wb_rst_i(~rst_n),
+        .port1_wb_clk_i(clk)
+    );
+    
+    // Region 1 data memory (64KB = 16K words)
+    memory_2rw_wb #(
+        .DATA_WIDTH(32),
+        .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
+        .NUM_WMASKS(4)
+    ) region1_data_memory (
+        .port0_wb_cyc_i(region1_wb_cyc),
+        .port0_wb_stb_i(region1_wb_stb),
+        .port0_wb_we_i(region1_wb_we),
+        .port0_wb_adr_i(region1_wb_adr),  // Local address from selector
+        .port0_wb_dat_i(region1_wb_dat_o),
+        .port0_wb_sel_i(region1_wb_sel),
+        .port0_wb_stall_o(region1_wb_stall),
+        .port0_wb_ack_o(region1_wb_ack),
+        .port0_wb_dat_o(region1_wb_dat_i),
+        .port0_wb_err_o(region1_wb_err),
+        .port0_wb_rst_i(~rst_n),
+        .port0_wb_clk_i(clk),
+        // Port 1 unused for region 1 memory
         .port1_wb_cyc_i(1'b0),
         .port1_wb_stb_i(1'b0),
         .port1_wb_we_i(1'b0),
@@ -271,9 +400,9 @@ module dv_top;
             // Load default test program for basic verification
             $display("Loading default test program");
             // You can specify a default hex file here or load from testbench directory
-            if ($fopen("init.hex", "r")) begin
-                $readmemh("init.hex", inst_memory.mem);
-                $display("Default test loaded from init.hex");
+            if ($fopen("inst_init.hex", "r")) begin
+                $readmemh("inst_init.hex", inst_memory.mem);
+                $display("Default test loaded from inst_init.hex");
             end else begin
                 $display("No default test found, using NOP instructions");
                 // Fill memory with NOP instructions (addi x0, x0, 0)
@@ -285,9 +414,37 @@ module dv_top;
         
         $display("Test program loaded at time %t", $time);
 
-        // Clear data memory
-        for (int i = 0; i < DATA_MEM_SIZE / 4; i++) begin
-            data_memory.mem[i] = 32'h0;  // Initialize data memory to zero
+        // Clear both data memory regions
+        for (int i = 0; i < REGION0_SIZE / 4; i++) begin
+            region0_data_memory.mem[i] = 32'h0;  // Initialize region 0 memory to zero
+        end
+        
+        for (int i = 0; i < REGION1_SIZE / 4; i++) begin
+            region1_data_memory.mem[i] = 32'h0;  // Initialize region 1 memory to zero
+        end
+        
+        // Load region data if specified
+        if ($test$plusargs("load_region_data")) begin
+            string region0_file, region1_file;
+            if ($value$plusargs("region0_hex=%s", region0_file)) begin
+                $display("Loading region 0 data from: %s", region0_file);
+                $readmemh(region0_file, region0_data_memory.mem);
+                $display("Region 0 data loaded from %s", region0_file);
+            end
+            else if ($fopen("region_0.hex", "r")) begin
+                $display("Loading default region 0 data");
+                $readmemh("region_0.hex", region0_data_memory.mem);
+            end
+
+            if ($value$plusargs("region1_hex=%s", region1_file)) begin
+                $display("Loading region 1 data from: %s", region1_file);
+                $readmemh(region1_file, region1_data_memory.mem);
+                $display("Region 1 data loaded from %s", region1_file);
+            end
+            else if ($fopen("region_1.hex", "r")) begin
+                $display("Loading default region 1 data");
+                $readmemh("region_1.hex", region1_data_memory.mem);
+            end
         end
     end
     
@@ -297,6 +454,7 @@ module dv_top;
     // Detect test completion based on various criteria
     
     logic ecall_detected;
+    assign ecall_detected = tracer_if.valid && (tracer_if.instr == 32'h00000073); // ECALL instruction
     logic test_signature_addr_hit;
     logic [31:0] max_cycles;
     
@@ -346,13 +504,7 @@ module dv_top;
         $finish;
     end
     
-    // Simulation control and monitoring
-    initial begin
-        $display("RV32I Core RISC-V DV Testbench");
-        $display("Instruction base address: 0x%08x", INST_BASE_ADDR);
-        $display("Data base address: 0x%08x", DATA_BASE_ADDR);
-        $display("Simulation started at time %t", $time);
-    end
+   
 
     // Enhanced monitoring - direct access to fetch stage and PC module
     logic [31:0] fetch_pc;           // PC from fetch stage 

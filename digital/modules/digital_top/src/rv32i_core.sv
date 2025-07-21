@@ -58,7 +58,7 @@ module rv32i_core #(parameter size = 32)(
 
     logic [size-1 : 0] FU_WB_i;
     logic [size-1 : 0] MEM_result_WB_i;
-    logic [7 : 0] Control_Signal_WB_i;
+    logic [10 : 0] Control_Signal_WB_i;
 
     logic [size-1 : 0] Final_Result_WB_o;
     logic [5 : 0] Control_Signal_WB_o;
@@ -161,14 +161,11 @@ module rv32i_core #(parameter size = 32)(
         .store_data_i(RAM_DATA_MEM_i),
         .control_signal_i(Control_Signal_MEM_i),
 
-        .load_data_i(data_mem_data_rd_data),
-
         .store_data_o(data_mem_data_wr_data),
         .data_mem_width_sel(data_mem_control),
         .data_mem_rw(data_mem_rw),
 
         .execute_result_o(FU_WB_i),
-        .load_data_o(MEM_result_WB_i),
 
         .control_signal_o(Control_Signal_WB_i),
         .mem_stage_destination(RD_MEM),
@@ -181,7 +178,7 @@ module rv32i_core #(parameter size = 32)(
         .clk(clk),
         .reset(reset),
         .ex_stage_result_i(FU_WB_i),
-        .mem_stage_result_i(data_mem_data_rd_data),
+        .load_data_i(data_mem_data_rd_data),
         .control_signal_i(Control_Signal_WB_i),
 
         .wb_stage_destination(RD_WB),

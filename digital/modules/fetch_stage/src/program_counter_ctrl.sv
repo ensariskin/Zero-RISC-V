@@ -54,9 +54,9 @@ module program_counter_ctrl #(parameter size = 32)(
 	end
 
 	assign pc_plus_four = pc_current_val + 32'd4; // 32'd4
-	assign pc_plus_imm  = pc_current_val + imm_i;
+	assign pc_plus_imm  = pc_current_val + {imm_i[31:2], 2'b00}; // prevent misalignment issues, don't use 2 LSBs
 	// TODO : use rs1 value instead of pc_current_val, how can we predict rs1 value? or should we wait until execuete stage calculate correct result
-	assign rs1_plus_imm_prediction = pc_current_val + imm_i;
+	assign rs1_plus_imm_prediction = pc_current_val + {imm_i[31:2], 2'b00};
 
 	// next pc value, TODO : handle jalr case
 	parametric_mux #(.mem_width(size), .mem_depth(4)) immeadiate_mux(

@@ -50,6 +50,6 @@ module data_organizer #(parameter size = 32)(
         .data_in({{size{1'b0}},{size{1'b0}}, {(size/2){(sign&data_in[15])}},{(size/2){1'b0}}, {(size*3/4){(sign&data_in[7])}}, {(size/4){1'b0}}}),
         .data_out(mask2));
 
-    assign data_out = (mask1 & data_in) | mask2;
+    assign data_out = (mask1 & data_in) | mask2; // commented becasue I am not sure how unsigned is worked
 
 endmodule

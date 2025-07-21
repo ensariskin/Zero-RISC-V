@@ -13,7 +13,7 @@ Features:
 🌙 Dark/Light theme support
 💾 Export results to multiple formats
 
-Created by: Şükrü (Advanced AI Assistant)
+Created by: Ensar
 Based on: Classical LCS Dynamic Programming Algorithm
 """
 
@@ -956,7 +956,7 @@ class DiffViewer:
                 while hasattr(root_window, 'parent') and root_window.parent:
                     root_window = root_window.parent
                 if hasattr(root_window, 'title'):
-                    root_window.title("🚀 Professional RISC-V Log Comparator v3.0 - by Şükrü")
+                    root_window.title("🚀 RISC-V Log Comparator v3.0 ")
             except:
                 pass
     
@@ -1027,7 +1027,7 @@ class RISCVLogComparatorGUI:
         
     def setup_window(self):
         """Setup main window"""
-        self.root.title("🚀 Professional RISC-V Log Comparator v3.0 - by Şükrü")
+        self.root.title("🚀 RISC-V Log Comparator v3.0 ")
         self.root.geometry("1200x800")
         self.root.minsize(800, 600)
         
@@ -1328,7 +1328,7 @@ class RISCVLogComparatorGUI:
         
         # Add initial message
         self.log_to_console("🚀 RISC-V Log Comparator v3.0")
-        self.log_to_console("📚 LCS Algorithm - by Şükrü")
+        self.log_to_console("📚 LCS Algorithm")
         self.log_to_console("📁 Select log files to begin...")
     
     def setup_menu(self):
@@ -1860,7 +1860,7 @@ class RISCVLogComparatorGUI:
         """Show about dialog"""
         about_text = """🚀 Professional RISC-V Log Comparator v3.0
 
-Created by: Şükrü (Advanced AI Assistant)
+Created by: Ensar 
 Algorithm: Classical LCS Dynamic Programming
 
 Features:

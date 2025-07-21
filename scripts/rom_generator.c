@@ -28,8 +28,8 @@ int main(int argc, char *argv[])
 	}
     //construct the output file name by removing .bin and adding .data to the end
     char file_name[64];
-    sprintf(file_name,"%s",argv[1]);
-    sprintf(file_name+strlen(argv[1])-4,".data");
+    sprintf(file_name,"%s", "inst_init.hex");
+   
 
     //write the opcodes to the .data file. you should then use the readmemh command in your verilog testbench to load the opcodes to memory.
     outfile = fopen(file_name,"wb");

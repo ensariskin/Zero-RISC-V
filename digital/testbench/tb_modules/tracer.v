@@ -17,15 +17,16 @@ integer file_pointer;
 initial begin
 file_pointer = $fopen("trace.log", "w"); //The file is normally located in <vivado-dir>\HornetRISCV-vivado.sim\sim_1\behav\xsim, so let's use relative path to move it to the main folder
     forever begin
-        @(posedge valid); //This is required otherwise testbench ignores the update signal
+        @(posedge clk_i); //This is required otherwise testbench ignores the update signal
+        if(valid) begin
         $fwrite(file_pointer, "0x%8h (0x%8h)", pc, instr);
         if (is_store) begin
             
             if(mem_size == 2'b00) begin
-                $fwrite(file_pointer, " mem 0x%8h 0x%2h", mem_addr, mem_data);
+                $fwrite(file_pointer, " mem 0x%8h 0x%2h", mem_addr, mem_data[7:0]);
             end
             else if(mem_size == 2'b01) begin
-                $fwrite(file_pointer, " mem 0x%8h 0x%4h", mem_addr, mem_data);
+                $fwrite(file_pointer, " mem 0x%8h 0x%4h", mem_addr, mem_data[15:0]);
             end
             else begin
                 $fwrite(file_pointer, " mem 0x%8h 0x%8h", mem_addr, mem_data);
@@ -62,6 +63,7 @@ file_pointer = $fopen("trace.log", "w"); //The file is normally located in <viva
             end
         end
         $fwrite(file_pointer, "\n");
+        end
     end
 end
 

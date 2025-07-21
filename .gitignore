@@ -16,7 +16,6 @@
 *.elf
 *.bin
 *.s
-*.S
 
 
 # Ignore simulation work directories
