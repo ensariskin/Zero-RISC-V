@@ -31,30 +31,37 @@ parameter DATA_WIDTH = 32 ;
 parameter ADDR_WIDTH = 9 ;
 parameter RAM_DEPTH = 1 << ADDR_WIDTH;
 
+// Number of address bits for byte level addressing. DATA_WIDTH is fixed to
+// 32-bit, so we need two extra address bits to address individual bytes.
+localparam BYTE_ADDR_WIDTH = ADDR_WIDTH + 2;
+localparam RAM_BYTE_DEPTH  = 1 << BYTE_ADDR_WIDTH;
+
 localparam D = 1; // Delay for simulation purposes
 
 wire clk0; // clock
 wire cs0; // active low chip select
 wire we0; // active low write control
 wire [NUM_WMASKS-1:0] wmask0; // write mask
-wire [ADDR_WIDTH-1:0] addr0;
+wire [BYTE_ADDR_WIDTH-1:0] addr0;
 wire [DATA_WIDTH-1:0] din0;
 wire [DATA_WIDTH-1:0] dout0;
 wire clk1; // clock
 wire cs1; // active low chip select
 wire we1; // active low write control
 wire [NUM_WMASKS-1:0] wmask1; // write mask
-wire [ADDR_WIDTH-1:0] addr1;
+wire [BYTE_ADDR_WIDTH-1:0] addr1;
 wire [DATA_WIDTH-1:0] din1;
 wire [DATA_WIDTH-1:0] dout1;
 
-reg [DATA_WIDTH-1:0] mem [0:RAM_DEPTH-1] /*verilator public*/;
+// Byte-addressable memory to support misaligned accesses
+reg [7:0] mem [0:RAM_BYTE_DEPTH-1] /*verilator public*/;
 
 assign clk0 = port0_wb_clk_i;
 assign cs0 = ~port0_wb_stb_i;
 assign we0 = ~port0_wb_we_i;
 assign wmask0 = port0_wb_sel_i;
-assign addr0 = port0_wb_adr_i[ADDR_WIDTH+1 : 2];
+// Byte address within the memory
+assign addr0 = port0_wb_adr_i[BYTE_ADDR_WIDTH-1:0];
 assign din0 = port0_wb_dat_i;
 assign port0_wb_stall_o = 1'b0;
 reg port0_ack;
@@ -72,7 +79,7 @@ assign clk1 = port1_wb_clk_i;
 assign cs1 = ~port1_wb_stb_i;
 assign we1 = ~port1_wb_we_i;
 assign wmask1 = port1_wb_sel_i;
-assign addr1 = port1_wb_adr_i[ADDR_WIDTH+1 : 2];
+assign addr1 = port1_wb_adr_i[BYTE_ADDR_WIDTH-1:0];
 assign din1 = port1_wb_dat_i;
 assign port1_wb_stall_o = 1'b0;
 reg port1_ack;
@@ -95,42 +102,35 @@ initial $readmemh("bootloader.mem",mem,7488,8191);
 
   // Memory Write Block Port 0
   // Write Operation : When we0 = 0, cs0 = 0
-always @ (posedge clk0)
+always @(posedge clk0)
 begin
-    if ( !cs0 && !we0 )
-    begin
-        if (wmask0[0])
-            mem[addr0][7:0] = din0[7:0];
-        if (wmask0[1])
-            mem[addr0][15:8] = din0[15:8];
-        if (wmask0[2])
-            mem[addr0][23:16] = din0[23:16];
-        if (wmask0[3])
-            mem[addr0][31:24] = din0[31:24];
+    if (!cs0 && !we0) begin
+        integer i;
+        for (i = 0; i < 4; i = i + 1) begin
+            if (wmask0[i])
+                mem[addr0 + i] <= din0[i*8 +: 8];
+        end
     end
 end
 
   // Memory Read Block Port 0
   // Read Operation : When we0 = 1, cs0 = 0
-always @ (posedge clk0)
+always @(posedge clk0)
 begin
     if (!cs0 && we0)
-        port0_wb_dat_o <= #D mem[addr0];
+        port0_wb_dat_o <= #D {mem[addr0+3], mem[addr0+2], mem[addr0+1], mem[addr0]};
 end
 
   // Memory Write Block Port 1
   // Write Operation : When we1 = 0, cs1 = 0
-always @ (posedge clk1)
+always @(posedge clk1)
 begin
-    if ( !cs1 && !we1 ) begin
-        if (wmask1[0])
-            mem[addr1][7:0] = din1[7:0];
-        if (wmask1[1])
-            mem[addr1][15:8] = din1[15:8];
-        if (wmask1[2])
-            mem[addr1][23:16] = din1[23:16];
-        if (wmask1[3])
-            mem[addr1][31:24] = din1[31:24];
+    if (!cs1 && !we1) begin
+        integer i;
+        for (i = 0; i < 4; i = i + 1) begin
+            if (wmask1[i])
+                mem[addr1 + i] <= din1[i*8 +: 8];
+        end
     end
 end
 
@@ -139,7 +139,7 @@ end
 always @(*) //(posedge clk1)
 begin : MEM_READ1
     if (!cs1 && we1)
-        port1_wb_dat_o = mem[addr1]; // <= #D
+        port1_wb_dat_o = {mem[addr1+3], mem[addr1+2], mem[addr1+1], mem[addr1]};
 end
 
 endmodule
