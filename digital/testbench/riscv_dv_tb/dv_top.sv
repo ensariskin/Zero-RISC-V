@@ -210,7 +210,7 @@ module dv_top;
     );
     
     // Instruction memory model
-    memory_2rw_wb #(
+    memory_2rw_old #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(16),  // 16KB memory (64K bytes / 4 bytes per word = 16K words = 2^14)
         .NUM_WMASKS(4)
@@ -415,11 +415,11 @@ module dv_top;
         $display("Test program loaded at time %t", $time);
 
         // Clear both data memory regions
-        for (int i = 0; i < REGION0_SIZE / 4; i++) begin
+        for (int i = 0; i < REGION0_SIZE; i++) begin
             region0_data_memory.mem[i] = 32'h0;  // Initialize region 0 memory to zero
         end
         
-        for (int i = 0; i < REGION1_SIZE / 4; i++) begin
+        for (int i = 0; i < REGION1_SIZE; i++) begin
             region1_data_memory.mem[i] = 32'h0;  // Initialize region 1 memory to zero
         end
         

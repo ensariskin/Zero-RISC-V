@@ -81,8 +81,16 @@ def extract_regions_from_assembly(assembly_file):
                 hex_values = re.findall(r'0x([0-9a-fA-F]{8})', hex_values_str)
                 
                 for hex_val in hex_values:
-                    # Convert to uppercase and add to current region
-                    regions[current_region].append(hex_val.upper())
+                    # Convert 32-bit hex to 8-bit bytes in little-endian format
+                    # 0xAABBCCDD becomes: DD, CC, BB, AA
+                    hex_val = hex_val.upper()
+                    byte3 = hex_val[6:8]  # DD (LSB)
+                    byte2 = hex_val[4:6]  # CC
+                    byte1 = hex_val[2:4]  # BB
+                    byte0 = hex_val[0:2]  # AA (MSB)
+                    
+                    # Add bytes in little-endian order
+                    regions[current_region].extend([byte3, byte2, byte1, byte0])
     
     return regions
 
@@ -113,11 +121,11 @@ def write_hex_files(regions, output_dir=None):
         
         try:
             with open(hex_filepath, 'w') as f:
-                for hex_value in hex_data:
-                    f.write(f"{hex_value}\n")
+                for hex_byte in hex_data:
+                    f.write(f"{hex_byte}\n")
             
             files_created.append(hex_filepath)
-            print(f"Created {hex_filename} with {len(hex_data)} hex values")
+            print(f"Created {hex_filename} with {len(hex_data)} hex bytes")
             
         except Exception as e:
             print(f"Error writing {hex_filename}: {e}")
@@ -133,6 +141,7 @@ def main():
         print("\nExample: python region_extractor.py riscv_rand_instr_test_0.S")
         print("\nThis script will extract region data from the assembly file")
         print("and create separate .hex files for each region found.")
+        print("Each 32-bit word will be split into 8-bit bytes in little-endian format.")
         sys.exit(1)
     
     assembly_file = sys.argv[1]
@@ -155,7 +164,8 @@ def main():
     
     print(f"\nFound {len(regions)} region(s):")
     for region_name, hex_data in regions.items():
-        print(f"  {region_name}: {len(hex_data)} hex values")
+        word_count = len(hex_data) // 4  # 4 bytes per word
+        print(f"  {region_name}: {word_count} words ({len(hex_data)} bytes)")
     
     print("\nGenerating hex files...")
     print("-" * 50)
@@ -168,6 +178,7 @@ def main():
         print(f"  {filepath}")
     
     print("\nRegion extraction completed!")
+    print("Note: 32-bit words have been split into 8-bit bytes in little-endian format")
 
 
 if __name__ == "__main__":
