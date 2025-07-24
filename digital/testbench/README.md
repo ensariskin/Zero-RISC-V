@@ -107,3 +107,28 @@ Testbench execution follows standardized verification procedures:
 - Vivado Simulator support
 - Synopsys VCS compatibility
 - Open-source Icarus Verilog support
+
+## Fault Injection Utility
+
+`fault_injector.sv` provides a simple mechanism to inject transient faults into
+a user defined list of signals. The list of target signals lives in
+`include/fault_target_list.svh` where each signal is aliased to a slot in the
+`fi_targets` array. Extend this file to inject faults into additional signals.
+The injector can be instantiated or bound to the testbench and configured via
+plusargs.
+
+### Usage Example
+
+```bash
+dsim +fi_seed=42 +fi_interval=5000 \
+     -timescale 1ns/1ns -top work.dv_top -F digital/sim/processor.f
+```
+
+Parameters:
+
+- `fi_seed`       – Random seed for fault generation.
+- `fi_interval`   – Number of cycles between fault injections.
+
+The `fi_targets` array defined in `fault_target_list.svh` aliases the DUT
+signals to be affected. Edit this file to add or remove fault injection points
+and update `NUM_FAULT_TARGETS` accordingly.
