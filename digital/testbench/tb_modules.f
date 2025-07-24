@@ -6,5 +6,6 @@ tb_modules/tracer.v
 tb_modules/rv32i_inst_wb_adapter.sv
 tb_modules/rv32i_data_wb_adapter.sv
 tb_modules/rv32i_tracer.sv
+fault_injector.sv
 
 riscv_dv_tb/dv_top.sv

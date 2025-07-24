@@ -368,6 +368,20 @@ module dv_top;
         .mem_data   (tracer_if.mem_data),
         .fpu_flags  (tracer_if.fpu_flags)
     );
+
+    // Fault injector instance - target signals are defined in
+    // include/fault_target_list.svh so users can easily extend the list.
+    `include "../include/fault_target_list.svh"
+
+    fault_injector #(
+        .POLICY(0)
+    ) fi_inst (
+        .clk   (clk),
+        .rst_n (rst_n),
+        .seed  (1),
+        .fault_interval(1000),
+        .targets(fi_targets)
+    );
     
     // Test program loader
     initial begin
