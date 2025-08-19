@@ -24,7 +24,7 @@
 **/metrics.db
 
 # Ignore log files
-#*.log
+*.log
 
 # Ignore backup files
 *~

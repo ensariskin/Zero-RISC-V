@@ -41,16 +41,7 @@ module fault_injector #(
         inject_cnt = 0;
         sel_idx = 0;
         rand_val = 0;
-        void'(std::randomize() with {`__RANDOMIZE_INIT;});
         $display("Fault injector enabled: seed=%0d interval=%0d targets=%0d", local_seed, interval, NUM_TARGETS);
-    end
-
-    // Release all signals on reset
-    always @(negedge rst_n) begin
-        for (int i = 0; i < NUM_TARGETS; i++) begin
-            release targets[i];
-        end
-        inject_cnt = 0;
     end
 
     // Main injection loop
@@ -58,6 +49,7 @@ module fault_injector #(
         if (rst_n) begin
             inject_cnt++;
             if (inject_cnt >= interval) begin
+                
                 inject_cnt = 0;
                 if (POLICY == 0) begin
                     void'(std::randomize(sel_idx) with {sel_idx < NUM_TARGETS;});
@@ -66,7 +58,8 @@ module fault_injector #(
                 end
                 void'(std::randomize(rand_val));
                 force targets[sel_idx] = rand_val;
-                #1;
+                $display("Error: Injecting fault into target[%0d] with value %0d", sel_idx, rand_val);
+                @(posedge clk); // Wait for next clock edge
                 release targets[sel_idx];
             end
         end

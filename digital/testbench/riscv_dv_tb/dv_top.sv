@@ -369,8 +369,10 @@ module dv_top;
         .fpu_flags  (tracer_if.fpu_flags)
     );
 
+    // For now I will try xcelium fault simulator
     // Fault injector instance - target signals are defined in
     // include/fault_target_list.svh so users can easily extend the list.
+    /* 
     `include "../include/fault_target_list.svh"
 
     fault_injector #(
@@ -379,10 +381,10 @@ module dv_top;
         .clk   (clk),
         .rst_n (rst_n),
         .seed  (1),
-        .fault_interval(1000),
+        .fault_interval(100),
         .targets(fi_targets)
     );
-    
+    */
     // Test program loader
     initial begin
         // Wait a bit for memory to initialize
