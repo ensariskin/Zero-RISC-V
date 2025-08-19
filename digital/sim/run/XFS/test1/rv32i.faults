@@ -1,0 +1,1 @@
+fault_target "dv_top.dut..." -type sa0+sa1

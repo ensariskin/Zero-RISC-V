@@ -157,6 +157,7 @@ module dv_top;
         .reset(rst_n),
         .ins_address(ins_address),
         .instruction_i(instruction_i),
+        .instruction_valid(1'b1),
         .data_mem_rw(data_mem_rw),
         .data_mem_addr_o(data_mem_addr_o),
         .data_mem_data_wr_data(data_mem_data_wr_data),

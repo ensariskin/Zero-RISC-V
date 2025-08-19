@@ -1,0 +1,5 @@
+//
+// File created by:  xrun
+// Do not modify this file
+
+s1::(19Aug2025:17:12:52):( xrun -sv -F /home/iskin/work/cores/Zero-RISC-V/digital/modules/digital_top/digital_top.f -F /home/iskin/work/cores/Zero-RISC-V/digital/testbench/tb_modules.f -top dv_top +region0_base=8000e000 +region1_base=8000f000 -access +rwc -gui )

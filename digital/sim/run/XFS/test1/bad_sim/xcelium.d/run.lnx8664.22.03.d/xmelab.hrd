@@ -1,0 +1,16 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+-FAULT_TOP
+dv_top.dut
+-FAULT_FILE
+../rv32i.faults
+-FAULT_WORK
+fault_db
+-timescale
+1ns/1ns
+
+dv_top
+-ACCESS
++rwc

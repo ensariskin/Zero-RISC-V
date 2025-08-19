@@ -1,0 +1,9 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
+-sv
+-INCDIR
+/home/iskin/work/cores/Zero-RISC-V/digital/testbench/tb_modules
+-INCDIR
+/home/iskin/work/cores/Zero-RISC-V/digital/testbench/include
