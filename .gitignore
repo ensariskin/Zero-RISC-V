@@ -12,7 +12,7 @@
 # Ignore compiled object files and binaries
 *.o
 *.so
-*.hex
+#*.hex
 *.elf
 *.bin
 *.s
