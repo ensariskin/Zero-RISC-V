@@ -84,7 +84,7 @@ module rv32i_core #(parameter size = 32)(
     tracer_interface tracer_if_execute_mem();
     tracer_interface tracer_if_mem_wb();    
 
-    fetch_stage Ins_Fetch(  // reformatting is done
+    fetch_stage IF(  // reformatting is done
         .clk(clk),
         .reset(reset),
         .buble(buble),
