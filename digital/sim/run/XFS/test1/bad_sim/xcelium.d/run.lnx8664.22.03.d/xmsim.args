@@ -1,0 +1,35 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
++region0_base=8000e000
++region1_base=8000f000
++incdir+tb_modules
++incdir+include
+-amsdlibdir
+./xcelium.d/AMSD
+-XMERROR
+ICFNFR
+-xmfatal
+FLTONF
+-FAULT_WORK
+fault_db
+-FAULT_OVERWRITE
+-STATUS
+-MESSAGES
++EMGRLOG
+xrun_elab_c.log
+-XLSTIME
+1755643570
+-XLKEEP
+-XLMODE
+./xcelium.d/run.lnx8664.22.03.d
+-RUNMODE
+-CDSLIB
+./xcelium.d/run.lnx8664.22.03.d/cds.lib
+-HDLVAR
+./xcelium.d/run.lnx8664.22.03.d/hdl.var
+-XLNAME
+xrun
+-XLVERSION
+"TOOL:	xrun(64)	22.03-s005"

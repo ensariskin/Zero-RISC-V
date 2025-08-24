@@ -1,0 +1,23 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
++region0_base=8000e000
++region1_base=8000f000
++incdir+tb_modules
++incdir+include
+-ACCESS
++rwc
+-MESSAGES
+dv_top
+-XLMODE
+./xcelium.d/run.lnx86.22.03.d
+-RUNMODE
+-CDSLIB
+./xcelium.d/run.lnx86.22.03.d/cds.lib
+-HDLVAR
+./xcelium.d/run.lnx86.22.03.d/hdl.var
+-WORK
+worklib
+-IRUNHASTOP
+-HASXLMODE

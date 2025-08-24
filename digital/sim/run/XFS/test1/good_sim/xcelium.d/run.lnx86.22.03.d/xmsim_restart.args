@@ -1,0 +1,28 @@
+//
+// File created by:  xrun
+// Do not modify this file
+//
++region0_base=8000e000
++region1_base=8000f000
++incdir+tb_modules
++incdir+include
+-gui
+-MESSAGES
++EMGRLOG
+xrun.log
+-XLSTIME
+1755637972
+-XLKEEP
+-XLMODE
+./xcelium.d/run.lnx86.22.03.d
+-RUNMODE
+-CDSLIB
+./xcelium.d/run.lnx86.22.03.d/cds.lib
+-HDLVAR
+./xcelium.d/run.lnx86.22.03.d/hdl.var
+-XLNAME
+xrun
+-XLVERSION
+"TOOL:	xrun	22.03-s005"
+-XLNAME
+./xcelium.d/run.lnx86.22.03.d/myhostname_23953

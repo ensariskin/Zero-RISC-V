@@ -12,7 +12,7 @@
 # Ignore compiled object files and binaries
 *.o
 *.so
-*.hex
+#*.hex
 *.elf
 *.bin
 *.s
@@ -24,7 +24,7 @@
 **/metrics.db
 
 # Ignore log files
-#*.log
+*.log
 
 # Ignore backup files
 *~

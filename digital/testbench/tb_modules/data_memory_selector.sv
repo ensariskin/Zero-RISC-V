@@ -151,6 +151,7 @@ module data_memory_selector (
 
     initial begin
         // Display region base addresses and sizes
+        #1;
         $display("Region 0 base address: 0x%08x (Size: %0d bytes) , Region 0 end_address = 0x%08x", REGION0_BASE, REGION0_SIZE, REGION0_END);
         $display("Region 1 base address: 0x%08x (Size: %0d bytes) , Region 1 end_address = 0x%08x", REGION1_BASE, REGION1_SIZE, REGION1_END);
     end

@@ -1,0 +1,5 @@
+//
+// File created by:  xrun
+// Do not modify this file
+
+s1::(19Aug2025:18:46:11):( xrun -xmlibdirname xcelium.d -xmerror ICFNFR -xmfatal FLTONF -fault_top dv_top.dut -fault_file ../rv32i.faults -fault_work fault_db -fault_overwrite -64bit -status -clean -c -sv -timescale 1ns/1ns -F /home/iskin/work/cores/Zero-RISC-V/digital/modules/digital_top/digital_top.f -F /home/iskin/work/cores/Zero-RISC-V/digital/testbench/tb_modules.f -top dv_top +region0_base=8000e000 +region1_base=8000f000 -access +rwc -l xrun_elab_c.log )
