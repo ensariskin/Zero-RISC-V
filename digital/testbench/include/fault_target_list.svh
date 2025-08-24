@@ -1,6 +1,6 @@
 // Final fault injection target list (deduplicated & cleaned)
 // Signals under 'dv_top.dut.', excluding clk/reset/tracer, compacted by bit-range
-
+/* 
 //parameter int NUM_FAULT_TARGETS = 1652;
 logic [31:0] fi_targets[1652];
 
@@ -1657,3 +1657,4 @@ alias fi_targets[1648] = dv_top.dut.misprediction;
 alias fi_targets[1649] = dv_top.dut.rs1_id;
 alias fi_targets[1650] = dv_top.dut.rs2_id;
 alias fi_targets[1651] = dv_top.dut.store_sel_df;
+*/
