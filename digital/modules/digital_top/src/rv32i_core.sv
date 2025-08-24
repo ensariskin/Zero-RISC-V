@@ -125,7 +125,7 @@ module rv32i_core #(parameter size = 32)(
         .tracer_if_o(tracer_if_decode_execute)
         );    
         
-        execute_stage EX(
+    execute_stage EX(
         .clk(clk),
         .reset(reset),
 

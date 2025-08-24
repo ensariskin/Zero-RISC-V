@@ -29,7 +29,10 @@ module execute_stage #(parameter size = 32)(
     output logic [4:0] rs2_addr,
 
     output logic misprediction_o,
-	output logic [size-1 : 0] correct_pc,
+    output logic update_prediction_valid_i,
+    output logic [size-1 : 0] correct_pc,
+    output logic [size-1 : 0] update_prediction_pc,
+	
 
     tracer_interface.sink tracer_if_i,
     tracer_interface.source tracer_if_o
