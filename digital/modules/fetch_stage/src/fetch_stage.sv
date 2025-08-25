@@ -3,21 +3,26 @@
 module fetch_stage#(parameter size = 32)(
     input  logic clk,
     input  logic reset,
-    input  logic buble,
-    input  logic misprediction,
+    
+    output logic [size-1 : 0] inst_addr,
     input  logic [size-1 : 0] instruction_i,
     input  logic instruction_valid,
     // Pipeline control signals
     input  logic flush,
+    input  logic buble,
 
+    // Branch prediction signals
+    output logic [size-1 : 0] pc_value_at_prediction, // PC value used for prediction
+    output logic branch_prediction_o,
+    input  logic update_prediction_valid_i,
+    input  logic [size-1 : 0] update_prediction_pc,
+    input  logic misprediction,
 	input  logic [size-1 : 0] correct_pc,
-    output logic [size-1 : 0] inst_addr,
 
     // Pipeline outputs (IF/ID register outputs)
     output logic [size-1 : 0] instruction_o,
     output logic [size-1 : 0] imm_o,
     output logic [size-1 : 0] pc_plus_o,
-    output logic branch_prediction_o,
 
     tracer_interface.source tracer_if
     );
@@ -38,7 +43,13 @@ module fetch_stage#(parameter size = 32)(
 
     // Jump controller
     jump_controller #(.size(size)) jump_controller(
+        .clk,
+        .reset,
+        .current_pc,
         .instruction(instruction_i),
+        .update_prediction_pc,
+        .update_prediction_valid_i,
+        .misprediction,
         .jump(jump),
 		.jalr(jalr));
 
@@ -64,17 +75,20 @@ module fetch_stage#(parameter size = 32)(
             instruction_o <= #D 0;
             imm_o <= #D 0;
             pc_plus_o <= #D 0;
+            pc_value_at_prediction <= #D 0;
             branch_prediction_o <= #D 0;
         end else begin                     
             if(flush) begin
                 instruction_o <= #D 32'h00000013;
                 imm_o <= #D 0;
                 pc_plus_o <= #D 0;
+                pc_value_at_prediction <= #D 0;
                 branch_prediction_o <= #D 0;
             end else if (~buble) begin
                 instruction_o <= #D instruction_i;
                 imm_o <= #D imm;
                 pc_plus_o <= #D pc_plus_internal;
+                pc_value_at_prediction <= #D current_pc;
                 branch_prediction_o <= #D jump;
             end
         end

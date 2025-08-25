@@ -28,6 +28,7 @@ module execute_stage #(parameter size = 32)(
     output logic [4:0] rs1_addr,    // we can move them to id_to_execute module
     output logic [4:0] rs2_addr,
 
+    input logic [size-1 : 0] pc_value_at_prediction_i,
     output logic misprediction_o,
     output logic update_prediction_valid_i,
     output logic [size-1 : 0] correct_pc,
@@ -101,13 +102,15 @@ module execute_stage #(parameter size = 32)(
     assign rs1_addr = control_signal_i[15:11]; // todo we can handle this at top level
     assign rs2_addr = control_signal_i[20:16];
     assign misprediction_o =  (Real_MPC ^  branch_prediction_i);
+    assign update_prediction_valid_i = (branch_sel > 3'b001) & (branch_sel < 3'b110) ;
+    assign update_prediction_pc = update_prediction_valid_i ? pc_value_at_prediction_i : {size{1'b0}};
 
     // EX/MEM Pipeline Register
     always @(posedge clk or negedge reset) begin
         if (!reset) begin
             calculated_result_o <= #D {size{1'b0}};
             store_data_o <= #D {size{1'b0}};
-            control_signal_o <= #D 12'b0; 
+            control_signal_o <= #D 12'b0;        
         end else begin
             calculated_result_o <= #D calculated_result_internal;
             store_data_o <= #D store_data_internal;

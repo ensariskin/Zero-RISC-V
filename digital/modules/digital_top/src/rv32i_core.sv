@@ -57,7 +57,7 @@ module rv32i_core #(parameter size = 32)(
     logic [11 : 0] Control_Signal_MEM_i;
 
     logic [size-1 : 0] FU_WB_i;
-    logic [size-1 : 0] MEM_result_WB_i;
+    //logic [size-1 : 0] MEM_result_WB_i;
     logic [10 : 0] Control_Signal_WB_i;
 
     logic [size-1 : 0] Final_Result_WB_o;
@@ -77,6 +77,10 @@ module rv32i_core #(parameter size = 32)(
     logic [1:0] store_sel_df; // for store data forwarding
 
 	logic [size-1 : 0] correct_pc;
+    logic [size-1 : 0] pc_value_at_prediction_id;
+    logic [size-1 : 0] pc_value_at_prediction_ex;
+    logic [size-1 : 0] update_prediction_pc;
+    logic update_prediction_valid;
 
     // Tracer interfaces for pipeline stages
     tracer_interface tracer_if_fetch_decode();
@@ -90,9 +94,12 @@ module rv32i_core #(parameter size = 32)(
         .buble(buble),
         .instruction_i(instruction_i),
         .instruction_valid(instruction_valid),
+        .pc_value_at_prediction(pc_value_at_prediction_id),
+        .update_prediction_pc(update_prediction_pc),
+        .update_prediction_valid_i(update_prediction_valid),
         .misprediction(misprediction),
-        .flush(misprediction),
         .correct_pc(correct_pc),
+        .flush(misprediction),
         .inst_addr(ins_address),
         .instruction_o(instruction_ID_i),
         .imm_o(IMM_ID_i),
@@ -108,6 +115,7 @@ module rv32i_core #(parameter size = 32)(
         .i_instruction(instruction_ID_i),
         .immediate_i(IMM_ID_i),
         .pc_plus_i(PCPlus_ID_i),
+        .pc_value_at_prediction_i(pc_value_at_prediction_id),
         .branch_perediction_i(Predicted_MPC_ID_i),
         .flush(misprediction),
         .control_signal_wb(Control_Signal_WB_o),
@@ -118,6 +126,7 @@ module rv32i_core #(parameter size = 32)(
         .store_data_o(RAM_DATA_EX_i),
         .pc_plus_o(PCplus_EX_i),
         .control_signal_o(Control_Signal_EX_i),
+        .pc_value_at_prediction_o(pc_value_at_prediction_ex),
         .branch_sel_o(Branch_sel_EX_i),
         .rs1_addr(rs1_id),
         .rs2_addr(rs2_id),
@@ -148,6 +157,9 @@ module rv32i_core #(parameter size = 32)(
 
         .rs1_addr(RA_DF),
         .rs2_addr(RB_DF),
+        .pc_value_at_prediction_i(pc_value_at_prediction_ex),
+        .update_prediction_pc(update_prediction_pc),
+        .update_prediction_valid_i(update_prediction_valid),
         .misprediction_o(misprediction),
         .correct_pc(correct_pc),
         .tracer_if_i(tracer_if_decode_execute),

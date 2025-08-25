@@ -151,9 +151,10 @@
               "content": "Create digital/modules/branch_predictor_super/ directory",
               "id": 1735100000013,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000013,
-              "focus": false
+              "focus": false,
+              "end": 1756159419189
             }
           },
           {
@@ -163,9 +164,10 @@
               "content": "Implement Branch Target Buffer (BTB) with 256-512 entries",
               "id": 1735100000014,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000014,
-              "focus": false
+              "focus": false,
+              "end": 1756159419702
             }
           },
           {
@@ -175,9 +177,10 @@
               "content": "Add 2-level adaptive branch predictor (pattern history table)",
               "id": 1735100000015,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000015,
-              "focus": false
+              "focus": false,
+              "end": 1756159420276
             }
           },
           {
@@ -187,9 +190,10 @@
               "content": "Integrate Return Address Stack (RAS) for call/return prediction",
               "id": 1735100000016,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000016,
-              "focus": false
+              "focus": false,
+              "end": 1756159420725
             }
           },
           {
@@ -199,9 +203,10 @@
               "content": "Add tournament predictor combining multiple predictors",
               "id": 1735100000017,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000017,
-              "focus": false
+              "focus": false,
+              "end": 1756159421505
             }
           }
         ],
@@ -209,9 +214,10 @@
           "content": "Phase 3: Advanced Branch Prediction System",
           "id": 1735100000012,
           "level": "warning",
-          "done": false,
+          "done": true,
           "start": 1735100000012,
-          "focus": false
+          "focus": false,
+          "end": 1756159430747
         }
       },
       {
@@ -1181,7 +1187,10 @@
       1735100000012,
       1735100000018,
       1735100000020,
-      1735100000002
+      1735100000002,
+      1735100000013,
+      1735100000081,
+      1735100000086
     ],
     "schema": "https://github.com/Saber2pr/vsc-ext-todolist/blob/master/src/api/type.ts#L3",
     "add_mode": "bottom",
@@ -1194,6 +1203,6 @@
     "showEndTime": false,
     "simpleMode": false,
     "lang": "en",
-    "version": "1756052392462"
+    "version": "1756159800329"
   }
 }
