@@ -23,7 +23,7 @@ module dv_top;
     parameter INST_MEM_SIZE = 32'h10000;  // 64KB instruction memory
     parameter REGION0_SIZE = 32'h1000;    // 4KB region 0 memory
     parameter REGION1_SIZE = 32'h10000;   // 64KB region 1 memory  
-    parameter INST_BASE_ADDR = 32'h00001000;
+    parameter INST_BASE_ADDR = 32'h80000000;
     
     // Default region base addresses (can be overridden via plusargs)
     parameter REGION0_BASE_ADDR_DEFAULT = 32'h80000000;  // Default Region 0 start address
@@ -533,13 +533,13 @@ module dv_top;
     logic [31:0] fetch_imm;          // Immediate from fetch stage
     
     // Connect to fetch stage internals
-    assign fetch_pc = dut.Ins_Fetch.current_pc;
-    assign fetch_instruction = dut.Ins_Fetch.instruction_i;
-    assign pc_ctrl_current = dut.Ins_Fetch.PC.current_pc;
-    assign pc_ctrl_save = dut.Ins_Fetch.PC.pc_save;
-    assign fetch_jump = dut.Ins_Fetch.jump;
-    assign fetch_jalr = dut.Ins_Fetch.jalr;
-    assign fetch_imm = dut.Ins_Fetch.imm;
+    assign fetch_pc = dut.IF.current_pc;
+    assign fetch_instruction = dut.IF.instruction_i;
+    assign pc_ctrl_current = dut.IF.PC.current_pc;
+    assign pc_ctrl_save = dut.IF.PC.pc_save;
+    assign fetch_jump = dut.IF.jump;
+    assign fetch_jalr = dut.IF.jalr;
+    assign fetch_imm = dut.IF.imm;
    
     
     // End of simulation summary

@@ -1,0 +1,282 @@
+{
+  "todotree": {
+    "tree": [
+      {
+        "key": 1735100000001,
+        "children": [
+          {
+            "key": 1735100000002,
+            "children": [],
+            "todo": {
+              "content": "Analyze current execute_stage.sv and ALU implementation",
+              "id": 1735100000002,
+              "level": "default",
+              "done": false,
+              "start": 1735100000002,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000003,
+            "children": [],
+            "todo": {
+              "content": "Document current Data_Forward.sv and hazard detection",
+              "id": 1735100000003,
+              "level": "default",
+              "done": false,
+              "start": 1735100000003,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 1: Analyze Current Architecture",
+          "id": 1735100000001,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000001,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000004,
+        "children": [
+          {
+            "key": 1735100000005,
+            "children": [],
+            "todo": {
+              "content": "Create alu_unit.sv - Generic ALU template",
+              "id": 1735100000005,
+              "level": "default",
+              "done": false,
+              "start": 1735100000005,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000006,
+            "children": [],
+            "todo": {
+              "content": "Design multi_alu_controller.sv - Coordinate 3 ALUs",
+              "id": 1735100000006,
+              "level": "default",
+              "done": false,
+              "start": 1735100000006,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 2: Create Multi-ALU Infrastructure",
+          "id": 1735100000004,
+          "level": "default",
+          "done": false,
+          "start": 1735100000004,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000007,
+        "children": [
+          {
+            "key": 1735100000008,
+            "children": [],
+            "todo": {
+              "content": "Extend Data_Forward.sv for 3 ALU sources",
+              "id": 1735100000008,
+              "level": "default",
+              "done": false,
+              "start": 1735100000008,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000009,
+            "children": [],
+            "todo": {
+              "content": "Add forwarding priority resolution logic",
+              "id": 1735100000009,
+              "level": "default",
+              "done": false,
+              "start": 1735100000009,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 3: Enhanced Data Forwarding",
+          "id": 1735100000007,
+          "level": "default",
+          "done": false,
+          "start": 1735100000007,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000010,
+        "children": [
+          {
+            "key": 1735100000011,
+            "children": [],
+            "todo": {
+              "content": "Create instruction dispatch and load balancing",
+              "id": 1735100000011,
+              "level": "default",
+              "done": false,
+              "start": 1735100000011,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000012,
+            "children": [],
+            "todo": {
+              "content": "Add dependency checking for dispatch conflicts",
+              "id": 1735100000012,
+              "level": "default",
+              "done": false,
+              "start": 1735100000012,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 4: Instruction Dispatch Logic",
+          "id": 1735100000010,
+          "level": "default",
+          "done": false,
+          "start": 1735100000010,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000013,
+        "children": [
+          {
+            "key": 1735100000014,
+            "children": [],
+            "todo": {
+              "content": "Modify execute_stage.sv for multi-ALU integration",
+              "id": 1735100000014,
+              "level": "default",
+              "done": false,
+              "start": 1735100000014,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000015,
+            "children": [],
+            "todo": {
+              "content": "Update rv32i_core.sv for multiple execution paths",
+              "id": 1735100000015,
+              "level": "default",
+              "done": false,
+              "start": 1735100000015,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 5: Pipeline Integration",
+          "id": 1735100000013,
+          "level": "default",
+          "done": false,
+          "start": 1735100000013,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000016,
+        "children": [
+          {
+            "key": 1735100000017,
+            "children": [],
+            "todo": {
+              "content": "Test multi-ALU with concurrent operations",
+              "id": 1735100000017,
+              "level": "default",
+              "done": false,
+              "start": 1735100000017,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000018,
+            "children": [],
+            "todo": {
+              "content": "Run RV32I compliance tests",
+              "id": 1735100000018,
+              "level": "default",
+              "done": false,
+              "start": 1735100000018,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 6: Testing and Validation",
+          "id": 1735100000016,
+          "level": "default",
+          "done": false,
+          "start": 1735100000016,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000019,
+        "children": [
+          {
+            "key": 1735100000020,
+            "children": [],
+            "todo": {
+              "content": "Add performance monitoring and IPC measurement",
+              "id": 1735100000020,
+              "level": "default",
+              "done": false,
+              "start": 1735100000020,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000021,
+            "children": [],
+            "todo": {
+              "content": "Generate performance comparison report",
+              "id": 1735100000021,
+              "level": "default",
+              "done": false,
+              "start": 1735100000021,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 7: Performance Analysis",
+          "id": 1735100000019,
+          "level": "default",
+          "done": false,
+          "start": 1735100000019,
+          "focus": false
+        }
+      }
+    ],
+    "expandKeys": [
+      1735100000001,
+      1735100000004,
+      1735100000007
+    ],
+    "schema": "https://github.com/Saber2pr/vsc-ext-todolist/blob/master/src/api/type.ts#L3",
+    "add_mode": "bottom",
+    "virtual": false,
+    "timelines": [],
+    "showLine": false,
+    "playFontSize": 24,
+    "title": "3-ALU Implementation",
+    "autoSort": false,
+    "showEndTime": false,
+    "simpleMode": false,
+    "lang": "en",
+    "version": "1756046305094"
+  }
+}

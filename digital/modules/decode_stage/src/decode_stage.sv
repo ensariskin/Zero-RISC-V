@@ -23,6 +23,8 @@ module decode_stage #(parameter size = 32)(
     input logic [size-1 : 0] i_instruction,
     input logic [size-1 : 0] immediate_i,
     input logic [size-1 : 0] pc_plus_i,
+
+    input logic [size-1 : 0] pc_value_at_prediction_i, 
     input logic branch_perediction_i,
 
     // Pipeline control signals
@@ -39,6 +41,7 @@ module decode_stage #(parameter size = 32)(
     output logic [size-1 : 0] store_data_o,
     output logic [size-1 : 0] pc_plus_o,
     output logic [25 : 0] control_signal_o,
+    output logic [size-1 : 0] pc_value_at_prediction_o, 
     output logic [2:0] branch_sel_o,
     
     output logic [4:0] rs1_addr,
@@ -103,6 +106,7 @@ module decode_stage #(parameter size = 32)(
             store_data_o <= #D {size{1'b0}};
             pc_plus_o <= #D {size{1'b0}};
             control_signal_o <= #D {26{1'b0}};
+            pc_value_at_prediction_o <= #D {size{1'b0}};
             branch_sel_o <= #D 3'b000;
         end else begin
             if(flush | buble) begin // todo insert addi x0, x0, 0
@@ -112,6 +116,7 @@ module decode_stage #(parameter size = 32)(
                 store_data_o <= #D {size{1'b0}};
                 pc_plus_o <= #D {size{1'b0}};
                 control_signal_o <= #D {26{1'b0}};
+                pc_value_at_prediction_o <= #D {size{1'b0}};
                 branch_sel_o <= #D 3'b000;
             end else begin
                 branch_prediction_o <= #D branch_prediction_internal;
@@ -120,6 +125,7 @@ module decode_stage #(parameter size = 32)(
                 store_data_o <= #D store_data_internal;
                 pc_plus_o <= #D pc_plus_internal;
                 control_signal_o <= #D control_signal_internal;
+                pc_value_at_prediction_o <= #D pc_value_at_prediction_i;
                 branch_sel_o <= #D branch_sel_internal;
             end
         end
