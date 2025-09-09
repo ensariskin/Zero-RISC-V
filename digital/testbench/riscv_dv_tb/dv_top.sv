@@ -541,6 +541,58 @@ module dv_top;
     assign fetch_jalr = dut.IF.jalr;
     assign fetch_imm = dut.IF.imm;
    
+    // Branch Prediction Performance Analysis
+    integer branch_prediction_file;
+    integer correct_predictions = 0;
+    integer mispredictions = 0;
+    integer total_predictions = 0;
+    real prediction_accuracy = 0.0;
+    
+    // Open branch prediction log file
+    initial begin
+        branch_prediction_file = $fopen("branch_prediction_log.txt", "w");
+        if (branch_prediction_file == 0) begin
+            $display("ERROR: Could not open branch_prediction_log.txt for writing");
+            $finish;
+        end
+        $fdisplay(branch_prediction_file, "Branch Prediction Performance Analysis");
+        $fdisplay(branch_prediction_file, "=====================================");
+        $fdisplay(branch_prediction_file, "Time\t\tCycle\tPC\t\tUpdate_Valid\tMisprediction\tCorrect\tMispred\tAccuracy");
+        $fdisplay(branch_prediction_file, "====\t\t=====\t==\t\t============\t=============\t=======\t=======\t========");
+    end
+    
+    // Branch prediction monitoring on clock edge
+    always @(posedge clk) begin
+        if (rst_n && dut.EX.update_prediction_valid_i) begin
+            total_predictions <= total_predictions + 1;
+            
+            if (dut.EX.misprediction_o) begin
+                mispredictions <= mispredictions + 1;
+                $fdisplay(branch_prediction_file, "%0t\t%0d\t0x%08x\t%b\t\t%b\t\t%0d\t%0d\t%.2f%%", 
+                         $time, cycle_count, fetch_pc, 
+                         dut.EX.update_prediction_valid_i, dut.EX.misprediction_o,
+                         correct_predictions, mispredictions + 1, 
+                         (total_predictions + 1) > 0 ? (correct_predictions * 100.0 / (total_predictions + 1)) : 0.0);
+            end else begin
+                correct_predictions <= correct_predictions + 1;
+                $fdisplay(branch_prediction_file, "%0t\t%0d\t0x%08x\t%b\t\t%b\t\t%0d\t%0d\t%.2f%%", 
+                         $time, cycle_count, fetch_pc, 
+                         dut.EX.update_prediction_valid_i, dut.EX.misprediction_o,
+                         correct_predictions + 1, mispredictions, 
+                         (total_predictions + 1) > 0 ? ((correct_predictions + 1) * 100.0 / (total_predictions + 1)) : 0.0);
+            end
+            
+            // Update accuracy
+            prediction_accuracy <= (total_predictions + 1) > 0 ? (correct_predictions * 100.0 / (total_predictions + 1)) : 0.0;
+            
+            // Display periodic summary
+            if ((total_predictions + 1) % 1000 == 0) begin
+                $display("[%0t] Branch Prediction Summary: %0d total, %0d correct, %0d mispred, %.2f%% accuracy", 
+                        $time, total_predictions + 1, correct_predictions, mispredictions, 
+                        (total_predictions + 1) > 0 ? (correct_predictions * 100.0 / (total_predictions + 1)) : 0.0);
+            end
+        end
+    end
     
     // End of simulation summary
     final begin
@@ -549,6 +601,32 @@ module dv_top;
         $display("Final PC: 0x%08x", fetch_pc);
         $display("Test passed: %b", test_passed);
         $display("Test failed: %b", test_failed);
+        
+        // Branch prediction summary
+        $display("=== BRANCH PREDICTION SUMMARY ===");
+        $display("Total predictions: %d", total_predictions);
+        $display("Correct predictions: %d", correct_predictions);
+        $display("Mispredictions: %d", mispredictions);
+        if (total_predictions > 0) begin
+            $display("Prediction accuracy: %.2f%%", (correct_predictions * 100.0 / total_predictions));
+        end else begin
+            $display("Prediction accuracy: N/A (no predictions made)");
+        end
+        
+        // Write final summary to log file
+        if (branch_prediction_file != 0) begin
+            $fdisplay(branch_prediction_file, "");
+            $fdisplay(branch_prediction_file, "=== FINAL BRANCH PREDICTION SUMMARY ===");
+            $fdisplay(branch_prediction_file, "Total predictions: %d", total_predictions);
+            $fdisplay(branch_prediction_file, "Correct predictions: %d", correct_predictions);
+            $fdisplay(branch_prediction_file, "Mispredictions: %d", mispredictions);
+            if (total_predictions > 0) begin
+                $fdisplay(branch_prediction_file, "Prediction accuracy: %.2f%%", (correct_predictions * 100.0 / total_predictions));
+            end else begin
+                $fdisplay(branch_prediction_file, "Prediction accuracy: N/A (no predictions made)");
+            end
+            $fclose(branch_prediction_file);
+        end
     end
     
     // Track if processor gets stuck
@@ -560,7 +638,7 @@ module dv_top;
     always @(posedge clk) begin
         if (rst_n) begin
             if (fetch_pc == last_active_pc) begin
-                stuck_counter = stuck_counter + 1;
+                stuck_counter <= stuck_counter + 1;
                 if (stuck_counter > 10) begin
                     $display("[%0t] *** PROCESSOR APPEARS STUCK at PC=0x%08x ***", $time, fetch_pc);
                     $display("Instruction: 0x%08x", fetch_instruction);
@@ -574,8 +652,8 @@ module dv_top;
                     $finish;
                 end
             end else begin
-                stuck_counter = 0;
-                last_active_pc = fetch_pc;
+                stuck_counter <= 0;
+                last_active_pc <= fetch_pc;
             end
         end
     end

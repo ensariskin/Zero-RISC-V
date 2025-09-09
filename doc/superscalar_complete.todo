@@ -78,9 +78,10 @@
               "content": "Create digital/modules/fetch_stage_super/ directory structure",
               "id": 1735100000007,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000007,
-              "focus": false
+              "focus": false,
+              "end": 1756752695359
             }
           },
           {
@@ -90,9 +91,10 @@
               "content": "Implement multi_fetch_unit.sv with 2-4 instruction fetch capability",
               "id": 1735100000008,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000008,
-              "focus": false
+              "focus": false,
+              "end": 1756752697348
             }
           },
           {
@@ -102,9 +104,10 @@
               "content": "Design instruction_buffer.sv for fetch-decode decoupling (8-16 entries)",
               "id": 1735100000009,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000009,
-              "focus": false
+              "focus": false,
+              "end": 1757096279074
             }
           },
           {
@@ -114,9 +117,10 @@
               "content": "Create fetch_target_predictor.sv for next-line prediction",
               "id": 1735100000010,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000010,
-              "focus": false
+              "focus": false,
+              "end": 1756752807586
             }
           },
           {
@@ -126,9 +130,10 @@
               "content": "Add instruction_alignment.sv to handle misaligned fetches",
               "id": 1735100000011,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000011,
-              "focus": false
+              "focus": false,
+              "end": 1756752712716
             }
           }
         ],
@@ -230,9 +235,10 @@
               "content": "Create digital/modules/decode_stage_super/ directory structure",
               "id": 1735100000019,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000019,
-              "focus": false
+              "focus": false,
+              "end": 1757354545671
             }
           },
           {
@@ -242,9 +248,10 @@
               "content": "Implement multi_decode_unit.sv for 2-4 parallel decode",
               "id": 1735100000020,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000020,
-              "focus": false
+              "focus": false,
+              "end": 1757356309689
             }
           },
           {
@@ -254,9 +261,10 @@
               "content": "Add instruction_queue.sv between fetch and decode",
               "id": 1735100000021,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000021,
-              "focus": false
+              "focus": false,
+              "end": 1757096304366
             }
           },
           {
@@ -276,9 +284,10 @@
           "content": "Phase 4: Multi-Decode Unit Implementation",
           "id": 1735100000018,
           "level": "warning",
-          "done": false,
+          "done": true,
           "start": 1735100000018,
-          "focus": false
+          "focus": false,
+          "end": 1757354543233
         }
       },
       {
@@ -1190,7 +1199,9 @@
       1735100000002,
       1735100000013,
       1735100000081,
-      1735100000086
+      1735100000086,
+      1735100000023,
+      1735100000030
     ],
     "schema": "https://github.com/Saber2pr/vsc-ext-todolist/blob/master/src/api/type.ts#L3",
     "add_mode": "bottom",
@@ -1203,6 +1214,6 @@
     "showEndTime": false,
     "simpleMode": false,
     "lang": "en",
-    "version": "1756159800329"
+    "version": "1757356470375"
   }
 }
