@@ -43,9 +43,6 @@ interface issue_to_dispatch_if #(
     // Immediate value (for immediate instructions)
     logic [DATA_WIDTH-1:0] immediate_value;         // Sign-extended immediate
     
-    // Store data physical address (for store instructions)
-    logic [PHYS_REG_ADDR_WIDTH-1:0] store_data_phys_addr;  // Physical address for store data
-    
     //==========================================================================
     // MODPORTS FOR DIFFERENT STAGES
     //==========================================================================
