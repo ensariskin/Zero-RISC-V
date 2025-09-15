@@ -62,10 +62,11 @@
           "content": "Phase 1: Current Architecture Analysis",
           "id": 1735100000001,
           "level": "warning",
-          "done": false,
+          "done": true,
           "start": 1735100000001,
           "focus": false,
-          "date": "1756048172,1756393774"
+          "date": "1756048172,1756393774",
+          "end": 1757620924322
         }
       },
       {
@@ -141,9 +142,10 @@
           "content": "Phase 2: Multi-Instruction Fetch Infrastructure",
           "id": 1735100000006,
           "level": "warning",
-          "done": false,
+          "done": true,
           "start": 1735100000006,
-          "focus": false
+          "focus": false,
+          "end": 1757620921460
         }
       },
       {
@@ -274,9 +276,21 @@
               "content": "Create early dependency detection logic",
               "id": 1735100000022,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000022,
-              "focus": false
+              "focus": false,
+              "end": 1757620944252
+            }
+          },
+          {
+            "key": 1757620954314,
+            "children": [],
+            "todo": {
+              "content": "Assign decode valid signal with RAT and RS busy signals!",
+              "id": 1757620954314,
+              "level": "default",
+              "done": false,
+              "start": 1757620954314
             }
           }
         ],
@@ -284,7 +298,7 @@
           "content": "Phase 4: Multi-Decode Unit Implementation",
           "id": 1735100000018,
           "level": "warning",
-          "done": true,
+          "done": false,
           "start": 1735100000018,
           "focus": false,
           "end": 1757354543233
@@ -300,9 +314,10 @@
               "content": "Create digital/modules/register_renaming/ directory structure",
               "id": 1735100000024,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000024,
-              "focus": false
+              "focus": false,
+              "end": 1757621050093
             }
           },
           {
@@ -312,9 +327,10 @@
               "content": "Design physical_register_file.sv with 64-128 registers",
               "id": 1735100000025,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000025,
-              "focus": false
+              "focus": false,
+              "end": 1757621046423
             }
           },
           {
@@ -324,9 +340,10 @@
               "content": "Implement multi-port register file (6R/4W or 8R/4W)",
               "id": 1735100000026,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000026,
-              "focus": false
+              "focus": false,
+              "end": 1757621015235
             }
           },
           {
@@ -336,9 +353,10 @@
               "content": "Create Register Alias Table (RAT) for arch-to-phys mapping",
               "id": 1735100000027,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000027,
-              "focus": false
+              "focus": false,
+              "end": 1757621029957
             }
           },
           {
@@ -348,9 +366,10 @@
               "content": "Add free_register_list.sv for register allocation",
               "id": 1735100000028,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1735100000028,
-              "focus": false
+              "focus": false,
+              "end": 1757621044969
             }
           },
           {
@@ -1214,6 +1233,6 @@
     "showEndTime": false,
     "simpleMode": false,
     "lang": "en",
-    "version": "1757356470375"
+    "version": "1757621085140"
   }
 }

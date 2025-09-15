@@ -51,28 +51,10 @@ module multi_decode_stage #(
     input logic [2:0] commit_valid_i,
     input logic [PHYS_REG_ADDR_WIDTH-1:0] commit_free_phys_reg_i_0, commit_free_phys_reg_i_1, commit_free_phys_reg_i_2,
     
-    // Outputs to Execute Stage (now with physical addresses)
-    output logic [2:0] decode_valid_o,
-    output logic [DATA_WIDTH-1:0] data_a_o_0, data_a_o_1, data_a_o_2,
-    output logic [DATA_WIDTH-1:0] data_b_o_0, data_b_o_1, data_b_o_2,
-    output logic [DATA_WIDTH-1:0] store_data_o_0, store_data_o_1, store_data_o_2,
-    output logic [DATA_WIDTH-1:0] pc_o_0, pc_o_1, pc_o_2,
-    output logic [25:0] control_signal_o_0, control_signal_o_1, control_signal_o_2,
-    output logic [DATA_WIDTH-1:0] pc_value_at_prediction_o_0, pc_value_at_prediction_o_1, pc_value_at_prediction_o_2,
-    output logic [2:0] branch_sel_o_0, branch_sel_o_1, branch_sel_o_2,
-    output logic branch_prediction_o_0, branch_prediction_o_1, branch_prediction_o_2,
-    
-    // Physical register addresses for reservation station
-    output logic [PHYS_REG_ADDR_WIDTH-1:0] rs1_phys_o_0, rs1_phys_o_1, rs1_phys_o_2,
-    output logic [PHYS_REG_ADDR_WIDTH-1:0] rs2_phys_o_0, rs2_phys_o_1, rs2_phys_o_2,
-    output logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_o_0, rd_phys_o_1, rd_phys_o_2,
-    output logic [PHYS_REG_ADDR_WIDTH-1:0] old_rd_phys_o_0, old_rd_phys_o_1, old_rd_phys_o_2,
-    output logic [2:0] rename_valid_o,
-    
-    // Architectural register addresses (for debugging/tracing)
-    output logic [ARCH_REG_ADDR_WIDTH-1:0] rs1_arch_o_0, rs1_arch_o_1, rs1_arch_o_2,
-    output logic [ARCH_REG_ADDR_WIDTH-1:0] rs2_arch_o_0, rs2_arch_o_1, rs2_arch_o_2,
-    output logic [ARCH_REG_ADDR_WIDTH-1:0] rd_arch_o_0, rd_arch_o_1, rd_arch_o_2
+    // Reservation Station Interfaces
+    decode_to_rs_if.decode decode_to_rs_0,
+    decode_to_rs_if.decode decode_to_rs_1,
+    decode_to_rs_if.decode decode_to_rs_2
 );
 
     localparam D = 1; // Delay for simulation
@@ -92,7 +74,7 @@ module multi_decode_stage #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] rs1_phys_0, rs1_phys_1, rs1_phys_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] rs2_phys_0, rs2_phys_1, rs2_phys_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_0, rd_phys_1, rd_phys_2;
-    logic [PHYS_REG_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2;
+    logic [PHYS_REG_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2; /// TODO : add recovery logic
     logic [2:0] rename_valid_internal;
     
     // Write enable signals for destinations
@@ -111,7 +93,19 @@ module multi_decode_stage #(
     logic [DATA_WIDTH-1:0] pc_prediction_reg_0, pc_prediction_reg_1, pc_prediction_reg_2;
     logic [2:0] branch_sel_reg_0, branch_sel_reg_1, branch_sel_reg_2;
     logic branch_prediction_reg_0, branch_prediction_reg_1, branch_prediction_reg_2;
+    
+    // Physical register address pipeline registers
+    logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_reg_0, rd_phys_reg_1, rd_phys_reg_2;
+    
+    // Tag pipeline registers  
+    logic [1:0] operand_a_tag_reg_0, operand_a_tag_reg_1, operand_a_tag_reg_2;
+    logic [1:0] operand_b_tag_reg_0, operand_b_tag_reg_1, operand_b_tag_reg_2;
 
+    // Writeback valid signals 
+    logic wb_valid_0, wb_valid_1, wb_valid_2;
+    assign wb_valid_0 = wb_valid_i[0] & wb_reg_write_i_0;
+    assign wb_valid_1 = wb_valid_i[1] & wb_reg_write_i_1;
+    assign wb_valid_2 = wb_valid_i[2] & wb_reg_write_i_2;
     
     //==========================================================================
     // DECODER UNITS (3 independent decoders)
@@ -185,7 +179,7 @@ module multi_decode_stage #(
         // Rename outputs - separated signals
         .rs1_phys_0(rs1_phys_0), .rs1_phys_1(rs1_phys_1), .rs1_phys_2(rs1_phys_2),
         .rs2_phys_0(rs2_phys_0), .rs2_phys_1(rs2_phys_1), .rs2_phys_2(rs2_phys_2),
-        .rd_phys_0(rd_phys_0), .rd_phys_1(rd_phys_1), .rd_phys_2(rd_phys_2),
+        .rd_phys_0(rd_phys_0),   .rd_phys_1(rd_phys_1),   .rd_phys_2(rd_phys_2),
         .old_rd_phys_0(old_rd_phys_0), .old_rd_phys_1(old_rd_phys_1), .old_rd_phys_2(old_rd_phys_2),
         .rename_valid(rename_valid_internal),
         
@@ -202,7 +196,7 @@ module multi_decode_stage #(
         .DATA_WIDTH(DATA_WIDTH),
         .ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),  // Now 6 bits for 64 registers
         .NUM_READ_PORTS(6),  // 2 ports per instruction (rs1, rs2)
-        .NUM_WRITE_PORTS(3) // 1 port per instruction
+        .NUM_REGISTERS(64)   // 64 physical registers
     ) reg_file (
         .clk(clk),
         .reset(reset),
@@ -212,14 +206,24 @@ module multi_decode_stage #(
         .read_addr_2(rs1_phys_1), .read_addr_3(rs2_phys_1),
         .read_addr_4(rs1_phys_2), .read_addr_5(rs2_phys_2),
         
-        .read_data_0(reg_a_data_0), .read_data_1(reg_b_data_0),
-        .read_data_2(reg_a_data_1), .read_data_3(reg_b_data_1),
-        .read_data_4(reg_a_data_2), .read_data_5(reg_b_data_2),
+        .read_data_0(reg_a_data_0), .read_data_1(reg_b_data_0),  // Instruction 0
+        .read_data_2(reg_a_data_1), .read_data_3(reg_b_data_1),  // Instruction 1
+        .read_data_4(reg_a_data_2), .read_data_5(reg_b_data_2),  // Instruction 2
         
-        // Write ports (3 total: 1 per writeback) - separated signals for better understanding
-        .write_enable_0(wb_reg_write_i_0), .write_enable_1(wb_reg_write_i_1), .write_enable_2(wb_reg_write_i_2),
-        .write_addr_0(wb_rd_i_0), .write_addr_1(wb_rd_i_1), .write_addr_2(wb_rd_i_2),
-        .write_data_0(wb_data_i_0), .write_data_1(wb_data_i_1), .write_data_2(wb_data_i_2)
+        // Read tags (6 total: 2 per instruction) - for dependency checking
+        .read_tag_0(), .read_tag_1(),  // Instruction 0 - not used yet, will be used by reservation stations
+        .read_tag_2(), .read_tag_3(),  // Instruction 1 - not used yet, will be used by reservation stations  
+        .read_tag_4(), .read_tag_5(),  // Instruction 2 - not used yet, will be used by reservation stations
+        
+        // Allocation ports (from RAT for register allocation during decode)
+        .alloc_enable_0(rename_valid_internal[0]), .alloc_enable_1(rename_valid_internal[1]), .alloc_enable_2(rename_valid_internal[2]),
+        .alloc_addr_0(rd_phys_0), .alloc_addr_1(rd_phys_1), .alloc_addr_2(rd_phys_2),
+        .alloc_tag_0(2'b00), .alloc_tag_1(2'b01), .alloc_tag_2(2'b10),  // Tags: port 0->ALU0, port 1->ALU1, port 2->ALU2
+        
+        // Commit ports (from ROB - will be connected later)
+        .commit_enable_0(wb_valid_0), .commit_enable_1(wb_valid_1), .commit_enable_2(wb_valid_2),
+        .commit_addr_0(wb_rd_i_0), .commit_addr_1(wb_rd_i_1), .commit_addr_2(wb_rd_i_2),
+        .commit_data_0(wb_data_i_0), .commit_data_1(wb_data_i_1), .commit_data_2(wb_data_i_2)
     );
     
     //==========================================================================
@@ -251,8 +255,8 @@ module multi_decode_stage #(
     // PIPELINE CONTROL
     //==========================================================================
     
-    // Always ready for now (no structural hazards)
-    assign decode_ready_o = 3'b111; // TODO implement real ready logic
+    // can be totally combinational
+    assign decode_ready_o = rename_valid_internal & {decode_to_rs_2.dispatch_ready, decode_to_rs_1.dispatch_ready, decode_to_rs_0.dispatch_ready};
     
     //==========================================================================
     // DECODE/EXECUTE PIPELINE REGISTERS
@@ -285,6 +289,15 @@ module multi_decode_stage #(
             branch_prediction_reg_0 <= #D 1'b0;
             branch_prediction_reg_1 <= #D 1'b0;
             branch_prediction_reg_2 <= #D 1'b0;
+            rd_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+            rd_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+            rd_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+            operand_a_tag_reg_0 <= #D 2'b11;
+            operand_a_tag_reg_1 <= #D 2'b11;
+            operand_a_tag_reg_2 <= #D 2'b11;
+            operand_b_tag_reg_0 <= #D 2'b11;
+            operand_b_tag_reg_1 <= #D 2'b11;
+            operand_b_tag_reg_2 <= #D 2'b11;
         end else begin
             if (flush | bubble) begin
                 // Insert NOPs on flush or bubble
@@ -313,6 +326,15 @@ module multi_decode_stage #(
                 branch_prediction_reg_0 <= #D 1'b0;
                 branch_prediction_reg_1 <= #D 1'b0;
                 branch_prediction_reg_2 <= #D 1'b0;
+                rd_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rd_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rd_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                operand_a_tag_reg_0 <= #D 2'b11;
+                operand_a_tag_reg_1 <= #D 2'b11;
+                operand_a_tag_reg_2 <= #D 2'b11;
+                operand_b_tag_reg_0 <= #D 2'b11;
+                operand_b_tag_reg_1 <= #D 2'b11;
+                operand_b_tag_reg_2 <= #D 2'b11;
             end else begin
                 // Normal operation - register the decoded values
                 decode_valid_reg <= #D decode_valid_i;
@@ -354,79 +376,69 @@ module multi_decode_stage #(
                 branch_prediction_reg_0 <= #D decode_valid_i[0] ? branch_prediction_i_0 : 1'b0;
                 branch_prediction_reg_1 <= #D decode_valid_i[1] ? branch_prediction_i_1 : 1'b0;
                 branch_prediction_reg_2 <= #D decode_valid_i[2] ? branch_prediction_i_2 : 1'b0;
+                
+                // Physical register addresses
+                rd_phys_reg_0 <= #D decode_valid_i[0] ? rd_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rd_phys_reg_1 <= #D decode_valid_i[1] ? rd_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rd_phys_reg_2 <= #D decode_valid_i[2] ? rd_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                
+                // Tags (TODO: Connect to register file read tags)
+                operand_a_tag_reg_0 <= #D decode_valid_i[0] ? 2'b11 : 2'b11;
+                operand_a_tag_reg_1 <= #D decode_valid_i[1] ? 2'b11 : 2'b11;
+                operand_a_tag_reg_2 <= #D decode_valid_i[2] ? 2'b11 : 2'b11;
+                operand_b_tag_reg_0 <= #D decode_valid_i[0] ? 2'b11 : 2'b11;
+                operand_b_tag_reg_1 <= #D decode_valid_i[1] ? 2'b11 : 2'b11;
+                operand_b_tag_reg_2 <= #D decode_valid_i[2] ? 2'b11 : 2'b11;
             end
         end
     end
     
     //==========================================================================
-    // OUTPUT ASSIGNMENTS
+    // RESERVATION STATION INTERFACE CONNECTIONS
     //==========================================================================
     
-    assign decode_valid_o = decode_valid_reg;
+    // Reservation Station 0 connections
+    assign decode_to_rs_0.dispatch_valid = decode_valid_reg[0];
+    assign decode_to_rs_0.control_signals = control_signal_reg_0[10:0]; // Remove register addresses, use bits [10:0]
+    assign decode_to_rs_0.pc = pc_reg_0;
+    assign decode_to_rs_0.operand_a_data = data_a_reg_0;
+    assign decode_to_rs_0.operand_b_data = data_b_reg_0;
+    assign decode_to_rs_0.store_data = store_data_reg_0;
+    assign decode_to_rs_0.operand_a_tag = operand_a_tag_reg_0;
+    assign decode_to_rs_0.operand_b_tag = operand_b_tag_reg_0;
+    assign decode_to_rs_0.rd_phys_addr = rd_phys_reg_0;
+    assign decode_to_rs_0.pc_value_at_prediction = pc_prediction_reg_0;
+    assign decode_to_rs_0.branch_sel = branch_sel_reg_0;
+    assign decode_to_rs_0.branch_prediction = branch_prediction_reg_0;
     
-    assign data_a_o_0 = data_a_reg_0;
-    assign data_a_o_1 = data_a_reg_1;
-    assign data_a_o_2 = data_a_reg_2;
+    // Reservation Station 1 connections
+    assign decode_to_rs_1.dispatch_valid = decode_valid_reg[1];
+    assign decode_to_rs_1.control_signals = control_signal_reg_1[10:0]; // Remove register addresses, use bits [10:0]
+    assign decode_to_rs_1.pc = pc_reg_1;
+    assign decode_to_rs_1.operand_a_data = data_a_reg_1;
+    assign decode_to_rs_1.operand_b_data = data_b_reg_1;
+    assign decode_to_rs_1.store_data = store_data_reg_1;
+    assign decode_to_rs_1.operand_a_tag = operand_a_tag_reg_1;
+    assign decode_to_rs_1.operand_b_tag = operand_b_tag_reg_1;
+    assign decode_to_rs_1.rd_phys_addr = rd_phys_reg_1;
+    assign decode_to_rs_1.pc_value_at_prediction = pc_prediction_reg_1;
+    assign decode_to_rs_1.branch_sel = branch_sel_reg_1;
+    assign decode_to_rs_1.branch_prediction = branch_prediction_reg_1;
     
-    assign data_b_o_0 = data_b_reg_0;
-    assign data_b_o_1 = data_b_reg_1;
-    assign data_b_o_2 = data_b_reg_2;
-    
-    assign store_data_o_0 = store_data_reg_0;
-    assign store_data_o_1 = store_data_reg_1;
-    assign store_data_o_2 = store_data_reg_2;
-    
-    assign pc_o_0 = pc_reg_0;
-    assign pc_o_1 = pc_reg_1;
-    assign pc_o_2 = pc_reg_2;
-    
-    assign control_signal_o_0 = control_signal_reg_0;
-    assign control_signal_o_1 = control_signal_reg_1;
-    assign control_signal_o_2 = control_signal_reg_2;
-    
-    assign pc_value_at_prediction_o_0 = pc_prediction_reg_0;
-    assign pc_value_at_prediction_o_1 = pc_prediction_reg_1;
-    assign pc_value_at_prediction_o_2 = pc_prediction_reg_2;
-    
-    assign branch_sel_o_0 = branch_sel_reg_0;
-    assign branch_sel_o_1 = branch_sel_reg_1;
-    assign branch_sel_o_2 = branch_sel_reg_2;
-    
-    assign branch_prediction_o_0 = branch_prediction_reg_0;
-    assign branch_prediction_o_1 = branch_prediction_reg_1;
-    assign branch_prediction_o_2 = branch_prediction_reg_2;
-    
-    // Physical register addresses for reservation station
-    assign rs1_phys_o_0 = rs1_phys_0;
-    assign rs1_phys_o_1 = rs1_phys_1;
-    assign rs1_phys_o_2 = rs1_phys_2;
-    
-    assign rs2_phys_o_0 = rs2_phys_0;
-    assign rs2_phys_o_1 = rs2_phys_1;
-    assign rs2_phys_o_2 = rs2_phys_2;
-    
-    assign rd_phys_o_0 = rd_phys_0;
-    assign rd_phys_o_1 = rd_phys_1;
-    assign rd_phys_o_2 = rd_phys_2;
-    
-    assign old_rd_phys_o_0 = old_rd_phys_0;
-    assign old_rd_phys_o_1 = old_rd_phys_1;
-    assign old_rd_phys_o_2 = old_rd_phys_2;
-    
-    assign rename_valid_o = rename_valid_internal;
-    
-    // Architectural register addresses (for debugging/tracing)
-    assign rs1_arch_o_0 = rs1_arch_0;
-    assign rs1_arch_o_1 = rs1_arch_1;
-    assign rs1_arch_o_2 = rs1_arch_2;
-    
-    assign rs2_arch_o_0 = rs2_arch_0;
-    assign rs2_arch_o_1 = rs2_arch_1;
-    assign rs2_arch_o_2 = rs2_arch_2;
-    
-    assign rd_arch_o_0 = rd_arch_0;
-    assign rd_arch_o_1 = rd_arch_1;
-    assign rd_arch_o_2 = rd_arch_2;
+    // Reservation Station 2 connections
+    assign decode_to_rs_2.dispatch_valid = decode_valid_reg[2];
+    assign decode_to_rs_2.control_signals = control_signal_reg_2[10:0]; // Remove register addresses, use bits [10:0]
+    assign decode_to_rs_2.pc = pc_reg_2;
+    assign decode_to_rs_2.operand_a_data = data_a_reg_2;
+    assign decode_to_rs_2.operand_b_data = data_b_reg_2;
+    assign decode_to_rs_2.store_data = store_data_reg_2;
+    assign decode_to_rs_2.operand_a_tag = operand_a_tag_reg_2;
+    assign decode_to_rs_2.operand_b_tag = operand_b_tag_reg_2;
+    assign decode_to_rs_2.rd_phys_addr = rd_phys_reg_2;
+    assign decode_to_rs_2.pc_value_at_prediction = pc_prediction_reg_2;
+    assign decode_to_rs_2.branch_sel = branch_sel_reg_2;
+    assign decode_to_rs_2.branch_prediction = branch_prediction_reg_2;
+
 
     //==========================================================================
     // DUMMY TRACER INTERFACES (for future tracing support)

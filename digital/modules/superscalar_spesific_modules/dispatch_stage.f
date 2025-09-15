@@ -1,0 +1,4 @@
+# Dispatch Stage Files
+dispatch_stage/multi_port_register_file.sv
+dispatch_stage/reservation_station.sv
+dispatch_stage/dispatch_stage.sv

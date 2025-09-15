@@ -1,0 +1,5 @@
+-F common.f
+-F interfaces.f
+-F fetch_stage.f
+-F issue_stage.f
+-F dipatch_stage.f

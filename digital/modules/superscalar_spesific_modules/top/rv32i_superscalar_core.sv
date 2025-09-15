@@ -163,7 +163,7 @@ module rv32i_superscalar_core #(
     logic halted;
     
     //==========================================================================
-    // FETCH AND BUFFER STAGE
+    // FETCH STAGE (fetch_buffer_top)
     //==========================================================================
     
     fetch_buffer_top #(
@@ -240,14 +240,18 @@ module rv32i_superscalar_core #(
     );
     
     //==========================================================================
-    // DECODE STAGE (3 parallel decode units with multi-port register file)
+    // ISSUE STAGE (3 parallel decode units with register renaming)
     //==========================================================================
     
-    multi_decode_stage #(
+    // Create interfaces for issue stage to dispatch stage
+    issue_to_dispatch_if #(.DATA_WIDTH(DATA_WIDTH), .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1)) 
+        issue_to_dispatch_0_if(), issue_to_dispatch_1_if(), issue_to_dispatch_2_if();
+    
+    issue_stage #(
         .DATA_WIDTH(DATA_WIDTH),
         .ARCH_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH),
         .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1)
-    ) multi_decode_unit (
+    ) issue_stage_unit (
         .clk(clk),
         .reset(reset),
         
@@ -276,47 +280,99 @@ module rv32i_superscalar_core #(
         // Ready signal to fetch/buffer stage
         .decode_ready_o(decode_ready),
         
-        // Writeback inputs for register file
-        .wb_valid_i(wb_valid),
-        .wb_data_i_0(wb_data_0),
-        .wb_data_i_1(wb_data_1),
-        .wb_data_i_2(wb_data_2),
-        .wb_rd_i_0(wb_rd_0),
-        .wb_rd_i_1(wb_rd_1),
-        .wb_rd_i_2(wb_rd_2),
-        .wb_reg_write_i_0(wb_reg_write_0),
-        .wb_reg_write_i_1(wb_reg_write_1),
-        .wb_reg_write_i_2(wb_reg_write_2),
+        // ROB commit interface (placeholder for now)
+        .commit_valid_i(3'b000),
+        .commit_free_phys_reg_i_0(6'h0),
+        .commit_free_phys_reg_i_1(6'h0),
+        .commit_free_phys_reg_i_2(6'h0),
         
-        // Outputs to execute stage
-        .decode_valid_o(decode_valid_out),
-        .data_a_o_0(decode_data_a_0),
-        .data_a_o_1(decode_data_a_1),
-        .data_a_o_2(decode_data_a_2),
-        .data_b_o_0(decode_data_b_0),
-        .data_b_o_1(decode_data_b_1),
-        .data_b_o_2(decode_data_b_2),
-        .store_data_o_0(decode_store_data_0),
-        .store_data_o_1(decode_store_data_1),
-        .store_data_o_2(decode_store_data_2),
-        .pc_o_0(decode_pc_0),
-        .pc_o_1(decode_pc_1),
-        .pc_o_2(decode_pc_2),
-        .control_signal_o_0(decode_control_0),
-        .control_signal_o_1(decode_control_1),
-        .control_signal_o_2(decode_control_2),
-        .pc_value_at_prediction_o_0(decode_pc_prediction_0),
-        .pc_value_at_prediction_o_1(decode_pc_prediction_1),
-        .pc_value_at_prediction_o_2(decode_pc_prediction_2),
-        .branch_sel_o_0(decode_branch_sel_0),
-        .branch_sel_o_1(decode_branch_sel_1),
-        .branch_sel_o_2(decode_branch_sel_2),
-        .branch_prediction_o_0(decode_branch_pred_0),
-        .branch_prediction_o_1(decode_branch_pred_1),
-        .branch_prediction_o_2(decode_branch_pred_2)
-        
-        
+        // Issue to Dispatch Stage Interfaces
+        .issue_to_dispatch_0(issue_to_dispatch_0_if.issue),
+        .issue_to_dispatch_1(issue_to_dispatch_1_if.issue),
+        .issue_to_dispatch_2(issue_to_dispatch_2_if.issue)
     );
+    
+    //==========================================================================
+    // DISPATCH STAGE (reservation stations + register file)
+    //==========================================================================
+    
+    // Create interfaces for dispatch stage to functional units
+    rs_to_exec_if #(.DATA_WIDTH(DATA_WIDTH)) 
+        dispatch_to_alu_0_if(), dispatch_to_alu_1_if(), dispatch_to_alu_2_if();
+    
+    // Create CDB interface
+    cdb_if #(.DATA_WIDTH(DATA_WIDTH), .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1)) 
+        cdb_interface();
+    
+    dispatch_stage #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1),
+        .NUM_PHYS_REGS(64)
+    ) dispatch_stage_unit (
+        .clk(clk),
+        .reset(reset),
+        
+        // Input from Issue Stage
+        .issue_to_dispatch_0(issue_to_dispatch_0_if.dispatch),
+        .issue_to_dispatch_1(issue_to_dispatch_1_if.dispatch),
+        .issue_to_dispatch_2(issue_to_dispatch_2_if.dispatch),
+        
+        // Output to Functional Units
+        .dispatch_to_alu_0(dispatch_to_alu_0_if.reservation_station),
+        .dispatch_to_alu_1(dispatch_to_alu_1_if.reservation_station),
+        .dispatch_to_alu_2(dispatch_to_alu_2_if.reservation_station)
+    );
+    
+    //==========================================================================
+    // TEMPORARY CONNECTIONS (for backward compatibility during transition)
+    //==========================================================================
+    
+    // Extract data from dispatch interfaces for execute stage (temporary)
+    assign decode_valid_out[0] = dispatch_to_alu_0_if.issue_valid;
+    assign decode_valid_out[1] = dispatch_to_alu_1_if.issue_valid;
+    assign decode_valid_out[2] = dispatch_to_alu_2_if.issue_valid;
+    
+    assign decode_data_a_0 = dispatch_to_alu_0_if.data_a;
+    assign decode_data_a_1 = dispatch_to_alu_1_if.data_a;
+    assign decode_data_a_2 = dispatch_to_alu_2_if.data_a;
+    
+    assign decode_data_b_0 = dispatch_to_alu_0_if.data_b;
+    assign decode_data_b_1 = dispatch_to_alu_1_if.data_b;
+    assign decode_data_b_2 = dispatch_to_alu_2_if.data_b;
+    
+    assign decode_store_data_0 = dispatch_to_alu_0_if.data_b;  // For store instructions, data_b contains store data
+    assign decode_store_data_1 = dispatch_to_alu_1_if.data_b;  // For store instructions, data_b contains store data
+    assign decode_store_data_2 = dispatch_to_alu_2_if.data_b;  // For store instructions, data_b contains store data
+    
+    assign decode_pc_0 = issue_to_dispatch_0_if.pc;
+    assign decode_pc_1 = issue_to_dispatch_1_if.pc;
+    assign decode_pc_2 = issue_to_dispatch_2_if.pc;
+    
+    assign decode_control_0 = {15'h0, issue_to_dispatch_0_if.control_signals}; // Extend 11 bits to 26
+    assign decode_control_1 = {15'h0, issue_to_dispatch_1_if.control_signals}; // Extend 11 bits to 26
+    assign decode_control_2 = {15'h0, issue_to_dispatch_2_if.control_signals}; // Extend 11 bits to 26
+    
+    assign decode_pc_prediction_0 = issue_to_dispatch_0_if.pc_value_at_prediction;
+    assign decode_pc_prediction_1 = issue_to_dispatch_1_if.pc_value_at_prediction;
+    assign decode_pc_prediction_2 = issue_to_dispatch_2_if.pc_value_at_prediction;
+    
+    assign decode_branch_sel_0 = issue_to_dispatch_0_if.branch_sel;
+    assign decode_branch_sel_1 = issue_to_dispatch_1_if.branch_sel;
+    assign decode_branch_sel_2 = issue_to_dispatch_2_if.branch_sel;
+    
+    assign decode_branch_pred_0 = issue_to_dispatch_0_if.branch_prediction;
+    assign decode_branch_pred_1 = issue_to_dispatch_1_if.branch_prediction;
+    assign decode_branch_pred_2 = issue_to_dispatch_2_if.branch_prediction;
+    
+    // Extract destination registers from interfaces (convert 6-bit back to 5-bit for now)
+    assign decode_rd_0 = issue_to_dispatch_0_if.rd_phys_addr[4:0];
+    assign decode_rd_1 = issue_to_dispatch_1_if.rd_phys_addr[4:0];
+    assign decode_rd_2 = issue_to_dispatch_2_if.rd_phys_addr[4:0];
+    
+    // Provide ready signals to dispatch stage (always ready for now)
+    assign dispatch_to_alu_0_if.issue_ready = 1'b1;
+    assign dispatch_to_alu_1_if.issue_ready = 1'b1;
+    assign dispatch_to_alu_2_if.issue_ready = 1'b1;
     
     //==========================================================================
     // EXECUTE STAGE (placeholder)

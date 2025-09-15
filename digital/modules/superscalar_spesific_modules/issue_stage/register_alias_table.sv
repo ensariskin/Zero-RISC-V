@@ -41,11 +41,8 @@ module register_alias_table #(
     
     // Commit interface (from ROB - frees old physical registers)
     input logic [2:0] commit_valid,
-    input logic [PHYS_ADDR_WIDTH-1:0] free_phys_reg_0, free_phys_reg_1, free_phys_reg_2,
+    input logic [PHYS_ADDR_WIDTH-1:0] free_phys_reg_0, free_phys_reg_1, free_phys_reg_2
     
-    // Status outputs
-    output logic free_list_empty,
-    output logic [5:0] free_list_count
 );
 
     // Register Alias Table - maps arch reg to current physical reg
@@ -70,9 +67,6 @@ module register_alias_table #(
             if (free_list[i]) free_count++;
         end
     end
-    
-    assign free_list_count = free_count;
-    assign free_list_empty = (free_count == 0);
     
     // Find available physical registers - SYNTHESIZABLE: Use proper triple priority encoder
     logic [5:0] first_free, second_free, third_free;
