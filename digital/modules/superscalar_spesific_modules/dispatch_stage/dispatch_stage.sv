@@ -58,9 +58,15 @@ module dispatch_stage #(
     
     // Physical register file interface signals
     // Read ports (6 total: 2 per reservation station)
-    logic [PHYS_REG_ADDR_WIDTH-1:0] reg_read_addr [5:0];
-    logic [DATA_WIDTH-1:0] reg_read_data [5:0];
-    logic [1:0] reg_read_tag [5:0];
+    logic [PHYS_REG_ADDR_WIDTH-1:0] inst_0_read_addr_a, inst_0_read_addr_b;
+    logic [PHYS_REG_ADDR_WIDTH-1:0] inst_1_read_addr_a, inst_1_read_addr_b;
+    logic [PHYS_REG_ADDR_WIDTH-1:0] inst_2_read_addr_a, inst_2_read_addr_b;
+    logic [DATA_WIDTH-1:0] inst_0_read_data_a, inst_0_read_data_b;
+    logic [DATA_WIDTH-1:0] inst_1_read_data_a, inst_1_read_data_b;
+    logic [DATA_WIDTH-1:0] inst_2_read_data_a, inst_2_read_data_b;
+    logic [1:0] inst_0_read_tag_a, inst_0_read_tag_b;
+    logic [1:0] inst_1_read_tag_a, inst_1_read_tag_b;
+    logic [1:0] inst_2_read_tag_a, inst_2_read_tag_b;
     
     //==========================================================================
     // SHARED PHYSICAL REGISTER FILE (64 entries)
@@ -68,20 +74,19 @@ module dispatch_stage #(
     
     multi_port_register_file #(
         .DATA_WIDTH(DATA_WIDTH),
-        .ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),  // 6 bits for 64 registers
-        .NUM_READ_PORTS(6),                // 2 per reservation station
+        .ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),  // 6 bits for 64 registers                
         .NUM_REGISTERS(NUM_PHYS_REGS)      // 64 physical registers
     ) physical_reg_file (
         .clk(clk),
         .reset(reset),
         
-        // Read ports (2 per reservation station)
-        .read_addr_0(reg_read_addr[0]), .read_data_0(reg_read_data[0]), .read_tag_0(reg_read_tag[0]),  // RS0 operand A
-        .read_addr_1(reg_read_addr[1]), .read_data_1(reg_read_data[1]), .read_tag_1(reg_read_tag[1]),  // RS0 operand B
-        .read_addr_2(reg_read_addr[2]), .read_data_2(reg_read_data[2]), .read_tag_2(reg_read_tag[2]),  // RS1 operand A
-        .read_addr_3(reg_read_addr[3]), .read_data_3(reg_read_data[3]), .read_tag_3(reg_read_tag[3]),  // RS1 operand B
-        .read_addr_4(reg_read_addr[4]), .read_data_4(reg_read_data[4]), .read_tag_4(reg_read_tag[4]),  // RS2 operand A
-        .read_addr_5(reg_read_addr[5]), .read_data_5(reg_read_data[5]), .read_tag_5(reg_read_tag[5]),  // RS2 operand B
+        // Read ports (descriptive naming)
+        .inst_0_read_addr_a(inst_0_read_addr_a), .inst_0_read_data_a(inst_0_read_data_a), .inst_0_read_tag_a(inst_0_read_tag_a),  // RS0 operand A
+        .inst_0_read_addr_b(inst_0_read_addr_b), .inst_0_read_data_b(inst_0_read_data_b), .inst_0_read_tag_b(inst_0_read_tag_b),  // RS0 operand B
+        .inst_1_read_addr_a(inst_1_read_addr_a), .inst_1_read_data_a(inst_1_read_data_a), .inst_1_read_tag_a(inst_1_read_tag_a),  // RS1 operand A
+        .inst_1_read_addr_b(inst_1_read_addr_b), .inst_1_read_data_b(inst_1_read_data_b), .inst_1_read_tag_b(inst_1_read_tag_b),  // RS1 operand B
+        .inst_2_read_addr_a(inst_2_read_addr_a), .inst_2_read_data_a(inst_2_read_data_a), .inst_2_read_tag_a(inst_2_read_tag_a),  // RS2 operand A
+        .inst_2_read_addr_b(inst_2_read_addr_b), .inst_2_read_data_b(inst_2_read_data_b), .inst_2_read_tag_b(inst_2_read_tag_b),  // RS2 operand B
         
         // Allocation ports - set tags when instructions are dispatched 
         .alloc_enable_0(issue_to_dispatch_0.dispatch_valid), .alloc_addr_0(issue_to_dispatch_0.rd_phys_addr), .alloc_tag_0(2'b00),  // ALU0 tag
@@ -93,6 +98,7 @@ module dispatch_stage #(
         .commit_enable_1(cdb_interface.cdb_valid_1), .commit_addr_1(cdb_interface.cdb_dest_reg_1), .commit_data_1(cdb_interface.cdb_data_1),
         .commit_enable_2(cdb_interface.cdb_valid_2), .commit_addr_2(cdb_interface.cdb_dest_reg_2), .commit_data_2(cdb_interface.cdb_data_2)
     );
+    // TODO : How can we use ROB or how we reorder instructions??
     
     //==========================================================================
     // COMMON DATA BUS (CDB) INTERFACE
@@ -109,16 +115,16 @@ module dispatch_stage #(
     
     // Connect interface addresses to register file read ports
     // RS0: Read ports 0 and 1
-    assign reg_read_addr[0] = issue_to_dispatch_0.operand_a_phys_addr;  // RS0 operand A
-    assign reg_read_addr[1] = issue_to_dispatch_0.operand_b_phys_addr;  // RS0 operand B
+    assign inst_0_read_addr_a = issue_to_dispatch_0.operand_a_phys_addr;  // RS0 operand A
+    assign inst_0_read_addr_b = issue_to_dispatch_0.operand_b_phys_addr;  // RS0 operand B
     
     // RS1: Read ports 2 and 3  
-    assign reg_read_addr[2] = issue_to_dispatch_1.operand_a_phys_addr;  // RS1 operand A
-    assign reg_read_addr[3] = issue_to_dispatch_1.operand_b_phys_addr;  // RS1 operand B
+    assign inst_1_read_addr_a = issue_to_dispatch_1.operand_a_phys_addr;  // RS1 operand A
+    assign inst_1_read_addr_b = issue_to_dispatch_1.operand_b_phys_addr;  // RS1 operand B
     
     // RS2: Read ports 4 and 5
-    assign reg_read_addr[4] = issue_to_dispatch_2.operand_a_phys_addr;  // RS2 operand A
-    assign reg_read_addr[5] = issue_to_dispatch_2.operand_b_phys_addr;  // RS2 operand B
+    assign inst_2_read_addr_a = issue_to_dispatch_2.operand_a_phys_addr;  // RS2 operand A
+    assign inst_2_read_addr_b = issue_to_dispatch_2.operand_b_phys_addr;  // RS2 operand B
     
     //==========================================================================
     // INTERNAL INTERFACES: Create legacy interfaces for reservation stations
@@ -135,11 +141,11 @@ module dispatch_stage #(
     assign issue_to_dispatch_0.dispatch_ready = internal_rs_if_0.dispatch_ready;
     assign internal_rs_if_0.control_signals = issue_to_dispatch_0.control_signals;
     assign internal_rs_if_0.pc = issue_to_dispatch_0.pc;
-    assign internal_rs_if_0.operand_a_data = reg_read_data[0];  // Data from register file
-    assign internal_rs_if_0.operand_b_data = issue_to_dispatch_0.control_signals[7] ? issue_to_dispatch_0.immediate_value : reg_read_data[1]; // Immediate or register
-    assign internal_rs_if_0.store_data = reg_read_data[1];      // Store data same as operand B (from rs2)
-    assign internal_rs_if_0.operand_a_tag = reg_read_tag[0];    // Tag from register file
-    assign internal_rs_if_0.operand_b_tag = issue_to_dispatch_0.control_signals[7] ? 2'b11 : reg_read_tag[1]; // Immediate always ready (tag 11)
+    assign internal_rs_if_0.operand_a_data = inst_0_read_data_a;  // Data from register file
+    assign internal_rs_if_0.operand_b_data = issue_to_dispatch_0.control_signals[3] ? issue_to_dispatch_0.immediate_value : inst_0_read_data_b; // Immediate or register
+    assign internal_rs_if_0.store_data = inst_0_read_data_b;      // Store data same as operand B (from rs2)
+    assign internal_rs_if_0.operand_a_tag = inst_0_read_tag_a;    // Tag from register file
+    assign internal_rs_if_0.operand_b_tag = issue_to_dispatch_0.control_signals[3] ? 2'b11 : inst_0_read_tag_b; // Immediate always ready (tag 11)
     assign internal_rs_if_0.rd_phys_addr = issue_to_dispatch_0.rd_phys_addr;
     assign internal_rs_if_0.pc_value_at_prediction = issue_to_dispatch_0.pc_value_at_prediction;
     assign internal_rs_if_0.branch_sel = issue_to_dispatch_0.branch_sel;
@@ -150,11 +156,11 @@ module dispatch_stage #(
     assign issue_to_dispatch_1.dispatch_ready = internal_rs_if_1.dispatch_ready;
     assign internal_rs_if_1.control_signals = issue_to_dispatch_1.control_signals;
     assign internal_rs_if_1.pc = issue_to_dispatch_1.pc;
-    assign internal_rs_if_1.operand_a_data = reg_read_data[2];  // Data from register file
-    assign internal_rs_if_1.operand_b_data = issue_to_dispatch_1.control_signals[7] ? issue_to_dispatch_1.immediate_value : reg_read_data[3]; // Immediate or register
-    assign internal_rs_if_1.store_data = reg_read_data[3];      // Store data same as operand B (from rs2)
-    assign internal_rs_if_1.operand_a_tag = reg_read_tag[2];    // Tag from register file
-    assign internal_rs_if_1.operand_b_tag = issue_to_dispatch_1.control_signals[7] ? 2'b11 : reg_read_tag[3]; // Immediate always ready (tag 11)
+    assign internal_rs_if_1.operand_a_data = inst_1_read_data_a;  // Data from register file
+    assign internal_rs_if_1.operand_b_data = issue_to_dispatch_1.control_signals[3] ? issue_to_dispatch_1.immediate_value : inst_1_read_data_b; // Immediate or register
+    assign internal_rs_if_1.store_data = inst_1_read_data_b;      // Store data same as operand B (from rs2)
+    assign internal_rs_if_1.operand_a_tag = inst_1_read_tag_a;    // Tag from register file
+    assign internal_rs_if_1.operand_b_tag = issue_to_dispatch_1.control_signals[3] ? 2'b11 : inst_1_read_tag_b; // Immediate always ready (tag 11)
     assign internal_rs_if_1.rd_phys_addr = issue_to_dispatch_1.rd_phys_addr;
     assign internal_rs_if_1.pc_value_at_prediction = issue_to_dispatch_1.pc_value_at_prediction;
     assign internal_rs_if_1.branch_sel = issue_to_dispatch_1.branch_sel;
@@ -165,11 +171,11 @@ module dispatch_stage #(
     assign issue_to_dispatch_2.dispatch_ready = internal_rs_if_2.dispatch_ready;
     assign internal_rs_if_2.control_signals = issue_to_dispatch_2.control_signals;
     assign internal_rs_if_2.pc = issue_to_dispatch_2.pc;
-    assign internal_rs_if_2.operand_a_data = reg_read_data[4];  // Data from register file
-    assign internal_rs_if_2.operand_b_data = issue_to_dispatch_2.control_signals[7] ? issue_to_dispatch_2.immediate_value : reg_read_data[5]; // Immediate or register
-    assign internal_rs_if_2.store_data = reg_read_data[5];      // Store data same as operand B (from rs2)
-    assign internal_rs_if_2.operand_a_tag = reg_read_tag[4];    // Tag from register file
-    assign internal_rs_if_2.operand_b_tag = issue_to_dispatch_2.control_signals[7] ? 2'b11 : reg_read_tag[5]; // Immediate always ready (tag 11)
+    assign internal_rs_if_2.operand_a_data = inst_2_read_data_a;  // Data from register file
+    assign internal_rs_if_2.operand_b_data = issue_to_dispatch_2.control_signals[3] ? issue_to_dispatch_2.immediate_value : inst_2_read_data_b; // Immediate or register
+    assign internal_rs_if_2.store_data = inst_2_read_data_b;      // Store data same as operand B (from rs2)
+    assign internal_rs_if_2.operand_a_tag = inst_2_read_tag_a;    // Tag from register file
+    assign internal_rs_if_2.operand_b_tag = issue_to_dispatch_2.control_signals[3] ? 2'b11 : inst_2_read_tag_b; // Immediate always ready (tag 11)
     assign internal_rs_if_2.rd_phys_addr = issue_to_dispatch_2.rd_phys_addr;
     assign internal_rs_if_2.pc_value_at_prediction = issue_to_dispatch_2.pc_value_at_prediction;
     assign internal_rs_if_2.branch_sel = issue_to_dispatch_2.branch_sel;

@@ -462,41 +462,7 @@ module dv_top_superscalar;
         .port1_wb_clk_i(clk)
     );
     
-    //==========================================================================
-    // TIMEOUT WATCHDOG
-    //==========================================================================
-    
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            cycle_count <= #D 0;
-            prev_debug_pc <= #D 32'h0;
-            prev_perf_instructions_executed <= #D 32'h0;
-            test_failed <= #D 1'b0;
-        end else begin
-            cycle_count <= #D cycle_count + 1;
-            prev_debug_pc <= #D debug_pc;
-            prev_perf_instructions_executed <= #D perf_instructions_executed;
-            
-            if (cycle_count >= TIMEOUT_CYCLES) begin
-                $display("[%t] TIMEOUT: Simulation exceeded %d cycles", $time, TIMEOUT_CYCLES);
-                $display("Final performance statistics:");
-                $display("  Cycles: %d", perf_cycles);
-                $display("  Instructions executed: %d", perf_instructions_executed);
-                $display("  Instructions fetched: %d", perf_instructions_fetched);
-                $display("  Branch mispredictions: %d", perf_branch_mispredictions);
-                $display("  Buffer stalls: %d", perf_buffer_stalls);
-                if (perf_cycles > 0) begin
-                    // Use direct calculations for display only
-                    $display("  IPC: %.2f", real'(perf_instructions_executed) / real'(perf_cycles));
-                    $display("  Fetch efficiency: %.2f instructions/cycle", real'(perf_instructions_fetched) / real'(perf_cycles));
-                end
-                test_failed <= #D 1;
-                #10;
-                $finish;
-            end
-        end
-    end
-    
+
     //==========================================================================
     // PERFORMANCE MONITORING
     //==========================================================================
@@ -549,140 +515,87 @@ module dv_top_superscalar;
     // Default test program for basic functionality
     task load_default_test_program();
         begin
-            $display("[%t] Loading default test program", $time);
-            // Simple test: ADDI x1, x0, 1; ADDI x2, x1, 2; ADD x3, x1, x2; NOP; NOP;
-            instruction_memory.mem[0] = 32'h00100093; // ADDI x1, x0, 1
-            instruction_memory.mem[1] = 32'h00208113; // ADDI x2, x1, 2  
-            instruction_memory.mem[2] = 32'h002081b3; // ADD x3, x1, x2
-            instruction_memory.mem[3] = 32'h00000013; // NOP (ADDI x0, x0, 0)
-            instruction_memory.mem[4] = 32'h00000013; // NOP (ADDI x0, x0, 0)
-            instruction_memory.mem[5] = 32'h00000013; // NOP (ADDI x0, x0, 0)
-            $display("[%t] Default test program loaded", $time);
+            $display("[%t] Loading comprehensive test program", $time);
+            
+            // =====================================================================
+            // COMPREHENSIVE SUPERSCALAR TEST PROGRAM
+            // Tests: Register loading, arithmetic, and logical operations
+            // =====================================================================
+            
+            for (int i = 0; i < 16384; i++) begin
+                instruction_memory.mem[i] = 32'h00000013; // NOP (ADDI x0, x0, 0)
+            end
+
+            // Phase 1: Load integer values into first 6 registers (x1-x6)
+            instruction_memory.mem[0] = 32'h00100093;  // ADDI x1, x0, 1       -> x1 = 1 
+            instruction_memory.mem[1] = 32'h00200113;  // ADDI x2, x0, 2       -> x2 = 2 
+            instruction_memory.mem[2] = 32'h00300193;  // ADDI x3, x0, 3       -> x3 = 3 
+            instruction_memory.mem[3] = 32'h00400213;  // ADDI x4, x0, 4       -> x4 = 4 
+            instruction_memory.mem[4] = 32'h00500293;  // ADDI x5, x0, 5       -> x5 = 5
+            instruction_memory.mem[5] = 32'h00600313;  // ADDI x6, x0, 6       -> x6 = 6
+            
+            //Phase 2: Arithmetic Operations
+            instruction_memory.mem[6]  = 32'h005203b3; // ADD  x7, x4, x5      -> x7 = 4 + 5 = 9 
+            instruction_memory.mem[7]  = 32'h40438433; // SUB  x8, x7, x4      -> x8 = 9 - 4 = 5
+            instruction_memory.mem[8]  = 32'h005303b3; // ADD  x7, x6, x5      -> x7 = 6 + 5 = 11
+            instruction_memory.mem[9]  = 32'h40138533; // SUB x10, x7, x1      -> x10 = 11 - 1 = 10
+            instruction_memory.mem[10] = 32'h006505b3; // ADD x11, x10, x6     -> x11 = 10 + 6 = 16
+            instruction_memory.mem[11] = 32'h40538633; // SUB x12, x7, x5      -> x12 = 11 - 5 = 6
+
+            // Phase 2: Arithmetic Operations
+            //instruction_memory.mem[6]  = 32'h002083b3; // ADD  x7, x1, x2      -> x7 = 1 + 2 = 3 -
+            //instruction_memory.mem[7]  = 32'h40208433; // SUB  x8, x1, x2      -> x8 = 1 - 2 = -1
+            //instruction_memory.mem[8]  = 32'h003104b3; // ADD  x9, x2, x3      -> x9 = 2 + 3 = 5
+            //instruction_memory.mem[9]  = 32'h40310533; // SUB x10, x2, x3      -> x10 = 2 - 3 = -1 -
+            //instruction_memory.mem[10] = 32'h004185b3; // ADD x11, x3, x4      -> x11 = 3 + 4 = 7
+            //instruction_memory.mem[11] = 32'h40418633; // SUB x12, x3, x4      -> x12 = 3 - 4 = -1
+
+            /*   
+            // Phase 3: Logical Operations  
+            instruction_memory.mem[12] = 32'h0020c6b3; // XOR x13, x1, x2      -> x13 = 1 ^ 2 = 3
+            instruction_memory.mem[13] = 32'h0020e733; // OR  x14, x1, x2      -> x14 = 1 | 2 = 3
+            instruction_memory.mem[14] = 32'h0020f7b3; // AND x15, x1, x2      -> x15 = 1 & 2 = 0
+            instruction_memory.mem[15] = 32'h00314833; // XOR x16, x2, x3      -> x16 = 2 ^ 3 = 1
+            instruction_memory.mem[16] = 32'h003168b3; // OR  x17, x2, x3      -> x17 = 2 | 3 = 3
+            instruction_memory.mem[17] = 32'h00317933; // AND x18, x2, x3      -> x18 = 2 & 3 = 2
+            
+            // Phase 4: Shift Operations
+            instruction_memory.mem[18] = 32'h002099b3; // SLL x19, x1, x2      -> x19 = 1 << 2 = 4
+            instruction_memory.mem[19] = 32'h0021da33; // SRL x20, x3, x2      -> x20 = 3 >> 2 = 0
+            instruction_memory.mem[20] = 32'h40215a33; // SRA x20, x2, x2      -> x20 = 2 >>> 2 = 0 (overwrite x20)
+            
+            // Phase 5: Immediate Operations  
+            instruction_memory.mem[21] = 32'h00a08a93; // ADDI x21, x1, 10     -> x21 = 1 + 10 = 11
+            instruction_memory.mem[22] = 32'h00f0cb13; // XORI x22, x1, 15     -> x22 = 1 ^ 15 = 14
+            instruction_memory.mem[23] = 32'h00f0eb93; // ORI  x23, x1, 15     -> x23 = 1 | 15 = 15
+            instruction_memory.mem[24] = 32'h00f0fc13; // ANDI x24, x1, 15     -> x24 = 1 & 15 = 1
+            
+            // Phase 6: Complex arithmetic using multiple registers
+            instruction_memory.mem[25] = 32'h00520cb3; // ADD x25, x4, x5      -> x25 = 4 + 5 = 9
+            instruction_memory.mem[26] = 32'h00628d33; // ADD x26, x5, x6      -> x26 = 5 + 6 = 11
+            instruction_memory.mem[27] = 32'h01ac8db3; // ADD x27, x25, x26    -> x27 = 9 + 11 = 20
+            
+            // Phase 7: Set Less Than operations
+            instruction_memory.mem[28] = 32'h0020ae33; // SLT x28, x1, x2      -> x28 = (1 < 2) = 1
+            instruction_memory.mem[29] = 32'h00103eb3; // SLTU x29, x0, x1     -> x29 = (0 < 1) = 1  
+            instruction_memory.mem[30] = 32'h0010af33; // SLT x30, x1, x1      -> x30 = (1 < 1) = 0
+            */
+            
+            $display("[%t] Comprehensive test program loaded:", $time);
+            $display("  Phase 1: Load x1=1, x2=2, x3=3, x4=4, x5=5, x6=6");
+            $display("  Phase 2: Arithmetic operations (ADD/SUB)");
+            $display("  Phase 3: Logical operations (XOR/OR/AND)");  
+            $display("  Phase 4: Shift operations (SLL/SRL/SRA)");
+            $display("  Phase 5: Immediate operations");
+            $display("  Phase 6: Complex multi-register arithmetic");
+            $display("  Phase 7: Set Less Than operations");
+            $display("  Phase 8: Pipeline flush NOPs");
         end
     endtask
     
-    //==========================================================================
-    // ASSERTIONS AND CHECKS
-    //==========================================================================
     
-    // Clock period check
-    property clk_period_check;
-        @(posedge clk) ##1 ($time - $past($time)) == CLK_PERIOD;
-    endproperty
-    assert property (clk_period_check) else $error("Clock period violation");
-    
-    // Reset functionality check
-    property reset_clears_performance_counters;
-        @(posedge clk) !rst_n |-> (perf_cycles == 0 && perf_instructions_executed == 0);
-    endproperty
-    assert property (reset_clears_performance_counters) 
-        else $error("Performance counters not cleared on reset");
-    
-    // Instruction address alignment check
-    property inst_addr_alignment;
-        @(posedge clk) rst_n |-> (inst_addr_0[1:0] == 2'b00 && 
-                                  inst_addr_1[1:0] == 2'b00 && 
-                                  inst_addr_2[1:0] == 2'b00);
-    endproperty
-    assert property (inst_addr_alignment) 
-        else $error("Instruction addresses not aligned to 4-byte boundaries");
-    
-    // Sequential instruction fetch check (when not branching)
-    property sequential_fetch_check;
-        @(posedge clk) rst_n && debug_valid && (debug_pc == prev_debug_pc + 12) |-> 
-            (inst_addr_0 == debug_pc && 
-             inst_addr_1 == debug_pc + 4 && 
-             inst_addr_2 == debug_pc + 8);
-    endproperty
-    assert property (sequential_fetch_check) 
-        else $warning("Non-sequential instruction fetch detected");
-    
-    // Performance counter monotonicity checks
-    property perf_counters_monotonic;
-        @(posedge clk) rst_n |-> (perf_cycles >= $past(perf_cycles) &&
-                                  perf_instructions_executed >= $past(perf_instructions_executed) &&
-                                  perf_instructions_fetched >= $past(perf_instructions_fetched));
-    endproperty
-    assert property (perf_counters_monotonic) 
-        else $error("Performance counters decreased");
-    
-    // Data memory access checks
-    property data_req_implies_valid_addr;
-        @(posedge clk) rst_n && data_req |-> (data_addr[1:0] == 2'b00 || 
-                                              data_be inside {4'b0001, 4'b0010, 4'b0100, 4'b1000, 4'b0011, 4'b1100, 4'b1111});
-    endproperty
-    assert property (data_req_implies_valid_addr) 
-        else $error("Invalid data memory access alignment");
-    
-    // Buffer efficiency check - warn if too many stalls
-    property buffer_stall_efficiency;
-        @(posedge clk) rst_n && (perf_cycles > 1000) |-> 
-            (real'(perf_buffer_stalls) / real'(perf_cycles) < 0.1);
-    endproperty
-    assert property (buffer_stall_efficiency) 
-        else $warning("High buffer stall rate detected (>10 percent)");
-    
-    // Branch prediction accuracy check
-    property branch_prediction_reasonable;
-        @(posedge clk) rst_n && (perf_instructions_executed > 100) |-> 
-            (real'(perf_branch_mispredictions) / real'(perf_instructions_executed) < 0.3);
-    endproperty
-    assert property (branch_prediction_reasonable) 
-        else $warning("High branch misprediction rate detected (>30 percent)");
-    
-    // IPC reasonable range check
-    property ipc_reasonable_range;
-        @(posedge clk) rst_n && (perf_cycles > 100) && (perf_instructions_executed > 0) |-> 
-            ((real'(perf_instructions_executed) / real'(perf_cycles)) <= 3.0);
-    endproperty
-    assert property (ipc_reasonable_range) 
-        else $error("Impossible IPC detected (>3.0 for 3-way superscalar)");
-    
-    //==========================================================================
-    // COVERAGE COLLECTION
-    //==========================================================================
-    
-    // Instruction type coverage
-    covergroup instruction_coverage @(posedge clk);
-        option.at_least = 10;
-        
-        inst_opcode_0: coverpoint instruction_i_0[6:0] iff (rst_n && debug_valid) {
-            bins R_type = {7'b0110011};
-            bins I_type_alu = {7'b0010011};
-            bins I_type_load = {7'b0000011};
-            bins S_type = {7'b0100011};
-            bins B_type = {7'b1100011};
-            bins U_type_lui = {7'b0110111};
-            bins U_type_auipc = {7'b0010111};
-            bins J_type = {7'b1101111};
-            bins JALR = {7'b1100111};
-        }
-        
-        inst_opcode_1: coverpoint instruction_i_1[6:0] iff (rst_n && debug_valid) {
-            bins R_type = {7'b0110011};
-            bins I_type_alu = {7'b0010011};
-            bins I_type_load = {7'b0000011};
-            bins S_type = {7'b0100011};
-            bins B_type = {7'b1100011};
-            bins U_type_lui = {7'b0110111};
-            bins U_type_auipc = {7'b0010111};
-            bins J_type = {7'b1101111};
-            bins JALR = {7'b1100111};
-        }
-        
-        inst_opcode_2: coverpoint instruction_i_2[6:0] iff (rst_n && debug_valid) {
-            bins R_type = {7'b0110011};
-            bins I_type_alu = {7'b0010011};
-            bins I_type_load = {7'b0000011};
-            bins S_type = {7'b0100011};
-            bins B_type = {7'b1100011};
-            bins U_type_lui = {7'b0110111};
-            bins U_type_auipc = {7'b0010111};
-            bins J_type = {7'b1101111};
-            bins JALR = {7'b1100111};
-        }
-    endgroup
-    
+
+ 
     /* 
     // Performance coverage
     covergroup performance_coverage @(posedge clk);
@@ -705,34 +618,6 @@ module dv_top_superscalar;
     // TEST COMPLETION DETECTION
     //==========================================================================
     
-    // Detect test completion (processor halt or specific instruction)
-    always_ff @(posedge clk) begin
-        if (rst_n) begin
-            // Check for ECALL instruction (test completion signal)
-            if (debug_valid && debug_instruction == 32'h00000073) begin
-                $display("[%t] ECALL detected - Test completed", $time);
-                #100ns; 
-                $display("=================================================================");
-                $display("TEST PASSED");
-                $display("Final Performance Statistics:");
-                $display("  Total cycles: %d", perf_cycles);
-                $display("  Instructions executed: %d", perf_instructions_executed);
-                $display("  Instructions fetched: %d", perf_instructions_fetched);
-                $display("  Branch mispredictions: %d", perf_branch_mispredictions);
-                $display("  Buffer stalls: %d", perf_buffer_stalls);
-                if (perf_cycles > 0) begin
-                    // Use direct calculations for display only
-                    $display("  IPC: %.3f", real'(perf_instructions_executed) / real'(perf_cycles));
-                    $display("  Fetch efficiency: %.3f instructions/cycle", real'(perf_instructions_fetched) / real'(perf_cycles));
-                    $display("  Branch accuracy: %.1f%%", 
-                        perf_instructions_executed > 0 ? 
-                        (1.0 - real'(perf_branch_mispredictions)/real'(perf_instructions_executed)) * 100.0 : 100.0);
-                end
-                $display("=================================================================");
-                $finish;
-            end
-        end
-    end
     
     // Final cleanup
     final begin

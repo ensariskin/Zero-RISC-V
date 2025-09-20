@@ -7,7 +7,7 @@
 # Superscalar testbench filelist
 +incdir+../testbench/include
 -F ../modules/digital_top/digital_top.f
--F ../modules/superscalar_spesific_modules/superscalar_core.f
+-F ../modules/superscalar_spesific_modules/top.f
 -F ../testbench/tb_modules_superscalar.f
 
 

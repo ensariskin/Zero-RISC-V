@@ -82,6 +82,8 @@ module issue_stage #(
     logic [DATA_WIDTH-1:0] immediate_reg_0, immediate_reg_1, immediate_reg_2;
     
     // Physical register address pipeline registers
+    logic [PHYS_REG_ADDR_WIDTH-1:0] rs1_phys_reg_0, rs1_phys_reg_1, rs1_phys_reg_2;
+    logic [PHYS_REG_ADDR_WIDTH-1:0] rs2_phys_reg_0, rs2_phys_reg_1, rs2_phys_reg_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_reg_0, rd_phys_reg_1, rd_phys_reg_2;
 
     
@@ -178,8 +180,8 @@ module issue_stage #(
     //==========================================================================
     
     // Ready signal indicates RAT can allocate physical registers and dispatch stage can accept
-    assign decode_ready_o = rename_valid_internal & {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready};
-    
+    assign decode_ready_o =  {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready};
+    // todo : add rename_valid here
     //==========================================================================
     // ISSUE STAGE PIPELINE REGISTERS (CONTROL AND ADDRESSES ONLY)
     //==========================================================================
@@ -208,6 +210,12 @@ module issue_stage #(
             rd_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
             rd_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
             rd_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+            rs1_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+            rs1_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+            rs1_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+            rs2_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+            rs2_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+            rs2_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
         end else begin
             if (flush | bubble) begin
                 // Insert NOPs on flush or bubble
@@ -233,6 +241,12 @@ module issue_stage #(
                 rd_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
                 rd_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
                 rd_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs1_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs1_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs1_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs2_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs2_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs2_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
             end else begin
                 // Normal operation - register the decoded control and addresses only
                 decode_valid_reg <= #D decode_valid_i;
@@ -269,6 +283,12 @@ module issue_stage #(
                 rd_phys_reg_0 <= #D decode_valid_i[0] ? rd_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                 rd_phys_reg_1 <= #D decode_valid_i[1] ? rd_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                 rd_phys_reg_2 <= #D decode_valid_i[2] ? rd_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs1_phys_reg_0 <= #D decode_valid_i[0] ? rs1_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs1_phys_reg_1 <= #D decode_valid_i[1] ? rs1_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs1_phys_reg_2 <= #D decode_valid_i[2] ? rs1_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs2_phys_reg_0 <= #D decode_valid_i[0] ? rs2_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs2_phys_reg_1 <= #D decode_valid_i[1] ? rs2_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rs2_phys_reg_2 <= #D decode_valid_i[2] ? rs2_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
             end
         end
     end
@@ -285,8 +305,8 @@ module issue_stage #(
     assign issue_to_dispatch_0.dispatch_valid = decode_valid_reg[0];
     assign issue_to_dispatch_0.control_signals = control_signal_reg_0[10:0]; // Remove register addresses, use bits [10:0]
     assign issue_to_dispatch_0.pc = pc_reg_0;
-    assign issue_to_dispatch_0.operand_a_phys_addr = rs1_phys_0; // Physical address from RAT
-    assign issue_to_dispatch_0.operand_b_phys_addr = rs2_phys_0; // Physical address from RAT
+    assign issue_to_dispatch_0.operand_a_phys_addr = rs1_phys_reg_0; // Use registered physical address
+    assign issue_to_dispatch_0.operand_b_phys_addr = rs2_phys_reg_0; // Use registered physical address
     assign issue_to_dispatch_0.immediate_value = immediate_reg_0; // Immediate value for dispatch stage
     assign issue_to_dispatch_0.rd_phys_addr = rd_phys_reg_0;
     assign issue_to_dispatch_0.pc_value_at_prediction = pc_prediction_reg_0;
@@ -297,8 +317,8 @@ module issue_stage #(
     assign issue_to_dispatch_1.dispatch_valid = decode_valid_reg[1];
     assign issue_to_dispatch_1.control_signals = control_signal_reg_1[10:0]; // Remove register addresses, use bits [10:0]
     assign issue_to_dispatch_1.pc = pc_reg_1;
-    assign issue_to_dispatch_1.operand_a_phys_addr = rs1_phys_1; // Physical address from RAT
-    assign issue_to_dispatch_1.operand_b_phys_addr = rs2_phys_1; // Physical address from RAT
+    assign issue_to_dispatch_1.operand_a_phys_addr = rs1_phys_reg_1; // Use registered physical address
+    assign issue_to_dispatch_1.operand_b_phys_addr = rs2_phys_reg_1; // Use registered physical address
     assign issue_to_dispatch_1.immediate_value = immediate_reg_1; // Immediate value for dispatch stage
     assign issue_to_dispatch_1.rd_phys_addr = rd_phys_reg_1;
     assign issue_to_dispatch_1.pc_value_at_prediction = pc_prediction_reg_1;
@@ -309,8 +329,8 @@ module issue_stage #(
     assign issue_to_dispatch_2.dispatch_valid = decode_valid_reg[2];
     assign issue_to_dispatch_2.control_signals = control_signal_reg_2[10:0]; // Remove register addresses, use bits [10:0]
     assign issue_to_dispatch_2.pc = pc_reg_2;
-    assign issue_to_dispatch_2.operand_a_phys_addr = rs1_phys_2; // Physical address from RAT
-    assign issue_to_dispatch_2.operand_b_phys_addr = rs2_phys_2; // Physical address from RAT
+    assign issue_to_dispatch_2.operand_a_phys_addr = rs1_phys_reg_2; // Use registered physical address
+    assign issue_to_dispatch_2.operand_b_phys_addr = rs2_phys_reg_2; // Use registered physical address
     assign issue_to_dispatch_2.immediate_value = immediate_reg_2; // Immediate value for dispatch stage
     assign issue_to_dispatch_2.rd_phys_addr = rd_phys_reg_2;
     assign issue_to_dispatch_2.pc_value_at_prediction = pc_prediction_reg_2;

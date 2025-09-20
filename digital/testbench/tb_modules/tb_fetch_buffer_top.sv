@@ -61,7 +61,7 @@ module tb_fetch_buffer_top;
     // Status outputs
     logic buffer_empty_o;
     logic buffer_full_o;
-    logic [$clog2(BUFFER_DEPTH):0] occupancy_o;
+    logic [$clog2(BUFFER_DEPTH)-1:0] occupancy_o;
     
     // Legacy outputs
     logic [DATA_WIDTH-1:0] legacy_instruction_o_0, legacy_instruction_o_1, legacy_instruction_o_2;
@@ -78,7 +78,7 @@ module tb_fetch_buffer_top;
     // DUT instantiation
     fetch_buffer_top #(
         .DATA_WIDTH(DATA_WIDTH),
-        .BUFFER_DEPTH(BUFFER_DEPTH)
+        .BUFFER_DEPTH(16)
     ) dut (
         .clk(clk),
         .reset(reset),
@@ -197,7 +197,7 @@ module tb_fetch_buffer_top;
         correct_pc = 0;
         
         // Initialize decode ready
-        decode_ready_i = 3'b111;
+        decode_ready_i = 3'b110;
         
         // Load test program
         load_branch_test_program();

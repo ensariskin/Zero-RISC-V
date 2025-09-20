@@ -44,6 +44,7 @@ module register_alias_table #(
     input logic [PHYS_ADDR_WIDTH-1:0] free_phys_reg_0, free_phys_reg_1, free_phys_reg_2
     
 );
+    localparam D = 1; // Delay for non-blocking assignments (for simulation purposes)
 
     // Register Alias Table - maps arch reg to current physical reg
     logic [PHYS_ADDR_WIDTH-1:0] rat_table [ARCH_REGS-1:0];
@@ -152,15 +153,33 @@ module register_alias_table #(
     //==========================================================================
     // RAT LOOKUP (COMBINATIONAL)
     //==========================================================================
+
+    logic rs1_arch_1_equal_rd_arch_0;
+    logic rs2_arch_1_equal_rd_arch_0;
+
+    logic rs1_arch_2_equal_rd_arch_0;
+    logic rs2_arch_2_equal_rd_arch_0;
+
+    logic rs1_arch_2_equal_rd_arch_1;
+    logic rs2_arch_2_equal_rd_arch_1;
+
+    assign rs1_arch_1_equal_rd_arch_0 = (rs1_arch_1 == rd_arch_0) && (rd_arch_0 != 5'h0) && decode_valid[0] && rd_write_enable_0;
+    assign rs2_arch_1_equal_rd_arch_0 = (rs2_arch_1 == rd_arch_0) && (rd_arch_0 != 5'h0) && decode_valid[0] && rd_write_enable_0;
+    
+    assign rs1_arch_2_equal_rd_arch_0 = (rs1_arch_2 == rd_arch_0) && (rd_arch_0 != 5'h0) && decode_valid[0] && rd_write_enable_0;
+    assign rs2_arch_2_equal_rd_arch_0 = (rs2_arch_2 == rd_arch_0) && (rd_arch_0 != 5'h0) && decode_valid[0] && rd_write_enable_0;
+    assign rs1_arch_2_equal_rd_arch_1 = (rs1_arch_2 == rd_arch_1) && (rd_arch_1 != 5'h0) && decode_valid[1] && rd_write_enable_1;
+    assign rs2_arch_2_equal_rd_arch_1 = (rs2_arch_2 == rd_arch_1) && (rd_arch_1 != 5'h0) && decode_valid[1] && rd_write_enable_1;
     
     // Source register lookups (always use current RAT mapping)
     assign rs1_phys_0 = rat_table[rs1_arch_0];
-    assign rs1_phys_1 = rat_table[rs1_arch_1];
-    assign rs1_phys_2 = rat_table[rs1_arch_2];
-    
     assign rs2_phys_0 = rat_table[rs2_arch_0];
-    assign rs2_phys_1 = rat_table[rs2_arch_1];
-    assign rs2_phys_2 = rat_table[rs2_arch_2];
+
+    assign rs1_phys_1 = rs1_arch_1_equal_rd_arch_0 ? rd_phys_0 : rat_table[rs1_arch_1];
+    assign rs2_phys_1 = rs2_arch_1_equal_rd_arch_0 ? rd_phys_0 : rat_table[rs2_arch_1];
+
+    assign rs1_phys_2 = rs1_arch_2_equal_rd_arch_1 ? rd_phys_1 : rs1_arch_2_equal_rd_arch_0 ? rd_phys_0 : rat_table[rs1_arch_2];
+    assign rs2_phys_2 = rs2_arch_2_equal_rd_arch_1 ? rd_phys_1 : rs2_arch_2_equal_rd_arch_0 ? rd_phys_0 : rat_table[rs2_arch_2];
     
     // Destination register handling
     always_comb begin
@@ -206,45 +225,45 @@ module register_alias_table #(
         if (!reset) begin
             // Initialize RAT - each architectural register maps to itself initially
             for (int i = 0; i < ARCH_REGS; i++) begin
-                rat_table[i] <= i[PHYS_ADDR_WIDTH-1:0];
+                rat_table[i] <= #D i[PHYS_ADDR_WIDTH-1:0];
             end
             
             // Initialize free list - registers 32-63 are initially free
-            free_list <= {{(PHYS_REGS-ARCH_REGS){1'b1}}, {ARCH_REGS{1'b0}}};
+            free_list <= #D {{(PHYS_REGS-ARCH_REGS){1'b1}}, {ARCH_REGS{1'b0}}};
             
         end else begin
             
             // Update RAT for new allocations
             if (decode_valid[0] && rd_write_enable_0 && rd_arch_0 != 5'h0 && allocation_success[0]) begin
-                rat_table[rd_arch_0] <= allocated_phys_reg[0];
+                rat_table[rd_arch_0] <= #D allocated_phys_reg[0];
             end
             if (decode_valid[1] && rd_write_enable_1 && rd_arch_1 != 5'h0 && allocation_success[1]) begin
-                rat_table[rd_arch_1] <= allocated_phys_reg[1];
+                rat_table[rd_arch_1] <= #D allocated_phys_reg[1];
             end
             if (decode_valid[2] && rd_write_enable_2 && rd_arch_2 != 5'h0 && allocation_success[2]) begin
-                rat_table[rd_arch_2] <= allocated_phys_reg[2];
+                rat_table[rd_arch_2] <= #D allocated_phys_reg[2];
             end
             
             // Update free list - mark allocated registers as used
             if (decode_valid[0] && rd_write_enable_0 && rd_arch_0 != 5'h0 && allocation_success[0]) begin
-                free_list[allocated_phys_reg[0]] <= 1'b0;
+                free_list[allocated_phys_reg[0]] <= #D 1'b0;
             end
             if (decode_valid[1] && rd_write_enable_1 && rd_arch_1 != 5'h0 && allocation_success[1]) begin
-                free_list[allocated_phys_reg[1]] <= 1'b0;
+                free_list[allocated_phys_reg[1]] <= #D 1'b0;
             end
             if (decode_valid[2] && rd_write_enable_2 && rd_arch_2 != 5'h0 && allocation_success[2]) begin
-                free_list[allocated_phys_reg[2]] <= 1'b0;
+                free_list[allocated_phys_reg[2]] <= #D 1'b0;
             end
             
             // Free committed registers
             if (commit_valid[0] && free_phys_reg_0 != 6'h0) begin  // Don't free register 0
-                free_list[free_phys_reg_0] <= 1'b1;
+                free_list[free_phys_reg_0] <= #D 1'b1;
             end
             if (commit_valid[1] && free_phys_reg_1 != 6'h0) begin
-                free_list[free_phys_reg_1] <= 1'b1;
+                free_list[free_phys_reg_1] <= #D 1'b1;
             end
             if (commit_valid[2] && free_phys_reg_2 != 6'h0) begin
-                free_list[free_phys_reg_2] <= 1'b1;
+                free_list[free_phys_reg_2] <= #D 1'b1;
             end
         end
     end

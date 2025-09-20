@@ -157,7 +157,7 @@ end
 
   // Memory Write Block Port 1
   // Write Operation : When we1 = 0, cs1 = 0
-always @ (posedge clk1)
+always @ (posedge clk0)
 begin
     if ( !cs1 && !we1 ) begin
         if (wmask1[0])
@@ -173,7 +173,7 @@ end
 
   // Memory Read Block Port 1
   // Read Operation : When we1 = 1, cs1 = 0
-always @(posedge clk1)
+always @(posedge clk0)
 begin : MEM_READ1
     if (!cs1 && we1)
         port1_wb_dat_o <= #D mem[addr1]; // <= #D
@@ -181,7 +181,7 @@ end
 
   // Memory Write Block Port 2
   // Write Operation : When we2 = 0, cs2 = 0
-always @ (posedge clk2)
+always @ (posedge clk0)
 begin
     if ( !cs2 && !we2 ) begin
         if (wmask2[0])
@@ -197,7 +197,7 @@ end
 
   // Memory Read Block Port 2
   // Read Operation : When we2 = 1, cs2 = 0
-always @(posedge clk2)
+always @(posedge clk0)
 begin : MEM_READ2
     if (!cs2 && we2)
         port2_wb_dat_o <= #D mem[addr2]; // <= #D

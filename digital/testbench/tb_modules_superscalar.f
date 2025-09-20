@@ -15,6 +15,7 @@ tb_modules/rv32i_inst_wb_adapter.sv
 tb_modules/rv32i_superscalar_data_wb_adapter.sv
 tb_modules/tb_multi_port_register_file.sv
 tb_modules/tb_register_alias_table.sv
+tb_modules/tb_fetch_buffer_top.sv
 
 // Superscalar testbench top
 riscv_dv_tb/dv_top_superscalar.sv

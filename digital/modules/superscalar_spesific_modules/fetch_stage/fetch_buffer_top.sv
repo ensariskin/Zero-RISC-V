@@ -142,7 +142,7 @@ module fetch_buffer_top #(
     assign fetch_branch_pred_2 = branch_prediction_o_2;
     
     // Instruction Buffer
-    instruction_buffer #(
+    instruction_buffer_new #(
         .BUFFER_DEPTH(BUFFER_DEPTH),
         .DATA_WIDTH(DATA_WIDTH)
     ) inst_buffer (

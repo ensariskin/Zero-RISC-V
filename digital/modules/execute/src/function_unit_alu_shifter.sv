@@ -29,16 +29,19 @@ module function_unit_alu_shifter #(parameter size = 32)(
     output logic carry_out,
     output logic overflow,
     output logic negative,
-    output logic zero);
+    output logic zero,
+    output logic busy);
 
     logic [size-1:0] alu_out;
     logic [size-1:0] shifter_out;
     logic alu_c, alu_v, alu_n, alu_z;
 
+
     assign carry_out = alu_c & ~func_sel[3];
     assign overflow  = alu_v & ~func_sel[3];
     assign negative  = alu_n & ~func_sel[3];
     assign zero      = alu_z & ~func_sel[3];
+    assign busy      = 1'b0; // Combinational, always ready
 
     alu #(.size(size)) alu(
         .data_a(data_a),

@@ -238,6 +238,7 @@ module rv32i_superscalar_core #(
         .legacy_imm_o_2(),
         .pc_plus_o()
     );
+
     
     //==========================================================================
     // ISSUE STAGE (3 parallel decode units with register renaming)
@@ -297,7 +298,7 @@ module rv32i_superscalar_core #(
     //==========================================================================
     
     // Create interfaces for dispatch stage to functional units
-    rs_to_exec_if #(.DATA_WIDTH(DATA_WIDTH)) 
+    rs_to_exec_if #(.DATA_WIDTH(DATA_WIDTH), .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1)) 
         dispatch_to_alu_0_if(), dispatch_to_alu_1_if(), dispatch_to_alu_2_if();
     
     // Create CDB interface
@@ -324,6 +325,22 @@ module rv32i_superscalar_core #(
     );
     
     //==========================================================================
+    // EXECUTE STAGE
+    //==========================================================================
+    
+    superscalar_execute_stage #(
+        .DATA_WIDTH(DATA_WIDTH)
+    ) execute_stage_unit (
+        .clk(clk),
+        .rst_n(~reset),
+        
+        // Interface to reservation stations
+        .rs_to_exec_0(dispatch_to_alu_0_if.functional_unit),
+        .rs_to_exec_1(dispatch_to_alu_1_if.functional_unit),
+        .rs_to_exec_2(dispatch_to_alu_2_if.functional_unit)
+    );
+    
+    //==========================================================================
     // TEMPORARY CONNECTIONS (for backward compatibility during transition)
     //==========================================================================
     
@@ -340,57 +357,51 @@ module rv32i_superscalar_core #(
     assign decode_data_b_1 = dispatch_to_alu_1_if.data_b;
     assign decode_data_b_2 = dispatch_to_alu_2_if.data_b;
     
-    assign decode_store_data_0 = dispatch_to_alu_0_if.data_b;  // For store instructions, data_b contains store data
-    assign decode_store_data_1 = dispatch_to_alu_1_if.data_b;  // For store instructions, data_b contains store data
-    assign decode_store_data_2 = dispatch_to_alu_2_if.data_b;  // For store instructions, data_b contains store data
+    assign decode_store_data_0 = dispatch_to_alu_0_if.store_data;  // Now using dedicated store_data signal
+    assign decode_store_data_1 = dispatch_to_alu_1_if.store_data;  // Now using dedicated store_data signal
+    assign decode_store_data_2 = dispatch_to_alu_2_if.store_data;  // Now using dedicated store_data signal
     
-    assign decode_pc_0 = issue_to_dispatch_0_if.pc;
-    assign decode_pc_1 = issue_to_dispatch_1_if.pc;
-    assign decode_pc_2 = issue_to_dispatch_2_if.pc;
+    assign decode_pc_0 = dispatch_to_alu_0_if.pc;                  // Now from rs_to_exec interface
+    assign decode_pc_1 = dispatch_to_alu_1_if.pc;                  // Now from rs_to_exec interface
+    assign decode_pc_2 = dispatch_to_alu_2_if.pc;                  // Now from rs_to_exec interface
     
-    assign decode_control_0 = {15'h0, issue_to_dispatch_0_if.control_signals}; // Extend 11 bits to 26
-    assign decode_control_1 = {15'h0, issue_to_dispatch_1_if.control_signals}; // Extend 11 bits to 26
-    assign decode_control_2 = {15'h0, issue_to_dispatch_2_if.control_signals}; // Extend 11 bits to 26
+    assign decode_control_0 = {15'h0, dispatch_to_alu_0_if.control_signals}; // Now from rs_to_exec interface
+    assign decode_control_1 = {15'h0, dispatch_to_alu_1_if.control_signals}; // Now from rs_to_exec interface
+    assign decode_control_2 = {15'h0, dispatch_to_alu_2_if.control_signals}; // Now from rs_to_exec interface
     
-    assign decode_pc_prediction_0 = issue_to_dispatch_0_if.pc_value_at_prediction;
-    assign decode_pc_prediction_1 = issue_to_dispatch_1_if.pc_value_at_prediction;
-    assign decode_pc_prediction_2 = issue_to_dispatch_2_if.pc_value_at_prediction;
+    assign decode_pc_prediction_0 = dispatch_to_alu_0_if.pc_value_at_prediction;
+    assign decode_pc_prediction_1 = dispatch_to_alu_1_if.pc_value_at_prediction;
+    assign decode_pc_prediction_2 = dispatch_to_alu_2_if.pc_value_at_prediction;
     
-    assign decode_branch_sel_0 = issue_to_dispatch_0_if.branch_sel;
-    assign decode_branch_sel_1 = issue_to_dispatch_1_if.branch_sel;
-    assign decode_branch_sel_2 = issue_to_dispatch_2_if.branch_sel;
+    assign decode_branch_sel_0 = dispatch_to_alu_0_if.branch_sel;
+    assign decode_branch_sel_1 = dispatch_to_alu_1_if.branch_sel;
+    assign decode_branch_sel_2 = dispatch_to_alu_2_if.branch_sel;
     
-    assign decode_branch_pred_0 = issue_to_dispatch_0_if.branch_prediction;
-    assign decode_branch_pred_1 = issue_to_dispatch_1_if.branch_prediction;
-    assign decode_branch_pred_2 = issue_to_dispatch_2_if.branch_prediction;
+    assign decode_branch_pred_0 = dispatch_to_alu_0_if.branch_prediction;
+    assign decode_branch_pred_1 = dispatch_to_alu_1_if.branch_prediction;
+    assign decode_branch_pred_2 = dispatch_to_alu_2_if.branch_prediction;
     
-    // Extract destination registers from interfaces (convert 6-bit back to 5-bit for now)
-    assign decode_rd_0 = issue_to_dispatch_0_if.rd_phys_addr[4:0];
-    assign decode_rd_1 = issue_to_dispatch_1_if.rd_phys_addr[4:0];
-    assign decode_rd_2 = issue_to_dispatch_2_if.rd_phys_addr[4:0];
-    
-    // Provide ready signals to dispatch stage (always ready for now)
-    assign dispatch_to_alu_0_if.issue_ready = 1'b1;
-    assign dispatch_to_alu_1_if.issue_ready = 1'b1;
-    assign dispatch_to_alu_2_if.issue_ready = 1'b1;
+    // Extract destination registers from rs_to_exec interfaces (convert 6-bit back to 5-bit for now)
+    assign decode_rd_0 = dispatch_to_alu_0_if.rd_phys_addr[4:0];
+    assign decode_rd_1 = dispatch_to_alu_1_if.rd_phys_addr[4:0];
+    assign decode_rd_2 = dispatch_to_alu_2_if.rd_phys_addr[4:0];
     
     //==========================================================================
-    // EXECUTE STAGE (placeholder)
+    // EXECUTE STAGE OUTPUTS (for backward compatibility)
     //==========================================================================
     
-    // For now, simple pass-through
-    // TODO: Implement proper execution units
-    assign execute_ready = 3'b111;
-    assign execute_valid_out = decode_valid_out;
-    assign execute_result_0 = decode_data_a_0; // Placeholder - use operand A
-    assign execute_result_1 = decode_data_a_1; // Placeholder - use operand A
-    assign execute_result_2 = decode_data_a_2; // Placeholder - use operand A
+    // Extract execute results from interface for temporary compatibility
+    assign execute_valid_out = decode_valid_out; // Will be replaced with proper completion signals
+    assign execute_result_0 = dispatch_to_alu_0_if.data_result;
+    assign execute_result_1 = dispatch_to_alu_1_if.data_result;
+    assign execute_result_2 = dispatch_to_alu_2_if.data_result;
     assign execute_rd_0 = decode_rd_0;
     assign execute_rd_1 = decode_rd_1;
     assign execute_rd_2 = decode_rd_2;
     assign execute_reg_write_0 = decode_valid_out[0] & (decode_control_0[0]); // Extract write enable from control
     assign execute_reg_write_1 = decode_valid_out[1] & (decode_control_1[0]); // Extract write enable from control
     assign execute_reg_write_2 = decode_valid_out[2] & (decode_control_2[0]); // Extract write enable from control
+    assign execute_ready = 3'b111; // Always ready for now
     
     //==========================================================================
     // MEMORY STAGE (placeholder)

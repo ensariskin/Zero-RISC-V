@@ -83,19 +83,31 @@ module instruction_buffer #(
     logic [2:0] actual_write_count; // Actual number written to buffer
     logic [2:0] actual_read_count;  // Actual number read from buffer
     
+    // Synthesizable space calculation signals
+    logic [ADDR_WIDTH:0] available_space;
+    logic [2:0] available_instructions;
+    logic can_write_1, can_write_2, can_write_3;
+    logic can_read_1, can_read_2, can_read_3;
+    
     // Calculate number of valid fetch instructions
     assign fetch_count = fetch_valid_i[0] + fetch_valid_i[1] + fetch_valid_i[2];
     
     // Calculate how many decode stages are ready
     assign decode_accept_count = decode_ready_i[0] + decode_ready_i[1] + decode_ready_i[2];
     
-    // Status signals
+    // Calculate available space in buffer
+    assign available_space = BUFFER_DEPTH - count;
+    
+    // Calculate available instructions to read
+    assign available_instructions = (count >= 3) ? 3'd3 : count[2:0];
+    
+    // Status signals - more conservative full signal
     assign buffer_empty_o = (count == 0);
-    assign buffer_full_o = (count >= BUFFER_DEPTH - 1); // Leave space for 3 instructions
+    assign buffer_full_o = (count >= BUFFER_DEPTH - 3); // Reserve space for up to 3 instructions
     assign occupancy_o = count;
     
-    // Fetch ready when buffer has space for incoming instructions
-    assign fetch_ready_o = !buffer_full_o && (count + fetch_count <= BUFFER_DEPTH);
+    // Improved fetch ready logic - prevents deadlock
+    assign fetch_ready_o = !buffer_full_o && !flush_i;
     
     // Determine actual write count (limited by buffer space and fetch valid)
     always_comb begin

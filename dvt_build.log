@@ -8,275 +8,142 @@ INFO: Auto-config - Wrote:
     -f d:\Ensar\Tez\RV32I\.dvt\default.build.auto.1
 *** List of invocations ***
 Invocation #1 +dvt_init+dvt in d:\Ensar\Tez\RV32I\.dvt\default.build.auto.1 at line 9
-*** Done analyzing build configuration [960 ms] ***
+*** Done analyzing build configuration [1s.372ms] ***
 Loaded compile waivers from D:\Ensar\Tez\RV32I\.dvt\waivers.xml
 
 *** Start SystemVerilog build ***
 *** Invocation #1***
 Loading (1) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv [8 ms, 273 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv [111 ms, 285 lines, SystemVerilog_2012] ...
 Loading (2) D:\Ensar\Tez\RV32I\digital\modules\common\src\CSA.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\common\src\CSA.sv [3 ms, 63 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\common\src\CSA.sv [23 ms, 63 lines, SystemVerilog_2012] ...
 Loading (3) D:\Ensar\Tez\RV32I\digital\modules\common\src\FA.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\common\src\FA.sv [1 ms, 26 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\common\src\FA.sv [4 ms, 26 lines, SystemVerilog_2012] ...
 Loading (4) D:\Ensar\Tez\RV32I\digital\modules\common\src\HA.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\common\src\HA.sv [0 ms, 12 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\common\src\HA.sv [2 ms, 12 lines, SystemVerilog_2012] ...
 Loading (5) D:\Ensar\Tez\RV32I\digital\modules\common\src\RCA.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\common\src\RCA.sv [2 ms, 29 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\common\src\RCA.sv [9 ms, 29 lines, SystemVerilog_2012] ...
 Loading (6) D:\Ensar\Tez\RV32I\digital\modules\common\src\dff_block_negedge_write.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\common\src\dff_block_negedge_write.sv [6 ms, 141 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\common\src\dff_block_negedge_write.sv [64 ms, 141 lines, SystemVerilog_2012] ...
 Loading (7) D:\Ensar\Tez\RV32I\digital\modules\common\src\dff_sync_reset_negedge_write.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\common\src\dff_sync_reset_negedge_write.sv [1 ms, 23 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\common\src\dff_sync_reset_negedge_write.sv [5 ms, 23 lines, SystemVerilog_2012] ...
 Loading (8) D:\Ensar\Tez\RV32I\digital\modules\common\src\parametric_decoder.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\common\src\parametric_decoder.sv [0 ms, 17 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\common\src\parametric_decoder.sv [2 ms, 17 lines, SystemVerilog_2012] ...
 Loading (9) D:\Ensar\Tez\RV32I\digital\modules\common\src\parametric_mux.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\common\src\parametric_mux.sv [1 ms, 19 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\common\src\parametric_mux.sv [4 ms, 19 lines, SystemVerilog_2012] ...
 Loading (10) D:\Ensar\Tez\RV32I\digital\modules\common\src\tracer_interface.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\common\src\tracer_interface.sv [1 ms, 44 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\common\src\tracer_interface.sv [8 ms, 44 lines, SystemVerilog_2012] ...
 Loading (11) D:\Ensar\Tez\RV32I\digital\modules\common\src\tracer_pipeline_interface.sv ...
 Done D:\Ensar\Tez\RV32I\digital\modules\common\src\tracer_pipeline_interface.sv [0 ms, 2 lines, SystemVerilog_2012] ...
 Loading (12) D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\decode_stage.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\decode_stage.sv [4 ms, 187 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\decode_stage.sv [34 ms, 187 lines, SystemVerilog_2012] ...
 Loading (13) D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\register_file.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\register_file.sv [1 ms, 43 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\register_file.sv [2 ms, 43 lines, SystemVerilog_2012] ...
 Loading (14) D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\rv32i_decoder.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\rv32i_decoder.sv [5 ms, 273 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\rv32i_decoder.sv [38 ms, 273 lines, SystemVerilog_2012] ...
 Loading (15) D:\Ensar\Tez\RV32I\digital\modules\digital_top\src\rv32i_core.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\digital_top\src\rv32i_core.sv [3 ms, 227 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\digital_top\src\rv32i_core.sv [36 ms, 227 lines, SystemVerilog_2012] ...
 Loading (16) D:\Ensar\Tez\RV32I\digital\modules\execute\src\Branch_Controller.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\Branch_Controller.sv [1 ms, 41 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\Branch_Controller.sv [0 ms, 41 lines, SystemVerilog_2012] ...
 Loading (17) D:\Ensar\Tez\RV32I\digital\modules\execute\src\alu.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\alu.sv [1 ms, 58 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\alu.sv [9 ms, 58 lines, SystemVerilog_2012] ...
 Loading (18) D:\Ensar\Tez\RV32I\digital\modules\execute\src\arithmetic_unit.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\arithmetic_unit.sv [2 ms, 70 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\arithmetic_unit.sv [10 ms, 70 lines, SystemVerilog_2012] ...
 Loading (19) D:\Ensar\Tez\RV32I\digital\modules\execute\src\execute_stage.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\execute_stage.sv [4 ms, 156 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\execute_stage.sv [25 ms, 156 lines, SystemVerilog_2012] ...
 Loading (20) D:\Ensar\Tez\RV32I\digital\modules\execute\src\function_unit_alu_shifter.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\function_unit_alu_shifter.sv [1 ms, 65 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\function_unit_alu_shifter.sv [9 ms, 68 lines, SystemVerilog_2012] ...
 Loading (21) D:\Ensar\Tez\RV32I\digital\modules\execute\src\logical_unit.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\logical_unit.sv [1 ms, 44 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\logical_unit.sv [4 ms, 44 lines, SystemVerilog_2012] ...
 Loading (22) D:\Ensar\Tez\RV32I\digital\modules\execute\src\shifter.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\shifter.sv [2 ms, 36 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\execute\src\shifter.sv [6 ms, 36 lines, SystemVerilog_2012] ...
 Loading (23) D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\branch_predictor.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\branch_predictor.sv [2 ms, 112 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\branch_predictor.sv [13 ms, 112 lines, SystemVerilog_2012] ...
 Loading (24) D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\early_stage_immediate_decoder.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\early_stage_immediate_decoder.sv [1 ms, 59 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\early_stage_immediate_decoder.sv [3 ms, 59 lines, SystemVerilog_2012] ...
 Loading (25) D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\fetch_stage.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\fetch_stage.sv [2 ms, 147 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\fetch_stage.sv [20 ms, 147 lines, SystemVerilog_2012] ...
 Loading (26) D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\jump_controller.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\jump_controller.sv [1 ms, 56 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\jump_controller.sv [7 ms, 56 lines, SystemVerilog_2012] ...
 Loading (27) D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\program_counter_ctrl.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\program_counter_ctrl.sv [1 ms, 85 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\program_counter_ctrl.sv [7 ms, 85 lines, SystemVerilog_2012] ...
 Loading (28) D:\Ensar\Tez\RV32I\digital\modules\hazard\src\Data_Forward.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\hazard\src\Data_Forward.sv [2 ms, 48 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\hazard\src\Data_Forward.sv [5 ms, 48 lines, SystemVerilog_2012] ...
 Loading (29) D:\Ensar\Tez\RV32I\digital\modules\hazard\src\hazard_detection_unit.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\hazard\src\hazard_detection_unit.sv [1 ms, 35 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\hazard\src\hazard_detection_unit.sv [0 ms, 35 lines, SystemVerilog_2012] ...
 Loading (30) D:\Ensar\Tez\RV32I\digital\modules\mem\src\mem_stage.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\mem\src\mem_stage.sv [2 ms, 113 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\mem\src\mem_stage.sv [18 ms, 113 lines, SystemVerilog_2012] ...
 Loading (31) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder.sv [14 ms, 289 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder.sv [44 ms, 289 lines, SystemVerilog_2012] ...
 Loading (32) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder_ver2.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder_ver2.sv [4 ms, 122 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder_ver2.sv [16 ms, 122 lines, SystemVerilog_2012] ...
 Loading (33) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder_ver3.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder_ver3.sv [3 ms, 154 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder_ver3.sv [31 ms, 154 lines, SystemVerilog_2012] ...
 Loading (34) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv [4 ms, 325 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv [16 ms, 268 lines, SystemVerilog_2012] ...
 Loading (35) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\multi_port_register_file.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\multi_port_register_file.sv [4 ms, 184 lines, SystemVerilog_2012] ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\multi_port_register_file.sv [33 ms, 292 lines, SystemVerilog_2012] ...
 Loading (36) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\reservation_station.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\reservation_station.sv [2 ms, 214 lines, SystemVerilog_2012] ...
-Loading (37) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv [4 ms, 202 lines, SystemVerilog_2012] ...
-Loading (38) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\fetch_buffer_top.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\fetch_buffer_top.sv [3 ms, 194 lines, SystemVerilog_2012] ...
-Loading (39) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\jump_controller_super.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\jump_controller_super.sv [3 ms, 115 lines, SystemVerilog_2012] ...
-Loading (40) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\multi_fetch.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\multi_fetch.sv [3 ms, 268 lines, SystemVerilog_2012] ...
-Loading (41) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\pc_ctrl_super.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\pc_ctrl_super.sv [2 ms, 156 lines, SystemVerilog_2012] ...
-Loading (42) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\cdb_if.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\cdb_if.sv [1 ms, 115 lines, SystemVerilog_2012] ...
-Loading (43) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\decode_to_rs_if.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\decode_to_rs_if.sv [1 ms, 79 lines, SystemVerilog_2012] ...
-Loading (44) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\issue_to_dispatch_if.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\issue_to_dispatch_if.sv [1 ms, 84 lines, SystemVerilog_2012] ...
-Loading (45) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\rs_to_exec_if.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\rs_to_exec_if.sv [0 ms, 51 lines, SystemVerilog_2012] ...
-Loading (46) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv [6 ms, 377 lines, SystemVerilog_2012] ...
-Loading (47) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv [8 ms, 500 lines, SystemVerilog_2012] ...
-Loading (48) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\register_alias_table.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\register_alias_table.sv [7 ms, 273 lines, SystemVerilog_2012] ...
-Loading (49) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv [7 ms, 548 lines, SystemVerilog_2012] ...
-Loading (50) D:\Ensar\Tez\RV32I\digital\modules\write_back\src\write_back_stage.sv ...
-Done D:\Ensar\Tez\RV32I\digital\modules\write_back\src\write_back_stage.sv [2 ms, 91 lines, SystemVerilog_2012] ...
-Loading (51) D:\Ensar\Tez\RV32I\digital\testbench\include\fault_target_list.svh ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\reservation_station.sv [31 ms, 286 lines, SystemVerilog_2012] ...
+Loading (37) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv [22 ms, 223 lines, SystemVerilog_2012] ...
+Loading (38) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv [25 ms, 202 lines, SystemVerilog_2012] ...
+Loading (39) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\fetch_buffer_top.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\fetch_buffer_top.sv [20 ms, 194 lines, SystemVerilog_2012] ...
+Loading (40) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer_new.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer_new.sv [16 ms, 259 lines, SystemVerilog_2012] ...
+Loading (41) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\jump_controller_super.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\jump_controller_super.sv [16 ms, 152 lines, SystemVerilog_2012] ...
+Loading (42) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\multi_fetch.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\multi_fetch.sv [16 ms, 268 lines, SystemVerilog_2012] ...
+Loading (43) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\pc_ctrl_super.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\pc_ctrl_super.sv [20 ms, 156 lines, SystemVerilog_2012] ...
+Loading (44) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv [25 ms, 260 lines, SystemVerilog_2012] ...
+Loading (45) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\cdb_if.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\cdb_if.sv [0 ms, 115 lines, SystemVerilog_2012] ...
+Loading (46) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\decode_to_rs_if.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\decode_to_rs_if.sv [0 ms, 79 lines, SystemVerilog_2012] ...
+Loading (47) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\issue_to_dispatch_if.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\issue_to_dispatch_if.sv [0 ms, 81 lines, SystemVerilog_2012] ...
+Loading (48) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\rs_to_exec_if.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\rs_to_exec_if.sv [16 ms, 78 lines, SystemVerilog_2012] ...
+Loading (49) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv [26 ms, 397 lines, SystemVerilog_2012] ...
+Loading (50) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv [47 ms, 500 lines, SystemVerilog_2012] ...
+Loading (51) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\register_alias_table.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\register_alias_table.sv [29 ms, 292 lines, SystemVerilog_2012] ...
+Loading (52) D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv [30 ms, 535 lines, SystemVerilog_2012] ...
+Loading (53) D:\Ensar\Tez\RV32I\digital\modules\write_back\src\write_back_stage.sv ...
+Done D:\Ensar\Tez\RV32I\digital\modules\write_back\src\write_back_stage.sv [16 ms, 91 lines, SystemVerilog_2012] ...
+Loading (54) D:\Ensar\Tez\RV32I\digital\testbench\include\fault_target_list.svh ...
 Done D:\Ensar\Tez\RV32I\digital\testbench\include\fault_target_list.svh [0 ms, 1661 lines, SystemVerilog_2012] ...
-*** Done invocation #1 [202 ms] ***
-*** Done parsing [LT 113 ms, PT 202 ms] ***
-*** Total number of lines [8 506] ***
+*** Done invocation #1 [991 ms] ***
+*** Done parsing [LT 430 ms, PT 991 ms] ***
+*** Total number of lines [9 473] ***
 Performing post full build actions ...
 Performing post full build step 1 (SRI) [0 ms] ...
-Performing post full build step 2 (RI) [1 ms] ...
-Performing post full build step 3 (RCP) [1 ms] ...
-*** Files summary [51 total, 51 unique, 0 optimized] ***
-*** Done SystemVerilog build [219 ms] ***
+Performing post full build step 2 (RI) [0 ms] ...
+Performing post full build step 3 (RCP) [0 ms] ...
+*** Files summary [54 total, 54 unique, 0 optimized] ***
+*** Done SystemVerilog build [1s.320ms] ***
 
 *** Start mixed mode extension build ***
-Performing mixed post full build step (VLOG - RI) [0 ms] ...
+Performing mixed post full build step (VLOG - RI) [15 ms] ...
 *** Top designs: work.rv32i_superscalar_core
-Performing mixed post full build step (MIXED - ELAB) [270 ms] ...
-Performing mixed post full build step (MIXED - UNEL) [121 ms] ...
-*** Error: NON_EXISTING_PORT: Non existing port 'wb_valid_i' of module 'issue_stage'
-    at line 284 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:284 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'wb_data_i_0' of module 'issue_stage'
-    at line 285 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:285 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'wb_data_i_1' of module 'issue_stage'
-    at line 286 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:286 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'wb_data_i_2' of module 'issue_stage'
-    at line 287 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:287 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'wb_rd_i_0' of module 'issue_stage'
-    at line 288 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:288 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'wb_rd_i_1' of module 'issue_stage'
-    at line 289 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:289 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'wb_rd_i_2' of module 'issue_stage'
-    at line 290 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:290 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'wb_reg_write_i_0' of module 'issue_stage'
-    at line 291 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:291 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'wb_reg_write_i_1' of module 'issue_stage'
-    at line 292 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:292 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'wb_reg_write_i_2' of module 'issue_stage'
-    at line 293 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:293 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'decode_to_rs_0' of module 'issue_stage'
-    at line 302 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:302 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'decode_to_rs_1' of module 'issue_stage'
-    at line 303 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:303 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'decode_to_rs_2' of module 'issue_stage'
-    at line 304 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:304 [compile index 49]
-*** Error: ILLEGAL_ASSIGNMENT: Illegal assignment of 'decode_to_rs_if.reservation_station' to argument 'issue_to_dispatch_0' of type 'issue_to_dispatch_if.dispatch'
-    at line 332 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:332 [compile index 49]
-*** Error: ILLEGAL_ASSIGNMENT: Illegal assignment of 'decode_to_rs_if.reservation_station' to argument 'issue_to_dispatch_1' of type 'issue_to_dispatch_if.dispatch'
-    at line 333 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:333 [compile index 49]
-*** Error: ILLEGAL_ASSIGNMENT: Illegal assignment of 'decode_to_rs_if.reservation_station' to argument 'issue_to_dispatch_2' of type 'issue_to_dispatch_if.dispatch'
-    at line 334 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:334 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_interface' of module 'dispatch_stage'
-    at line 342 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:342 [compile index 49]
-*** Error: UNDECLARED_IDENTIFIER: Identifier 'dispatch' is not a member of 'cdb_interface'
-    at line 342 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:342 [compile index 49]
-*** Warning: MISSING_PORT_CONNECTION: Instance 'issue_stage_unit' of module 'issue_stage' is missing port connection to interface 'issue_to_dispatch_0, issue_to_dispatch_1, issue_to_dispatch_2'
-    at line 250 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:250 [compile index 49]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_enable_0' of module 'multi_port_register_file'
-    at line 99 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:99 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_addr_0' of module 'multi_port_register_file'
-    at line 99 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:99 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_data_0' of module 'multi_port_register_file'
-    at line 100 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:100 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_tag_0' of module 'multi_port_register_file'
-    at line 100 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:100 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_enable_1' of module 'multi_port_register_file'
-    at line 101 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:101 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_addr_1' of module 'multi_port_register_file'
-    at line 101 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:101 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_data_1' of module 'multi_port_register_file'
-    at line 102 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:102 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_tag_1' of module 'multi_port_register_file'
-    at line 102 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:102 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_enable_2' of module 'multi_port_register_file'
-    at line 103 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:103 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_addr_2' of module 'multi_port_register_file'
-    at line 103 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:103 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_data_2' of module 'multi_port_register_file'
-    at line 104 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:104 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'write_tag_2' of module 'multi_port_register_file'
-    at line 104 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:104 [compile index 34]
-*** Error: ILLEGAL_ASSIGNMENT: Illegal assignment of 'logic' to port 'cdb_if_port' of type 'cdb_if.rs0'
-    at line 195 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:195 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_addr_a' of module 'reservation_station'
-    at line 201 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:201 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_data_a' of module 'reservation_station'
-    at line 202 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:202 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_tag_a' of module 'reservation_station'
-    at line 203 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:203 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_addr_b' of module 'reservation_station'
-    at line 204 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:204 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_data_b' of module 'reservation_station'
-    at line 205 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:205 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_tag_b' of module 'reservation_station'
-    at line 206 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:206 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_valid' of module 'reservation_station'
-    at line 209 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:209 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_data' of module 'reservation_station'
-    at line 210 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:210 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_tag' of module 'reservation_station'
-    at line 211 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:211 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_dest_reg' of module 'reservation_station'
-    at line 212 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:212 [compile index 34]
-*** Error: ILLEGAL_ASSIGNMENT: Illegal assignment of 'logic' to port 'cdb_if_port' of type 'cdb_if.rs0'
-    at line 231 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:231 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_addr_a' of module 'reservation_station'
-    at line 237 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:237 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_data_a' of module 'reservation_station'
-    at line 238 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:238 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_tag_a' of module 'reservation_station'
-    at line 239 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:239 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_addr_b' of module 'reservation_station'
-    at line 240 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:240 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_data_b' of module 'reservation_station'
-    at line 241 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:241 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_tag_b' of module 'reservation_station'
-    at line 242 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:242 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_valid' of module 'reservation_station'
-    at line 245 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:245 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_data' of module 'reservation_station'
-    at line 246 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:246 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_tag' of module 'reservation_station'
-    at line 247 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:247 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_dest_reg' of module 'reservation_station'
-    at line 248 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:248 [compile index 34]
-*** Error: ILLEGAL_ASSIGNMENT: Illegal assignment of 'logic' to port 'cdb_if_port' of type 'cdb_if.rs0'
-    at line 267 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:267 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_addr_a' of module 'reservation_station'
-    at line 273 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:273 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_data_a' of module 'reservation_station'
-    at line 274 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:274 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_tag_a' of module 'reservation_station'
-    at line 275 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:275 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_addr_b' of module 'reservation_station'
-    at line 276 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:276 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_data_b' of module 'reservation_station'
-    at line 277 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:277 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'reg_file_read_tag_b' of module 'reservation_station'
-    at line 278 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:278 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_valid' of module 'reservation_station'
-    at line 281 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:281 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_data' of module 'reservation_station'
-    at line 282 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:282 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_tag' of module 'reservation_station'
-    at line 283 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:283 [compile index 34]
-*** Error: NON_EXISTING_PORT: Non existing port 'cdb_output_dest_reg' of module 'reservation_station'
-    at line 284 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:284 [compile index 34]
-*** Warning: MISSING_PORT_CONNECTION: Instance 'physical_reg_file' of module 'multi_port_register_file' is missing port connection to input 'alloc_enable_0, alloc_enable_1, alloc_enable_2, alloc_addr_0, ...'
-    at line 81 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:81 [compile index 34]
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.CSA' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\common\src\CSA.sv at line 23] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.FA' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\common\src\FA.sv at line 4] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.HA' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\common\src\HA.sv at line 3] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.RCA' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\common\src\RCA.sv at line 3] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
+Performing mixed post full build step (MIXED - ELAB) [1350 ms] ...
+Performing mixed post full build step (MIXED - UNEL) [304 ms] ...
+Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.instruction_buffer' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv at line 28] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.dff_block_negedge_write' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\common\src\dff_block_negedge_write.sv at line 3] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.dff_sync_reset_negedge_write' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\common\src\dff_sync_reset_negedge_write.sv at line 3] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.parametric_decoder' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\common\src\parametric_decoder.sv at line 3] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.decode_stage' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\decode_stage.sv at line 19] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.register_file' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\decode_stage\src\register_file.sv at line 3] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.rv32i_core' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\digital_top\src\rv32i_core.sv at line 22] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.Branch_Controller' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\execute\src\Branch_Controller.sv at line 23] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.alu' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\execute\src\alu.sv at line 22] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.arithmetic_unit' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\execute\src\arithmetic_unit.sv at line 23] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.execute_stage' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\execute\src\execute_stage.sv at line 4] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.function_unit_alu_shifter' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\execute\src\function_unit_alu_shifter.sv at line 23] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.logical_unit' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\execute\src\logical_unit.sv at line 23] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.shifter' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\execute\src\shifter.sv at line 3] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.branch_predictor' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\branch_predictor.sv at line 23] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.fetch_stage' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\fetch_stage.sv at line 3] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.jump_controller' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\fetch_stage\src\jump_controller.sv at line 23] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
@@ -286,56 +153,71 @@ Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Mod
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.mem_stage' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\mem\src\mem_stage.sv at line 23] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.triple_priority_encoder' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder.sv at line 12] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.triple_priority_encoder_ver2' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\common\triple_priority_encoder_ver2.sv at line 5] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-*** Warning: UNELABORATED_ÝNTERFACE: Interface 'work.issue_to_dispatch_if' is not elaborated
-    at line 22 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\interfaces\issue_to_dispatch_if.sv:22 [compile index 44]
+Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.tb_instruction_buffer_new' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv at line 3] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.multi_decode_stage' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv at line 20] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : UNELABORATED_MODULE: Module 'work.write_back_stage' is not elaborated in file D:\Ensar\Tez\RV32I\digital\modules\write_back\src\write_back_stage.sv at line 23] by [Waiver 'Disable UNELABORATED_MODULE message' to 'DISABLED']
-Performing mixed post full build step (VLOG - RD) [2 ms] ...
-Performing mixed post full build step (VLOG - US) [56 ms] ...
+Performing mixed post full build step (VLOG - RD) [5 ms] ...
+Performing mixed post full build step (VLOG - US) [190 ms] ...
+*** Warning: SIGNAL_NEVER_READ: Signal 'available_space' is never read
+    at line 87 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:87 [compile index 1]
+*** Warning: SIGNAL_NEVER_READ: Signal 'available_instructions' is never read
+    at line 88 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:88 [compile index 1]
+*** Warning: SIGNAL_NEVER_USED: Signal 'can_write_1' is never used
+    at line 89 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:89 [compile index 1]
+*** Warning: SIGNAL_NEVER_USED: Signal 'can_write_2' is never used
+    at line 89 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:89 [compile index 1]
+*** Warning: SIGNAL_NEVER_USED: Signal 'can_write_3' is never used
+    at line 89 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:89 [compile index 1]
+*** Warning: SIGNAL_NEVER_USED: Signal 'can_read_1' is never used
+    at line 90 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:90 [compile index 1]
+*** Warning: SIGNAL_NEVER_USED: Signal 'can_read_2' is never used
+    at line 90 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:90 [compile index 1]
+*** Warning: SIGNAL_NEVER_USED: Signal 'can_read_3' is never used
+    at line 90 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:90 [compile index 1]
 *** Warning: SIGNAL_RESET_BUT_NOT_DRIVEN: Signal 'instruction' is reset but not driven
-    at line 167 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:167 [compile index 1]
+    at line 179 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:179 [compile index 1]
 *** Warning: SIGNAL_RESET_BUT_NOT_DRIVEN: Signal 'pc' is reset but not driven
-    at line 168 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:168 [compile index 1]
+    at line 180 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:180 [compile index 1]
 *** Warning: SIGNAL_RESET_BUT_NOT_DRIVEN: Signal 'imm' is reset but not driven
-    at line 169 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:169 [compile index 1]
+    at line 181 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:181 [compile index 1]
 *** Warning: SIGNAL_RESET_BUT_NOT_DRIVEN: Signal 'branch_prediction' is reset but not driven
-    at line 170 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:170 [compile index 1]
+    at line 182 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:182 [compile index 1]
 *** Warning: SIGNAL_NOT_RESET: Signal 'valid' is not reset
-    at line 185 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:185 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'instruction' is not reset
-    at line 186 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:186 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'pc' is not reset
-    at line 187 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:187 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'imm' is not reset
-    at line 188 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:188 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'branch_prediction' is not reset
-    at line 189 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:189 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'valid' is not reset
-    at line 193 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:193 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'instruction' is not reset
-    at line 194 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:194 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'pc' is not reset
-    at line 195 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:195 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'imm' is not reset
-    at line 196 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:196 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'branch_prediction' is not reset
     at line 197 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:197 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'valid' is not reset
-    at line 201 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:201 [compile index 1]
 *** Warning: SIGNAL_NOT_RESET: Signal 'instruction' is not reset
-    at line 202 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:202 [compile index 1]
+    at line 198 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:198 [compile index 1]
 *** Warning: SIGNAL_NOT_RESET: Signal 'pc' is not reset
-    at line 203 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:203 [compile index 1]
+    at line 199 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:199 [compile index 1]
 *** Warning: SIGNAL_NOT_RESET: Signal 'imm' is not reset
-    at line 204 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:204 [compile index 1]
+    at line 200 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:200 [compile index 1]
 *** Warning: SIGNAL_NOT_RESET: Signal 'branch_prediction' is not reset
-    at line 205 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:205 [compile index 1]
+    at line 201 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:201 [compile index 1]
 *** Warning: SIGNAL_NOT_RESET: Signal 'valid' is not reset
-    at line 210 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:210 [compile index 1]
+    at line 205 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:205 [compile index 1]
+*** Warning: SIGNAL_NOT_RESET: Signal 'instruction' is not reset
+    at line 206 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:206 [compile index 1]
+*** Warning: SIGNAL_NOT_RESET: Signal 'pc' is not reset
+    at line 207 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:207 [compile index 1]
+*** Warning: SIGNAL_NOT_RESET: Signal 'imm' is not reset
+    at line 208 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:208 [compile index 1]
+*** Warning: SIGNAL_NOT_RESET: Signal 'branch_prediction' is not reset
+    at line 209 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:209 [compile index 1]
 *** Warning: SIGNAL_NOT_RESET: Signal 'valid' is not reset
     at line 213 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:213 [compile index 1]
-*** Warning: SIGNAL_NOT_RESET: Signal 'valid' is not reset
+*** Warning: SIGNAL_NOT_RESET: Signal 'instruction' is not reset
+    at line 214 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:214 [compile index 1]
+*** Warning: SIGNAL_NOT_RESET: Signal 'pc' is not reset
+    at line 215 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:215 [compile index 1]
+*** Warning: SIGNAL_NOT_RESET: Signal 'imm' is not reset
     at line 216 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:216 [compile index 1]
+*** Warning: SIGNAL_NOT_RESET: Signal 'branch_prediction' is not reset
+    at line 217 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:217 [compile index 1]
+*** Warning: SIGNAL_NOT_RESET: Signal 'valid' is not reset
+    at line 222 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:222 [compile index 1]
+*** Warning: SIGNAL_NOT_RESET: Signal 'valid' is not reset
+    at line 225 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:225 [compile index 1]
+*** Warning: SIGNAL_NOT_RESET: Signal 'valid' is not reset
+    at line 228 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\instruction_buffer.sv:228 [compile index 1]
 *** Warning: OUTPUT_PORT_READ: Reading from output port 'S' is not recommended
     at line 39 in D:\Ensar\Tez\RV32I\digital\modules\common\src\CSA.sv:39 [compile index 2]
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : FEEDTHROUGH_DETECTED: Feedthrough from 'control_signal_i' to 'rs1_addr' in file D:\Ensar\Tez\RV32I\digital\modules\execute\src\execute_stage.sv at line 102] by [Waiver 'Disable FEEDTHROUGH_DETECTED message' to 'DISABLED']
@@ -353,203 +235,260 @@ Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : SIGNAL_NOT_RESET: Signal
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : FEEDTHROUGH_DETECTED: Feedthrough from 'control_signal_i' to 'data_mem_width_sel' in file D:\Ensar\Tez\RV32I\digital\modules\mem\src\mem_stage.sv at line 54] by [Waiver 'Disable FEEDTHROUGH_DETECTED message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : FEEDTHROUGH_DETECTED: Feedthrough from 'control_signal_i' to 'mem_stage_destination' in file D:\Ensar\Tez\RV32I\digital\modules\mem\src\mem_stage.sv at line 58] by [Waiver 'Disable FEEDTHROUGH_DETECTED message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : FEEDTHROUGH_DETECTED: Feedthrough from 'control_signal_i' to 'mem_stage_we' in file D:\Ensar\Tez\RV32I\digital\modules\mem\src\mem_stage.sv at line 59] by [Waiver 'Disable FEEDTHROUGH_DETECTED message' to 'DISABLED']
-*** Warning: SIGNAL_NEVER_USED: Signal 'flush' is never used
-    at line 33 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:33 [compile index 34]
-*** Warning: SIGNAL_NEVER_USED: Signal 'bubble' is never used
-    at line 34 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:34 [compile index 34]
-*** Warning: SIGNAL_NEVER_READ: Signal 'reg_write_enable' is never read
-    at line 66 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:66 [compile index 34]
-*** Warning: SIGNAL_NEVER_READ: Signal 'reg_write_addr' is never read
-    at line 67 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:67 [compile index 34]
-*** Warning: SIGNAL_NEVER_READ: Signal 'reg_write_data' is never read
-    at line 68 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:68 [compile index 34]
-*** Warning: SIGNAL_NEVER_READ: Signal 'reg_write_tag' is never read
-    at line 69 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:69 [compile index 34]
-*** Warning: SIGNAL_NEVER_WRITTEN: Signal 'internal_cdb_valid' is never written
-    at line 72 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:72 [compile index 34]
-*** Warning: SIGNAL_NEVER_WRITTEN: Signal 'internal_cdb_data' is never written
-    at line 73 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:73 [compile index 34]
-*** Warning: SIGNAL_NEVER_WRITTEN: Signal 'internal_cdb_tag' is never written
-    at line 74 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:74 [compile index 34]
-*** Warning: SIGNAL_NEVER_WRITTEN: Signal 'internal_cdb_dest_reg' is never written
-    at line 75 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:75 [compile index 34]
-*** Warning: IMPLICIT_DECLARATION: Implicit declaration of 'cdb_interface' using `default_nettype set to wire
-    at line 195 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\dispatch_stage.sv:195 [compile index 34]
-*** Warning: PARAMETER_NEVER_USED: Parameter 'TAG_ALU0' is never used
-    at line 46 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\multi_port_register_file.sv:46 [compile index 35]
-*** Warning: PARAMETER_NEVER_USED: Parameter 'TAG_ALU1' is never used
-    at line 47 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\multi_port_register_file.sv:47 [compile index 35]
-*** Warning: PARAMETER_NEVER_USED: Parameter 'TAG_ALU2' is never used
-    at line 48 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\multi_port_register_file.sv:48 [compile index 35]
-Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : FEEDTHROUGH_DETECTED: Feedthrough from 'data_result' to 'cdb_data_0' in file D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\dispatch_stage\reservation_station.sv at line 195] by [Waiver 'Disable FEEDTHROUGH_DETECTED message' to 'DISABLED']
+*** Warning: SIGNAL_NEVER_USED: Signal 'clk' is never used
+    at line 26 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:26 [compile index 37]
+*** Warning: SIGNAL_NEVER_USED: Signal 'rst_n' is never used
+    at line 27 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:27 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu0_carry_out' is never read (connected to sub-instance output port)
+    at line 39 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:39 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu0_overflow' is never read (connected to sub-instance output port)
+    at line 39 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:39 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu0_misprediction' is never read
+    at line 44 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:44 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu0_correct_pc' is never read
+    at line 46 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:46 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu1_carry_out' is never read (connected to sub-instance output port)
+    at line 52 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:52 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu1_overflow' is never read (connected to sub-instance output port)
+    at line 52 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:52 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu1_misprediction' is never read
+    at line 57 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:57 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu1_correct_pc' is never read
+    at line 59 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:59 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu2_carry_out' is never read (connected to sub-instance output port)
+    at line 65 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:65 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu2_overflow' is never read (connected to sub-instance output port)
+    at line 65 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:65 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu2_misprediction' is never read
+    at line 70 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:70 [compile index 37]
+*** Warning: SIGNAL_NEVER_READ: Signal 'fu2_correct_pc' is never read
+    at line 72 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\execute_stage\execute_stage.sv:72 [compile index 37]
 *** Warning: SIGNAL_RESET_BUT_NOT_DRIVEN: Signal 'counter' is reset but not driven
-    at line 119 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv:119 [compile index 37]
+    at line 119 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv:119 [compile index 38]
 *** Warning: SIGNAL_NOT_RESET: Signal 'counter' is not reset
-    at line 127 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv:127 [compile index 37]
+    at line 127 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv:127 [compile index 38]
 *** Warning: SIGNAL_NOT_RESET: Signal 'counter' is not reset
-    at line 152 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv:152 [compile index 37]
+    at line 152 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv:152 [compile index 38]
 *** Warning: SIGNAL_NOT_RESET: Signal 'counter' is not reset
-    at line 177 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv:177 [compile index 37]
+    at line 177 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\branch_predictor_super.sv:177 [compile index 38]
+*** Warning: SIGNAL_NEVER_READ: Signal 'instruction_o_2' is never read (connected to sub-instance output port)
+    at line 18 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:18 [compile index 44]
+*** Warning: SIGNAL_NEVER_READ: Signal 'pc_o_0' is never read (connected to sub-instance output port)
+    at line 19 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:19 [compile index 44]
+*** Warning: SIGNAL_NEVER_READ: Signal 'pc_o_1' is never read (connected to sub-instance output port)
+    at line 19 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:19 [compile index 44]
+*** Warning: SIGNAL_NEVER_READ: Signal 'pc_o_2' is never read (connected to sub-instance output port)
+    at line 19 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:19 [compile index 44]
+*** Warning: SIGNAL_NEVER_READ: Signal 'imm_o_0' is never read (connected to sub-instance output port)
+    at line 20 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:20 [compile index 44]
+*** Warning: SIGNAL_NEVER_READ: Signal 'imm_o_1' is never read (connected to sub-instance output port)
+    at line 20 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:20 [compile index 44]
+*** Warning: SIGNAL_NEVER_READ: Signal 'imm_o_2' is never read (connected to sub-instance output port)
+    at line 20 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:20 [compile index 44]
+*** Warning: SIGNAL_NEVER_READ: Signal 'branch_prediction_o_0' is never read (connected to sub-instance output port)
+    at line 21 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:21 [compile index 44]
+*** Warning: SIGNAL_NEVER_READ: Signal 'branch_prediction_o_1' is never read (connected to sub-instance output port)
+    at line 21 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:21 [compile index 44]
+*** Warning: SIGNAL_NEVER_READ: Signal 'branch_prediction_o_2' is never read (connected to sub-instance output port)
+    at line 21 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:21 [compile index 44]
+*** Warning: INTERNAL_GENERATED_CLOCK: Clock signal 'clk' is not an input port
+    at line 77 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:77 [compile index 44]
+*** Warning: INTERNAL_GENERATED_CLOCK: Clock signal 'clk' is not an input port
+    at line 252 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:252 [compile index 44]
+*** Warning: INTERNAL_GENERATED_RESET: Reset signal 'reset' is not an input port
+    at line 253 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\fetch_stage\tb_instruction_buffer_new.sv:253 [compile index 44]
 *** Warning: SIGNAL_NEVER_READ: Signal 'old_rd_phys_0' is never read (connected to sub-instance output port)
-    at line 69 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv:69 [compile index 46]
+    at line 69 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv:69 [compile index 49]
 *** Warning: SIGNAL_NEVER_READ: Signal 'old_rd_phys_1' is never read (connected to sub-instance output port)
-    at line 69 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv:69 [compile index 46]
+    at line 69 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv:69 [compile index 49]
 *** Warning: SIGNAL_NEVER_READ: Signal 'old_rd_phys_2' is never read (connected to sub-instance output port)
-    at line 69 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv:69 [compile index 46]
+    at line 69 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv:69 [compile index 49]
+*** Warning: SIGNAL_NEVER_READ: Signal 'rename_valid_internal' is never read (connected to sub-instance output port)
+    at line 70 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\issue_stage.sv:70 [compile index 49]
+*** Warning: SIGNAL_NEVER_WRITTEN: Signal 'reg_a_data_0' is never written
+    at line 63 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:63 [compile index 50]
+*** Warning: SIGNAL_NEVER_WRITTEN: Signal 'reg_a_data_1' is never written
+    at line 63 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:63 [compile index 50]
+*** Warning: SIGNAL_NEVER_WRITTEN: Signal 'reg_a_data_2' is never written
+    at line 63 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:63 [compile index 50]
+*** Warning: SIGNAL_NEVER_WRITTEN: Signal 'reg_b_data_0' is never written
+    at line 64 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:64 [compile index 50]
+*** Warning: SIGNAL_NEVER_WRITTEN: Signal 'reg_b_data_1' is never written
+    at line 64 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:64 [compile index 50]
+*** Warning: SIGNAL_NEVER_WRITTEN: Signal 'reg_b_data_2' is never written
+    at line 64 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:64 [compile index 50]
+*** Warning: SIGNAL_NEVER_READ: Signal 'rs1_phys_0' is never read (connected to sub-instance output port)
+    at line 74 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:74 [compile index 50]
+*** Warning: SIGNAL_NEVER_READ: Signal 'rs1_phys_1' is never read (connected to sub-instance output port)
+    at line 74 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:74 [compile index 50]
+*** Warning: SIGNAL_NEVER_READ: Signal 'rs1_phys_2' is never read (connected to sub-instance output port)
+    at line 74 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:74 [compile index 50]
+*** Warning: SIGNAL_NEVER_READ: Signal 'rs2_phys_0' is never read (connected to sub-instance output port)
+    at line 75 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:75 [compile index 50]
+*** Warning: SIGNAL_NEVER_READ: Signal 'rs2_phys_1' is never read (connected to sub-instance output port)
+    at line 75 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:75 [compile index 50]
+*** Warning: SIGNAL_NEVER_READ: Signal 'rs2_phys_2' is never read (connected to sub-instance output port)
+    at line 75 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:75 [compile index 50]
 *** Warning: SIGNAL_NEVER_READ: Signal 'old_rd_phys_0' is never read (connected to sub-instance output port)
-    at line 77 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:77 [compile index 47]
+    at line 77 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:77 [compile index 50]
 *** Warning: SIGNAL_NEVER_READ: Signal 'old_rd_phys_1' is never read (connected to sub-instance output port)
-    at line 77 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:77 [compile index 47]
+    at line 77 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:77 [compile index 50]
 *** Warning: SIGNAL_NEVER_READ: Signal 'old_rd_phys_2' is never read (connected to sub-instance output port)
-    at line 77 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:77 [compile index 47]
+    at line 77 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\issue_stage\multi_decode_stage.sv:77 [compile index 50]
 *** Warning: SIGNAL_NEVER_USED: Signal 'data_read' is never used
-    at line 46 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:46 [compile index 49]
+    at line 46 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:46 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'data_ack' is never used
-    at line 50 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:50 [compile index 49]
+    at line 50 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:50 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'data_err' is never used
-    at line 51 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:51 [compile index 49]
+    at line 51 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:51 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'buffer_empty' is never read (connected to sub-instance output port)
-    at line 89 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:89 [compile index 49]
+    at line 89 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:89 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'buffer_occupancy' is never read (connected to sub-instance output port)
-    at line 90 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:90 [compile index 49]
+    at line 90 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:90 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'bp_pc_0' is never read (connected to sub-instance output port)
-    at line 93 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:93 [compile index 49]
+    at line 93 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:93 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'bp_pc_1' is never read (connected to sub-instance output port)
-    at line 93 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:93 [compile index 49]
+    at line 93 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:93 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'bp_pc_2' is never read (connected to sub-instance output port)
-    at line 93 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:93 [compile index 49]
+    at line 93 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:93 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'bp_prediction_0' is never read (connected to sub-instance output port)
-    at line 94 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:94 [compile index 49]
+    at line 94 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:94 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'bp_prediction_1' is never read (connected to sub-instance output port)
-    at line 94 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:94 [compile index 49]
+    at line 94 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:94 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'bp_prediction_2' is never read (connected to sub-instance output port)
-    at line 94 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:94 [compile index 49]
+    at line 94 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:94 [compile index 52]
+*** Warning: SIGNAL_NEVER_READ: Signal 'decode_data_a_0' is never read
+    at line 102 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:102 [compile index 52]
+*** Warning: SIGNAL_NEVER_READ: Signal 'decode_data_a_1' is never read
+    at line 102 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:102 [compile index 52]
+*** Warning: SIGNAL_NEVER_READ: Signal 'decode_data_a_2' is never read
+    at line 102 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:102 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_data_b_0' is never read
-    at line 103 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:103 [compile index 49]
+    at line 103 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:103 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_data_b_1' is never read
-    at line 103 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:103 [compile index 49]
+    at line 103 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:103 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_data_b_2' is never read
-    at line 103 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:103 [compile index 49]
+    at line 103 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:103 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_store_data_0' is never read
-    at line 104 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:104 [compile index 49]
+    at line 104 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:104 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_store_data_1' is never read
-    at line 104 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:104 [compile index 49]
+    at line 104 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:104 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_store_data_2' is never read
-    at line 104 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:104 [compile index 49]
+    at line 104 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:104 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_pc_0' is never read
-    at line 105 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:105 [compile index 49]
+    at line 105 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:105 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_pc_1' is never read
-    at line 105 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:105 [compile index 49]
+    at line 105 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:105 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_pc_2' is never read
-    at line 105 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:105 [compile index 49]
+    at line 105 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:105 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_pc_prediction_0' is never read
-    at line 107 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:107 [compile index 49]
+    at line 107 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:107 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_pc_prediction_1' is never read
-    at line 107 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:107 [compile index 49]
+    at line 107 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:107 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_pc_prediction_2' is never read
-    at line 107 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:107 [compile index 49]
+    at line 107 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:107 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_branch_sel_0' is never read
-    at line 108 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:108 [compile index 49]
+    at line 108 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:108 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_branch_sel_1' is never read
-    at line 108 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:108 [compile index 49]
+    at line 108 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:108 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_branch_sel_2' is never read
-    at line 108 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:108 [compile index 49]
+    at line 108 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:108 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_branch_pred_0' is never read
-    at line 109 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:109 [compile index 49]
+    at line 109 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:109 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_branch_pred_1' is never read
-    at line 109 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:109 [compile index 49]
+    at line 109 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:109 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'decode_branch_pred_2' is never read
-    at line 109 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:109 [compile index 49]
+    at line 109 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:109 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'decode_rs1_0' is never used
-    at line 110 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:110 [compile index 49]
+    at line 110 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:110 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'decode_rs1_1' is never used
-    at line 110 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:110 [compile index 49]
+    at line 110 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:110 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'decode_rs1_2' is never used
-    at line 110 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:110 [compile index 49]
+    at line 110 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:110 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'decode_rs2_0' is never used
-    at line 111 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:111 [compile index 49]
+    at line 111 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:111 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'decode_rs2_1' is never used
-    at line 111 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:111 [compile index 49]
+    at line 111 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:111 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'decode_rs2_2' is never used
-    at line 111 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:111 [compile index 49]
+    at line 111 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:111 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'execute_ready' is never read
-    at line 115 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:115 [compile index 49]
+    at line 115 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:115 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'mem_valid' is never read
-    at line 122 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:122 [compile index 49]
+    at line 122 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:122 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'mem_result' is never read
-    at line 123 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:123 [compile index 49]
+    at line 123 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:123 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'mem_rd' is never read
-    at line 124 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:124 [compile index 49]
+    at line 124 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:124 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'mem_reg_write' is never read
-    at line 125 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:125 [compile index 49]
+    at line 125 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:125 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'wb_valid' is never read
-    at line 128 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:128 [compile index 49]
+    at line 128 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:128 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'wb_data_0' is never read
-    at line 129 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:129 [compile index 49]
+    at line 129 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:129 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'wb_data_1' is never read
-    at line 129 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:129 [compile index 49]
+    at line 129 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:129 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'wb_data_2' is never read
-    at line 129 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:129 [compile index 49]
+    at line 129 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:129 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'wb_rd_0' is never read
-    at line 130 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:130 [compile index 49]
+    at line 130 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:130 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'wb_rd_1' is never read
-    at line 130 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:130 [compile index 49]
+    at line 130 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:130 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'wb_rd_2' is never read
-    at line 130 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:130 [compile index 49]
+    at line 130 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:130 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'wb_reg_write_0' is never read
-    at line 131 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:131 [compile index 49]
+    at line 131 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:131 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'wb_reg_write_1' is never read
-    at line 131 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:131 [compile index 49]
+    at line 131 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:131 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'wb_reg_write_2' is never read
-    at line 131 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:131 [compile index 49]
+    at line 131 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:131 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'rf_read_data_0_0' is never used
-    at line 134 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:134 [compile index 49]
+    at line 134 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:134 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'rf_read_data_0_1' is never used
-    at line 134 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:134 [compile index 49]
+    at line 134 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:134 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'rf_read_data_1_0' is never used
-    at line 135 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:135 [compile index 49]
+    at line 135 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:135 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'rf_read_data_1_1' is never used
-    at line 135 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:135 [compile index 49]
+    at line 135 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:135 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'rf_read_data_2_0' is never used
-    at line 136 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:136 [compile index 49]
+    at line 136 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:136 [compile index 52]
 *** Warning: SIGNAL_NEVER_USED: Signal 'rf_read_data_2_1' is never used
-    at line 136 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:136 [compile index 49]
+    at line 136 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:136 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'csr_addr' is never read
-    at line 139 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:139 [compile index 49]
+    at line 139 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:139 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'csr_write_data' is never read
-    at line 140 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:140 [compile index 49]
+    at line 140 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:140 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'csr_read_data' is never read
-    at line 141 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:141 [compile index 49]
+    at line 141 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:141 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'csr_write_enable' is never read
-    at line 142 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:142 [compile index 49]
+    at line 142 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:142 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'csr_read_enable' is never read
-    at line 143 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:143 [compile index 49]
+    at line 143 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:143 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'exception_cause' is never read
-    at line 147 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:147 [compile index 49]
+    at line 147 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:147 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'exception_pc' is never read
-    at line 148 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:148 [compile index 49]
+    at line 148 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:148 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'interrupt_pending' is never read
-    at line 149 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:149 [compile index 49]
+    at line 149 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:149 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'current_pc' is never read
-    at line 159 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:159 [compile index 49]
+    at line 159 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:159 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'current_instruction' is never read
-    at line 160 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:160 [compile index 49]
+    at line 160 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:160 [compile index 52]
 *** Warning: SIGNAL_NEVER_READ: Signal 'instruction_valid' is never read
-    at line 161 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:161 [compile index 49]
+    at line 161 in D:\Ensar\Tez\RV32I\digital\modules\superscalar_spesific_modules\top\rv32i_superscalar_core.sv:161 [compile index 52]
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : FEEDTHROUGH_DETECTED: Feedthrough from 'control_signal_i' to 'control_signal_o' in file D:\Ensar\Tez\RV32I\digital\modules\write_back\src\write_back_stage.sv at line 54] by [Waiver 'Disable FEEDTHROUGH_DETECTED message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : FEEDTHROUGH_DETECTED: Feedthrough from 'control_signal_i' to 'wb_stage_destination' in file D:\Ensar\Tez\RV32I\digital\modules\write_back\src\write_back_stage.sv at line 55] by [Waiver 'Disable FEEDTHROUGH_DETECTED message' to 'DISABLED']
 Waive [WARNING/DISABLED on project RV32I : SVSM SVSMW : FEEDTHROUGH_DETECTED: Feedthrough from 'control_signal_i' to 'wb_stage_we' in file D:\Ensar\Tez\RV32I\digital\modules\write_back\src\write_back_stage.sv at line 56] by [Waiver 'Disable FEEDTHROUGH_DETECTED message' to 'DISABLED']
-*** Done mixed mode extension build [458 ms] ***
+*** Done mixed mode extension build [1s.876ms] ***
 Waiver 'Disable by message' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 4 applied to 0 problems
 Waiver 'Demote by path' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 8 applied to 0 problems
 Waiver 'Promote by path OR message' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 12 applied to 0 problems
 Waiver 'Disable by path AND message' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 17 applied to 0 problems
-Waiver 'Disable UNELABORATED_MODULE message' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 21 applied to 28 problems
-Waiver 'Disable FEEDTHROUGH_DETECTED message' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 25 applied to 9 problems
+Waiver 'Disable UNELABORATED_MODULE message' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 21 applied to 20 problems
+Waiver 'Disable FEEDTHROUGH_DETECTED message' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 25 applied to 8 problems
 Waiver 'SIGNAL_RESET_BUT_NOT_DRIVEN' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 31 applied to 0 problems
 Waiver 'SIGNAL_NOT_RESET' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 34 applied to 0 problems
 Waiver 'SIGNAL_RESET_BUT_NOT_DRIVEN' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 37 applied to 1 problems
 Waiver 'SIGNAL_NOT_RESET' defined in 'D:\Ensar\Tez\RV32I\.dvt\waivers.xml' at line 40 applied to 1 problems
-There are 39 waived problems. Check the build log file for details:
+There are 30 waived problems. Check the build log file for details:
 D:\Ensar\Tez\RV32I\dvt_build.log
-*** Total build time [1s.650ms] ***
+*** Total build time [4s.684ms] ***
