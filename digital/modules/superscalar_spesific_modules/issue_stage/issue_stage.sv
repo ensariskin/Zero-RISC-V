@@ -180,7 +180,7 @@ module issue_stage #(
     //==========================================================================
     
     // Ready signal indicates RAT can allocate physical registers and dispatch stage can accept
-    assign decode_ready_o =  {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready};
+    assign decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready};
     // todo : add rename_valid here
     //==========================================================================
     // ISSUE STAGE PIPELINE REGISTERS (CONTROL AND ADDRESSES ONLY)
@@ -218,7 +218,7 @@ module issue_stage #(
             rs2_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
         end else begin
             if (flush | bubble) begin
-                // Insert NOPs on flush or bubble
+                // Insert NOPs on flush for all channels
                 decode_valid_reg <= #D 3'b000;
                 pc_reg_0 <= #D {DATA_WIDTH{1'b0}};
                 pc_reg_1 <= #D {DATA_WIDTH{1'b0}};
@@ -248,47 +248,56 @@ module issue_stage #(
                 rs2_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
                 rs2_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
             end else begin
-                // Normal operation - register the decoded control and addresses only
-                decode_valid_reg <= #D decode_valid_i;
+                // Channel 0: Update only when dispatch_ready[0] is high
+                if (issue_to_dispatch_0.dispatch_ready) begin
                 
-                // PC values
-                pc_reg_0 <= #D decode_valid_i[0] ? pc_i_0 : {DATA_WIDTH{1'b0}};
-                pc_reg_1 <= #D decode_valid_i[1] ? pc_i_1 : {DATA_WIDTH{1'b0}};
-                pc_reg_2 <= #D decode_valid_i[2] ? pc_i_2 : {DATA_WIDTH{1'b0}};
+                    decode_valid_reg[0] <= #D decode_valid_i[0];
+                    pc_reg_0 <= #D decode_valid_i[0] ? pc_i_0 : {DATA_WIDTH{1'b0}};
+                    control_signal_reg_0 <= #D decode_valid_i[0] ? control_signal_internal_0 : 26'h0;
+                    pc_prediction_reg_0 <= #D decode_valid_i[0] ? pc_value_at_prediction_i_0 : {DATA_WIDTH{1'b0}};
+                    branch_sel_reg_0 <= #D decode_valid_i[0] ? branch_sel_internal_0 : 3'b000;
+                    branch_prediction_reg_0 <= #D decode_valid_i[0] ? branch_prediction_i_0 : 1'b0;
+                    immediate_reg_0 <= #D decode_valid_i[0] ? immediate_i_0 : {DATA_WIDTH{1'b0}};
+                    rd_phys_reg_0 <= #D decode_valid_i[0] ? rd_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs1_phys_reg_0 <= #D decode_valid_i[0] ? rs1_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs2_phys_reg_0 <= #D decode_valid_i[0] ? rs2_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                 
-                // Control signals
-                control_signal_reg_0 <= #D decode_valid_i[0] ? control_signal_internal_0 : 26'h0;
-                control_signal_reg_1 <= #D decode_valid_i[1] ? control_signal_internal_1 : 26'h0;
-                control_signal_reg_2 <= #D decode_valid_i[2] ? control_signal_internal_2 : 26'h0;
+                end
+                // If dispatch_ready[0] is 0, channel 0 registers maintain their values (no update)
                 
-                // Branch prediction data
-                pc_prediction_reg_0 <= #D decode_valid_i[0] ? pc_value_at_prediction_i_0 : {DATA_WIDTH{1'b0}};
-                pc_prediction_reg_1 <= #D decode_valid_i[1] ? pc_value_at_prediction_i_1 : {DATA_WIDTH{1'b0}};
-                pc_prediction_reg_2 <= #D decode_valid_i[2] ? pc_value_at_prediction_i_2 : {DATA_WIDTH{1'b0}};
+                // Channel 1: Update only when dispatch_ready[1] is high
+                if (issue_to_dispatch_1.dispatch_ready) begin
+                    
+                    decode_valid_reg[1] <= #D decode_valid_i[1];
+                    pc_reg_1 <= #D decode_valid_i[1] ? pc_i_1 : {DATA_WIDTH{1'b0}};
+                    control_signal_reg_1 <= #D decode_valid_i[1] ? control_signal_internal_1 : 26'h0;
+                    pc_prediction_reg_1 <= #D decode_valid_i[1] ? pc_value_at_prediction_i_1 : {DATA_WIDTH{1'b0}};
+                    branch_sel_reg_1 <= #D decode_valid_i[1] ? branch_sel_internal_1 : 3'b000;
+                    branch_prediction_reg_1 <= #D decode_valid_i[1] ? branch_prediction_i_1 : 1'b0;
+                    immediate_reg_1 <= #D decode_valid_i[1] ? immediate_i_1 : {DATA_WIDTH{1'b0}};
+                    rd_phys_reg_1 <= #D decode_valid_i[1] ? rd_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs1_phys_reg_1 <= #D decode_valid_i[1] ? rs1_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs2_phys_reg_1 <= #D decode_valid_i[1] ? rs2_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    
+                end
+                // If dispatch_ready[1] is 0, channel 1 registers maintain their values (no update)
                 
-                branch_sel_reg_0 <= #D decode_valid_i[0] ? branch_sel_internal_0 : 3'b000;
-                branch_sel_reg_1 <= #D decode_valid_i[1] ? branch_sel_internal_1 : 3'b000;
-                branch_sel_reg_2 <= #D decode_valid_i[2] ? branch_sel_internal_2 : 3'b000;
-                
-                branch_prediction_reg_0 <= #D decode_valid_i[0] ? branch_prediction_i_0 : 1'b0;
-                branch_prediction_reg_1 <= #D decode_valid_i[1] ? branch_prediction_i_1 : 1'b0;
-                branch_prediction_reg_2 <= #D decode_valid_i[2] ? branch_prediction_i_2 : 1'b0;
-                
-                // Immediate values
-                immediate_reg_0 <= #D decode_valid_i[0] ? immediate_i_0 : {DATA_WIDTH{1'b0}};
-                immediate_reg_1 <= #D decode_valid_i[1] ? immediate_i_1 : {DATA_WIDTH{1'b0}};
-                immediate_reg_2 <= #D decode_valid_i[2] ? immediate_i_2 : {DATA_WIDTH{1'b0}};
-                
-                // Physical register addresses
-                rd_phys_reg_0 <= #D decode_valid_i[0] ? rd_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                rd_phys_reg_1 <= #D decode_valid_i[1] ? rd_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                rd_phys_reg_2 <= #D decode_valid_i[2] ? rd_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                rs1_phys_reg_0 <= #D decode_valid_i[0] ? rs1_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                rs1_phys_reg_1 <= #D decode_valid_i[1] ? rs1_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                rs1_phys_reg_2 <= #D decode_valid_i[2] ? rs1_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                rs2_phys_reg_0 <= #D decode_valid_i[0] ? rs2_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                rs2_phys_reg_1 <= #D decode_valid_i[1] ? rs2_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                rs2_phys_reg_2 <= #D decode_valid_i[2] ? rs2_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                // Channel 2: Update only when dispatch_ready[2] is high
+                if (issue_to_dispatch_2.dispatch_ready) begin
+                   
+                    decode_valid_reg[2] <= #D decode_valid_i[2];
+                    pc_reg_2 <= #D decode_valid_i[2] ? pc_i_2 : {DATA_WIDTH{1'b0}};
+                    control_signal_reg_2 <= #D decode_valid_i[2] ? control_signal_internal_2 : 26'h0;
+                    pc_prediction_reg_2 <= #D decode_valid_i[2] ? pc_value_at_prediction_i_2 : {DATA_WIDTH{1'b0}};
+                    branch_sel_reg_2 <= #D decode_valid_i[2] ? branch_sel_internal_2 : 3'b000;
+                    branch_prediction_reg_2 <= #D decode_valid_i[2] ? branch_prediction_i_2 : 1'b0;
+                    immediate_reg_2 <= #D decode_valid_i[2] ? immediate_i_2 : {DATA_WIDTH{1'b0}};
+                    rd_phys_reg_2 <= #D decode_valid_i[2] ? rd_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs1_phys_reg_2 <= #D decode_valid_i[2] ? rs1_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs2_phys_reg_2 <= #D decode_valid_i[2] ? rs2_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    
+                end
+                // If dispatch_ready[2] is 0, channel 2 registers maintain their values (no update)
             end
         end
     end
