@@ -43,218 +43,232 @@ module reservation_station #(
 );
 
     localparam D = 1; // Delay for simulation
+    localparam TAG_READY = 2'b11; // Tag indicating operand is ready/valid
 
     //==========================================================================
-    // INTERNAL LOGIC SIGNALS (COMBINATIONAL)
+    // RESERVATION STATION STORAGE REGISTERS
     //==========================================================================
     
-    // Current instruction state (directly in output registers)
-    logic instruction_valid;                        // Valid instruction being processed
+    // Instruction storage (valid when occupied)
+    logic occupied;
+    logic [10:0] stored_control_signals;
+    logic [DATA_WIDTH-1:0] stored_pc;
+    logic [PHYS_REG_ADDR_WIDTH-1:0] stored_rd_phys_addr;
+    logic [DATA_WIDTH-1:0] stored_pc_value_at_prediction;
+    logic [2:0] stored_branch_sel;
+    logic stored_branch_prediction;
+    logic [DATA_WIDTH-1:0] stored_store_data;
     
-    // Operand dependency tags (for CDB monitoring)
-    logic [1:0] operand_a_tag;                      // Operand A dependency tag
-    logic [1:0] operand_b_tag;                      // Operand B dependency tag
-    logic operand_a_ready;                          // Operand A is ready
-    logic operand_b_ready;                          // Operand B is ready
+    // Operand A storage and tracking
+    logic [DATA_WIDTH-1:0] stored_operand_a_data;
+    logic [1:0] stored_operand_a_tag;
     
+    // Operand B storage and tracking  
+    logic [DATA_WIDTH-1:0] stored_operand_b_data;
+    logic [1:0] stored_operand_b_tag;
+
     //==========================================================================
-    // OPERAND READINESS LOGIC
+    // COMBINATIONAL LOGIC FOR OPERAND SELECTION
     //==========================================================================
     
-    // Next state logic for operand data and readiness
-    logic operand_a_ready_next, operand_b_ready_next;
-    logic [DATA_WIDTH-1:0] operand_a_data_next, operand_b_data_next;
+    // Check if operands are valid (from decode or CDB)
+    logic operand_a_valid_from_decode, operand_b_valid_from_decode;
+    logic operand_a_valid_from_stored, operand_b_valid_from_stored;
+    logic [DATA_WIDTH-1:0] final_operand_a_data, final_operand_b_data;
+    logic should_issue;
     
-    // Check if operands are ready from CDB broadcasts
     always_comb begin
-        // Default: keep current state from output registers
-        operand_a_ready_next = operand_a_ready;
-        operand_a_data_next = exec_if.data_a;
-        operand_b_ready_next = operand_b_ready;
-        operand_b_data_next = exec_if.data_b;
+        // Check if operands are valid from decode interface (only TAG_READY, no CDB monitoring)
+        operand_a_valid_from_decode = (decode_if.operand_a_tag == TAG_READY);
+        operand_b_valid_from_decode = (decode_if.operand_b_tag == TAG_READY);
         
-        // Check operand A against CDB broadcasts
-        if (!operand_a_ready && instruction_valid) begin
-            // Check CDB channel 0 (ALU0)
-            if (cdb_if_port.cdb_valid_0 && (operand_a_tag == 2'b00)) begin
-                operand_a_ready_next = 1'b1;
-                operand_a_data_next = cdb_if_port.cdb_data_0;
-            end
-            // Check CDB channel 1 (ALU1) 
-            else if (cdb_if_port.cdb_valid_1 && (operand_a_tag == 2'b01)) begin
-                operand_a_ready_next = 1'b1;
-                operand_a_data_next = cdb_if_port.cdb_data_1;
-            end
-            // Check CDB channel 2 (ALU2)
-            else if (cdb_if_port.cdb_valid_2 && (operand_a_tag == 2'b10)) begin
-                operand_a_ready_next = 1'b1;
-                operand_a_data_next = cdb_if_port.cdb_data_2;
-            end
-        end
+        // Check if stored operands are valid (from storage or CDB monitoring)
+        operand_a_valid_from_stored = (stored_operand_a_tag == TAG_READY) ||
+                                     (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 2'b00) ||
+                                     (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 2'b01) ||
+                                     (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 2'b10);
+                                     
+        operand_b_valid_from_stored = (stored_operand_b_tag == TAG_READY) ||
+                                     (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 2'b00) ||
+                                     (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 2'b01) ||
+                                     (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 2'b10);
         
-        // Check operand B against CDB broadcasts
-        if (!operand_b_ready && instruction_valid) begin
-            // Check CDB channel 0 (ALU0)
-            if (cdb_if_port.cdb_valid_0 && (operand_b_tag == 2'b00)) begin
-                operand_b_ready_next = 1'b1;
-                operand_b_data_next = cdb_if_port.cdb_data_0;
+        // Determine what data to use and when to issue
+        if (decode_if.dispatch_valid && operand_a_valid_from_decode && operand_b_valid_from_decode) begin
+            // Use decode data directly (both operands ready)
+            should_issue = 1'b1;
+            
+            // Use operand data directly from decode (no CDB needed)
+            final_operand_a_data = decode_if.operand_a_data;
+            final_operand_b_data = decode_if.operand_b_data;
+            
+        end else if (occupied && operand_a_valid_from_stored && operand_b_valid_from_stored) begin
+            // Use stored data (both operands now ready)
+            should_issue = 1'b1;
+            
+            // Select operand A data from stored/CDB
+            if (stored_operand_a_tag == TAG_READY) begin
+                final_operand_a_data = stored_operand_a_data;
+            end else if (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 2'b00) begin
+                final_operand_a_data = cdb_if_port.cdb_data_0;
+            end else if (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 2'b01) begin
+                final_operand_a_data = cdb_if_port.cdb_data_1;
+            end else begin // cdb_valid_2 && stored_operand_a_tag == 2'b10
+                final_operand_a_data = cdb_if_port.cdb_data_2;
             end
-            // Check CDB channel 1 (ALU1)
-            else if (cdb_if_port.cdb_valid_1 && (operand_b_tag == 2'b01)) begin
-                operand_b_ready_next = 1'b1;
-                operand_b_data_next = cdb_if_port.cdb_data_1;
+            
+            // Select operand B data from stored/CDB
+            if (stored_operand_b_tag == TAG_READY) begin
+                final_operand_b_data = stored_operand_b_data;
+            end else if (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 2'b00) begin
+                final_operand_b_data = cdb_if_port.cdb_data_0;
+            end else if (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 2'b01) begin
+                final_operand_b_data = cdb_if_port.cdb_data_1;
+            end else begin // cdb_valid_2 && stored_operand_b_tag == 2'b10
+                final_operand_b_data = cdb_if_port.cdb_data_2;
             end
-            // Check CDB channel 2 (ALU2)
-            else if (cdb_if_port.cdb_valid_2 && (operand_b_tag == 2'b10)) begin
-                operand_b_ready_next = 1'b1;
-                operand_b_data_next = cdb_if_port.cdb_data_2;
-            end
+            
+        end else begin
+            // Not ready to issue
+            should_issue = 1'b0;
+            final_operand_a_data = '0;
+            final_operand_b_data = '0;
         end
     end
-    
+
     //==========================================================================
-    // DISPATCH/ISSUE CONTROL LOGIC
+    // DECODE INTERFACE CONTROL
     //==========================================================================
     
-    // Ready to accept new instruction from decode stage
-    assign decode_if.dispatch_ready = !instruction_valid || (instruction_valid && operand_a_ready_next && operand_b_ready_next && exec_if.issue_ready);
-    
-    // Ready to issue to functional unit (both operands ready)
-    logic ready_to_issue;
-    assign ready_to_issue = instruction_valid && operand_a_ready_next && operand_b_ready_next;
-    
+    // Ready to accept new instruction when not occupied or when issuing from stored
+    assign decode_if.dispatch_ready = !occupied; //(occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready);
+
     //==========================================================================
-    // EXECUTE INTERFACE OUTPUTS (SINGLE LEVEL REGISTERS)
+    // RESERVATION STATION STORAGE UPDATE
     //==========================================================================
     
     always_ff @(posedge clk or negedge reset) begin
         if (!reset) begin
-            // Reset all output registers
-            exec_if.issue_valid <= #D 1'b0;
-            exec_if.control_signals <= #D 11'h0;
-            exec_if.pc <= #D {DATA_WIDTH{1'b0}};
-            exec_if.data_a <= #D {DATA_WIDTH{1'b0}};
-            exec_if.data_b <= #D {DATA_WIDTH{1'b0}};
-            exec_if.store_data <= #D {DATA_WIDTH{1'b0}};
-            exec_if.rd_phys_addr <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
-            exec_if.pc_value_at_prediction <= #D {DATA_WIDTH{1'b0}};
-            exec_if.branch_sel <= #D 3'b000;
-            exec_if.branch_prediction <= #D 1'b0;
-            
-            // Reset internal state
-            instruction_valid <= #D 1'b0;
-            operand_a_tag <= #D 2'b11;  // Default to ready
-            operand_b_tag <= #D 2'b11;  // Default to ready
-            operand_a_ready <= #D 1'b1;
-            operand_b_ready <= #D 1'b1;
-            
+            occupied <= #D 1'b0;
+            stored_control_signals <= #D '0;
+            stored_pc <= #D '0;
+            stored_rd_phys_addr <= #D '0;
+            stored_pc_value_at_prediction <= #D '0;
+            stored_branch_sel <= #D '0;
+            stored_branch_prediction <= #D 1'b0;
+            stored_store_data <= #D '0;
+            stored_operand_a_data <= #D '0;
+            stored_operand_a_tag <= #D TAG_READY;
+            stored_operand_b_data <= #D '0;
+            stored_operand_b_tag <= #D TAG_READY;
         end else begin
-            // Handle new instruction dispatch
-            if (decode_if.dispatch_valid && decode_if.dispatch_ready) begin
-                // Load new instruction into output registers
-                instruction_valid <= #D 1'b1;
-                exec_if.control_signals <= #D decode_if.control_signals;
-                exec_if.pc <= #D decode_if.pc;
-                exec_if.rd_phys_addr <= #D decode_if.rd_phys_addr;
-                exec_if.pc_value_at_prediction <= #D decode_if.pc_value_at_prediction;
-                exec_if.branch_sel <= #D decode_if.branch_sel;
-                exec_if.branch_prediction <= #D decode_if.branch_prediction;
-                exec_if.store_data <= #D decode_if.store_data;
+            // Handle instruction dispatch that needs storage
+            if (decode_if.dispatch_valid && decode_if.dispatch_ready && 
+                !(operand_a_valid_from_decode && operand_b_valid_from_decode)) begin
                 
-                // Handle operand A with immediate CDB check
+                // Store instruction context
+                occupied <= #D 1'b1;
+                stored_control_signals <= #D decode_if.control_signals;
+                stored_pc <= #D decode_if.pc;
+                stored_rd_phys_addr <= #D decode_if.rd_phys_addr;
+                stored_pc_value_at_prediction <= #D decode_if.pc_value_at_prediction;
+                stored_branch_sel <= #D decode_if.branch_sel;
+                stored_branch_prediction <= #D decode_if.branch_prediction;
+                stored_store_data <= #D decode_if.store_data;
                 
-                if (decode_if.operand_a_tag == 2'b11) begin
-                    // Operand A is ready (immediate or already resolved register)
-                    exec_if.data_a <= #D decode_if.operand_a_data;
-                    operand_a_ready <= #D 1'b1;
-                    operand_a_tag <= #D decode_if.operand_a_tag;
-                end else begin
-                    // Check if operand A is available on CDB right now
-                    if (cdb_if_port.cdb_valid_0 && (operand_a_tag == 2'b00)) begin
-                        // ALU0 has the data we need
-                        exec_if.data_a <= #D cdb_if_port.cdb_data_0;
-                        operand_a_ready <= #D 1'b1;
-                        operand_a_tag <= #D 2'b11;
-                    end else if (cdb_if_port.cdb_valid_1 && (operand_a_tag == 2'b01)) begin
-                        // ALU1 has the data we need
-                        exec_if.data_a <= #D cdb_if_port.cdb_data_1;
-                        operand_a_ready <= #D 1'b1;
-                        operand_a_tag <= #D 2'b11;
-                    end else if (cdb_if_port.cdb_valid_2 && (operand_a_tag == 2'b10)) begin
-                        // ALU2 has the data we need
-                        exec_if.data_a <= #D cdb_if_port.cdb_data_2;
-                        operand_a_ready <= #D 1'b1;
-                        operand_a_tag <= #D 2'b11;
-                    end else begin
-                        // Data not available yet, use placeholder and wait
-                        exec_if.data_a <= #D decode_if.operand_a_data;
-                        operand_a_ready <= #D 1'b0;
-                        operand_a_tag <= #D decode_if.operand_a_tag;
+                // Store operand A (no CDB monitoring during dispatch)
+                stored_operand_a_data <= #D decode_if.operand_a_data;
+                stored_operand_a_tag <= #D decode_if.operand_a_tag;
+                
+                // Store operand B (no CDB monitoring during dispatch)
+                stored_operand_b_data <= #D decode_if.operand_b_data;
+                stored_operand_b_tag <= #D decode_if.operand_b_tag;
+            end
+            
+            // Update stored operands from CDB when waiting
+            else if (occupied) begin
+                // Update operand A from CDB if still waiting
+                if (stored_operand_a_tag != TAG_READY) begin
+                    if (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 2'b00) begin
+                        stored_operand_a_data <= #D cdb_if_port.cdb_data_0;
+                        stored_operand_a_tag <= #D TAG_READY;
+                    end else if (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 2'b01) begin
+                        stored_operand_a_data <= #D cdb_if_port.cdb_data_1;
+                        stored_operand_a_tag <= #D TAG_READY;
+                    end else if (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 2'b10) begin
+                        stored_operand_a_data <= #D cdb_if_port.cdb_data_2;
+                        stored_operand_a_tag <= #D TAG_READY;
                     end
                 end
                 
-                // Handle operand B with immediate CDB check
-                
-                if (decode_if.operand_b_tag == 2'b11) begin
-                    // Operand B is ready (immediate or already resolved register)
-                    exec_if.data_b <= #D decode_if.operand_b_data;
-                    operand_b_ready <= #D 1'b1;
-                    operand_b_tag <= #D 2'b11;
-                end else begin
-                    // Check if operand B is available on CDB right now
-                    if (cdb_if_port.cdb_valid_0 && (operand_b_tag == 2'b00)) begin
-                        // ALU0 has the data we need
-                        exec_if.data_b <= #D cdb_if_port.cdb_data_0;
-                        operand_b_ready <= #D 1'b1;
-                        operand_b_tag <= #D 2'b11;
-                    end else if (cdb_if_port.cdb_valid_1 && (operand_b_tag == 2'b01)) begin
-                        // ALU1 has the data we need
-                        exec_if.data_b <= #D cdb_if_port.cdb_data_1;
-                        operand_b_ready <= #D 1'b1;
-                        operand_b_tag <= #D 2'b11;
-                    end else if (cdb_if_port.cdb_valid_2 && (operand_b_tag == 2'b10)) begin
-                        // ALU2 has the data we need
-                        exec_if.data_b <= #D cdb_if_port.cdb_data_2;
-                        operand_b_ready <= #D 1'b1;
-                        operand_b_tag <= #D 2'b11;
-                    end else begin
-                        // Data not available yet, use placeholder and wait
-                        exec_if.data_b <= #D decode_if.operand_b_data;
-                        operand_b_ready <= #D 1'b0;
-                        operand_b_tag <= #D decode_if.operand_b_tag;
+                // Update operand B from CDB if still waiting
+                if (stored_operand_b_tag != TAG_READY) begin
+                    if (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 2'b00) begin
+                        stored_operand_b_data <= #D cdb_if_port.cdb_data_0;
+                        stored_operand_b_tag <= #D TAG_READY;
+                    end else if (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 2'b01) begin
+                        stored_operand_b_data <= #D cdb_if_port.cdb_data_1;
+                        stored_operand_b_tag <= #D TAG_READY;
+                    end else if (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 2'b10) begin
+                        stored_operand_b_data <= #D cdb_if_port.cdb_data_2;
+                        stored_operand_b_tag <= #D TAG_READY;
                     end
                 end
-                
-                // Set issue valid based on final operand readiness (after CDB check)
-                exec_if.issue_valid <= #D ((decode_if.operand_a_tag == 2'b11) || 
-                                           (cdb_if_port.cdb_valid_0 && (decode_if.operand_a_tag == 2'b00)) ||
-                                           (cdb_if_port.cdb_valid_1 && (decode_if.operand_a_tag == 2'b01)) ||
-                                           (cdb_if_port.cdb_valid_2 && (decode_if.operand_a_tag == 2'b10))) &&
-                                          ((decode_if.operand_b_tag == 2'b11) || 
-                                           (cdb_if_port.cdb_valid_0 && (decode_if.operand_b_tag == 2'b00)) ||
-                                           (cdb_if_port.cdb_valid_1 && (decode_if.operand_b_tag == 2'b01)) ||
-                                           (cdb_if_port.cdb_valid_2 && (decode_if.operand_b_tag == 2'b10)));
-                
             end
-            // Handle instruction issue (clear when issued and accepted)
-            else if (ready_to_issue && exec_if.issue_ready) begin
-                instruction_valid <= #D 1'b0;  // Clear instruction
-                exec_if.issue_valid <= #D 1'b0;  // Clear issue valid
-            end
-            // Handle CDB updates (update operand readiness and data)
-            else begin
-                operand_a_ready <= #D operand_a_ready_next;
-                exec_if.data_a <= #D operand_a_data_next;
-                operand_b_ready <= #D operand_b_ready_next;
-                exec_if.data_b <= #D operand_b_data_next;
-                
-                // Update issue valid when operands become ready
-                exec_if.issue_valid <= #D ready_to_issue;
+            
+            // Clear occupied when instruction is issued from storage
+            if (occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready) begin
+                occupied <= #D 1'b0;
             end
         end
     end
-    
+
     //==========================================================================
+    // REGISTERED EXECUTE INTERFACE OUTPUTS (REQUIREMENT 1)
+    //==========================================================================
+    
+    always_ff @(posedge clk or negedge reset) begin
+        if (!reset) begin
+            exec_if.issue_valid <= #D 1'b0;
+            exec_if.control_signals <= #D '0;
+            exec_if.pc <= #D '0;
+            exec_if.data_a <= #D '0;
+            exec_if.data_b <= #D '0;
+            exec_if.store_data <= #D '0;
+            exec_if.rd_phys_addr <= #D '0;
+            exec_if.pc_value_at_prediction <= #D '0;
+            exec_if.branch_sel <= #D '0;
+            exec_if.branch_prediction <= #D 1'b0;
+        end else begin
+            if (should_issue) begin
+                // Register outputs when ready to issue
+                exec_if.issue_valid <= #D 1'b1;
+                exec_if.data_a <= #D final_operand_a_data;
+                exec_if.data_b <= #D final_operand_b_data;
+                
+                // Use decode data if issuing directly, otherwise use stored data
+                if (decode_if.dispatch_valid && operand_a_valid_from_decode && operand_b_valid_from_decode) begin
+                    exec_if.control_signals <= #D decode_if.control_signals;
+                    exec_if.pc <= #D decode_if.pc;
+                    exec_if.store_data <= #D decode_if.store_data;
+                    exec_if.rd_phys_addr <= #D decode_if.rd_phys_addr;
+                    exec_if.pc_value_at_prediction <= #D decode_if.pc_value_at_prediction;
+                    exec_if.branch_sel <= #D decode_if.branch_sel;
+                    exec_if.branch_prediction <= #D decode_if.branch_prediction;
+                end else begin
+                    exec_if.control_signals <= #D stored_control_signals;
+                    exec_if.pc <= #D stored_pc;
+                    exec_if.store_data <= #D stored_store_data;
+                    exec_if.rd_phys_addr <= #D stored_rd_phys_addr;
+                    exec_if.pc_value_at_prediction <= #D stored_pc_value_at_prediction;
+                    exec_if.branch_sel <= #D stored_branch_sel;
+                    exec_if.branch_prediction <= #D stored_branch_prediction;
+                end
+            end else begin
+                exec_if.issue_valid <= #D 1'b0;
+            end
+        end
+    end//==========================================================================
     // CDB OUTPUT (COMBINATIONAL FOR SPEED)
     //==========================================================================
     
