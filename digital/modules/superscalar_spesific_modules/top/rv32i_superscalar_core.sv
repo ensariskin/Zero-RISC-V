@@ -29,7 +29,7 @@
 
 module rv32i_superscalar_core #(
     parameter DATA_WIDTH = 32,
-    parameter BUFFER_DEPTH = 8,
+    parameter BUFFER_DEPTH = 16,
     parameter REG_FILE_ADDR_WIDTH = 5
 )(
     // Clock and Reset
@@ -441,8 +441,8 @@ module rv32i_superscalar_core #(
     //==========================================================================
     
     // Pipeline Control Logic
-    assign pipeline_flush = bp_misprediction_0 | bp_misprediction_1 | bp_misprediction_2 | exception_occurred;
-    assign pipeline_stall = buffer_full | decode_bubble;
+    assign pipeline_flush = 1'b0;
+    assign pipeline_stall = 1'b0;
     assign decode_bubble = 1'b0; // Placeholder
     
     // Branch Prediction Updates (placeholder)

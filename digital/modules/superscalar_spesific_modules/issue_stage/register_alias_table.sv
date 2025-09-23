@@ -15,7 +15,7 @@
 //     - Commit interface for freeing old physical registers
 //     - x0 always maps to physical register 0 (hardwired zero)
 //////////////////////////////////////////////////////////////////////////////////
-
+//TODO : When lower numbered allocattion is not needed, other allocations fail. Fix it.
 module register_alias_table #(
     parameter ARCH_REGS = 32,
     parameter PHYS_REGS = 64,
@@ -116,38 +116,17 @@ module register_alias_table #(
         end
         
         // Instruction 1: Gets next available register based on inst 0's allocation
-        if (need_alloc_1) begin
-            if (need_alloc_0 && found_first && found_second) begin
-                // Inst 0 took first_free, so inst 1 gets second_free
-                allocated_phys_reg[1] = second_free;
-                allocation_success[1] = 1'b1;
-            end else if (!need_alloc_0 && found_first) begin
-                // Inst 0 doesn't need allocation, so inst 1 gets first_free
-                allocated_phys_reg[1] = first_free;
-                allocation_success[1] = 1'b1;
-            end
+        if (need_alloc_1 && found_second) begin
+            allocated_phys_reg[1] = second_free;
+            allocation_success[1] = 1'b1;
+        end
+
+        // Instruction 1: Gets next available register based on inst 0's allocation
+        if (need_alloc_2 && found_third) begin
+            allocated_phys_reg[2] = third_free;
+            allocation_success[2] = 1'b1;
         end
         
-        // Instruction 2: Gets next available register based on inst 0 and 1 allocations
-        if (need_alloc_2) begin
-            if (need_alloc_0 && need_alloc_1 && found_first && found_second && found_third) begin
-                // Both inst 0 and 1 allocated, so inst 2 gets third_free
-                allocated_phys_reg[2] = third_free;
-                allocation_success[2] = 1'b1;
-            end else if (need_alloc_0 && !need_alloc_1 && found_first && found_second) begin
-                // Only inst 0 allocated, so inst 2 gets second_free
-                allocated_phys_reg[2] = second_free;
-                allocation_success[2] = 1'b1;
-            end else if (!need_alloc_0 && need_alloc_1 && found_first && found_second) begin
-                // Only inst 1 allocated first_free, so inst 2 gets second_free
-                allocated_phys_reg[2] = second_free;
-                allocation_success[2] = 1'b1;
-            end else if (!need_alloc_0 && !need_alloc_1 && found_first) begin
-                // Neither inst 0 nor 1 allocated, so inst 2 gets first_free
-                allocated_phys_reg[2] = first_free;
-                allocation_success[2] = 1'b1;
-            end
-        end
     end
     
     //==========================================================================

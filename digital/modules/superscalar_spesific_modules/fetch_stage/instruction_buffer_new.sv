@@ -26,7 +26,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module instruction_buffer_new #(
-    parameter BUFFER_DEPTH = 8,    // Number of instruction entries (must be power of 2)
+    parameter BUFFER_DEPTH = 16,    // Number of instruction entries (must be power of 2)
     parameter DATA_WIDTH = 32
 )(
     input  logic clk,
@@ -69,6 +69,9 @@ module instruction_buffer_new #(
     logic [$clog2(BUFFER_DEPTH):0] head_ptr;    // Points to next read location
     logic [$clog2(BUFFER_DEPTH):0] tail_ptr;    // Points to next write location
     logic [$clog2(BUFFER_DEPTH):0] count;       // Number of valid entries (0-8)
+
+    logic [$clog2(BUFFER_DEPTH):0] decode_1_read_offset;     
+    logic [$clog2(BUFFER_DEPTH):0] decode_2_read_offset;   
     
     // Write enable signals for each slot
     logic write_en_0, write_en_1, write_en_2;
@@ -102,11 +105,11 @@ module instruction_buffer_new #(
             // Count valid input instructions
             case ({fetch_valid_i[2], fetch_valid_i[1], fetch_valid_i[0]})
                 3'b001: num_to_write = (space_available >= 1) ? 3'd1 : 3'd0;
-                3'b010: num_to_write = (space_available >= 1) ? 3'd1 : 3'd0;
+                3'b010: num_to_write = (space_available >= 1) ? 3'd0 : 3'd0;
                 3'b011: num_to_write = (space_available >= 2) ? 3'd2 : 3'd0;
-                3'b100: num_to_write = (space_available >= 1) ? 3'd1 : 3'd0;
-                3'b101: num_to_write = (space_available >= 2) ? 3'd2 : 3'd0;
-                3'b110: num_to_write = (space_available >= 2) ? 3'd2 : 3'd0;
+                3'b100: num_to_write = (space_available >= 1) ? 3'd0 : 3'd0;
+                3'b101: num_to_write = (space_available >= 2) ? 3'd1 : 3'd0;
+                3'b110: num_to_write = (space_available >= 2) ? 3'd0 : 3'd0;
                 3'b111: num_to_write = (space_available >= 3) ? 3'd3 : 3'd0;
                 default: num_to_write = 3'd0;
             endcase
@@ -138,28 +141,20 @@ module instruction_buffer_new #(
     assign write_en_2 = (num_to_write >= 3) && fetch_valid_i[2];
     
     // Generate read enables
-    assign read_en_0 = (num_to_read >= 1) && decode_ready_i[0];
-    assign read_en_1 = (num_to_read >= 2) && decode_ready_i[1];
-    assign read_en_2 = (num_to_read >= 3) && decode_ready_i[2];
-    
-    always_ff @(posedge clk or negedge reset) begin
-        if(!reset) begin
-            decode_valid_o <= 3'b000;
-        end
-        else begin
-            // Output valid signals
-            decode_valid_o[0] <= #D read_en_0 && !buffer_empty_o;
-            decode_valid_o[1] <= #D read_en_1 && !buffer_empty_o && (count >= 2);
-            decode_valid_o[2] <= #D read_en_2 && !buffer_empty_o && (count >= 3);
-        end
-    end
+    assign read_en_0 = decode_ready_i[0];
+    assign read_en_1 = decode_ready_i[1];
+    assign read_en_2 = decode_ready_i[2];
 
+    assign decode_valid_o[0] = read_en_0 && (count >= 1);
+    assign decode_valid_o[1] = read_en_1 && (count >= 1 + decode_ready_i[0]);
+    assign decode_valid_o[2] = read_en_2 && (count >= 1 + decode_ready_i[0] + decode_ready_i[1]);
+    
     // Sequential logic
     always_ff @(posedge clk or negedge reset) begin
         if (!reset) begin
             head_ptr <= #D {$clog2(BUFFER_DEPTH)+1{1'b0}};
             tail_ptr <= #D {$clog2(BUFFER_DEPTH)+1{1'b0}};
-            count <= #D 4'd0;
+            count <= #D 5'd0;
             
             // Initialize memory arrays
             for (int i = 0; i < BUFFER_DEPTH; i++) begin
@@ -174,7 +169,7 @@ module instruction_buffer_new #(
             if (flush_i) begin
                 head_ptr <= #D {$clog2(BUFFER_DEPTH)+1{1'b0}};
                 tail_ptr <= #D {$clog2(BUFFER_DEPTH)+1{1'b0}};
-                count <= #D 4'd0;
+                count <= #D 5'd0;
                 
             end else begin
                 // Update pointers and count
@@ -231,6 +226,9 @@ module instruction_buffer_new #(
         branch_prediction_o_0 = 1'b0;
         branch_prediction_o_1 = 1'b0;
         branch_prediction_o_2 = 1'b0;
+
+        decode_1_read_offset = decode_valid_o[0] ? 1 : 0 ;
+        decode_2_read_offset = decode_valid_o[0] + decode_valid_o[1];
         
         // Output valid instructions
         if (decode_valid_o[0]) begin
@@ -241,17 +239,17 @@ module instruction_buffer_new #(
         end
         
         if (decode_valid_o[1]) begin
-            instruction_o_1 = instruction_mem[(head_ptr + 1) % BUFFER_DEPTH];
-            pc_o_1 = pc_mem[(head_ptr + 1) % BUFFER_DEPTH];
-            imm_o_1 = imm_mem[(head_ptr + 1) % BUFFER_DEPTH];
-            branch_prediction_o_1 = branch_prediction_mem[(head_ptr + 1) % BUFFER_DEPTH];
+            instruction_o_1 = instruction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
+            pc_o_1 = pc_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
+            imm_o_1 = imm_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
+            branch_prediction_o_1 = branch_prediction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
         end
         
         if (decode_valid_o[2]) begin
-            instruction_o_2 = instruction_mem[(head_ptr + 2) % BUFFER_DEPTH];
-            pc_o_2 = pc_mem[(head_ptr + 2) % BUFFER_DEPTH];
-            imm_o_2 = imm_mem[(head_ptr + 2) % BUFFER_DEPTH];
-            branch_prediction_o_2 = branch_prediction_mem[(head_ptr + 2) % BUFFER_DEPTH];
+            instruction_o_2 = instruction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
+            pc_o_2 = pc_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
+            imm_o_2 = imm_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
+            branch_prediction_o_2 = branch_prediction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
         end
     end
 

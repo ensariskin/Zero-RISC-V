@@ -141,7 +141,7 @@ module reservation_station #(
     //==========================================================================
     
     // Ready to accept new instruction when not occupied or when issuing from stored
-    assign decode_if.dispatch_ready = !occupied; //(occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready);
+    assign decode_if.dispatch_ready = !occupied  && exec_if.issue_ready; //(occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready);
 
     //==========================================================================
     // RESERVATION STATION STORAGE UPDATE

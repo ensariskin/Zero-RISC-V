@@ -200,68 +200,21 @@ module multi_fetch #(parameter size = 32)(
       .pc_save(pc_save)
    );
 
+   assign instruction_o_0 =  instruction_i_0;
+   assign instruction_o_1 =  instruction_i_1;
+   assign instruction_o_2 =  instruction_i_2;
 
-   // IF/ID Pipeline Register
-   always @(posedge clk or negedge reset)
-   begin
-      if (!reset) begin
-         instruction_o_0 <= #D 0;
-         instruction_o_1 <= #D 0;
-         instruction_o_2 <= #D 0;
+   assign imm_o_0 = imm_0;
+   assign imm_o_1 = imm_1;
+   assign imm_o_2 = imm_2;
 
-         imm_o_0 <= #D 0;
-         imm_o_1 <= #D 0;
-         imm_o_2 <= #D 0;
+   assign pc_value_at_prediction_0 = current_pc_0;
+   assign pc_value_at_prediction_1 = current_pc_1;
+   assign pc_value_at_prediction_2 = current_pc_2;
 
-         pc_value_at_prediction_0 <= #D 0;
-         pc_value_at_prediction_1 <= #D 0;
-         pc_value_at_prediction_2 <= #D 0;
-
-         branch_prediction_o_0 <= #D 0;
-         branch_prediction_o_1 <= #D 0;
-         branch_prediction_o_2 <= #D 0;
-
-         pc_plus_o <= #D 0;
-      end else begin
-         if(flush) begin
-            instruction_o_0 <= #D 32'h00000013;
-            instruction_o_1 <= #D 32'h00000013;
-            instruction_o_2 <= #D 32'h00000013;
-
-            imm_o_0 <= #D 0;
-            imm_o_1 <= #D 0;
-            imm_o_2 <= #D 0;
-
-
-            pc_value_at_prediction_0 <= #D 0;
-            pc_value_at_prediction_1 <= #D 0;
-            pc_value_at_prediction_2 <= #D 0;
-
-            branch_prediction_o_0 <= #D 0;
-            branch_prediction_o_1 <= #D 0;
-            branch_prediction_o_2 <= #D 0;
-
-            pc_plus_o <= #D 0;
-         end else if (~internal_bubble) begin  // Use combined bubble signal
-            instruction_o_0 <= #D instruction_i_0;
-            instruction_o_1 <= #D instruction_i_1;
-            instruction_o_2 <= #D instruction_i_2;
-
-            imm_o_0 <= #D imm_0;
-            imm_o_1 <= #D imm_1;
-            imm_o_2 <= #D imm_2;
-
-            pc_value_at_prediction_0 <= #D current_pc_0;
-            pc_value_at_prediction_1 <= #D current_pc_1;
-            pc_value_at_prediction_2 <= #D current_pc_2;
-
-            branch_prediction_o_0 <= #D jump_0;
-            branch_prediction_o_1 <= #D jump_1;
-            branch_prediction_o_2 <= #D jump_2;
-            pc_plus_o <= #D pc_save;
-         end
-      end
-   end
-
+   assign branch_prediction_o_0 = jump_0;
+   assign branch_prediction_o_1 = jump_1;
+   assign  branch_prediction_o_2 = jump_2;
+   assign pc_plus_o = pc_save;
 
 endmodule

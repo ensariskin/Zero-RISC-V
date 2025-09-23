@@ -165,7 +165,7 @@ module dv_top_superscalar;
     
     rv32i_superscalar_core #(
         .DATA_WIDTH(DATA_WIDTH),
-        .BUFFER_DEPTH(8),
+        .BUFFER_DEPTH(16),
         .REG_FILE_ADDR_WIDTH(REG_FILE_ADDR_WIDTH)
     ) dut (
         .clk(clk),
@@ -539,7 +539,7 @@ module dv_top_superscalar;
             instruction_memory.mem[7]  = 32'h40438433; // SUB  x8, x7, x4      -> x8 = 9 - 4 = 5
             instruction_memory.mem[8]  = 32'h005303b3; // ADD  x7, x6, x5      -> x7 = 6 + 5 = 11
             instruction_memory.mem[9]  = 32'h40138533; // SUB x10, x7, x1      -> x10 = 11 - 1 = 10
-            instruction_memory.mem[10] = 32'h006505b3; // ADD x11, x10, x6     -> x11 = 10 + 6 = 16 -- only this is missing!!
+            instruction_memory.mem[10] = 32'h006505b3; // ADD x11, x10, x6     -> x11 = 10 + 6 = 16 -- only this is missing!! // todo when pipe is limited to 2 , this failed again!!!
             instruction_memory.mem[11] = 32'h40538633; // SUB x12, x7, x5      -> x12 = 11 - 5 = 6
 
             // Phase 2: Arithmetic Operations
@@ -550,7 +550,7 @@ module dv_top_superscalar;
             //instruction_memory.mem[10] = 32'h004185b3; // ADD x11, x3, x4      -> x11 = 3 + 4 = 7
             //instruction_memory.mem[11] = 32'h40418633; // SUB x12, x3, x4      -> x12 = 3 - 4 = -1
 
-            /*   
+             
             // Phase 3: Logical Operations  
             instruction_memory.mem[12] = 32'h0020c6b3; // XOR x13, x1, x2      -> x13 = 1 ^ 2 = 3
             instruction_memory.mem[13] = 32'h0020e733; // OR  x14, x1, x2      -> x14 = 1 | 2 = 3
@@ -559,6 +559,7 @@ module dv_top_superscalar;
             instruction_memory.mem[16] = 32'h003168b3; // OR  x17, x2, x3      -> x17 = 2 | 3 = 3
             instruction_memory.mem[17] = 32'h00317933; // AND x18, x2, x3      -> x18 = 2 & 3 = 2
             
+            /*  
             // Phase 4: Shift Operations
             instruction_memory.mem[18] = 32'h002099b3; // SLL x19, x1, x2      -> x19 = 1 << 2 = 4
             instruction_memory.mem[19] = 32'h0021da33; // SRL x20, x3, x2      -> x20 = 3 >> 2 = 0

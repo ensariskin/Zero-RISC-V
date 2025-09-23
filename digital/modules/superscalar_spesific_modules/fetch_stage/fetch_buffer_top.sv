@@ -25,7 +25,7 @@
 
 module fetch_buffer_top #(
     parameter DATA_WIDTH = 32,
-    parameter BUFFER_DEPTH = 8
+    parameter BUFFER_DEPTH = 16
 )(
     input  logic clk,
     input  logic reset,

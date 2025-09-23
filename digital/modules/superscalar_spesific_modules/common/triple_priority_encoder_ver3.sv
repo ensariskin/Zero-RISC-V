@@ -103,8 +103,8 @@ module triple_priority_encoder_ver3 #(
     assign base_1 = { (b32_1?1'b0:1'b1), (b16_1?1'b0:1'b1), (b8_1?1'b0:1'b1), (b4_1?1'b0:1'b1), (b2_1?1'b0:1'b1), 1'b0 };
     assign idx1_w = base_1 + {5'd0, ~b1_1};
 
-    assign second_valid = second_enable ? v1 : 1'b0;
-    assign second_index = second_valid ? idx1_w : '0;
+    assign second_valid = second_enable ? (first_enable ? v1 : v0) : 1'b0;
+    assign second_index = second_valid  ? first_valid ?  idx1_w : idx0_w : '0;
 
     // ---------- Stage 3 input ----------
     assign in2 = in1 & ~one1;
@@ -147,7 +147,7 @@ module triple_priority_encoder_ver3 #(
     assign base_2 = { (b32_2?1'b0:1'b1), (b16_2?1'b0:1'b1), (b8_2?1'b0:1'b1), (b4_2?1'b0:1'b1), (b2_2?1'b0:1'b1), 1'b0 };
     assign idx2_w = base_2 + {5'd0, ~b1_2};
 
-    assign third_valid = third_enable ? v2 : 1'b0;
-    assign third_index = third_valid ? idx2_w : '0;
+    assign third_valid = third_enable ? (second_enable ? (first_enable ? v2 : v1) : (first_enable ? v1 : v0)) : '0;                 //v2 : 1'b0;
+    assign third_index = third_valid  ? (second_valid ? (first_valid ? idx2_w : idx1_w) : (first_valid ? idx1_w : idx0_w)) : '0;
 
 endmodule
