@@ -77,7 +77,7 @@ module superscalar_execute_stage #(
     
     
     // FU0 is ready when not busy
-    assign rs_to_exec_0.issue_ready = !fu0_busy;
+    assign rs_to_exec_0.issue_ready = !fu0_busy; 
     
     // Extract function select from control signals
     // Control signals format: [10:7] = func_sel, [6:0] = other control bits

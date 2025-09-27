@@ -38,6 +38,7 @@ module register_alias_table #(
     output logic [PHYS_ADDR_WIDTH-1:0] rd_phys_0, rd_phys_1, rd_phys_2,
     output logic [PHYS_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2,
     output logic [2:0] rename_valid,
+    output logic [2:0] rename_ready, // Indicates RAT can allocate physical registers
     
     // Commit interface (from ROB - frees old physical registers)
     input logic [2:0] commit_valid,
@@ -68,6 +69,10 @@ module register_alias_table #(
             if (free_list[i]) free_count++;
         end
     end
+
+    assign rename_ready = (free_count >= 3) ? 3'b111 :
+                          (free_count == 2) ? 3'b011 :
+                          (free_count == 1) ? 3'b001 : 3'b000;
     
     // Find available physical registers - SYNTHESIZABLE: Use proper triple priority encoder
     logic [5:0] first_free, second_free, third_free;

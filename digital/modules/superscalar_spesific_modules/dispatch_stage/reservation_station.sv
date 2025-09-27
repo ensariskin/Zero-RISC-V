@@ -76,33 +76,31 @@ module reservation_station #(
     logic operand_a_valid_from_stored, operand_b_valid_from_stored;
     logic [DATA_WIDTH-1:0] final_operand_a_data, final_operand_b_data;
     logic should_issue;
-    
+    logic a_valid;
+    logic b_valid;
+    logic all_valid;
+    logic issued;
+    assign a_valid = (operand_a_valid_from_stored | operand_a_valid_from_decode);
+    assign b_valid = (operand_b_valid_from_stored | operand_b_valid_from_decode);
+    assign all_valid = issued ? a_valid & b_valid : 1'b1;
     always_comb begin
         // Check if operands are valid from decode interface (only TAG_READY, no CDB monitoring)
         operand_a_valid_from_decode = (decode_if.operand_a_tag == TAG_READY);
         operand_b_valid_from_decode = (decode_if.operand_b_tag == TAG_READY);
         
         // Check if stored operands are valid (from storage or CDB monitoring)
-        operand_a_valid_from_stored = (stored_operand_a_tag == TAG_READY) ||
+        operand_a_valid_from_stored = occupied ? (stored_operand_a_tag == TAG_READY) ||
                                      (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 2'b00) ||
                                      (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 2'b01) ||
-                                     (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 2'b10);
+                                     (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 2'b10) : 1'b0;
                                      
-        operand_b_valid_from_stored = (stored_operand_b_tag == TAG_READY) ||
+        operand_b_valid_from_stored = occupied ? (stored_operand_b_tag == TAG_READY) ||
                                      (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 2'b00) ||
                                      (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 2'b01) ||
-                                     (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 2'b10);
+                                     (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 2'b10) : 1'b0;
         
         // Determine what data to use and when to issue
-        if (decode_if.dispatch_valid && operand_a_valid_from_decode && operand_b_valid_from_decode) begin
-            // Use decode data directly (both operands ready)
-            should_issue = 1'b1;
-            
-            // Use operand data directly from decode (no CDB needed)
-            final_operand_a_data = decode_if.operand_a_data;
-            final_operand_b_data = decode_if.operand_b_data;
-            
-        end else if (occupied && operand_a_valid_from_stored && operand_b_valid_from_stored) begin
+        if (occupied && operand_a_valid_from_stored && operand_b_valid_from_stored) begin
             // Use stored data (both operands now ready)
             should_issue = 1'b1;
             
@@ -128,7 +126,14 @@ module reservation_station #(
                 final_operand_b_data = cdb_if_port.cdb_data_2;
             end
             
-        end else begin
+        end else  if (decode_if.dispatch_valid && operand_a_valid_from_decode && operand_b_valid_from_decode) begin
+            // Use decode data directly (both operands ready)
+            should_issue = 1'b1;
+            // Use operand data directly from decode (no CDB needed)
+            final_operand_a_data = decode_if.operand_a_data;
+            final_operand_b_data = decode_if.operand_b_data;
+        end
+        else begin
             // Not ready to issue
             should_issue = 1'b0;
             final_operand_a_data = '0;
@@ -141,7 +146,7 @@ module reservation_station #(
     //==========================================================================
     
     // Ready to accept new instruction when not occupied or when issuing from stored
-    assign decode_if.dispatch_ready = !occupied  && exec_if.issue_ready; //(occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready);
+    assign decode_if.dispatch_ready = all_valid && exec_if.issue_ready; //!occupied  && exec_if.issue_ready; //(occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready);
 
     //==========================================================================
     // RESERVATION STATION STORAGE UPDATE
@@ -158,12 +163,16 @@ module reservation_station #(
             stored_branch_prediction <= #D 1'b0;
             stored_store_data <= #D '0;
             stored_operand_a_data <= #D '0;
-            stored_operand_a_tag <= #D TAG_READY;
+            stored_operand_a_tag <= #D 0;
             stored_operand_b_data <= #D '0;
-            stored_operand_b_tag <= #D TAG_READY;
+            stored_operand_b_tag <= #D 0;
+            issued <= #D 1'b0;
         end else begin
             // Handle instruction dispatch that needs storage
-            if (decode_if.dispatch_valid && decode_if.dispatch_ready && 
+            if(decode_if.dispatch_valid)
+                issued <= #D 1'b1;
+
+            if (decode_if.dispatch_valid && 
                 !(operand_a_valid_from_decode && operand_b_valid_from_decode)) begin
                 
                 // Store instruction context
@@ -219,6 +228,8 @@ module reservation_station #(
             // Clear occupied when instruction is issued from storage
             if (occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready) begin
                 occupied <= #D 1'b0;
+                stored_operand_a_tag <= #D 0;
+                stored_operand_b_tag <= #D 0;
             end
         end
     end

@@ -527,20 +527,28 @@ module dv_top_superscalar;
             end
 
             // Phase 1: Load integer values into first 6 registers (x1-x6)
-            instruction_memory.mem[0] = 32'h00100093;  // ADDI x1, x0, 1       -> x1 = 1 
-            instruction_memory.mem[1] = 32'h00200113;  // ADDI x2, x0, 2       -> x2 = 2 
-            instruction_memory.mem[2] = 32'h00300193;  // ADDI x3, x0, 3       -> x3 = 3 
-            instruction_memory.mem[3] = 32'h00400213;  // ADDI x4, x0, 4       -> x4 = 4 
-            instruction_memory.mem[4] = 32'h00500293;  // ADDI x5, x0, 5       -> x5 = 5
-            instruction_memory.mem[5] = 32'h00600313;  // ADDI x6, x0, 6       -> x6 = 6
+            instruction_memory.mem[0] = 32'h00100093;  // ADDI x1, x0, 1       -> x1 = 1 //32
+            instruction_memory.mem[1] = 32'h00200113;  // ADDI x2, x0, 2       -> x2 = 2 //33
+            instruction_memory.mem[2] = 32'h00300193;  // ADDI x3, x0, 3       -> x3 = 3 //34
+            instruction_memory.mem[3] = 32'h00400213;  // ADDI x4, x0, 4       -> x4 = 4 //35
+            instruction_memory.mem[4] = 32'h00500293;  // ADDI x5, x0, 5       -> x5 = 5 //36
+            instruction_memory.mem[5] = 32'h00600313;  // ADDI x6, x0, 6       -> x6 = 6 //37
             
             //Phase 2: Arithmetic Operations
-            instruction_memory.mem[6]  = 32'h005203b3; // ADD  x7, x4, x5      -> x7 = 4 + 5 = 9 
-            instruction_memory.mem[7]  = 32'h40438433; // SUB  x8, x7, x4      -> x8 = 9 - 4 = 5
-            instruction_memory.mem[8]  = 32'h005303b3; // ADD  x7, x6, x5      -> x7 = 6 + 5 = 11
-            instruction_memory.mem[9]  = 32'h40138533; // SUB x10, x7, x1      -> x10 = 11 - 1 = 10
-            instruction_memory.mem[10] = 32'h006505b3; // ADD x11, x10, x6     -> x11 = 10 + 6 = 16 -- only this is missing!! // todo when pipe is limited to 2 , this failed again!!!
-            instruction_memory.mem[11] = 32'h40538633; // SUB x12, x7, x5      -> x12 = 11 - 5 = 6
+            instruction_memory.mem[6]  = 32'h005203b3; // ADD  x7, x4, x5      -> x7 = 4 + 5 = 9 //38
+            instruction_memory.mem[7]  = 32'h40438433; // SUB  x8, x7, x4      -> x8 = 9 - 4 = 5 //39
+            instruction_memory.mem[8]  = 32'h005303b3; // ADD  x7, x6, x5      -> x7 = 6 + 5 = 11 //40
+            instruction_memory.mem[9]  = 32'h40138533; // SUB x10, x7, x1      -> x10 = 11 - 1 = 10 //41
+            instruction_memory.mem[10] = 32'h006505b3; // ADD x11, x10, x6     -> x11 = 10 + 6 = 16 //42
+            instruction_memory.mem[11] = 32'h40538633; // SUB x12, x7, x5      -> x12 = 11 - 5 = 6  //43
+
+            // Phase 3: Logical Operations  
+            instruction_memory.mem[12] = 32'h0020c6b3; // XOR x13, x1, x2      -> x13 = 1 ^ 2 = 3  //44
+            instruction_memory.mem[13] = 32'h0020e733; // OR  x14, x1, x2      -> x14 = 1 | 2 = 3  //45
+            instruction_memory.mem[14] = 32'h0020f7b3; // AND x15, x1, x2      -> x15 = 1 & 2 = 0  //46
+            instruction_memory.mem[15] = 32'h00314833; // XOR x16, x2, x3      -> x16 = 2 ^ 3 = 1  //47
+            instruction_memory.mem[16] = 32'h003168b3; // OR  x17, x2, x3      -> x17 = 2 | 3 = 3  //48
+            instruction_memory.mem[17] = 32'h00317933; // AND x18, x2, x3      -> x18 = 2 & 3 = 2  //49
 
             // Phase 2: Arithmetic Operations
             //instruction_memory.mem[6]  = 32'h002083b3; // ADD  x7, x1, x2      -> x7 = 1 + 2 = 3 -
@@ -549,15 +557,6 @@ module dv_top_superscalar;
             //instruction_memory.mem[9]  = 32'h40310533; // SUB x10, x2, x3      -> x10 = 2 - 3 = -1 -
             //instruction_memory.mem[10] = 32'h004185b3; // ADD x11, x3, x4      -> x11 = 3 + 4 = 7
             //instruction_memory.mem[11] = 32'h40418633; // SUB x12, x3, x4      -> x12 = 3 - 4 = -1
-
-             
-            // Phase 3: Logical Operations  
-            instruction_memory.mem[12] = 32'h0020c6b3; // XOR x13, x1, x2      -> x13 = 1 ^ 2 = 3
-            instruction_memory.mem[13] = 32'h0020e733; // OR  x14, x1, x2      -> x14 = 1 | 2 = 3
-            instruction_memory.mem[14] = 32'h0020f7b3; // AND x15, x1, x2      -> x15 = 1 & 2 = 0
-            instruction_memory.mem[15] = 32'h00314833; // XOR x16, x2, x3      -> x16 = 2 ^ 3 = 1
-            instruction_memory.mem[16] = 32'h003168b3; // OR  x17, x2, x3      -> x17 = 2 | 3 = 3
-            instruction_memory.mem[17] = 32'h00317933; // AND x18, x2, x3      -> x18 = 2 & 3 = 2
             
             /*  
             // Phase 4: Shift Operations

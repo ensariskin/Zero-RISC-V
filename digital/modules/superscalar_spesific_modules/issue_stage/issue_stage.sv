@@ -68,6 +68,7 @@ module issue_stage #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_0, rd_phys_1, rd_phys_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2; /// TODO : add recovery logic
     logic [2:0] rename_valid_internal;
+    logic [2:0] rename_ready;
     
     // Write enable signals for destinations
     logic rd_write_enable_0, rd_write_enable_1, rd_write_enable_2;
@@ -162,7 +163,8 @@ module issue_stage #(
         .rd_phys_0(rd_phys_0),   .rd_phys_1(rd_phys_1),   .rd_phys_2(rd_phys_2),
         .old_rd_phys_0(old_rd_phys_0), .old_rd_phys_1(old_rd_phys_1), .old_rd_phys_2(old_rd_phys_2),
         .rename_valid(rename_valid_internal),
-        
+        .rename_ready(rename_ready), // Indicates RAT can allocate physical registers
+
         // Commit interface (from ROB) - separated signals  
         .commit_valid(commit_valid_i),
         .free_phys_reg_0(commit_free_phys_reg_i_0), .free_phys_reg_1(commit_free_phys_reg_i_1), .free_phys_reg_2(commit_free_phys_reg_i_2)
@@ -180,7 +182,7 @@ module issue_stage #(
     //==========================================================================
     
     // Ready signal indicates RAT can allocate physical registers and dispatch stage can accept
-    assign decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready};
+    assign decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready} & rename_ready;
     // todo : add rename_valid here
     //==========================================================================
     // ISSUE STAGE PIPELINE REGISTERS (CONTROL AND ADDRESSES ONLY)
@@ -263,6 +265,8 @@ module issue_stage #(
                     rs2_phys_reg_0 <= #D decode_valid_i[0] ? rs2_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                 
                 end
+                else 
+                    decode_valid_reg[0] <= #D 0;
                 // If dispatch_ready[0] is 0, channel 0 registers maintain their values (no update)
                 
                 // Channel 1: Update only when dispatch_ready[1] is high
@@ -280,6 +284,8 @@ module issue_stage #(
                     rs2_phys_reg_1 <= #D decode_valid_i[1] ? rs2_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     
                 end
+                else 
+                    decode_valid_reg[1] <= #D 0;
                 // If dispatch_ready[1] is 0, channel 1 registers maintain their values (no update)
                 
                 // Channel 2: Update only when dispatch_ready[2] is high
@@ -297,6 +303,8 @@ module issue_stage #(
                     rs2_phys_reg_2 <= #D decode_valid_i[2] ? rs2_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     
                 end
+                else 
+                    decode_valid_reg[2] <= #D 0;
                 // If dispatch_ready[2] is 0, channel 2 registers maintain their values (no update)
             end
         end
@@ -333,7 +341,7 @@ module issue_stage #(
     assign issue_to_dispatch_1.pc_value_at_prediction = pc_prediction_reg_1;
     assign issue_to_dispatch_1.branch_sel = branch_sel_reg_1;
     assign issue_to_dispatch_1.branch_prediction = branch_prediction_reg_1;
-   
+    
     // Issue to Dispatch Channel 2
     assign issue_to_dispatch_2.dispatch_valid = decode_valid_reg[2];
     assign issue_to_dispatch_2.control_signals = control_signal_reg_2[10:0]; // Remove register addresses, use bits [10:0]
