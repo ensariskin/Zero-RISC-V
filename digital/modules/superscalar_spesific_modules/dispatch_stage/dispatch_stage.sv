@@ -246,7 +246,14 @@ module dispatch_stage #(
         // Interface to functional unit
         .exec_if(dispatch_to_alu_2)
     );
-    
+
+    logic [1:0] active_rs_number;
+    assign active_rs_number = cdb_interface.cdb_valid_0 + 
+                              cdb_interface.cdb_valid_1 + 
+                              cdb_interface.cdb_valid_2;
+
+
+
     //==========================================================================
     // STATUS AND DEBUG OUTPUTS
     //==========================================================================

@@ -19,11 +19,11 @@ module dv_top_superscalar;
     parameter TIMEOUT_CYCLES = 1000000; // Simulation timeout
     parameter DATA_WIDTH = 32;
     parameter REG_FILE_ADDR_WIDTH = 5;
-    parameter INST_BASE_ADDR = 32'h80000000;
+    parameter INST_BASE_addR = 32'h80000000;
     
     // Default region base addresses (can be overridden via plusargs)
-    parameter REGION0_BASE_ADDR_DEFAULT = 32'h80000000;  // Default Region 0 start address
-    parameter REGION1_BASE_ADDR_DEFAULT = 32'h80001000;  // Default Region 1 start address
+    parameter REGION0_BASE_addR_DEFAULT = 32'h80000000;  // Default Region 0 start address
+    parameter REGION1_BASE_addR_DEFAULT = 32'h80001000;  // Default Region 1 start address
     
     // Runtime configurable region base addresses
     logic [31:0] region0_base_addr;
@@ -112,14 +112,14 @@ module dv_top_superscalar;
     logic [31:0] prev_perf_instructions_executed;
     
     //==========================================================================
-    // SIMULATION CONTROL AND MONITORING
+    // SIMULATION CONTROL and MONITorING
     //==========================================================================
     
     initial begin
         $display("=================================================================");
         $display("RV32I Superscalar Core RISC-V DV Testbench");
         $display("=================================================================");
-        $display("Instruction base address: 0x%08x", INST_BASE_ADDR);
+        $display("Instruction base address: 0x%08x", INST_BASE_addR);
         $display("3-way superscalar configuration");
         $display("Simulation started at time %t", $time);
         $display("=================================================================");
@@ -128,17 +128,17 @@ module dv_top_superscalar;
     // Initialize region base addresses from plusargs or use defaults
     initial begin
         if (!$value$plusargs("region0_base=%h", region0_base_addr)) begin
-            region0_base_addr = REGION0_BASE_ADDR_DEFAULT;
+            region0_base_addr = REGION0_BASE_addR_DEFAULT;
             $display("Using default Region 0 base address: 0x%08x", region0_base_addr);
         end
         if (!$value$plusargs("region1_base=%h", region1_base_addr)) begin
-            region1_base_addr = REGION1_BASE_ADDR_DEFAULT;
+            region1_base_addr = REGION1_BASE_addR_DEFAULT;
             $display("Using default Region 1 base address: 0x%08x", region1_base_addr);
         end
     end
     
     //==========================================================================
-    // CLOCK AND RESET GENERATION
+    // CLOCK and RESET GENERATION
     //==========================================================================
     
     // Clock generation
@@ -160,7 +160,7 @@ module dv_top_superscalar;
     end
     
     //==========================================================================
-    // SUPERSCALAR CORE INSTANTIATION
+    // SUPERSCALAR CorE INSTANTIATION
     //==========================================================================
     
     rv32i_superscalar_core #(
@@ -212,7 +212,7 @@ module dv_top_superscalar;
     );
     
     //==========================================================================
-    // INSTRUCTION MEMORY ADAPTERS (3 ports)
+    // INSTRUCTION MEMorY ADAPTERS (3 ports)
     //==========================================================================
     
     // Port 0 instruction memory adapter
@@ -270,7 +270,7 @@ module dv_top_superscalar;
     );
     
     //==========================================================================
-    // DATA MEMORY ADAPTER
+    // DATA MEMorY ADAPTER
     //==========================================================================
     
     rv32i_superscalar_data_wb_adapter data_wb_adapter (
@@ -297,7 +297,7 @@ module dv_top_superscalar;
     );
     
     //==========================================================================
-    // MEMORY SUBSYSTEM (3-PORT INSTRUCTION + DATA)
+    // MEMorY subSYSTEM (3-PorT INSTRUCTION + DATA)
     //==========================================================================
     
     // 3-port instruction memory (64KB = 16K words)
@@ -464,7 +464,7 @@ module dv_top_superscalar;
     
 
     //==========================================================================
-    // PERFORMANCE MONITORING
+    // PERForMANCE MONITorING
     //==========================================================================
     
     // Monitor performance counters and detect progress
@@ -523,40 +523,54 @@ module dv_top_superscalar;
             // =====================================================================
             
             for (int i = 0; i < 16384; i++) begin
-                instruction_memory.mem[i] = 32'h00000013; // NOP (ADDI x0, x0, 0)
+                instruction_memory.mem[i] = 32'h00000013; // NOP (addi x0, x0, 0)
             end
 
             // Phase 1: Load integer values into first 6 registers (x1-x6)
-            instruction_memory.mem[0] = 32'h00100093;  // ADDI x1, x0, 1       -> x1 = 1 //32
-            instruction_memory.mem[1] = 32'h00200113;  // ADDI x2, x0, 2       -> x2 = 2 //33
-            instruction_memory.mem[2] = 32'h00300193;  // ADDI x3, x0, 3       -> x3 = 3 //34
-            instruction_memory.mem[3] = 32'h00400213;  // ADDI x4, x0, 4       -> x4 = 4 //35
-            instruction_memory.mem[4] = 32'h00500293;  // ADDI x5, x0, 5       -> x5 = 5 //36
-            instruction_memory.mem[5] = 32'h00600313;  // ADDI x6, x0, 6       -> x6 = 6 //37
+            instruction_memory.mem[0] = 32'h00100093;  // addi x1, x0, 1       -> x1 = 1 //32
+            instruction_memory.mem[1] = 32'h00200113;  // addi x2, x0, 2       -> x2 = 2 //33
+            instruction_memory.mem[2] = 32'h00300193;  // addi x3, x0, 3       -> x3 = 3 //34
+            instruction_memory.mem[3] = 32'h00400213;  // addi x4, x0, 4       -> x4 = 4 //35
+            instruction_memory.mem[4] = 32'h00500293;  // addi x5, x0, 5       -> x5 = 5 //36
+            instruction_memory.mem[5] = 32'h00600313;  // addi x6, x0, 6       -> x6 = 6 //37
             
             //Phase 2: Arithmetic Operations
-            instruction_memory.mem[6]  = 32'h005203b3; // ADD  x7, x4, x5      -> x7 = 4 + 5 = 9 //38
-            instruction_memory.mem[7]  = 32'h40438433; // SUB  x8, x7, x4      -> x8 = 9 - 4 = 5 //39
-            instruction_memory.mem[8]  = 32'h005303b3; // ADD  x7, x6, x5      -> x7 = 6 + 5 = 11 //40
-            instruction_memory.mem[9]  = 32'h40138533; // SUB x10, x7, x1      -> x10 = 11 - 1 = 10 //41
-            instruction_memory.mem[10] = 32'h006505b3; // ADD x11, x10, x6     -> x11 = 10 + 6 = 16 //42
-            instruction_memory.mem[11] = 32'h40538633; // SUB x12, x7, x5      -> x12 = 11 - 5 = 6  //43
+            instruction_memory.mem[6]  = 32'h005203b3; // add  x7, x4, x5      -> x7 = 4 + 5 = 9 //38
+            instruction_memory.mem[7]  = 32'h40438433; // sub  x8, x7, x4      -> x8 = 9 - 4 = 5 //39
+            instruction_memory.mem[8]  = 32'h005303b3; // add  x7, x6, x5      -> x7 = 6 + 5 = 11 //40
+            instruction_memory.mem[9]  = 32'h40138533; // sub x10, x7, x1      -> x10 = 11 - 1 = 10 //41
+            instruction_memory.mem[10] = 32'h006505b3; // add x11, x10, x6     -> x11 = 10 + 6 = 16 //42
+            instruction_memory.mem[11] = 32'h40538633; // sub x12, x7, x5      -> x12 = 11 - 5 = 6  //43
 
             // Phase 3: Logical Operations  
-            instruction_memory.mem[12] = 32'h0020c6b3; // XOR x13, x1, x2      -> x13 = 1 ^ 2 = 3  //44
-            instruction_memory.mem[13] = 32'h0020e733; // OR  x14, x1, x2      -> x14 = 1 | 2 = 3  //45
-            instruction_memory.mem[14] = 32'h0020f7b3; // AND x15, x1, x2      -> x15 = 1 & 2 = 0  //46
-            instruction_memory.mem[15] = 32'h00314833; // XOR x16, x2, x3      -> x16 = 2 ^ 3 = 1  //47
-            instruction_memory.mem[16] = 32'h003168b3; // OR  x17, x2, x3      -> x17 = 2 | 3 = 3  //48
-            instruction_memory.mem[17] = 32'h00317933; // AND x18, x2, x3      -> x18 = 2 & 3 = 2  //49
+            instruction_memory.mem[12] = 32'h0020c6b3; // xor x13, x1, x2      -> x13 = 1 ^ 2 = 3  //44
+            instruction_memory.mem[13] = 32'h0020e733; // or  x14, x1, x2      -> x14 = 1 | 2 = 3  //45
+            instruction_memory.mem[14] = 32'h0020f7b3; // and x15, x1, x2      -> x15 = 1 & 2 = 0  //46
+            instruction_memory.mem[15] = 32'h00324833; // xor x16, x4, x3      -> x16 = 4 ^ 3 = 7  //47
+            instruction_memory.mem[16] = 32'h003268b3; // or  x17, x4, x3      -> x17 = 4 | 3 = 7  //48
+            instruction_memory.mem[17] = 32'h00327933; // and x18, x4, x3      -> x18 = 4 & 3 = 0  //49
+
+            instruction_memory.mem[18] = 32'h0108c933; // xor x18, x17, x16      -> x18 = 7 ^ 7 = 0  //50
+            instruction_memory.mem[19] = 32'h011949b3; // xor x19, x18, x17      -> x19 = 0 ^ 7 = 7  //51
+            instruction_memory.mem[20] = 32'h01397a33; // and x20, x18, x19      -> x20 = 1 & 2 = 0  //52
+            instruction_memory.mem[21] = 32'h01394ab3; // xor x21, x18, x19      -> x21 = 2 ^ 3 = 7  //53
+            instruction_memory.mem[22] = 32'h01396b33; // or  x22, x18, x19      -> x22 = 2 | 3 = 7  //54
+            instruction_memory.mem[23] = 32'h0128fbb3; // and x23, x17, x18      -> x23 = 2 & 3 = 0  //55
+            instruction_memory.mem[24] = 32'h0170cc33; // xor x24, x1, x23       -> x24 = 1 ^ 2 = 1  //56
+            instruction_memory.mem[25] = 32'h01896cb3; // or  x25, x18, x24      -> x25 = 1 | 2 = 1  //57
+            instruction_memory.mem[26] = 32'h019b7d33; // and x26, x22, x25      -> x26 = 1 & 2 = 1  //58
+            instruction_memory.mem[27] = 32'h017ccdb3; // xor x27, x25, x23      -> x27 = 2 ^ 3 = 1  //59
+            instruction_memory.mem[28] = 32'h01adee33; // or  x28, x27, x26      -> x28 = 2 | 3 = 1  //60
+            instruction_memory.mem[29] = 32'h00317eb3; // and x29, x2, x3        -> x29 = 2 & 3 = 0  //61
+            
 
             // Phase 2: Arithmetic Operations
-            //instruction_memory.mem[6]  = 32'h002083b3; // ADD  x7, x1, x2      -> x7 = 1 + 2 = 3 -
-            //instruction_memory.mem[7]  = 32'h40208433; // SUB  x8, x1, x2      -> x8 = 1 - 2 = -1
-            //instruction_memory.mem[8]  = 32'h003104b3; // ADD  x9, x2, x3      -> x9 = 2 + 3 = 5
-            //instruction_memory.mem[9]  = 32'h40310533; // SUB x10, x2, x3      -> x10 = 2 - 3 = -1 -
-            //instruction_memory.mem[10] = 32'h004185b3; // ADD x11, x3, x4      -> x11 = 3 + 4 = 7
-            //instruction_memory.mem[11] = 32'h40418633; // SUB x12, x3, x4      -> x12 = 3 - 4 = -1
+            //instruction_memory.mem[6]  = 32'h002083b3; // add  x7, x1, x2      -> x7 = 1 + 2 = 3 -
+            //instruction_memory.mem[7]  = 32'h40208433; // sub  x8, x1, x2      -> x8 = 1 - 2 = -1
+            //instruction_memory.mem[8]  = 32'h003104b3; // add  x9, x2, x3      -> x9 = 2 + 3 = 5
+            //instruction_memory.mem[9]  = 32'h40310533; // sub x10, x2, x3      -> x10 = 2 - 3 = -1 -
+            //instruction_memory.mem[10] = 32'h004185b3; // add x11, x3, x4      -> x11 = 3 + 4 = 7
+            //instruction_memory.mem[11] = 32'h40418633; // sub x12, x3, x4      -> x12 = 3 - 4 = -1
             
             /*  
             // Phase 4: Shift Operations
@@ -565,15 +579,15 @@ module dv_top_superscalar;
             instruction_memory.mem[20] = 32'h40215a33; // SRA x20, x2, x2      -> x20 = 2 >>> 2 = 0 (overwrite x20)
             
             // Phase 5: Immediate Operations  
-            instruction_memory.mem[21] = 32'h00a08a93; // ADDI x21, x1, 10     -> x21 = 1 + 10 = 11
-            instruction_memory.mem[22] = 32'h00f0cb13; // XORI x22, x1, 15     -> x22 = 1 ^ 15 = 14
-            instruction_memory.mem[23] = 32'h00f0eb93; // ORI  x23, x1, 15     -> x23 = 1 | 15 = 15
-            instruction_memory.mem[24] = 32'h00f0fc13; // ANDI x24, x1, 15     -> x24 = 1 & 15 = 1
+            instruction_memory.mem[21] = 32'h00a08a93; // addi x21, x1, 10     -> x21 = 1 + 10 = 11
+            instruction_memory.mem[22] = 32'h00f0cb13; // xorI x22, x1, 15     -> x22 = 1 ^ 15 = 14
+            instruction_memory.mem[23] = 32'h00f0eb93; // orI  x23, x1, 15     -> x23 = 1 | 15 = 15
+            instruction_memory.mem[24] = 32'h00f0fc13; // andI x24, x1, 15     -> x24 = 1 & 15 = 1
             
             // Phase 6: Complex arithmetic using multiple registers
-            instruction_memory.mem[25] = 32'h00520cb3; // ADD x25, x4, x5      -> x25 = 4 + 5 = 9
-            instruction_memory.mem[26] = 32'h00628d33; // ADD x26, x5, x6      -> x26 = 5 + 6 = 11
-            instruction_memory.mem[27] = 32'h01ac8db3; // ADD x27, x25, x26    -> x27 = 9 + 11 = 20
+            instruction_memory.mem[25] = 32'h00520cb3; // add x25, x4, x5      -> x25 = 4 + 5 = 9
+            instruction_memory.mem[26] = 32'h00628d33; // add x26, x5, x6      -> x26 = 5 + 6 = 11
+            instruction_memory.mem[27] = 32'h01ac8db3; // add x27, x25, x26    -> x27 = 9 + 11 = 20
             
             // Phase 7: Set Less Than operations
             instruction_memory.mem[28] = 32'h0020ae33; // SLT x28, x1, x2      -> x28 = (1 < 2) = 1
@@ -583,8 +597,8 @@ module dv_top_superscalar;
             
             $display("[%t] Comprehensive test program loaded:", $time);
             $display("  Phase 1: Load x1=1, x2=2, x3=3, x4=4, x5=5, x6=6");
-            $display("  Phase 2: Arithmetic operations (ADD/SUB)");
-            $display("  Phase 3: Logical operations (XOR/OR/AND)");  
+            $display("  Phase 2: Arithmetic operations (add/sub)");
+            $display("  Phase 3: Logical operations (xor/or/and)");  
             $display("  Phase 4: Shift operations (SLL/SRL/SRA)");
             $display("  Phase 5: Immediate operations");
             $display("  Phase 6: Complex multi-register arithmetic");

@@ -301,10 +301,6 @@ module rv32i_superscalar_core #(
     rs_to_exec_if #(.DATA_WIDTH(DATA_WIDTH), .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1)) 
         dispatch_to_alu_0_if(), dispatch_to_alu_1_if(), dispatch_to_alu_2_if();
     
-    // Create CDB interface
-    cdb_if #(.DATA_WIDTH(DATA_WIDTH), .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1)) 
-        cdb_interface();
-    
     dispatch_stage #(
         .DATA_WIDTH(DATA_WIDTH),
         .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1),

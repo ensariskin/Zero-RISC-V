@@ -2,3 +2,4 @@
 common/triple_priority_encoder.sv
 common/triple_priority_encoder_ver2.sv
 common/triple_priority_encoder_ver3.sv
+common/circular_buffer_3port.sv

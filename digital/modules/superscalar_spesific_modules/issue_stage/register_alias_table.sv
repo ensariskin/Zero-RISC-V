@@ -81,7 +81,7 @@ module register_alias_table #(
     // Allocation requirement signals
     logic need_alloc_0, need_alloc_1, need_alloc_2;
     
-    // Instantiate triple priority encoder
+   /*  // Instantiate triple priority encoder
     triple_priority_encoder_ver3 #(
         .WIDTH(PHYS_REGS),
         .INDEX_WIDTH(PHYS_ADDR_WIDTH)
@@ -96,6 +96,31 @@ module register_alias_table #(
         .first_valid(found_first),
         .second_valid(found_second),
         .third_valid(found_third)
+    );
+    */
+
+    
+    circular_buffer_3port free_address_buffer(
+        .clk(clk),
+        .rst_n(reset),
+        .read_en_0(need_alloc_0),
+        .read_en_1(need_alloc_1),
+        .read_en_2(need_alloc_2),
+        .read_data_0(first_free),
+        .read_data_1(second_free),
+        .read_data_2(third_free),
+        .read_valid_0(found_first),
+        .read_valid_1(found_second),
+        .read_valid_2(found_third),
+        .write_en_0(commit_valid[0]),
+        .write_en_1(commit_valid[1]),
+        .write_en_2(commit_valid[2]),
+        //.write_data_0(free_phys_reg_0),
+        //.write_data_1(free_phys_reg_1),
+        //.write_data_2(free_phys_reg_2),
+        .buffer_empty(),
+        .buffer_full(),
+        .buffer_count()
     );
 
     // Pre-compute allocation requirements (separate combinational logic)
