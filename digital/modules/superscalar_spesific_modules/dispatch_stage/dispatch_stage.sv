@@ -41,15 +41,12 @@ module dispatch_stage #(
     // Output to Functional Units (3 execution units)
     rs_to_exec_if.reservation_station dispatch_to_alu_0,
     rs_to_exec_if.reservation_station dispatch_to_alu_1,
-    rs_to_exec_if.reservation_station dispatch_to_alu_2
-    
-    // Common Data Bus Interface (3 channels)
-    //cdb_if.dispatch cdb_interface,
-    
-    // Status and Debug Outputs
-    //output logic [2:0] rs_occupancy,           // How many RSs are occupied
-    //output logic [2:0] rs_ready_to_issue,     // Which RSs are ready to issue
-    //output logic [$clog2(NUM_PHYS_REGS):0] reg_file_utilization
+    rs_to_exec_if.reservation_station dispatch_to_alu_2,
+
+    output logic [2:0] commit_valid,
+    output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0, 
+    output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_1,
+    output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_2
 );
 
     //==========================================================================
@@ -61,44 +58,131 @@ module dispatch_stage #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] inst_0_read_addr_a, inst_0_read_addr_b;
     logic [PHYS_REG_ADDR_WIDTH-1:0] inst_1_read_addr_a, inst_1_read_addr_b;
     logic [PHYS_REG_ADDR_WIDTH-1:0] inst_2_read_addr_a, inst_2_read_addr_b;
+    
+    // Data from ROB
+    logic [DATA_WIDTH-1:0] rob_0_read_data_a, rob_0_read_data_b;
+    logic [DATA_WIDTH-1:0] rob_1_read_data_a, rob_1_read_data_b;
+    logic [DATA_WIDTH-1:0] rob_2_read_data_a, rob_2_read_data_b;
+    logic [1:0] rob_0_read_tag_a, rob_0_read_tag_b;
+    logic [1:0] rob_1_read_tag_a, rob_1_read_tag_b;
+    logic [1:0] rob_2_read_tag_a, rob_2_read_tag_b;
+
+    // Data from Register File
+    logic [DATA_WIDTH-1:0] reg_file_read_data_a_0, reg_file_read_data_b_0;
+    logic [DATA_WIDTH-1:0] reg_file_read_data_a_1, reg_file_read_data_b_1;
+    logic [DATA_WIDTH-1:0] reg_file_read_data_a_2, reg_file_read_data_b_2;
+
+    // Final operand data to dispatch to functional units
     logic [DATA_WIDTH-1:0] inst_0_read_data_a, inst_0_read_data_b;
     logic [DATA_WIDTH-1:0] inst_1_read_data_a, inst_1_read_data_b;
     logic [DATA_WIDTH-1:0] inst_2_read_data_a, inst_2_read_data_b;
     logic [1:0] inst_0_read_tag_a, inst_0_read_tag_b;
     logic [1:0] inst_1_read_tag_a, inst_1_read_tag_b;
     logic [1:0] inst_2_read_tag_a, inst_2_read_tag_b;
+
+    logic commit_ready_0, commit_ready_1, commit_ready_2;
+    logic [DATA_WIDTH-1:0] commit_data_0, commit_data_1, commit_data_2;
+    
+    logic commit_exception_0, commit_exception_1, commit_exception_2;
     
     //==========================================================================
     // SHARED PHYSICAL REGISTER FILE (64 entries)
     //==========================================================================
+
+    reorder_buffer rob (
+        .clk(clk),
+        .reset(reset),
+
+        .alloc_enable_0(issue_to_dispatch_0.dispatch_valid & issue_to_dispatch_0.control_signals[6] & issue_to_dispatch_0.rd_arch_addr != 5'b0), // Do not allocate for x0
+        .alloc_enable_1(issue_to_dispatch_1.dispatch_valid & issue_to_dispatch_1.control_signals[6] & issue_to_dispatch_1.rd_arch_addr != 5'b0),
+        .alloc_enable_2(issue_to_dispatch_2.dispatch_valid & issue_to_dispatch_2.control_signals[6] & issue_to_dispatch_2.rd_arch_addr != 5'b0),
+        .alloc_addr_0(issue_to_dispatch_0.rd_arch_addr),
+        .alloc_addr_1(issue_to_dispatch_1.rd_arch_addr),
+        .alloc_addr_2(issue_to_dispatch_2.rd_arch_addr),
+        .alloc_tag_0(2'b00),
+        .alloc_tag_1(2'b01),
+        .alloc_tag_2(2'b10),
+        .cdb_valid_0(cdb_interface.cdb_valid_0),
+        .cdb_valid_1(cdb_interface.cdb_valid_1),
+        .cdb_valid_2(cdb_interface.cdb_valid_2),
+        .cdb_addr_0(cdb_interface.cdb_dest_reg_0[4:0]),
+        .cdb_addr_1(cdb_interface.cdb_dest_reg_1[4:0]),
+        .cdb_addr_2(cdb_interface.cdb_dest_reg_2[4:0]),
+        .cdb_data_0(cdb_interface.cdb_data_0),
+        .cdb_data_1(cdb_interface.cdb_data_1),
+        .cdb_data_2(cdb_interface.cdb_data_2),
+        .cdb_exception_0(1'b0),  //(cdb_interface.cdb_exception_0),
+        .cdb_exception_1(1'b0),  //(cdb_interface.cdb_exception_1),
+        .cdb_exception_2(1'b0),  //(cdb_interface.cdb_exception_2),
+
+        .read_addr_0(inst_0_read_addr_a[4:0]),
+        .read_addr_1(inst_0_read_addr_b[4:0]),
+        .read_addr_2(inst_1_read_addr_a[4:0]),
+        .read_addr_3(inst_1_read_addr_b[4:0]),
+        .read_addr_4(inst_2_read_addr_a[4:0]),
+        .read_addr_5(inst_2_read_addr_b[4:0]),
+        .read_data_0(rob_0_read_data_a),
+        .read_data_1(rob_0_read_data_b),
+        .read_data_2(rob_1_read_data_a),
+        .read_data_3(rob_1_read_data_b),
+        .read_data_4(rob_2_read_data_a),
+        .read_data_5(rob_2_read_data_b),
+        .read_tag_0(rob_0_read_tag_a),
+        .read_tag_1(rob_0_read_tag_b),
+        .read_tag_2(rob_1_read_tag_a),
+        .read_tag_3(rob_1_read_tag_b),
+        .read_tag_4(rob_2_read_tag_a),
+        .read_tag_5(rob_2_read_tag_b),
+
+        .commit_ready_0(commit_ready_0), 
+        .commit_ready_1(commit_ready_1), 
+        .commit_ready_2(commit_ready_2), 
+        .commit_data_0(commit_data_0), 
+        .commit_data_1(commit_data_1), 
+        .commit_data_2(commit_data_2), 
+        .commit_addr_0(commit_addr_0),
+        .commit_addr_1(commit_addr_1),
+        .commit_addr_2(commit_addr_2),
+        .commit_exception_0(commit_exception_0), 
+        .commit_exception_1(commit_exception_1), 
+        .commit_exception_2(commit_exception_2)
+    );
     
     multi_port_register_file #(
         .DATA_WIDTH(DATA_WIDTH),
-        .ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),  // 6 bits for 64 registers                
-        .NUM_REGISTERS(NUM_PHYS_REGS)      // 64 physical registers
+        .ADDR_WIDTH(5),  // 6 bits for 64 registers                
+        .NUM_REGISTERS(32)      // 64 physical registers
     ) physical_reg_file (
         .clk(clk),
         .reset(reset),
         
         // Read ports (descriptive naming)
-        .inst_0_read_addr_a(inst_0_read_addr_a), .inst_0_read_data_a(inst_0_read_data_a), .inst_0_read_tag_a(inst_0_read_tag_a),  // RS0 operand A
-        .inst_0_read_addr_b(inst_0_read_addr_b), .inst_0_read_data_b(inst_0_read_data_b), .inst_0_read_tag_b(inst_0_read_tag_b),  // RS0 operand B
-        .inst_1_read_addr_a(inst_1_read_addr_a), .inst_1_read_data_a(inst_1_read_data_a), .inst_1_read_tag_a(inst_1_read_tag_a),  // RS1 operand A
-        .inst_1_read_addr_b(inst_1_read_addr_b), .inst_1_read_data_b(inst_1_read_data_b), .inst_1_read_tag_b(inst_1_read_tag_b),  // RS1 operand B
-        .inst_2_read_addr_a(inst_2_read_addr_a), .inst_2_read_data_a(inst_2_read_data_a), .inst_2_read_tag_a(inst_2_read_tag_a),  // RS2 operand A
-        .inst_2_read_addr_b(inst_2_read_addr_b), .inst_2_read_data_b(inst_2_read_data_b), .inst_2_read_tag_b(inst_2_read_tag_b),  // RS2 operand B
-        
-        // Allocation ports - set tags when instructions are dispatched 
-        .alloc_enable_0(issue_to_dispatch_0.dispatch_valid), .alloc_addr_0(issue_to_dispatch_0.rd_phys_addr), .alloc_tag_0(2'b00),  // ALU0 tag
-        .alloc_enable_1(issue_to_dispatch_1.dispatch_valid), .alloc_addr_1(issue_to_dispatch_1.rd_phys_addr), .alloc_tag_1(2'b01),  // ALU1 tag
-        .alloc_enable_2(issue_to_dispatch_2.dispatch_valid), .alloc_addr_2(issue_to_dispatch_2.rd_phys_addr), .alloc_tag_2(2'b10),  // ALU2 tag
+        .inst_0_read_addr_a(inst_0_read_addr_a[4:0]), .inst_0_read_data_a(reg_file_read_data_a_0),   // RS0 operand A
+        .inst_0_read_addr_b(inst_0_read_addr_b[4:0]), .inst_0_read_data_b(reg_file_read_data_b_0),   // RS0 operand B
+        .inst_1_read_addr_a(inst_1_read_addr_a[4:0]), .inst_1_read_data_a(reg_file_read_data_a_1),   // RS1 operand A
+        .inst_1_read_addr_b(inst_1_read_addr_b[4:0]), .inst_1_read_data_b(reg_file_read_data_b_1),   // RS1 operand B
+        .inst_2_read_addr_a(inst_2_read_addr_a[4:0]), .inst_2_read_data_a(reg_file_read_data_a_2),   // RS2 operand A
+        .inst_2_read_addr_b(inst_2_read_addr_b[4:0]), .inst_2_read_data_b(reg_file_read_data_b_2),   // RS2 operand B
         
         // Commit ports - write results from CDB when complete
-        .commit_enable_0(cdb_interface.cdb_valid_0), .commit_addr_0(cdb_interface.cdb_dest_reg_0), .commit_data_0(cdb_interface.cdb_data_0),
-        .commit_enable_1(cdb_interface.cdb_valid_1), .commit_addr_1(cdb_interface.cdb_dest_reg_1), .commit_data_1(cdb_interface.cdb_data_1),
-        .commit_enable_2(cdb_interface.cdb_valid_2), .commit_addr_2(cdb_interface.cdb_dest_reg_2), .commit_data_2(cdb_interface.cdb_data_2)
+        .commit_enable_0(commit_ready_0), .commit_addr_0(commit_addr_0), .commit_data_0(commit_data_0),
+        .commit_enable_1(commit_ready_1), .commit_addr_1(commit_addr_1), .commit_data_1(commit_data_1),
+        .commit_enable_2(commit_ready_2), .commit_addr_2(commit_addr_2), .commit_data_2(commit_data_2)
     );
-    // TODO : How can we use ROB or how we reorder instructions??
+
+    assign inst_0_read_data_a = inst_0_read_addr_a[5] ? rob_0_read_data_a : reg_file_read_data_a_0;
+    assign inst_0_read_tag_a  = inst_0_read_addr_a[5] ? rob_0_read_tag_a  : 2'b11; // Ready if from reg file
+    assign inst_0_read_data_b = inst_0_read_addr_b[5] ? rob_0_read_data_b : reg_file_read_data_b_0;
+    assign inst_0_read_tag_b  = inst_0_read_addr_b[5] ? rob_0_read_tag_b  : 2'b11; // Ready if from reg file
+    assign inst_1_read_data_a = inst_1_read_addr_a[5] ? rob_1_read_data_a : reg_file_read_data_a_1;
+    assign inst_1_read_tag_a  = inst_1_read_addr_a[5] ? rob_1_read_tag_a  : 2'b11; // Ready if from reg file
+    assign inst_1_read_data_b = inst_1_read_addr_b[5] ? rob_1_read_data_b : reg_file_read_data_b_1;
+    assign inst_1_read_tag_b  = inst_1_read_addr_b[5] ? rob_1_read_tag_b  : 2'b11; // Ready if from reg file
+    assign inst_2_read_data_a = inst_2_read_addr_a[5] ? rob_2_read_data_a : reg_file_read_data_a_2;
+    assign inst_2_read_tag_a  = inst_2_read_addr_a[5] ? rob_2_read_tag_a  : 2'b11; // Ready if from reg file
+    assign inst_2_read_data_b = inst_2_read_addr_b[5] ? rob_2_read_data_b : reg_file_read_data_b_2;
+    assign inst_2_read_tag_b  = inst_2_read_addr_b[5] ? rob_2_read_tag_b  : 2'b11; // Ready if from reg file
+   
     
     //==========================================================================
     // COMMON DATA BUS (CDB) INTERFACE
@@ -252,6 +336,7 @@ module dispatch_stage #(
                               cdb_interface.cdb_valid_1 + 
                               cdb_interface.cdb_valid_2;
 
+    assign commit_valid = {commit_ready_2, commit_ready_1, commit_ready_0};
 
 
     //==========================================================================

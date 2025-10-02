@@ -9,18 +9,18 @@
 //     Handles 3-way superscalar rename operations per cycle.
 //
 // Features:
-//     - 32 architectural → 64 physical register mapping
+//     - 32 architectural → 64 physical register mapping (32 in Register File, 32 in ROB)
 //     - 3-way parallel rename for superscalar decode
-//     - Free list management for available physical registers
+//     - Free list management for available physical registers (using circular buffer)
 //     - Commit interface for freeing old physical registers
 //     - x0 always maps to physical register 0 (hardwired zero)
 //////////////////////////////////////////////////////////////////////////////////
-//TODO : When lower numbered allocattion is not needed, other allocations fail. Fix it.
+
 module register_alias_table #(
     parameter ARCH_REGS = 32,
     parameter PHYS_REGS = 64,
-    parameter ARCH_ADDR_WIDTH = 5,
-    parameter PHYS_ADDR_WIDTH = 6
+    parameter ARCH_ADDR_WIDTH = $clog2(ARCH_REGS),
+    parameter PHYS_ADDR_WIDTH = $clog2(PHYS_REGS)
 )(
     input logic clk,
     input logic reset,
@@ -41,8 +41,11 @@ module register_alias_table #(
     output logic [2:0] rename_ready, // Indicates RAT can allocate physical registers
     
     // Commit interface (from ROB - frees old physical registers)
-    input logic [2:0] commit_valid,
-    input logic [PHYS_ADDR_WIDTH-1:0] free_phys_reg_0, free_phys_reg_1, free_phys_reg_2
+    input logic [4:0] commit_addr_0, 
+    input logic [4:0] commit_addr_1,
+    input logic [4:0] commit_addr_2,
+    input logic [2:0] commit_valid
+    //input logic [PHYS_ADDR_WIDTH-1:0] free_phys_reg_0, free_phys_reg_1, free_phys_reg_2
     
 );
     localparam D = 1; // Delay for non-blocking assignments (for simulation purposes)
@@ -51,28 +54,11 @@ module register_alias_table #(
     logic [PHYS_ADDR_WIDTH-1:0] rat_table [ARCH_REGS-1:0];
     
     // Free List - available physical registers
-    logic [PHYS_REGS-1:0] free_list;
     logic [5:0] free_count;
     
     // Internal allocation signals
     logic [PHYS_ADDR_WIDTH-1:0] allocated_phys_reg [2:0];
     logic [2:0] allocation_success;
-    
-    //==========================================================================
-    // FREE LIST MANAGEMENT
-    //==========================================================================
-    
-    // Count free registers
-    always_comb begin
-        free_count = 0;
-        for (int i = 0; i < PHYS_REGS; i++) begin
-            if (free_list[i]) free_count++;
-        end
-    end
-
-    assign rename_ready = (free_count >= 3) ? 3'b111 :
-                          (free_count == 2) ? 3'b011 :
-                          (free_count == 1) ? 3'b001 : 3'b000;
     
     // Find available physical registers - SYNTHESIZABLE: Use proper triple priority encoder
     logic [5:0] first_free, second_free, third_free;
@@ -114,14 +100,20 @@ module register_alias_table #(
         .read_valid_2(found_third),
         .write_en_0(commit_valid[0]),
         .write_en_1(commit_valid[1]),
-        .write_en_2(commit_valid[2]),
+        .write_en_2(commit_valid[2]), 
         //.write_data_0(free_phys_reg_0),
         //.write_data_1(free_phys_reg_1),
         //.write_data_2(free_phys_reg_2),
         .buffer_empty(),
         .buffer_full(),
-        .buffer_count()
+        .buffer_count(free_count)
     );
+
+    // Count free registers
+    assign rename_ready = (free_count >= 3) ? 3'b111 :
+                          (free_count == 2) ? 3'b011 :
+                          (free_count == 1) ? 3'b001 : 3'b000;
+
 
     // Pre-compute allocation requirements (separate combinational logic)
     always_comb begin
@@ -227,7 +219,7 @@ module register_alias_table #(
     end
     
     //==========================================================================
-    // RAT AND FREE LIST UPDATES (SEQUENTIAL)
+    // RAT UPDATES (SEQUENTIAL)
     //==========================================================================
     
     always_ff @(posedge clk or negedge reset) begin
@@ -236,44 +228,31 @@ module register_alias_table #(
             for (int i = 0; i < ARCH_REGS; i++) begin
                 rat_table[i] <= #D i[PHYS_ADDR_WIDTH-1:0];
             end
-            
-            // Initialize free list - registers 32-63 are initially free
-            free_list <= #D {{(PHYS_REGS-ARCH_REGS){1'b1}}, {ARCH_REGS{1'b0}}};
-            
         end else begin
-            
             // Update RAT for new allocations
+            if(commit_valid[0] && commit_addr_0 != 0) begin
+               rat_table[commit_addr_0] <= #D {1'b0, commit_addr_0};
+            end
+            if(commit_valid[1] && commit_addr_1 != 0) begin
+               rat_table[commit_addr_1] <= #D {1'b0, commit_addr_1};
+            end
+            if(commit_valid[2] && commit_addr_2 != 0) begin
+               rat_table[commit_addr_2] <= #D {1'b0, commit_addr_2};
+            end
+
             if (decode_valid[0] && rd_write_enable_0 && rd_arch_0 != 5'h0 && allocation_success[0]) begin
                 rat_table[rd_arch_0] <= #D allocated_phys_reg[0];
             end
+            
             if (decode_valid[1] && rd_write_enable_1 && rd_arch_1 != 5'h0 && allocation_success[1]) begin
                 rat_table[rd_arch_1] <= #D allocated_phys_reg[1];
             end
+            
             if (decode_valid[2] && rd_write_enable_2 && rd_arch_2 != 5'h0 && allocation_success[2]) begin
                 rat_table[rd_arch_2] <= #D allocated_phys_reg[2];
             end
             
-            // Update free list - mark allocated registers as used
-            if (decode_valid[0] && rd_write_enable_0 && rd_arch_0 != 5'h0 && allocation_success[0]) begin
-                free_list[allocated_phys_reg[0]] <= #D 1'b0;
-            end
-            if (decode_valid[1] && rd_write_enable_1 && rd_arch_1 != 5'h0 && allocation_success[1]) begin
-                free_list[allocated_phys_reg[1]] <= #D 1'b0;
-            end
-            if (decode_valid[2] && rd_write_enable_2 && rd_arch_2 != 5'h0 && allocation_success[2]) begin
-                free_list[allocated_phys_reg[2]] <= #D 1'b0;
-            end
             
-            // Free committed registers
-            if (commit_valid[0] && free_phys_reg_0 != 6'h0) begin  // Don't free register 0
-                free_list[free_phys_reg_0] <= #D 1'b1;
-            end
-            if (commit_valid[1] && free_phys_reg_1 != 6'h0) begin
-                free_list[free_phys_reg_1] <= #D 1'b1;
-            end
-            if (commit_valid[2] && free_phys_reg_2 != 6'h0) begin
-                free_list[free_phys_reg_2] <= #D 1'b1;
-            end
         end
     end
     

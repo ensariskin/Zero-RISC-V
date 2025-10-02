@@ -110,6 +110,11 @@ module rv32i_superscalar_core #(
     logic [REG_FILE_ADDR_WIDTH-1:0] decode_rs1_0, decode_rs1_1, decode_rs1_2;
     logic [REG_FILE_ADDR_WIDTH-1:0] decode_rs2_0, decode_rs2_1, decode_rs2_2;
     logic [REG_FILE_ADDR_WIDTH-1:0] decode_rd_0, decode_rd_1, decode_rd_2;
+
+    logic [2:0] commit_valid;
+    logic [REG_FILE_ADDR_WIDTH-1:0] commit_addr_0;
+    logic [REG_FILE_ADDR_WIDTH-1:0] commit_addr_1;
+    logic [REG_FILE_ADDR_WIDTH-1:0] commit_addr_2;
     
     // Execute Stage Interface
     logic [2:0] execute_ready;
@@ -282,10 +287,10 @@ module rv32i_superscalar_core #(
         .decode_ready_o(decode_ready),
         
         // ROB commit interface (placeholder for now)
-        .commit_valid_i(3'b000),
-        .commit_free_phys_reg_i_0(6'h0),
-        .commit_free_phys_reg_i_1(6'h0),
-        .commit_free_phys_reg_i_2(6'h0),
+        .commit_addr_0_i(commit_addr_0),
+        .commit_addr_1_i(commit_addr_1),
+        .commit_addr_2_i(commit_addr_2),
+        .commit_valid_i(commit_valid),
         
         // Issue to Dispatch Stage Interfaces
         .issue_to_dispatch_0(issue_to_dispatch_0_if.issue),
@@ -317,7 +322,12 @@ module rv32i_superscalar_core #(
         // Output to Functional Units
         .dispatch_to_alu_0(dispatch_to_alu_0_if.reservation_station),
         .dispatch_to_alu_1(dispatch_to_alu_1_if.reservation_station),
-        .dispatch_to_alu_2(dispatch_to_alu_2_if.reservation_station)
+        .dispatch_to_alu_2(dispatch_to_alu_2_if.reservation_station),
+
+        .commit_valid(commit_valid),
+        .commit_addr_0(commit_addr_0),
+        .commit_addr_1(commit_addr_1),
+        .commit_addr_2(commit_addr_2)
     );
     
     //==========================================================================

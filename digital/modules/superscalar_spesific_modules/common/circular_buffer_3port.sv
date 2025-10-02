@@ -69,7 +69,7 @@ module circular_buffer_3port #(
     
     always_comb begin
         for (int i = 0; i < BUFFER_DEPTH; i++) begin
-            buffer_mem[i] = i;
+            buffer_mem[i] = i[ADDR_WIDTH-1:0];
         end
     end
     

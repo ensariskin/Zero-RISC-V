@@ -43,7 +43,10 @@ module issue_stage #(
     
     // ROB commit interface (for freeing physical registers)
     input logic [2:0] commit_valid_i,
-    input logic [PHYS_REG_ADDR_WIDTH-1:0] commit_free_phys_reg_i_0, commit_free_phys_reg_i_1, commit_free_phys_reg_i_2,
+    input logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0_i, 
+    input logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_1_i,
+    input logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_2_i,
+    //input logic [PHYS_REG_ADDR_WIDTH-1:0] commit_free_phys_reg_i_0, commit_free_phys_reg_i_1, commit_free_phys_reg_i_2,
     
     // Dispatch Stage Interfaces (NEW - replaces reservation station interfaces)
     issue_to_dispatch_if.issue issue_to_dispatch_0,
@@ -86,6 +89,7 @@ module issue_stage #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] rs1_phys_reg_0, rs1_phys_reg_1, rs1_phys_reg_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] rs2_phys_reg_0, rs2_phys_reg_1, rs2_phys_reg_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_reg_0, rd_phys_reg_1, rd_phys_reg_2;
+    logic [ARCH_REG_ADDR_WIDTH-1:0] rd_arch_reg_0, rd_arch_reg_1, rd_arch_reg_2;
 
     
     //==========================================================================
@@ -167,7 +171,10 @@ module issue_stage #(
 
         // Commit interface (from ROB) - separated signals  
         .commit_valid(commit_valid_i),
-        .free_phys_reg_0(commit_free_phys_reg_i_0), .free_phys_reg_1(commit_free_phys_reg_i_1), .free_phys_reg_2(commit_free_phys_reg_i_2)
+        .commit_addr_0(commit_addr_0_i), 
+        .commit_addr_1(commit_addr_1_i), 
+        .commit_addr_2(commit_addr_2_i)
+        //.free_phys_reg_0(commit_free_phys_reg_i_0), .free_phys_reg_1(commit_free_phys_reg_i_1), .free_phys_reg_2(commit_free_phys_reg_i_2)
     );
     
     //==========================================================================
@@ -183,7 +190,7 @@ module issue_stage #(
     
     // Ready signal indicates RAT can allocate physical registers and dispatch stage can accept
     assign decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready} & rename_ready;
-    // todo : add rename_valid here
+  
     //==========================================================================
     // ISSUE STAGE PIPELINE REGISTERS (CONTROL AND ADDRESSES ONLY)
     //==========================================================================
@@ -218,6 +225,10 @@ module issue_stage #(
             rs2_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
             rs2_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
             rs2_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+
+            rd_arch_reg_0 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
+            rd_arch_reg_1 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
+            rd_arch_reg_2 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
         end else begin
             if (flush | bubble) begin
                 // Insert NOPs on flush for all channels
@@ -249,6 +260,9 @@ module issue_stage #(
                 rs2_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
                 rs2_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
                 rs2_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                rd_arch_reg_0 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
+                rd_arch_reg_1 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
+                rd_arch_reg_2 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
             end else begin
                 // Channel 0: Update only when dispatch_ready[0] is high
                 if (issue_to_dispatch_0.dispatch_ready) begin
@@ -263,7 +277,7 @@ module issue_stage #(
                     rd_phys_reg_0 <= #D decode_valid_i[0] ? rd_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs1_phys_reg_0 <= #D decode_valid_i[0] ? rs1_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs2_phys_reg_0 <= #D decode_valid_i[0] ? rs2_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                
+                    rd_arch_reg_0 <= #D decode_valid_i[0] ? rd_arch_0 : {ARCH_REG_ADDR_WIDTH{1'b0}};
                 end
                 else 
                     decode_valid_reg[0] <= #D 0;
@@ -282,7 +296,7 @@ module issue_stage #(
                     rd_phys_reg_1 <= #D decode_valid_i[1] ? rd_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs1_phys_reg_1 <= #D decode_valid_i[1] ? rs1_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs2_phys_reg_1 <= #D decode_valid_i[1] ? rs2_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                    
+                    rd_arch_reg_1 <= #D decode_valid_i[1] ? rd_arch_1 : {ARCH_REG_ADDR_WIDTH{1'b0}};
                 end
                 else 
                     decode_valid_reg[1] <= #D 0;
@@ -301,6 +315,7 @@ module issue_stage #(
                     rd_phys_reg_2 <= #D decode_valid_i[2] ? rd_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs1_phys_reg_2 <= #D decode_valid_i[2] ? rs1_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs2_phys_reg_2 <= #D decode_valid_i[2] ? rs2_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rd_arch_reg_2 <= #D decode_valid_i[2] ? rd_arch_2 : {ARCH_REG_ADDR_WIDTH{1'b0}};
                     
                 end
                 else 
@@ -329,7 +344,7 @@ module issue_stage #(
     assign issue_to_dispatch_0.pc_value_at_prediction = pc_prediction_reg_0;
     assign issue_to_dispatch_0.branch_sel = branch_sel_reg_0;
     assign issue_to_dispatch_0.branch_prediction = branch_prediction_reg_0;
-    
+    assign issue_to_dispatch_0.rd_arch_addr = rd_arch_reg_0;
     // Issue to Dispatch Channel 1
     assign issue_to_dispatch_1.dispatch_valid = decode_valid_reg[1];
     assign issue_to_dispatch_1.control_signals = control_signal_reg_1[10:0]; // Remove register addresses, use bits [10:0]
@@ -341,6 +356,7 @@ module issue_stage #(
     assign issue_to_dispatch_1.pc_value_at_prediction = pc_prediction_reg_1;
     assign issue_to_dispatch_1.branch_sel = branch_sel_reg_1;
     assign issue_to_dispatch_1.branch_prediction = branch_prediction_reg_1;
+    assign issue_to_dispatch_1.rd_arch_addr = rd_arch_reg_1;
     
     // Issue to Dispatch Channel 2
     assign issue_to_dispatch_2.dispatch_valid = decode_valid_reg[2];
@@ -353,7 +369,7 @@ module issue_stage #(
     assign issue_to_dispatch_2.pc_value_at_prediction = pc_prediction_reg_2;
     assign issue_to_dispatch_2.branch_sel = branch_sel_reg_2;
     assign issue_to_dispatch_2.branch_prediction = branch_prediction_reg_2;
-
+    assign issue_to_dispatch_2.rd_arch_addr = rd_arch_reg_2;
     //==========================================================================
     // DUMMY TRACER INTERFACES (for future tracing support)
     //==========================================================================
