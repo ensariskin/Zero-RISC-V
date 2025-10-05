@@ -88,7 +88,7 @@ module circular_buffer_3port #(
     //==========================================================================
     
     // Calculate number of entries available for reading
-    assign entries_available = write_ptr - read_ptr;
+    assign entries_available = write_ptr[ADDR_WIDTH] ? (write_ptr - read_ptr) : read_ptr[ADDR_WIDTH] ? (BUFFER_DEPTH + write_ptr[ADDR_WIDTH-1:0] - read_ptr[ADDR_WIDTH-1:0])  :  write_ptr - read_ptr;
     assign buffer_count = entries_available;
     
     // Empty when read pointer equals write pointer
@@ -123,7 +123,7 @@ module circular_buffer_3port #(
     // Read port 1: Read pointer + 1
     always_comb begin
         if (!buffer_empty && entries_available >= 2) begin
-            data_1 = {1'b1, buffer_mem[(read_ptr[ADDR_WIDTH-1:0] + read_en_0) % BUFFER_DEPTH]};
+            data_1 = {1'b1, buffer_mem[(read_ptr[ADDR_WIDTH-1:0] + 1) % BUFFER_DEPTH]};
             valid_1 = 1'b1;
         end else begin
             data_1 = '0;
@@ -134,7 +134,7 @@ module circular_buffer_3port #(
     // Read port 2: Read pointer + 2
     always_comb begin
         if (!buffer_empty && entries_available >= 3) begin
-            data_2 = {1'b1, buffer_mem[(read_ptr[ADDR_WIDTH-1:0] + read_en_0 + read_en_1) % BUFFER_DEPTH]};
+            data_2 = {1'b1, buffer_mem[(read_ptr[ADDR_WIDTH-1:0] + 2) % BUFFER_DEPTH]};
             valid_2 = 1'b1;
         end else begin
             data_2 = '0;
@@ -162,13 +162,8 @@ module circular_buffer_3port #(
         if (!buffer_empty) begin
             next_read_ptr = read_ptr + num_reads;
            
-            // Ensure we don't read beyond available entries
-            if ((next_read_ptr - read_ptr) > entries_available) begin
-                next_read_ptr = write_ptr;  // Cap at write pointer
-            end
         end
     end
-    
     // Calculate next write pointer based on number of enabled writes
     always_comb begin
         next_write_ptr = write_ptr;
@@ -176,10 +171,6 @@ module circular_buffer_3port #(
         // Only update if writes are enabled and buffer is not full
         if (!buffer_full) begin
             next_write_ptr = write_ptr + num_writes;
-            // Ensure we don't overflow the buffer
-            if ((next_write_ptr - read_ptr) > BUFFER_DEPTH) begin
-                next_write_ptr = read_ptr + BUFFER_DEPTH;  // Cap at full
-            end
         end
     end
     
@@ -227,7 +218,20 @@ module circular_buffer_3port #(
     //==========================================================================
     // ASSERTIONS FOR DEBUG
     //==========================================================================
-    
+    logic [9:0] total_reads;
+    logic [9:0] total_writes;
+    logic [9:0] diff;
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            total_reads  <= #D '0;
+            total_writes <= #D '0;
+            diff         <= #D '0;
+        end else begin
+            total_reads  <= #D total_reads  + num_reads;
+            total_writes <= #D total_writes + num_writes;
+            diff         <= #D total_reads - total_writes;
+        end
+    end
     // synthesis translate_off
     always_ff @(posedge clk) begin
         if (rst_n) begin

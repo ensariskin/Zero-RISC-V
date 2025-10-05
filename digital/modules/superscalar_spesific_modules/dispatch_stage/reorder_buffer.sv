@@ -179,6 +179,7 @@ module reorder_buffer #(
     //==========================================================================
     
     logic [ADDR_WIDTH-1:0] head_idx, head_plus_1_idx, head_plus_2_idx;
+    logic [ADDR_WIDTH-1:0] head_idx_d1, head_plus_1_idx_d1, head_plus_2_idx_d1;
     logic [1:0] num_commits;
     logic [ADDR_WIDTH:0] next_head_ptr;
     
@@ -253,6 +254,40 @@ module reorder_buffer #(
     assign read_5_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_5);
     
     //==========================================================================
+    // Forwarding from allocation to read ports
+    //==========================================================================
+    logic read_0_match_alloc_0, read_0_match_alloc_1, read_0_match_alloc_2;
+    logic read_1_match_alloc_0, read_1_match_alloc_1, read_1_match_alloc_2;
+    logic read_2_match_alloc_0, read_2_match_alloc_1, read_2_match_alloc_2;
+    logic read_3_match_alloc_0, read_3_match_alloc_1, read_3_match_alloc_2;
+    logic read_4_match_alloc_0, read_4_match_alloc_1, read_4_match_alloc_2;
+    logic read_5_match_alloc_0, read_5_match_alloc_1, read_5_match_alloc_2;
+
+    assign read_0_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_0);
+    assign read_0_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_0);
+    assign read_0_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_0);
+
+    assign read_1_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_1);
+    assign read_1_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_1);
+    assign read_1_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_1);
+
+    assign read_2_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_2);
+    assign read_2_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_2);
+    assign read_2_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_2);
+
+    assign read_3_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_3);
+    assign read_3_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_3);
+    assign read_3_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_3);
+
+    assign read_4_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_4);
+    assign read_4_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_4);
+    assign read_4_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_4);
+
+    assign read_5_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_5);
+    assign read_5_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_5);
+    assign read_5_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_5);
+
+    //==========================================================================
     // READ PORT IMPLEMENTATION (with CDB forwarding)
     //==========================================================================
     
@@ -267,6 +302,15 @@ module reorder_buffer #(
         end else if (read_0_match_cdb_0) begin
             read_data_0 = cdb_data_0;
             read_tag_0 = TAG_VALID;
+        end else if (read_0_match_alloc_2) begin
+            read_data_0 = '0; // New allocation, data not ready
+            read_tag_0 = alloc_tag_2;
+        end else if (read_0_match_alloc_1) begin
+            read_data_0 = '0; // New allocation, data not ready
+            read_tag_0 = alloc_tag_1;
+        end else if (read_0_match_alloc_0) begin
+            read_data_0 = '0; // New allocation, data not ready
+            read_tag_0 = alloc_tag_0;
         end else begin
             read_data_0 = buffer_data[read_addr_0];
             read_tag_0 = buffer_tag[read_addr_0];
@@ -284,6 +328,15 @@ module reorder_buffer #(
         end else if (read_1_match_cdb_0) begin
             read_data_1 = cdb_data_0;
             read_tag_1 = TAG_VALID;
+        end else if (read_1_match_alloc_2) begin
+            read_data_1 = '0; // New allocation, data not ready
+            read_tag_1 = alloc_tag_2;
+        end else if (read_1_match_alloc_1) begin
+            read_data_1 = '0; // New allocation, data not ready
+            read_tag_1 = alloc_tag_1;
+        end else if (read_1_match_alloc_0) begin
+            read_data_1 = '0; // New allocation, data not ready
+            read_tag_1 = alloc_tag_0;
         end else begin
             read_data_1 = buffer_data[read_addr_1];
             read_tag_1 = buffer_tag[read_addr_1];
@@ -301,6 +354,15 @@ module reorder_buffer #(
         end else if (read_2_match_cdb_0) begin
             read_data_2 = cdb_data_0;
             read_tag_2 = TAG_VALID;
+        end else if (read_2_match_alloc_2) begin
+            read_data_2 = '0; // New allocation, data not ready
+            read_tag_2 = alloc_tag_2;
+        end else if (read_2_match_alloc_1) begin
+            read_data_2 = '0; // New allocation, data not ready
+            read_tag_2 = alloc_tag_1;
+        end else if (read_2_match_alloc_0) begin
+            read_data_2 = '0; // New allocation, data not ready
+            read_tag_2 = alloc_tag_0;
         end else begin
             read_data_2 = buffer_data[read_addr_2];
             read_tag_2 = buffer_tag[read_addr_2];
@@ -318,6 +380,15 @@ module reorder_buffer #(
         end else if (read_3_match_cdb_0) begin
             read_data_3 = cdb_data_0;
             read_tag_3 = TAG_VALID;
+        end else if (read_3_match_alloc_2) begin
+            read_data_3 = '0; // New allocation, data not ready
+            read_tag_3 = alloc_tag_2;
+        end else if (read_3_match_alloc_1) begin
+            read_data_3 = '0; // New allocation, data not ready
+            read_tag_3 = alloc_tag_1;
+        end else if (read_3_match_alloc_0) begin
+            read_data_3 = '0; // New allocation, data not ready
+            read_tag_3 = alloc_tag_0;
         end else begin
             read_data_3 = buffer_data[read_addr_3];
             read_tag_3 = buffer_tag[read_addr_3];
@@ -335,6 +406,15 @@ module reorder_buffer #(
         end else if (read_4_match_cdb_0) begin
             read_data_4 = cdb_data_0;
             read_tag_4 = TAG_VALID;
+        end else if (read_4_match_alloc_2) begin
+            read_data_4 = '0; // New allocation, data not ready
+            read_tag_4 = alloc_tag_2;
+        end else if (read_4_match_alloc_1) begin
+            read_data_4 = '0; // New allocation, data not ready
+            read_tag_4 = alloc_tag_1;
+        end else if (read_4_match_alloc_0) begin
+            read_data_4 = '0; // New allocation, data not ready
+            read_tag_4 = alloc_tag_0;
         end else begin
             read_data_4 = buffer_data[read_addr_4];
             read_tag_4 = buffer_tag[read_addr_4];
@@ -352,6 +432,15 @@ module reorder_buffer #(
         end else if (read_5_match_cdb_0) begin
             read_data_5 = cdb_data_0;
             read_tag_5 = TAG_VALID;
+        end else if (read_5_match_alloc_2) begin
+            read_data_5 = '0; // New allocation, data not ready
+            read_tag_5 = alloc_tag_2;
+        end else if (read_5_match_alloc_1) begin
+            read_data_5 = '0; // New allocation, data not ready
+            read_tag_5 = alloc_tag_1;
+        end else if (read_5_match_alloc_0) begin
+            read_data_5 = '0; // New allocation, data not ready
+            read_tag_5 = alloc_tag_0;
         end else begin
             read_data_5 = buffer_data[read_addr_5];
             read_tag_5 = buffer_tag[read_addr_5];
@@ -376,13 +465,21 @@ module reorder_buffer #(
             // Reset pointers
             head_ptr_reg <= #D '0;
             tail_ptr_reg <= #D '0;
+
+            head_idx_d1 <= #D 5'd0;
+            head_plus_1_idx_d1 <= #D 5'd1;
+            head_plus_2_idx_d1 <= #D 5'd2;
             
         end else begin
             // Update head pointer (commits)
             head_ptr_reg <= #D next_head_ptr;
-            
             // Update tail pointer (allocations)
             tail_ptr_reg <= #D next_tail_ptr;
+
+            // Update delayed head indices
+            head_idx_d1 <= #D head_idx;
+            head_plus_1_idx_d1 <= #D head_plus_1_idx;
+            head_plus_2_idx_d1 <= #D head_plus_2_idx;
             
             //==================================================================
             // ALLOCATION - Initialize new entries
@@ -432,6 +529,31 @@ module reorder_buffer #(
                 buffer_executed[cdb_addr_2] <= #D 1'b1;
                 buffer_exception[cdb_addr_2] <= #D cdb_exception_2;
             end
+
+          if(head_idx_d1 != head_idx) begin // detected commit
+            // Clear committed entries (head, head+1, head+2)
+            buffer_data[head_idx_d1] <= #D '0;
+            buffer_tag[head_idx_d1] <= #D '0;
+            buffer_addr[head_idx_d1] <= #D '0;
+            buffer_executed[head_idx_d1] <= #D 1'b0;
+            buffer_exception[head_idx_d1] <= #D 1'b0;
+            if(head_plus_1_idx_d1 != head_idx) begin // if only one commit happened, head idx will be same as head+1 idx, so don't clear if they are same
+                buffer_data[head_plus_1_idx_d1] <= #D '0;
+                buffer_tag[head_plus_1_idx_d1] <= #D '0;
+                buffer_addr[head_plus_1_idx_d1] <= #D '0;
+                buffer_executed[head_plus_1_idx_d1] <= #D 1'b0;
+                buffer_exception[head_plus_1_idx_d1] <= #D 1'b0;
+                if(head_plus_2_idx_d1 != head_idx) begin
+                    buffer_data[head_plus_2_idx_d1] <= #D '0;
+                    buffer_tag[head_plus_2_idx_d1] <= #D '0;
+                    buffer_addr[head_plus_2_idx_d1] <= #D '0;
+                    buffer_executed[head_plus_2_idx_d1] <= #D 1'b0;
+                    buffer_exception[head_plus_2_idx_d1] <= #D 1'b0;
+                end
+            end
+          end
+
+
         end
     end
     
