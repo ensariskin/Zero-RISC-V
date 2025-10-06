@@ -46,6 +46,10 @@ module issue_stage #(
     input logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0_i, 
     input logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_1_i,
     input logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_2_i,
+    input logic [4:0] commit_rob_idx_0, 
+    input logic [4:0] commit_rob_idx_1, 
+    input logic [4:0] commit_rob_idx_2,
+
     //input logic [PHYS_REG_ADDR_WIDTH-1:0] commit_free_phys_reg_i_0, commit_free_phys_reg_i_1, commit_free_phys_reg_i_2,
     
     // Dispatch Stage Interfaces (NEW - replaces reservation station interfaces)
@@ -173,7 +177,10 @@ module issue_stage #(
         .commit_valid(commit_valid_i),
         .commit_addr_0(commit_addr_0_i), 
         .commit_addr_1(commit_addr_1_i), 
-        .commit_addr_2(commit_addr_2_i)
+        .commit_addr_2(commit_addr_2_i),
+        .commit_rob_idx_0(commit_rob_idx_0),
+        .commit_rob_idx_1(commit_rob_idx_1),
+        .commit_rob_idx_2(commit_rob_idx_2)
         //.free_phys_reg_0(commit_free_phys_reg_i_0), .free_phys_reg_1(commit_free_phys_reg_i_1), .free_phys_reg_2(commit_free_phys_reg_i_2)
     );
     

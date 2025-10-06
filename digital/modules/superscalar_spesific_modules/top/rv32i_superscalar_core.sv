@@ -115,6 +115,9 @@ module rv32i_superscalar_core #(
     logic [REG_FILE_ADDR_WIDTH-1:0] commit_addr_0;
     logic [REG_FILE_ADDR_WIDTH-1:0] commit_addr_1;
     logic [REG_FILE_ADDR_WIDTH-1:0] commit_addr_2;
+    logic [4:0] commit_rob_idx_0;
+    logic [4:0] commit_rob_idx_1;
+    logic [4:0] commit_rob_idx_2;
     
     // Execute Stage Interface
     logic [2:0] execute_ready;
@@ -287,10 +290,14 @@ module rv32i_superscalar_core #(
         .decode_ready_o(decode_ready),
         
         // ROB commit interface (placeholder for now)
+        .commit_valid_i(commit_valid),
         .commit_addr_0_i(commit_addr_0),
         .commit_addr_1_i(commit_addr_1),
         .commit_addr_2_i(commit_addr_2),
-        .commit_valid_i(commit_valid),
+        .commit_rob_idx_0(commit_rob_idx_0),
+        .commit_rob_idx_1(commit_rob_idx_1),
+        .commit_rob_idx_2(commit_rob_idx_2),
+        
         
         // Issue to Dispatch Stage Interfaces
         .issue_to_dispatch_0(issue_to_dispatch_0_if.issue),
@@ -327,7 +334,10 @@ module rv32i_superscalar_core #(
         .commit_valid(commit_valid),
         .commit_addr_0(commit_addr_0),
         .commit_addr_1(commit_addr_1),
-        .commit_addr_2(commit_addr_2)
+        .commit_addr_2(commit_addr_2),
+        .commit_rob_idx_0(commit_rob_idx_0),
+        .commit_rob_idx_1(commit_rob_idx_1),
+        .commit_rob_idx_2(commit_rob_idx_2)
     );
     
     //==========================================================================

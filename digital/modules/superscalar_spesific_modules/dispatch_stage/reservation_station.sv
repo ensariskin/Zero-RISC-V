@@ -82,7 +82,7 @@ module reservation_station #(
     logic issued;
     assign a_valid = (operand_a_valid_from_stored | operand_a_valid_from_decode);
     assign b_valid = (operand_b_valid_from_stored | operand_b_valid_from_decode);
-    assign all_valid = issued ? a_valid & b_valid : 1'b1;
+    assign all_valid = a_valid & b_valid;
     always_comb begin
         // Check if operands are valid from decode interface (only TAG_READY, no CDB monitoring)
         operand_a_valid_from_decode = (decode_if.operand_a_tag == TAG_READY);

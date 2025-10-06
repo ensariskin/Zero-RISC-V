@@ -137,7 +137,7 @@ module reorder_buffer #(
     logic [ADDR_WIDTH:0] entries_used;
     logic [ADDR_WIDTH:0] entries_free;
     
-    assign entries_used = tail_ptr_reg - head_ptr_reg;
+    assign entries_used = tail_ptr_reg - head_ptr_reg; // TODO: can be wrong we need to check MSB
     assign entries_free = BUFFER_DEPTH - entries_used;
     assign buffer_count = entries_used;
     assign buffer_empty = (entries_used == 0);
@@ -263,29 +263,29 @@ module reorder_buffer #(
     logic read_4_match_alloc_0, read_4_match_alloc_1, read_4_match_alloc_2;
     logic read_5_match_alloc_0, read_5_match_alloc_1, read_5_match_alloc_2;
 
-    assign read_0_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_0);
-    assign read_0_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_0);
-    assign read_0_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_0);
+    assign read_0_match_alloc_0 = alloc_enable_0 && (alloc_idx_0 == read_addr_0);
+    assign read_0_match_alloc_1 = alloc_enable_1 && (alloc_idx_1 == read_addr_0);
+    assign read_0_match_alloc_2 = alloc_enable_2 && (alloc_idx_2 == read_addr_0);
 
-    assign read_1_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_1);
-    assign read_1_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_1);
-    assign read_1_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_1);
+    assign read_1_match_alloc_0 = alloc_enable_0 && (alloc_idx_0 == read_addr_1);
+    assign read_1_match_alloc_1 = alloc_enable_1 && (alloc_idx_1 == read_addr_1);
+    assign read_1_match_alloc_2 = alloc_enable_2 && (alloc_idx_2 == read_addr_1);
 
-    assign read_2_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_2);
-    assign read_2_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_2);
-    assign read_2_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_2);
+    assign read_2_match_alloc_0 = alloc_enable_0 && (alloc_idx_0 == read_addr_2);
+    assign read_2_match_alloc_1 = alloc_enable_1 && (alloc_idx_1 == read_addr_2);
+    assign read_2_match_alloc_2 = alloc_enable_2 && (alloc_idx_2 == read_addr_2);
 
-    assign read_3_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_3);
-    assign read_3_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_3);
-    assign read_3_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_3);
+    assign read_3_match_alloc_0 = alloc_enable_0 && (alloc_idx_0 == read_addr_3);
+    assign read_3_match_alloc_1 = alloc_enable_1 && (alloc_idx_1 == read_addr_3);
+    assign read_3_match_alloc_2 = alloc_enable_2 && (alloc_idx_2 == read_addr_3);
 
-    assign read_4_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_4);
-    assign read_4_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_4);
-    assign read_4_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_4);
+    assign read_4_match_alloc_0 = alloc_enable_0 && (alloc_idx_0 == read_addr_4);
+    assign read_4_match_alloc_1 = alloc_enable_1 && (alloc_idx_1 == read_addr_4);
+    assign read_4_match_alloc_2 = alloc_enable_2 && (alloc_idx_2 == read_addr_4);
 
-    assign read_5_match_alloc_0 = alloc_enable_0 && (alloc_addr_0 == read_addr_5);
-    assign read_5_match_alloc_1 = alloc_enable_1 && (alloc_addr_1 == read_addr_5);
-    assign read_5_match_alloc_2 = alloc_enable_2 && (alloc_addr_2 == read_addr_5);
+    assign read_5_match_alloc_0 = alloc_enable_0 && (alloc_idx_0 == read_addr_5);
+    assign read_5_match_alloc_1 = alloc_enable_1 && (alloc_idx_1 == read_addr_5);
+    assign read_5_match_alloc_2 = alloc_enable_2 && (alloc_idx_2 == read_addr_5);
 
     //==========================================================================
     // READ PORT IMPLEMENTATION (with CDB forwarding)

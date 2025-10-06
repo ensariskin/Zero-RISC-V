@@ -44,6 +44,9 @@ module register_alias_table #(
     input logic [4:0] commit_addr_0, 
     input logic [4:0] commit_addr_1,
     input logic [4:0] commit_addr_2,
+    input logic [4:0] commit_rob_idx_0, 
+    input logic [4:0] commit_rob_idx_1,
+    input logic [4:0] commit_rob_idx_2,
     input logic [2:0] commit_valid
     //input logic [PHYS_ADDR_WIDTH-1:0] free_phys_reg_0, free_phys_reg_1, free_phys_reg_2
     
@@ -231,13 +234,19 @@ module register_alias_table #(
         end else begin
             // Update RAT for new allocations
             if(commit_valid[0] && commit_addr_0 != 0) begin
-               rat_table[commit_addr_0] <= #D {1'b0, commit_addr_0};
+                if(commit_rob_idx_0 == rat_table[commit_addr_0][4:0]) begin // Only free if the mapping matches
+                    rat_table[commit_addr_0] <= #D {1'b0, commit_addr_0};
+                end
             end
             if(commit_valid[1] && commit_addr_1 != 0) begin
-               rat_table[commit_addr_1] <= #D {1'b0, commit_addr_1};
+                if(commit_rob_idx_1 == rat_table[commit_addr_1][4:0]) begin // Only free if the mapping matches
+                    rat_table[commit_addr_1] <= #D {1'b0, commit_addr_1};
+                end
             end
             if(commit_valid[2] && commit_addr_2 != 0) begin
-               rat_table[commit_addr_2] <= #D {1'b0, commit_addr_2};
+                if(commit_rob_idx_2 == rat_table[commit_addr_2][4:0]) begin // Only free if the mapping matches
+                    rat_table[commit_addr_2] <= #D {1'b0, commit_addr_2};
+                end
             end
 
             if (decode_valid[0] && rd_write_enable_0 && rd_arch_0 != 5'h0 && allocation_success[0]) begin

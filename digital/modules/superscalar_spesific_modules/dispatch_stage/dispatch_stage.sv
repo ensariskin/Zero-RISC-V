@@ -46,7 +46,10 @@ module dispatch_stage #(
     output logic [2:0] commit_valid,
     output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0, 
     output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_1,
-    output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_2
+    output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_2,
+    output logic [4:0] commit_rob_idx_0, 
+    output logic [4:0] commit_rob_idx_1,    
+    output logic [4:0] commit_rob_idx_2
 );
 
     //==========================================================================
@@ -82,13 +85,19 @@ module dispatch_stage #(
 
     logic commit_ready_0, commit_ready_1, commit_ready_2;
     logic [DATA_WIDTH-1:0] commit_data_0, commit_data_1, commit_data_2;
+
+    logic [4:0] rob_head_idx;
     
     logic commit_exception_0, commit_exception_1, commit_exception_2;
+
+    assign commit_rob_idx_0 = rob_head_idx;
+    assign commit_rob_idx_1 = rob_head_idx + 1;
+    assign commit_rob_idx_2 = rob_head_idx + 2;
     
     //==========================================================================
-    // SHARED PHYSICAL REGISTER FILE (64 entries)
+    //Reorder Buffer
     //==========================================================================
-
+    
     reorder_buffer rob (
         .clk(clk),
         .reset(reset),
@@ -145,7 +154,8 @@ module dispatch_stage #(
         .commit_addr_2(commit_addr_2),
         .commit_exception_0(commit_exception_0), 
         .commit_exception_1(commit_exception_1), 
-        .commit_exception_2(commit_exception_2)
+        .commit_exception_2(commit_exception_2),
+        .head_ptr(rob_head_idx)
     );
     
     multi_port_register_file #(
