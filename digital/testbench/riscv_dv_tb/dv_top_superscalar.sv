@@ -525,7 +525,7 @@ module dv_top_superscalar;
             for (int i = 0; i < 16384; i++) begin
                 instruction_memory.mem[i] = 32'h00000013; // NOP (addi x0, x0, 0)
             end
-            
+            /* 
             instruction_memory.mem[0] = 32'h00590913; 
             instruction_memory.mem[1] = 32'h00590913; 
             instruction_memory.mem[2] = 32'h00590913; 
@@ -576,7 +576,8 @@ module dv_top_superscalar;
             instruction_memory.mem[47] = 32'h00590913; 
             instruction_memory.mem[48] = 32'h00590913; 
             instruction_memory.mem[49] = 32'h00590913; 
-            /* 
+            */
+             
             // Phase 1: Load integer values into first 6 registers (x1-x6)
             instruction_memory.mem[0] = 32'h00100093;  // addi x1, x0, 1       -> x1 = 1 //0
             instruction_memory.mem[1] = 32'h00200113;  // addi x2, x0, 2       -> x2 = 2 //1
@@ -613,7 +614,7 @@ module dv_top_superscalar;
             instruction_memory.mem[27] = 32'h017ccdb3; // xor x27, x25, x23      -> x27 = 1 ^ 0 = 1  //27 **
             instruction_memory.mem[28] = 32'h01adee33; // or  x28, x27, x26      -> x28 = 1 | 1 = 1  //28 **
             instruction_memory.mem[29] = 32'h00317eb3; // and x29, x2, x3        -> x29 = 2 & 3 = 2  //29
-            */
+            
             // Phase 2: Arithmetic Operations
             //instruction_memory.mem[6]  = 32'h002083b3; // add  x7, x1, x2      -> x7 = 1 + 2 = 3 -
             //instruction_memory.mem[7]  = 32'h40208433; // sub  x8, x1, x2      -> x8 = 1 - 2 = -1
