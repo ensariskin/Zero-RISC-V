@@ -28,47 +28,47 @@ module dispatch_stage #(
     // Clock and Reset
     input logic clk,
     input logic reset,
-    
+
     // Pipeline Control
     //input logic flush,
     //input logic bubble,
-    
+
     // Input from Issue Stage (3 instruction streams)
     issue_to_dispatch_if.dispatch issue_to_dispatch_0,
     issue_to_dispatch_if.dispatch issue_to_dispatch_1,
     issue_to_dispatch_if.dispatch issue_to_dispatch_2,
-    
+
     // Output to Functional Units (3 execution units)
     rs_to_exec_if.reservation_station dispatch_to_alu_0,
     rs_to_exec_if.reservation_station dispatch_to_alu_1,
     rs_to_exec_if.reservation_station dispatch_to_alu_2,
 
     output logic [2:0] commit_valid,
-    output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0, 
+    output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0,
     output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_1,
     output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_2,
-    output logic [4:0] commit_rob_idx_0, 
-    output logic [4:0] commit_rob_idx_1,    
+    output logic [4:0] commit_rob_idx_0,
+    output logic [4:0] commit_rob_idx_1,
     output logic [4:0] commit_rob_idx_2
 );
 
     //==========================================================================
     // INTERNAL SIGNALS
     //==========================================================================
-    
+
     // Physical register file interface signals
     // Read ports (6 total: 2 per reservation station)
     logic [PHYS_REG_ADDR_WIDTH-1:0] inst_0_read_addr_a, inst_0_read_addr_b;
     logic [PHYS_REG_ADDR_WIDTH-1:0] inst_1_read_addr_a, inst_1_read_addr_b;
     logic [PHYS_REG_ADDR_WIDTH-1:0] inst_2_read_addr_a, inst_2_read_addr_b;
-    
+
     // Data from ROB
     logic [DATA_WIDTH-1:0] rob_0_read_data_a, rob_0_read_data_b;
     logic [DATA_WIDTH-1:0] rob_1_read_data_a, rob_1_read_data_b;
     logic [DATA_WIDTH-1:0] rob_2_read_data_a, rob_2_read_data_b;
-    logic [1:0] rob_0_read_tag_a, rob_0_read_tag_b;
-    logic [1:0] rob_1_read_tag_a, rob_1_read_tag_b;
-    logic [1:0] rob_2_read_tag_a, rob_2_read_tag_b;
+    logic [2:0] rob_0_read_tag_a, rob_0_read_tag_b;
+    logic [2:0] rob_1_read_tag_a, rob_1_read_tag_b;
+    logic [2:0] rob_2_read_tag_a, rob_2_read_tag_b;
 
     // Data from Register File
     logic [DATA_WIDTH-1:0] reg_file_read_data_a_0, reg_file_read_data_b_0;
@@ -79,25 +79,25 @@ module dispatch_stage #(
     logic [DATA_WIDTH-1:0] inst_0_read_data_a, inst_0_read_data_b;
     logic [DATA_WIDTH-1:0] inst_1_read_data_a, inst_1_read_data_b;
     logic [DATA_WIDTH-1:0] inst_2_read_data_a, inst_2_read_data_b;
-    logic [1:0] inst_0_read_tag_a, inst_0_read_tag_b;
-    logic [1:0] inst_1_read_tag_a, inst_1_read_tag_b;
-    logic [1:0] inst_2_read_tag_a, inst_2_read_tag_b;
+    logic [2:0] inst_0_read_tag_a, inst_0_read_tag_b;
+    logic [2:0] inst_1_read_tag_a, inst_1_read_tag_b;
+    logic [2:0] inst_2_read_tag_a, inst_2_read_tag_b;
 
     logic commit_ready_0, commit_ready_1, commit_ready_2;
     logic [DATA_WIDTH-1:0] commit_data_0, commit_data_1, commit_data_2;
 
     logic [4:0] rob_head_idx;
-    
+
     logic commit_exception_0, commit_exception_1, commit_exception_2;
 
     assign commit_rob_idx_0 = rob_head_idx;
     assign commit_rob_idx_1 = rob_head_idx + 1;
     assign commit_rob_idx_2 = rob_head_idx + 2;
-    
+
     //==========================================================================
     //Reorder Buffer
     //==========================================================================
-    
+
     reorder_buffer rob (
         .clk(clk),
         .reset(reset),
@@ -108,9 +108,9 @@ module dispatch_stage #(
         .alloc_addr_0(issue_to_dispatch_0.rd_arch_addr),
         .alloc_addr_1(issue_to_dispatch_1.rd_arch_addr),
         .alloc_addr_2(issue_to_dispatch_2.rd_arch_addr),
-        .alloc_tag_0(2'b00),
-        .alloc_tag_1(2'b01),
-        .alloc_tag_2(2'b10),
+        .alloc_tag_0(3'b000),
+        .alloc_tag_1(3'b001),
+        .alloc_tag_2(3'b010),
         .cdb_valid_0(cdb_interface.cdb_valid_0 & cdb_interface.cdb_dest_reg_0[5]),
         .cdb_valid_1(cdb_interface.cdb_valid_1 & cdb_interface.cdb_dest_reg_1[5]),
         .cdb_valid_2(cdb_interface.cdb_valid_2 & cdb_interface.cdb_dest_reg_2[5]),
@@ -143,29 +143,29 @@ module dispatch_stage #(
         .read_tag_4(rob_2_read_tag_a),
         .read_tag_5(rob_2_read_tag_b),
 
-        .commit_ready_0(commit_ready_0), 
-        .commit_ready_1(commit_ready_1), 
-        .commit_ready_2(commit_ready_2), 
-        .commit_data_0(commit_data_0), 
-        .commit_data_1(commit_data_1), 
-        .commit_data_2(commit_data_2), 
+        .commit_ready_0(commit_ready_0),
+        .commit_ready_1(commit_ready_1),
+        .commit_ready_2(commit_ready_2),
+        .commit_data_0(commit_data_0),
+        .commit_data_1(commit_data_1),
+        .commit_data_2(commit_data_2),
         .commit_addr_0(commit_addr_0),
         .commit_addr_1(commit_addr_1),
         .commit_addr_2(commit_addr_2),
-        .commit_exception_0(commit_exception_0), 
-        .commit_exception_1(commit_exception_1), 
+        .commit_exception_0(commit_exception_0),
+        .commit_exception_1(commit_exception_1),
         .commit_exception_2(commit_exception_2),
         .head_ptr(rob_head_idx)
     );
-    
+
     multi_port_register_file #(
         .DATA_WIDTH(DATA_WIDTH),
-        .ADDR_WIDTH(5),  // 6 bits for 64 registers                
+        .ADDR_WIDTH(5),  // 6 bits for 64 registers
         .NUM_REGISTERS(32)      // 64 physical registers
     ) physical_reg_file (
         .clk(clk),
         .reset(reset),
-        
+
         // Read ports (descriptive naming)
         .inst_0_read_addr_a(inst_0_read_addr_a[4:0]), .inst_0_read_data_a(reg_file_read_data_a_0),   // RS0 operand A
         .inst_0_read_addr_b(inst_0_read_addr_b[4:0]), .inst_0_read_data_b(reg_file_read_data_b_0),   // RS0 operand B
@@ -173,7 +173,7 @@ module dispatch_stage #(
         .inst_1_read_addr_b(inst_1_read_addr_b[4:0]), .inst_1_read_data_b(reg_file_read_data_b_1),   // RS1 operand B
         .inst_2_read_addr_a(inst_2_read_addr_a[4:0]), .inst_2_read_data_a(reg_file_read_data_a_2),   // RS2 operand A
         .inst_2_read_addr_b(inst_2_read_addr_b[4:0]), .inst_2_read_data_b(reg_file_read_data_b_2),   // RS2 operand B
-        
+
         // Commit ports - write results from CDB when complete
         .commit_enable_0(commit_ready_0), .commit_addr_0(commit_addr_0), .commit_data_0(commit_data_0),
         .commit_enable_1(commit_ready_1), .commit_addr_1(commit_addr_1), .commit_data_1(commit_data_1),
@@ -181,54 +181,53 @@ module dispatch_stage #(
     );
 
     assign inst_0_read_data_a = inst_0_read_addr_a[5] ? rob_0_read_data_a : reg_file_read_data_a_0;
-    assign inst_0_read_tag_a  = inst_0_read_addr_a[5] ? rob_0_read_tag_a  : 2'b11; // Ready if from reg file
+    assign inst_0_read_tag_a  = inst_0_read_addr_a[5] ? rob_0_read_tag_a  : 3'b111; // Ready if from reg file
     assign inst_0_read_data_b = inst_0_read_addr_b[5] ? rob_0_read_data_b : reg_file_read_data_b_0;
-    assign inst_0_read_tag_b  = inst_0_read_addr_b[5] ? rob_0_read_tag_b  : 2'b11; // Ready if from reg file
+    assign inst_0_read_tag_b  = inst_0_read_addr_b[5] ? rob_0_read_tag_b  : 3'b111; // Ready if from reg file
     assign inst_1_read_data_a = inst_1_read_addr_a[5] ? rob_1_read_data_a : reg_file_read_data_a_1;
-    assign inst_1_read_tag_a  = inst_1_read_addr_a[5] ? rob_1_read_tag_a  : 2'b11; // Ready if from reg file
+    assign inst_1_read_tag_a  = inst_1_read_addr_a[5] ? rob_1_read_tag_a  : 3'b111; // Ready if from reg file
     assign inst_1_read_data_b = inst_1_read_addr_b[5] ? rob_1_read_data_b : reg_file_read_data_b_1;
-    assign inst_1_read_tag_b  = inst_1_read_addr_b[5] ? rob_1_read_tag_b  : 2'b11; // Ready if from reg file
+    assign inst_1_read_tag_b  = inst_1_read_addr_b[5] ? rob_1_read_tag_b  : 3'b111; // Ready if from reg file
     assign inst_2_read_data_a = inst_2_read_addr_a[5] ? rob_2_read_data_a : reg_file_read_data_a_2;
-    assign inst_2_read_tag_a  = inst_2_read_addr_a[5] ? rob_2_read_tag_a  : 2'b11; // Ready if from reg file
+    assign inst_2_read_tag_a  = inst_2_read_addr_a[5] ? rob_2_read_tag_a  : 3'b111; // Ready if from reg file
     assign inst_2_read_data_b = inst_2_read_addr_b[5] ? rob_2_read_data_b : reg_file_read_data_b_2;
-    assign inst_2_read_tag_b  = inst_2_read_addr_b[5] ? rob_2_read_tag_b  : 2'b11; // Ready if from reg file
-   
-    
+    assign inst_2_read_tag_b  = inst_2_read_addr_b[5] ? rob_2_read_tag_b  : 3'b111; // Ready if from reg file
+
     //==========================================================================
     // COMMON DATA BUS (CDB) INTERFACE
     //==========================================================================
-    
+
     cdb_if #(
         .DATA_WIDTH(DATA_WIDTH),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH)
     ) cdb_interface ();
-    
+
     //==========================================================================
     // INTERFACE BRIDGE: Convert new issue_to_dispatch_if to register file access
     //==========================================================================
-    
+
     // Connect interface addresses to register file read ports
     // RS0: Read ports 0 and 1
     assign inst_0_read_addr_a = issue_to_dispatch_0.operand_a_phys_addr;  // RS0 operand A
     assign inst_0_read_addr_b = issue_to_dispatch_0.operand_b_phys_addr;  // RS0 operand B
-    
-    // RS1: Read ports 2 and 3  
+
+    // RS1: Read ports 2 and 3
     assign inst_1_read_addr_a = issue_to_dispatch_1.operand_a_phys_addr;  // RS1 operand A
     assign inst_1_read_addr_b = issue_to_dispatch_1.operand_b_phys_addr;  // RS1 operand B
-    
+
     // RS2: Read ports 4 and 5
     assign inst_2_read_addr_a = issue_to_dispatch_2.operand_a_phys_addr;  // RS2 operand A
     assign inst_2_read_addr_b = issue_to_dispatch_2.operand_b_phys_addr;  // RS2 operand B
-    
+
     //==========================================================================
     // INTERNAL INTERFACES: Create legacy interfaces for reservation stations
     //==========================================================================
-    
+
     // Create internal decode_to_rs_if interfaces for each reservation station
     decode_to_rs_if internal_rs_if_0();
     decode_to_rs_if internal_rs_if_1();
     decode_to_rs_if internal_rs_if_2();
-    
+
     // Connect new interfaces directly to internal interfaces
     // RS0 interface
     assign internal_rs_if_0.dispatch_valid = issue_to_dispatch_0.dispatch_valid;
@@ -244,7 +243,7 @@ module dispatch_stage #(
     assign internal_rs_if_0.pc_value_at_prediction = issue_to_dispatch_0.pc_value_at_prediction;
     assign internal_rs_if_0.branch_sel = issue_to_dispatch_0.branch_sel;
     assign internal_rs_if_0.branch_prediction = issue_to_dispatch_0.branch_prediction;
-    
+
     // RS1 interface
     assign internal_rs_if_1.dispatch_valid = issue_to_dispatch_1.dispatch_valid;
     assign issue_to_dispatch_1.dispatch_ready = internal_rs_if_1.dispatch_ready;
@@ -259,7 +258,7 @@ module dispatch_stage #(
     assign internal_rs_if_1.pc_value_at_prediction = issue_to_dispatch_1.pc_value_at_prediction;
     assign internal_rs_if_1.branch_sel = issue_to_dispatch_1.branch_sel;
     assign internal_rs_if_1.branch_prediction = issue_to_dispatch_1.branch_prediction;
-    
+
     // RS2 interface
     assign internal_rs_if_2.dispatch_valid = issue_to_dispatch_2.dispatch_valid;
     assign issue_to_dispatch_2.dispatch_ready = internal_rs_if_2.dispatch_ready;
@@ -274,76 +273,76 @@ module dispatch_stage #(
     assign internal_rs_if_2.pc_value_at_prediction = issue_to_dispatch_2.pc_value_at_prediction;
     assign internal_rs_if_2.branch_sel = issue_to_dispatch_2.branch_sel;
     assign internal_rs_if_2.branch_prediction = issue_to_dispatch_2.branch_prediction;
-    
+
     //==========================================================================
     // RESERVATION STATION 0 (ALU0)
     //==========================================================================
-    
+
     reservation_station #(
         .DATA_WIDTH(DATA_WIDTH),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
-        .ALU_TAG(2'b00)  // ALU0 tag
+        .ALU_TAG(3'b000)  // ALU0 tag
     ) rs_0 (
         .clk(clk),
         .reset(reset),
-        
+
         // Interface to issue stage
         .decode_if(internal_rs_if_0),
-        
+
         // Interface to CDB
         .cdb_if_port(cdb_interface.rs0),  // Use rs0 modport
-        
+
         // Interface to functional unit
         .exec_if(dispatch_to_alu_0)
     );
-    
+
     //==========================================================================
-    // RESERVATION STATION 1 (ALU1)  
+    // RESERVATION STATION 1 (ALU1)
     //==========================================================================
-    
+
     reservation_station #(
         .DATA_WIDTH(DATA_WIDTH),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
-        .ALU_TAG(2'b01)  // ALU1 tag
+        .ALU_TAG(3'b001)  // ALU1 tag
     ) rs_1 (
         .clk(clk),
         .reset(reset),
-        
+
         // Interface to issue stage
         .decode_if(internal_rs_if_1),
-        
+
         // Interface to CDB
         .cdb_if_port(cdb_interface.rs1),  // Use rs1 modport
-        
+
         // Interface to functional unit
         .exec_if(dispatch_to_alu_1)
     );
-    
+
     //==========================================================================
     // RESERVATION STATION 2 (ALU2)
     //==========================================================================
-    
+
     reservation_station #(
         .DATA_WIDTH(DATA_WIDTH),
         .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
-        .ALU_TAG(2'b10)  // ALU2 tag
+        .ALU_TAG(3'b010)  // ALU2 tag
     ) rs_2 (
         .clk(clk),
         .reset(reset),
-        
+
         // Interface to issue stage
         .decode_if(internal_rs_if_2),
-        
+
         // Interface to CDB
         .cdb_if_port(cdb_interface.rs2),  // Use rs2 modport
-        
+
         // Interface to functional unit
         .exec_if(dispatch_to_alu_2)
     );
 
     logic [1:0] active_rs_number;
-    assign active_rs_number = cdb_interface.cdb_valid_0 + 
-                              cdb_interface.cdb_valid_1 + 
+    assign active_rs_number = cdb_interface.cdb_valid_0 +
+                              cdb_interface.cdb_valid_1 +
                               cdb_interface.cdb_valid_2;
 
     assign commit_valid = {commit_ready_2, commit_ready_1, commit_ready_0};
@@ -352,17 +351,17 @@ module dispatch_stage #(
     //==========================================================================
     // STATUS AND DEBUG OUTPUTS
     //==========================================================================
-    /* 
+    /*
     // Track reservation station occupancy
     assign rs_occupancy[0] = issue_to_dispatch_0.dispatch_valid && issue_to_dispatch_0.dispatch_ready;
     assign rs_occupancy[1] = issue_to_dispatch_1.dispatch_valid && issue_to_dispatch_1.dispatch_ready;
     assign rs_occupancy[2] = issue_to_dispatch_2.dispatch_valid && issue_to_dispatch_2.dispatch_ready;
-    
+
     // Track which reservation stations are ready to issue
     assign rs_ready_to_issue[0] = dispatch_to_alu_0.issue_valid;
     assign rs_ready_to_issue[1] = dispatch_to_alu_1.issue_valid;
     assign rs_ready_to_issue[2] = dispatch_to_alu_2.issue_valid;
-    
+
     // Register file utilization (placeholder - can be enhanced)
     assign reg_file_utilization = NUM_PHYS_REGS; // TODO: Implement actual utilization counting
     */

@@ -16,20 +16,20 @@
 //
 // Buffer Entry Structure:
 //     - data[31:0]: Result data
-//     - tag[2:0]: Producer tag (2'b11 = valid/ready)
+//     - tag[2:0]: Producer tag (3'b111 = valid/ready)
 //     - executed: Indicates instruction has completed
 //     - exception: Indicates exception/misprediction occurred
 //////////////////////////////////////////////////////////////////////////////////
 
 module reorder_buffer #(
     parameter DATA_WIDTH = 32,
-    parameter TAG_WIDTH = 2,
+    parameter TAG_WIDTH = 3,
     parameter BUFFER_DEPTH = 32, // Must be power of 2
     parameter ADDR_WIDTH = $clog2(BUFFER_DEPTH)
 )(
     input  logic clk,
     input  logic reset,
-    
+
     //==========================================================================
     // ALLOCATION INTERFACE (from Register Alias Table)
     //==========================================================================
@@ -43,7 +43,7 @@ module reorder_buffer #(
     input logic [ADDR_WIDTH-1:0] alloc_addr_1,
     input logic [ADDR_WIDTH-1:0] alloc_addr_2,
     output logic alloc_success,  // All requested allocations succeeded
-    
+
     //==========================================================================
     // CDB INTERFACE (from execution units)
     //==========================================================================
@@ -59,7 +59,7 @@ module reorder_buffer #(
     input  logic cdb_exception_0,  // Misprediction/exception flag
     input  logic cdb_exception_1,
     input  logic cdb_exception_2,
-    
+
     //==========================================================================
     // READ INTERFACE (for reservation stations)
     //==========================================================================
@@ -81,7 +81,7 @@ module reorder_buffer #(
     output logic [TAG_WIDTH-1:0] read_tag_3,
     output logic [TAG_WIDTH-1:0] read_tag_4,
     output logic [TAG_WIDTH-1:0] read_tag_5,
-    
+
     //==========================================================================
     // COMMIT INTERFACE (in-order commits)
     //==========================================================================
@@ -110,39 +110,39 @@ module reorder_buffer #(
 
     localparam D = 1;  // Delay for simulation
     localparam TAG_VALID = 3'b111;  // Tag indicating data is valid and ready
-    
+
     //==========================================================================
     // BUFFER STORAGE
     //==========================================================================
-    
+
     // Buffer entry structure
     logic [BUFFER_DEPTH-1:0][DATA_WIDTH-1:0] buffer_data;
     logic [BUFFER_DEPTH-1:0][TAG_WIDTH-1:0] buffer_tag;
     logic [BUFFER_DEPTH-1:0][ADDR_WIDTH-1:0] buffer_addr;
     logic [BUFFER_DEPTH-1:0] buffer_executed;
     logic [BUFFER_DEPTH-1:0] buffer_exception;
-    
+
     // Head and tail pointers (extra bit for full/empty detection)
     logic [ADDR_WIDTH:0] head_ptr_reg;
     logic [ADDR_WIDTH:0] tail_ptr_reg;
-    
+
     // Assign outputs
     assign head_ptr = head_ptr_reg[ADDR_WIDTH-1:0];
     assign tail_ptr = tail_ptr_reg[ADDR_WIDTH-1:0];
-    
+
     //==========================================================================
     // BUFFER STATUS
     //==========================================================================
-    
+
     logic [ADDR_WIDTH:0] entries_used;
     logic [ADDR_WIDTH:0] entries_free;
-    
+
     assign entries_used = tail_ptr_reg - head_ptr_reg; // TODO: can be wrong we need to check MSB
     assign entries_free = BUFFER_DEPTH - entries_used;
     assign buffer_count = entries_used;
     assign buffer_empty = (entries_used == 0);
     assign buffer_full = (entries_used == BUFFER_DEPTH);
-    
+
     //==========================================================================
     // ALLOCATION LOGIC
     //==========================================================================
@@ -152,20 +152,20 @@ module reorder_buffer #(
 
     logic [1:0] num_alloc_requests;
     logic [ADDR_WIDTH:0] next_tail_ptr;
-    
+
     // Count number of allocation requests
     always_comb begin
         num_alloc_requests = alloc_enable_0 + alloc_enable_1 + alloc_enable_2;
     end
-    
+
     // Check if allocation can succeed
     assign alloc_success = (entries_free >= num_alloc_requests); //todo unnecessary?
-    
+
     // Assign allocation addresses (current tail position)
     assign alloc_idx_0 = tail_ptr_reg[ADDR_WIDTH-1:0];
     assign alloc_idx_1 = (tail_ptr_reg[ADDR_WIDTH-1:0] + alloc_enable_0) % BUFFER_DEPTH;
     assign alloc_idx_2 = (tail_ptr_reg[ADDR_WIDTH-1:0] + alloc_enable_0 + alloc_enable_1) % BUFFER_DEPTH;
-    
+
     // Calculate next tail pointer
     always_comb begin
         next_tail_ptr = tail_ptr_reg;
@@ -173,29 +173,29 @@ module reorder_buffer #(
             next_tail_ptr = tail_ptr_reg + num_alloc_requests;
         end
     end
-    
+
     //==========================================================================
     // COMMIT LOGIC (In-order commits from head)
     //==========================================================================
-    
+
     logic [ADDR_WIDTH-1:0] head_idx, head_plus_1_idx, head_plus_2_idx;
     logic [ADDR_WIDTH-1:0] head_idx_d1, head_plus_1_idx_d1, head_plus_2_idx_d1;
     logic [1:0] num_commits;
     logic [ADDR_WIDTH:0] next_head_ptr;
-    
+
     assign head_idx = head_ptr_reg[ADDR_WIDTH-1:0];
     assign head_plus_1_idx = (head_ptr_reg[ADDR_WIDTH-1:0] + 1'b1) % BUFFER_DEPTH;
     assign head_plus_2_idx = (head_ptr_reg[ADDR_WIDTH-1:0] + 2'b10) % BUFFER_DEPTH;
-    
+
     // Commit ready signals - in-order commit requirement
     assign commit_ready_0 = !buffer_empty && buffer_executed[head_idx];
-    assign commit_ready_1 = (entries_used >= 2) && buffer_executed[head_idx] && 
+    assign commit_ready_1 = (entries_used >= 2) && buffer_executed[head_idx] &&
                             buffer_executed[head_plus_1_idx];
-    assign commit_ready_2 = (entries_used >= 3) && buffer_executed[head_idx] && 
-                            buffer_executed[head_plus_1_idx] && 
-                            buffer_executed[head_plus_2_idx]; 
+    assign commit_ready_2 = (entries_used >= 3) && buffer_executed[head_idx] &&
+                            buffer_executed[head_plus_1_idx] &&
+                            buffer_executed[head_plus_2_idx];
                             // todo maybe check misprediction here too?
-    
+
     // Commit data outputs
     assign commit_data_0 = buffer_data[head_idx];
     assign commit_data_1 = buffer_data[head_plus_1_idx];
@@ -206,21 +206,21 @@ module reorder_buffer #(
     assign commit_exception_0 = buffer_exception[head_idx];
     assign commit_exception_1 = buffer_exception[head_plus_1_idx];
     assign commit_exception_2 = buffer_exception[head_plus_2_idx];
-    
+
     // Count number of commits
     always_comb begin
         num_commits = commit_ready_0 + commit_ready_1 + commit_ready_2;
     end
-    
+
     // Calculate next head pointer
     always_comb begin
         next_head_ptr = head_ptr_reg + num_commits; // default
     end
-    
+
     //==========================================================================
     // CDB UPDATE LOGIC (with forwarding to read ports)
     //==========================================================================
-    
+
     // Address matching signals for CDB forwarding
     logic read_0_match_cdb_0, read_0_match_cdb_1, read_0_match_cdb_2;
     logic read_1_match_cdb_0, read_1_match_cdb_1, read_1_match_cdb_2;
@@ -228,31 +228,31 @@ module reorder_buffer #(
     logic read_3_match_cdb_0, read_3_match_cdb_1, read_3_match_cdb_2;
     logic read_4_match_cdb_0, read_4_match_cdb_1, read_4_match_cdb_2;
     logic read_5_match_cdb_0, read_5_match_cdb_1, read_5_match_cdb_2;
-    
+
     assign read_0_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_0);
     assign read_0_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_0);
     assign read_0_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_0);
-    
+
     assign read_1_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_1);
     assign read_1_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_1);
     assign read_1_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_1);
-    
+
     assign read_2_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_2);
     assign read_2_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_2);
     assign read_2_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_2);
-    
+
     assign read_3_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_3);
     assign read_3_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_3);
     assign read_3_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_3);
-    
+
     assign read_4_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_4);
     assign read_4_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_4);
     assign read_4_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_4);
-    
+
     assign read_5_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_5);
     assign read_5_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_5);
     assign read_5_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_5);
-    
+
     //==========================================================================
     // Forwarding from allocation to read ports
     //==========================================================================
@@ -290,7 +290,7 @@ module reorder_buffer #(
     //==========================================================================
     // READ PORT IMPLEMENTATION (with CDB forwarding)
     //==========================================================================
-    
+
     // Read port 0: Forward from CDB if available, otherwise read from buffer
     always_comb begin
         if (read_0_match_cdb_2) begin
@@ -316,7 +316,7 @@ module reorder_buffer #(
             read_tag_0 = buffer_tag[read_addr_0];
         end
     end
-    
+
     // Read port 1
     always_comb begin
         if (read_1_match_cdb_2) begin
@@ -342,7 +342,7 @@ module reorder_buffer #(
             read_tag_1 = buffer_tag[read_addr_1];
         end
     end
-    
+
     // Read port 2
     always_comb begin
         if (read_2_match_cdb_2) begin
@@ -368,7 +368,7 @@ module reorder_buffer #(
             read_tag_2 = buffer_tag[read_addr_2];
         end
     end
-    
+
     // Read port 3
     always_comb begin
         if (read_3_match_cdb_2) begin
@@ -394,7 +394,7 @@ module reorder_buffer #(
             read_tag_3 = buffer_tag[read_addr_3];
         end
     end
-    
+
     // Read port 4
     always_comb begin
         if (read_4_match_cdb_2) begin
@@ -420,7 +420,7 @@ module reorder_buffer #(
             read_tag_4 = buffer_tag[read_addr_4];
         end
     end
-    
+
     // Read port 5
     always_comb begin
         if (read_5_match_cdb_2) begin
@@ -446,11 +446,11 @@ module reorder_buffer #(
             read_tag_5 = buffer_tag[read_addr_5];
         end
     end
-    
+
     //==========================================================================
     // SEQUENTIAL LOGIC - BUFFER UPDATES
     //==========================================================================
-    
+
     always_ff @(posedge clk or negedge reset) begin
         if (!reset) begin
             // Reset all buffer entries
@@ -461,7 +461,7 @@ module reorder_buffer #(
                 buffer_executed[i] <= #D 1'b0;
                 buffer_exception[i] <= #D 1'b0;
             end
-            
+
             // Reset pointers
             head_ptr_reg <= #D '0;
             tail_ptr_reg <= #D '0;
@@ -469,7 +469,7 @@ module reorder_buffer #(
             head_idx_d1 <= #D 5'd0;
             head_plus_1_idx_d1 <= #D 5'd1;
             head_plus_2_idx_d1 <= #D 5'd2;
-            
+
         end else begin
             // Update head pointer (commits)
             head_ptr_reg <= #D next_head_ptr;
@@ -480,7 +480,7 @@ module reorder_buffer #(
             head_idx_d1 <= #D head_idx;
             head_plus_1_idx_d1 <= #D head_plus_1_idx;
             head_plus_2_idx_d1 <= #D head_plus_2_idx;
-            
+
             //==================================================================
             // ALLOCATION - Initialize new entries
             //==================================================================
@@ -507,7 +507,7 @@ module reorder_buffer #(
                     buffer_exception[alloc_idx_2] <= #D 1'b0;
                 end
             end
-            
+
             //==================================================================
             // CDB UPDATES - Write results from execution units
             //==================================================================
@@ -556,11 +556,11 @@ module reorder_buffer #(
 
         end
     end
-    
+
     //==========================================================================
     // ASSERTIONS FOR DEBUG
     //==========================================================================
-    
+
     // synthesis translate_off
     always_ff @(posedge clk) begin
         if (reset) begin
@@ -568,7 +568,7 @@ module reorder_buffer #(
             if (num_alloc_requests > 0 && !alloc_success) begin
                 $warning("[%t] ROB allocation failed - buffer full or insufficient space", $time);
             end
-            
+
             // Check pointer wraparound
             if (head_ptr_reg > 2*BUFFER_DEPTH) begin
                 $error("[%t] ROB head pointer out of range: %d", $time, head_ptr_reg);

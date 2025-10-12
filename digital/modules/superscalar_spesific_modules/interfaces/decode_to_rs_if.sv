@@ -22,26 +22,26 @@ interface decode_to_rs_if #(
     // Dispatch signals (decode → RS)
     logic dispatch_valid;              // Valid instruction being dispatched
     logic dispatch_ready;              // RS can accept new instruction (RS → decode)
-    
+
     // Reduced control signals (decode → RS) - removed register address fields
     logic [10:0] control_signals;      // Bits [10:7] = func_sel, [6] = we, [5] = pc_sel, [4:0] = other control
     logic [DATA_WIDTH-1:0] pc;
-    
+
     // Source operands with dependency info (decode → RS)
     logic [DATA_WIDTH-1:0] operand_a_data;
     logic [DATA_WIDTH-1:0] operand_b_data;    // Already muxed (reg_data OR immediate)
     logic [DATA_WIDTH-1:0] store_data;        // Data to be stored (for store instructions)
-    logic [1:0] operand_a_tag;         // Which ALU will produce operand A
-    logic [1:0] operand_b_tag;         // Which ALU will produce operand B (or 2'b11 if immediate)
-    
+    logic [2:0] operand_a_tag;         // Which ALU will produce operand A
+    logic [2:0] operand_b_tag;         // Which ALU will produce operand B (or 2'b11 if immediate)
+
     // Physical destination register (decode → RS)
     logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_addr;
-    
+
     // Branch prediction info (decode → RS)
     logic [DATA_WIDTH-1:0] pc_value_at_prediction;
     logic [2:0] branch_sel;
     logic branch_prediction;
-    
+
     // Modport definitions
     modport decode (
         output dispatch_valid,
@@ -58,7 +58,7 @@ interface decode_to_rs_if #(
         output branch_sel,
         output branch_prediction
     );
-    
+
     modport reservation_station (
         input  dispatch_valid,
         output dispatch_ready,
