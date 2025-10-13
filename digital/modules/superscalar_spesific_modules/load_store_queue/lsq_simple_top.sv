@@ -37,7 +37,6 @@ module lsq_simple_top
       // Allocation 0
       input  logic                            alloc_valid_0_i,
       input  logic                            alloc_is_store_0_i,
-      input  logic [ROB_ADDR_WIDTH-1:0]       alloc_rob_idx_0_i,
       input  logic [PHYS_REG_WIDTH-1:0]       alloc_phys_reg_0_i,
       input  logic [TAG_WIDTH-1:0]            alloc_addr_tag_0_i,
       input  logic [DATA_WIDTH-1:0]           alloc_data_operand_0_i,
@@ -48,7 +47,6 @@ module lsq_simple_top
       // Allocation 1
       input  logic                            alloc_valid_1_i,
       input  logic                            alloc_is_store_1_i,
-      input  logic [ROB_ADDR_WIDTH-1:0]       alloc_rob_idx_1_i,
       input  logic [PHYS_REG_WIDTH-1:0]       alloc_phys_reg_1_i,
       input  logic [TAG_WIDTH-1:0]            alloc_addr_tag_1_i,
       input  logic [DATA_WIDTH-1:0]           alloc_data_operand_1_i,
@@ -59,7 +57,6 @@ module lsq_simple_top
       // Allocation 2
       input  logic                            alloc_valid_2_i,
       input  logic                            alloc_is_store_2_i,
-      input  logic [ROB_ADDR_WIDTH-1:0]       alloc_rob_idx_2_i,
       input  logic [PHYS_REG_WIDTH-1:0]       alloc_phys_reg_2_i,
       input  logic [TAG_WIDTH-1:0]            alloc_addr_tag_2_i,
       input  logic [DATA_WIDTH-1:0]           alloc_data_operand_2_i,
@@ -69,28 +66,7 @@ module lsq_simple_top
 
       output logic                            alloc_ready_o,
 
-      // CDB monitoring (for address and data resolution)
-      // CDB 0
-      input  logic                            cdb_valid_0_i,
-      input  logic [TAG_WIDTH-1:0]            cdb_tag_0_i,
-      input  logic [DATA_WIDTH-1:0]           cdb_data_0_i,
-
-      // CDB 1
-      input  logic                            cdb_valid_1_i,
-      input  logic [TAG_WIDTH-1:0]            cdb_tag_1_i,
-      input  logic [DATA_WIDTH-1:0]           cdb_data_1_i,
-
-      // CDB 2
-      input  logic                            cdb_valid_2_i,
-      input  logic [TAG_WIDTH-1:0]            cdb_tag_2_i,
-      input  logic [DATA_WIDTH-1:0]           cdb_data_2_i,
-
-      // CDB broadcast (for load results)
-      output logic                            load_result_valid_o,
-      output logic [DATA_WIDTH-1:0]           load_result_data_o,
-      output logic [PHYS_REG_WIDTH-1:0]       load_result_phys_reg_o,
-      output logic [ROB_ADDR_WIDTH-1:0]       load_result_rob_idx_o,
-
+      cdb_if cdb_interface,
       // Memory interface (simple - one operation at a time)
       output logic                            mem_req_valid_o,
       output logic                            mem_req_is_store_o,
@@ -119,7 +95,6 @@ module lsq_simple_top
    typedef struct packed {
       logic                       valid;
       logic                       is_store;
-      logic [ROB_ADDR_WIDTH-1:0]  rob_idx;
       logic [PHYS_REG_WIDTH-1:0]  phys_reg;       // For loads only
 
       // Address
@@ -212,7 +187,6 @@ module lsq_simple_top
            
             lsq_buffer[alloc_0_ptr].valid       <= #D 1'b1;
             lsq_buffer[alloc_0_ptr].is_store    <= #D alloc_is_store_0_i;
-            lsq_buffer[alloc_0_ptr].rob_idx     <= #D alloc_rob_idx_0_i;
             lsq_buffer[alloc_0_ptr].phys_reg    <= #D alloc_phys_reg_0_i;
             lsq_buffer[alloc_0_ptr].size        <= #D mem_size_t'(alloc_size_0_i);
             lsq_buffer[alloc_0_ptr].sign_extend <= #D alloc_sign_extend_0_i;
@@ -248,7 +222,6 @@ module lsq_simple_top
 
             lsq_buffer[alloc_1_ptr].valid       <= #D 1'b1;
             lsq_buffer[alloc_1_ptr].is_store    <= #D alloc_is_store_1_i;
-            lsq_buffer[alloc_1_ptr].rob_idx     <= #D alloc_rob_idx_1_i;
             lsq_buffer[alloc_1_ptr].phys_reg    <= #D alloc_phys_reg_1_i;
             lsq_buffer[alloc_1_ptr].size        <= #D mem_size_t'(alloc_size_1_i);
             lsq_buffer[alloc_1_ptr].sign_extend <= #D alloc_sign_extend_1_i;
@@ -281,7 +254,6 @@ module lsq_simple_top
          if (actual_alloc_2) begin
             lsq_buffer[alloc_2_ptr].valid       <= #D 1'b1;
             lsq_buffer[alloc_2_ptr].is_store    <= #D alloc_is_store_2_i;
-            lsq_buffer[alloc_2_ptr].rob_idx     <= #D alloc_rob_idx_2_i;
             lsq_buffer[alloc_2_ptr].phys_reg    <= #D alloc_phys_reg_2_i;
             lsq_buffer[alloc_2_ptr].size        <= #D mem_size_t'(alloc_size_2_i);
             lsq_buffer[alloc_2_ptr].sign_extend <= #D alloc_sign_extend_2_i;
@@ -322,37 +294,37 @@ module lsq_simple_top
             if (lsq_buffer[i].valid) begin
                // Address resolution
                if (!lsq_buffer[i].addr_valid) begin
-                  if ((cdb_valid_0_i && lsq_buffer[i].addr_tag == cdb_tag_0_i) ||
-                        (cdb_valid_1_i && lsq_buffer[i].addr_tag == cdb_tag_1_i) ||
-                        (cdb_valid_2_i && lsq_buffer[i].addr_tag == cdb_tag_2_i)) begin
+                  if ((cdb_interface.cdb_valid_0 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_0) ||
+                        (cdb_interface.cdb_valid_1 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_1) ||
+                        (cdb_interface.cdb_valid_2 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_2)) begin
 
                      lsq_buffer[i].addr_valid <= #D 1'b1;
                      lsq_buffer[i].addr_tag   <= #D TAG_READY;
 
-                     if (cdb_valid_0_i && lsq_buffer[i].addr_tag == cdb_tag_0_i)
-                        lsq_buffer[i].address <= #D cdb_data_0_i;
-                     else if (cdb_valid_1_i && lsq_buffer[i].addr_tag == cdb_tag_1_i)
-                        lsq_buffer[i].address <= #D cdb_data_1_i;
+                     if (cdb_interface.cdb_valid_0 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_0)
+                        lsq_buffer[i].address <= #D cdb_interface.cdb_data_0;
+                     else if (cdb_interface.cdb_valid_1 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_1)
+                        lsq_buffer[i].address <= #D cdb_interface.cdb_data_1;
                      else
-                        lsq_buffer[i].address <= #D cdb_data_2_i;
+                        lsq_buffer[i].address <= #D cdb_interface.cdb_data_2;
                   end
                end
 
                // Data resolution (stores only)
                if (lsq_buffer[i].is_store && !lsq_buffer[i].data_valid) begin
-                  if ((cdb_valid_0_i && lsq_buffer[i].data_tag == cdb_tag_0_i) ||
-                        (cdb_valid_1_i && lsq_buffer[i].data_tag == cdb_tag_1_i) ||
-                        (cdb_valid_2_i && lsq_buffer[i].data_tag == cdb_tag_2_i)) begin
+                  if ((cdb_interface.cdb_valid_0 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_0) ||
+                        (cdb_interface.cdb_valid_1 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_1) ||
+                        (cdb_interface.cdb_valid_2 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_2)) begin
 
                      lsq_buffer[i].data_valid <= #D 1'b1;
                      lsq_buffer[i].data_tag   <= #D TAG_READY;
 
-                     if (cdb_valid_0_i && lsq_buffer[i].data_tag == cdb_tag_0_i)
-                        lsq_buffer[i].data <= #D cdb_data_0_i;
-                     else if (cdb_valid_1_i && lsq_buffer[i].data_tag == cdb_tag_1_i)
-                        lsq_buffer[i].data <= #D cdb_data_1_i;
+                     if (cdb_interface.cdb_valid_0 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_0)
+                        lsq_buffer[i].data <= #D cdb_interface.cdb_data_0;
+                     else if (cdb_interface.cdb_valid_1 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_1)
+                        lsq_buffer[i].data <= #D cdb_interface.cdb_data_1;
                      else
-                        lsq_buffer[i].data <= #D cdb_data_2_i;
+                        lsq_buffer[i].data <= #D cdb_interface.cdb_data_2;
                   end
                end
             end
@@ -405,14 +377,18 @@ module lsq_simple_top
    //==========================================================================
    // MEMORY RESPONSE AND CDB BROADCAST (for loads)
    //==========================================================================
-
-   logic load_completing;
-   assign load_completing = mem_resp_valid_i && !lsq_buffer[head_idx].is_store;
-
-   assign load_result_valid_o = load_completing;
+   /* 
+   assign load_result_valid_o = mem_resp_valid_i && !lsq_buffer[head_idx].is_store;
    assign load_result_data_o = mem_resp_data_i;
    assign load_result_phys_reg_o = lsq_buffer[head_idx].phys_reg;
    assign load_result_rob_idx_o = lsq_buffer[head_idx].rob_idx;
+   */
+   // todo use buffer data
+   assign cdb_interface.cdb_valid_3 = mem_resp_valid_i;
+   assign cdb_interface.cdb_tag_3 = 3'b011;
+   assign cdb_interface.cdb_data_3 = mem_resp_data_i;
+   assign cdb_interface.cdb_dest_reg_3 = lsq_buffer[head_idx].phys_reg;
+
 
 
 endmodule

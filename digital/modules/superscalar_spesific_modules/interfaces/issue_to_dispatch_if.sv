@@ -40,6 +40,7 @@ interface issue_to_dispatch_if #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] operand_b_phys_addr;  // Physical address for rs2
     logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_addr;         // Destination physical register
     logic [PHYS_REG_ADDR_WIDTH-2:0] rd_arch_addr;         // Destination physical register
+    logic [2:0]                     alloc_tag;
     // Immediate value (for immediate instructions)
     logic [DATA_WIDTH-1:0] immediate_value;         // Sign-extended immediate
     
@@ -60,6 +61,7 @@ interface issue_to_dispatch_if #(
         output operand_b_phys_addr,
         output rd_phys_addr,
         output rd_arch_addr,
+        output alloc_tag,
         output immediate_value
     );
     
@@ -76,6 +78,7 @@ interface issue_to_dispatch_if #(
         input  operand_b_phys_addr,
         input  rd_phys_addr,
         input  rd_arch_addr,
+        input  alloc_tag,
         input  immediate_value
     );
 

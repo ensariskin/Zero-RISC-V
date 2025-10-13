@@ -169,6 +169,11 @@ module rv32i_superscalar_core #(
     logic instruction_valid;
     logic [1:0] privilege_mode;
     logic halted;
+
+    cdb_if #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .PHYS_REG_ADDR_WIDTH(6)
+    ) cdb_interface ();
     
     //==========================================================================
     // FETCH STAGE (fetch_buffer_top)
@@ -330,6 +335,8 @@ module rv32i_superscalar_core #(
         .dispatch_to_alu_0(dispatch_to_alu_0_if.reservation_station),
         .dispatch_to_alu_1(dispatch_to_alu_1_if.reservation_station),
         .dispatch_to_alu_2(dispatch_to_alu_2_if.reservation_station),
+
+        .cdb_interface(cdb_interface),
 
         .commit_valid(commit_valid),
         .commit_addr_0(commit_addr_0),

@@ -50,15 +50,19 @@ module reorder_buffer #(
     input  logic cdb_valid_0,
     input  logic cdb_valid_1,
     input  logic cdb_valid_2,
+    input  logic cdb_valid_3,
     input  logic [ADDR_WIDTH-1:0] cdb_addr_0,
     input  logic [ADDR_WIDTH-1:0] cdb_addr_1,
     input  logic [ADDR_WIDTH-1:0] cdb_addr_2,
+    input  logic [ADDR_WIDTH-1:0] cdb_addr_3,
     input  logic [DATA_WIDTH-1:0] cdb_data_0,
     input  logic [DATA_WIDTH-1:0] cdb_data_1,
     input  logic [DATA_WIDTH-1:0] cdb_data_2,
+    input  logic [DATA_WIDTH-1:0] cdb_data_3,
     input  logic cdb_exception_0,  // Misprediction/exception flag
     input  logic cdb_exception_1,
     input  logic cdb_exception_2,
+    input  logic cdb_exception_3,
 
     //==========================================================================
     // READ INTERFACE (for reservation stations)
@@ -222,36 +226,42 @@ module reorder_buffer #(
     //==========================================================================
 
     // Address matching signals for CDB forwarding
-    logic read_0_match_cdb_0, read_0_match_cdb_1, read_0_match_cdb_2;
-    logic read_1_match_cdb_0, read_1_match_cdb_1, read_1_match_cdb_2;
-    logic read_2_match_cdb_0, read_2_match_cdb_1, read_2_match_cdb_2;
-    logic read_3_match_cdb_0, read_3_match_cdb_1, read_3_match_cdb_2;
-    logic read_4_match_cdb_0, read_4_match_cdb_1, read_4_match_cdb_2;
-    logic read_5_match_cdb_0, read_5_match_cdb_1, read_5_match_cdb_2;
+    logic read_0_match_cdb_0, read_0_match_cdb_1, read_0_match_cdb_2, read_0_match_cdb_3;
+    logic read_1_match_cdb_0, read_1_match_cdb_1, read_1_match_cdb_2, read_1_match_cdb_3;
+    logic read_2_match_cdb_0, read_2_match_cdb_1, read_2_match_cdb_2, read_2_match_cdb_3;
+    logic read_3_match_cdb_0, read_3_match_cdb_1, read_3_match_cdb_2, read_3_match_cdb_3;
+    logic read_4_match_cdb_0, read_4_match_cdb_1, read_4_match_cdb_2, read_4_match_cdb_3;
+    logic read_5_match_cdb_0, read_5_match_cdb_1, read_5_match_cdb_2, read_5_match_cdb_3;
 
     assign read_0_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_0);
     assign read_0_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_0);
     assign read_0_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_0);
+    assign read_0_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_0);
 
     assign read_1_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_1);
     assign read_1_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_1);
     assign read_1_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_1);
+    assign read_1_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_1);
 
     assign read_2_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_2);
     assign read_2_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_2);
     assign read_2_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_2);
+    assign read_2_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_2);
 
     assign read_3_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_3);
     assign read_3_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_3);
     assign read_3_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_3);
+    assign read_3_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_3);
 
     assign read_4_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_4);
     assign read_4_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_4);
     assign read_4_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_4);
+    assign read_4_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_4);
 
     assign read_5_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_5);
     assign read_5_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_5);
     assign read_5_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_5);
+    assign read_5_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_5);
 
     //==========================================================================
     // Forwarding from allocation to read ports
@@ -293,7 +303,10 @@ module reorder_buffer #(
 
     // Read port 0: Forward from CDB if available, otherwise read from buffer
     always_comb begin
-        if (read_0_match_cdb_2) begin
+        if (read_0_match_cdb_3) begin
+            read_data_0 = cdb_data_3;
+            read_tag_0 = TAG_VALID;
+        end else if (read_0_match_cdb_2) begin
             read_data_0 = cdb_data_2;
             read_tag_0 = TAG_VALID;
         end else if (read_0_match_cdb_1) begin
@@ -319,7 +332,10 @@ module reorder_buffer #(
 
     // Read port 1
     always_comb begin
-        if (read_1_match_cdb_2) begin
+        if (read_1_match_cdb_3) begin
+            read_data_1 = cdb_data_3;
+            read_tag_1 = TAG_VALID;
+        end else if (read_1_match_cdb_2) begin
             read_data_1 = cdb_data_2;
             read_tag_1 = TAG_VALID;
         end else if (read_1_match_cdb_1) begin
@@ -345,7 +361,10 @@ module reorder_buffer #(
 
     // Read port 2
     always_comb begin
-        if (read_2_match_cdb_2) begin
+        if (read_2_match_cdb_3) begin
+            read_data_2 = cdb_data_3;
+            read_tag_2 = TAG_VALID;
+        end else if (read_2_match_cdb_2) begin
             read_data_2 = cdb_data_2;
             read_tag_2 = TAG_VALID;
         end else if (read_2_match_cdb_1) begin
@@ -371,7 +390,10 @@ module reorder_buffer #(
 
     // Read port 3
     always_comb begin
-        if (read_3_match_cdb_2) begin
+        if (read_3_match_cdb_3) begin
+            read_data_3 = cdb_data_3;
+            read_tag_3 = TAG_VALID;
+        end else if (read_3_match_cdb_2) begin
             read_data_3 = cdb_data_2;
             read_tag_3 = TAG_VALID;
         end else if (read_3_match_cdb_1) begin
@@ -397,7 +419,10 @@ module reorder_buffer #(
 
     // Read port 4
     always_comb begin
-        if (read_4_match_cdb_2) begin
+        if (read_4_match_cdb_3) begin
+            read_data_4 = cdb_data_3;
+            read_tag_4 = TAG_VALID;
+        end else if (read_4_match_cdb_2) begin
             read_data_4 = cdb_data_2;
             read_tag_4 = TAG_VALID;
         end else if (read_4_match_cdb_1) begin
@@ -423,7 +448,10 @@ module reorder_buffer #(
 
     // Read port 5
     always_comb begin
-        if (read_5_match_cdb_2) begin
+        if (read_5_match_cdb_3) begin
+            read_data_5 = cdb_data_3;
+            read_tag_5 = TAG_VALID;
+        end else if (read_5_match_cdb_2) begin
             read_data_5 = cdb_data_2;
             read_tag_5 = TAG_VALID;
         end else if (read_5_match_cdb_1) begin
@@ -528,6 +556,12 @@ module reorder_buffer #(
                 buffer_tag[cdb_addr_2] <= #D TAG_VALID;
                 buffer_executed[cdb_addr_2] <= #D 1'b1;
                 buffer_exception[cdb_addr_2] <= #D cdb_exception_2;
+            end
+            if (cdb_valid_3) begin
+                buffer_data[cdb_addr_3] <= #D cdb_data_3;
+                buffer_tag[cdb_addr_3] <= #D TAG_VALID;
+                buffer_executed[cdb_addr_3] <= #D 1'b1;
+                buffer_exception[cdb_addr_3] <= #D cdb_exception_3;
             end
 
           if(head_idx_d1 != head_idx) begin // detected commit

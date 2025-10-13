@@ -36,7 +36,7 @@ module reservation_station #(
 
 
     // Interface to CDB (for monitoring other ALUs and broadcasting results)
-    cdb_if cdb_if_port,  // Note: Will be connected to appropriate modport (rs0, rs1, rs2)
+    cdb_if cdb_if_port,  
 
     // Interface to Functional Unit
     rs_to_exec_if.reservation_station exec_if
@@ -90,14 +90,18 @@ module reservation_station #(
 
         // Check if stored operands are valid (from storage or CDB monitoring)
         operand_a_valid_from_stored = occupied ? (stored_operand_a_tag == TAG_READY) ||
-                                     (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 2'b00) ||
-                                     (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 2'b01) ||
-                                     (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 2'b10) : 1'b0;
+                                     (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 3'b000) ||
+                                     (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 3'b001) ||
+                                     (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 3'b010) ||
+                                     (cdb_if_port.cdb_valid_3 && stored_operand_a_tag == 3'b011 && 
+                                     stored_rd_phys_addr == cdb_if_port.cdb_dest_reg_3) : 1'b0;
 
         operand_b_valid_from_stored = occupied ? (stored_operand_b_tag == TAG_READY) ||
-                                     (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 2'b00) ||
-                                     (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 2'b01) ||
-                                     (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 2'b10) : 1'b0;
+                                     (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 3'b000) ||
+                                     (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 3'b001) ||
+                                     (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 3'b010) ||
+                                     (cdb_if_port.cdb_valid_3 && stored_operand_b_tag == 3'b011 && 
+                                     stored_rd_phys_addr == cdb_if_port.cdb_dest_reg_3) : 1'b0;
 
         // Determine what data to use and when to issue
         if (occupied && operand_a_valid_from_stored && operand_b_valid_from_stored) begin
@@ -107,23 +111,27 @@ module reservation_station #(
             // Select operand A data from stored/CDB
             if (stored_operand_a_tag == TAG_READY) begin
                 final_operand_a_data = stored_operand_a_data;
-            end else if (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 2'b00) begin
+            end else if (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 3'b000) begin
                 final_operand_a_data = cdb_if_port.cdb_data_0;
-            end else if (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 2'b01) begin
+            end else if (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 3'b001) begin
                 final_operand_a_data = cdb_if_port.cdb_data_1;
-            end else begin // cdb_valid_2 && stored_operand_a_tag == 2'b10
+            end else if (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 3'b010) begin
                 final_operand_a_data = cdb_if_port.cdb_data_2;
+            end else begin 
+                final_operand_a_data = cdb_if_port.cdb_data_3;
             end
 
             // Select operand B data from stored/CDB
             if (stored_operand_b_tag == TAG_READY) begin
                 final_operand_b_data = stored_operand_b_data;
-            end else if (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 2'b00) begin
+            end else if (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 3'b000) begin
                 final_operand_b_data = cdb_if_port.cdb_data_0;
-            end else if (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 2'b01) begin
+            end else if (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 3'b001) begin
                 final_operand_b_data = cdb_if_port.cdb_data_1;
-            end else begin // cdb_valid_2 && stored_operand_b_tag == 2'b10
+            end else if (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 3'b010) begin
                 final_operand_b_data = cdb_if_port.cdb_data_2;
+            end else begin 
+                final_operand_b_data = cdb_if_port.cdb_data_3;
             end
 
         end else  if (decode_if.dispatch_valid && operand_a_valid_from_decode && operand_b_valid_from_decode) begin
@@ -198,14 +206,17 @@ module reservation_station #(
             else if (occupied) begin
                 // Update operand A from CDB if still waiting
                 if (stored_operand_a_tag != TAG_READY) begin
-                    if (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 2'b00) begin
+                    if (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 3'b000) begin
                         stored_operand_a_data <= #D cdb_if_port.cdb_data_0;
                         stored_operand_a_tag <= #D TAG_READY;
-                    end else if (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 2'b01) begin
+                    end else if (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 3'b001) begin
                         stored_operand_a_data <= #D cdb_if_port.cdb_data_1;
                         stored_operand_a_tag <= #D TAG_READY;
-                    end else if (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 2'b10) begin
+                    end else if (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 3'b010) begin
                         stored_operand_a_data <= #D cdb_if_port.cdb_data_2;
+                        stored_operand_a_tag <= #D TAG_READY;
+                    end else if (cdb_if_port.cdb_valid_3 && stored_operand_a_tag == 3'b011 && stored_rd_phys_addr == cdb_if_port.cdb_dest_reg_3) begin
+                        stored_operand_a_data <= #D cdb_if_port.cdb_data_3;
                         stored_operand_a_tag <= #D TAG_READY;
                     end
                 end
@@ -220,6 +231,9 @@ module reservation_station #(
                         stored_operand_b_tag <= #D TAG_READY;
                     end else if (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 2'b10) begin
                         stored_operand_b_data <= #D cdb_if_port.cdb_data_2;
+                        stored_operand_b_tag <= #D TAG_READY;
+                    end else if (cdb_if_port.cdb_valid_3 && stored_operand_b_tag == 2'b11 && stored_rd_phys_addr == cdb_if_port.cdb_dest_reg_3) begin
+                        stored_operand_b_data <= #D cdb_if_port.cdb_data_3;
                         stored_operand_b_tag <= #D TAG_READY;
                     end
                 end

@@ -43,6 +43,8 @@ module dispatch_stage #(
     rs_to_exec_if.reservation_station dispatch_to_alu_1,
     rs_to_exec_if.reservation_station dispatch_to_alu_2,
 
+    cdb_if cdb_interface,  // Common Data Bus interface
+
     output logic [2:0] commit_valid,
     output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0,
     output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_1,
@@ -108,21 +110,25 @@ module dispatch_stage #(
         .alloc_addr_0(issue_to_dispatch_0.rd_arch_addr),
         .alloc_addr_1(issue_to_dispatch_1.rd_arch_addr),
         .alloc_addr_2(issue_to_dispatch_2.rd_arch_addr),
-        .alloc_tag_0(3'b000),
-        .alloc_tag_1(3'b001),
-        .alloc_tag_2(3'b010),
+        .alloc_tag_0(issue_to_dispatch_0.alloc_tag),
+        .alloc_tag_1(issue_to_dispatch_1.alloc_tag),
+        .alloc_tag_2(issue_to_dispatch_2.alloc_tag),
         .cdb_valid_0(cdb_interface.cdb_valid_0 & cdb_interface.cdb_dest_reg_0[5]),
         .cdb_valid_1(cdb_interface.cdb_valid_1 & cdb_interface.cdb_dest_reg_1[5]),
         .cdb_valid_2(cdb_interface.cdb_valid_2 & cdb_interface.cdb_dest_reg_2[5]),
+        .cdb_valid_3(cdb_interface.cdb_valid_3 & cdb_interface.cdb_dest_reg_3[5]),
         .cdb_addr_0(cdb_interface.cdb_dest_reg_0[4:0]),
         .cdb_addr_1(cdb_interface.cdb_dest_reg_1[4:0]),
         .cdb_addr_2(cdb_interface.cdb_dest_reg_2[4:0]),
+        .cdb_addr_3(cdb_interface.cdb_dest_reg_3[4:0]),
         .cdb_data_0(cdb_interface.cdb_data_0),
         .cdb_data_1(cdb_interface.cdb_data_1),
         .cdb_data_2(cdb_interface.cdb_data_2),
+        .cdb_data_3(cdb_interface.cdb_data_3),
         .cdb_exception_0(1'b0),  //(cdb_interface.cdb_exception_0),
         .cdb_exception_1(1'b0),  //(cdb_interface.cdb_exception_1),
         .cdb_exception_2(1'b0),  //(cdb_interface.cdb_exception_2),
+        .cdb_exception_3(1'b0),  //(cdb_interface.cdb_exception_3),
 
         .read_addr_0(inst_0_read_addr_a[4:0]),
         .read_addr_1(inst_0_read_addr_b[4:0]),
@@ -193,14 +199,6 @@ module dispatch_stage #(
     assign inst_2_read_data_b = inst_2_read_addr_b[5] ? rob_2_read_data_b : reg_file_read_data_b_2;
     assign inst_2_read_tag_b  = inst_2_read_addr_b[5] ? rob_2_read_tag_b  : 3'b111; // Ready if from reg file
 
-    //==========================================================================
-    // COMMON DATA BUS (CDB) INTERFACE
-    //==========================================================================
-
-    cdb_if #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH)
-    ) cdb_interface ();
 
     //==========================================================================
     // INTERFACE BRIDGE: Convert new issue_to_dispatch_if to register file access
@@ -238,7 +236,7 @@ module dispatch_stage #(
     assign internal_rs_if_0.operand_b_data = issue_to_dispatch_0.control_signals[3] ? issue_to_dispatch_0.immediate_value : inst_0_read_data_b; // Immediate or register
     assign internal_rs_if_0.store_data = inst_0_read_data_b;      // Store data same as operand B (from rs2)
     assign internal_rs_if_0.operand_a_tag = inst_0_read_tag_a;    // Tag from register file
-    assign internal_rs_if_0.operand_b_tag = issue_to_dispatch_0.control_signals[3] ? 2'b11 : inst_0_read_tag_b; // Immediate always ready (tag 11)
+    assign internal_rs_if_0.operand_b_tag = issue_to_dispatch_0.control_signals[3] ? 3'b111 : inst_0_read_tag_b; // Immediate always ready (tag 11)
     assign internal_rs_if_0.rd_phys_addr = issue_to_dispatch_0.rd_phys_addr;
     assign internal_rs_if_0.pc_value_at_prediction = issue_to_dispatch_0.pc_value_at_prediction;
     assign internal_rs_if_0.branch_sel = issue_to_dispatch_0.branch_sel;
@@ -253,7 +251,7 @@ module dispatch_stage #(
     assign internal_rs_if_1.operand_b_data = issue_to_dispatch_1.control_signals[3] ? issue_to_dispatch_1.immediate_value : inst_1_read_data_b; // Immediate or register
     assign internal_rs_if_1.store_data = inst_1_read_data_b;      // Store data same as operand B (from rs2)
     assign internal_rs_if_1.operand_a_tag = inst_1_read_tag_a;    // Tag from register file
-    assign internal_rs_if_1.operand_b_tag = issue_to_dispatch_1.control_signals[3] ? 2'b11 : inst_1_read_tag_b; // Immediate always ready (tag 11)
+    assign internal_rs_if_1.operand_b_tag = issue_to_dispatch_1.control_signals[3] ? 3'b111 : inst_1_read_tag_b; // Immediate always ready (tag 11)
     assign internal_rs_if_1.rd_phys_addr = issue_to_dispatch_1.rd_phys_addr;
     assign internal_rs_if_1.pc_value_at_prediction = issue_to_dispatch_1.pc_value_at_prediction;
     assign internal_rs_if_1.branch_sel = issue_to_dispatch_1.branch_sel;
@@ -268,7 +266,7 @@ module dispatch_stage #(
     assign internal_rs_if_2.operand_b_data = issue_to_dispatch_2.control_signals[3] ? issue_to_dispatch_2.immediate_value : inst_2_read_data_b; // Immediate or register
     assign internal_rs_if_2.store_data = inst_2_read_data_b;      // Store data same as operand B (from rs2)
     assign internal_rs_if_2.operand_a_tag = inst_2_read_tag_a;    // Tag from register file
-    assign internal_rs_if_2.operand_b_tag = issue_to_dispatch_2.control_signals[3] ? 2'b11 : inst_2_read_tag_b; // Immediate always ready (tag 11)
+    assign internal_rs_if_2.operand_b_tag = issue_to_dispatch_2.control_signals[3] ? 3'b111 : inst_2_read_tag_b; // Immediate always ready (tag 11)
     assign internal_rs_if_2.rd_phys_addr = issue_to_dispatch_2.rd_phys_addr;
     assign internal_rs_if_2.pc_value_at_prediction = issue_to_dispatch_2.pc_value_at_prediction;
     assign internal_rs_if_2.branch_sel = issue_to_dispatch_2.branch_sel;
@@ -339,6 +337,64 @@ module dispatch_stage #(
         // Interface to functional unit
         .exec_if(dispatch_to_alu_2)
     );
+
+    // LSQ instance (simple, all ports explicit, connections skipped)
+    lsq_simple_top u_lsq_simple (
+      // Clock and reset
+      .clk(clk),
+      .rst_n(reset),
+
+      // Allocation interface (from Issue Stage)
+      // Allocation 0
+      .alloc_valid_0_i(),
+      .alloc_is_store_0_i(),
+      .alloc_phys_reg_0_i(),
+      .alloc_addr_tag_0_i(),
+      .alloc_data_operand_0_i(),
+      .alloc_data_tag_0_i(),
+      .alloc_size_0_i(),
+      .alloc_sign_extend_0_i(),
+      // Allocation 1
+      .alloc_valid_1_i(),
+      .alloc_is_store_1_i(),
+      .alloc_phys_reg_1_i(),
+      .alloc_addr_tag_1_i(),
+      .alloc_data_operand_1_i(),
+      .alloc_data_tag_1_i(),
+      .alloc_size_1_i(),
+      .alloc_sign_extend_1_i(),
+      // Allocation 2
+      .alloc_valid_2_i(),
+      .alloc_is_store_2_i(),
+      .alloc_phys_reg_2_i(),
+      .alloc_addr_tag_2_i(),
+      .alloc_data_operand_2_i(),
+      .alloc_data_tag_2_i(),
+      .alloc_size_2_i(),
+      .alloc_sign_extend_2_i(),
+      // Allocation output
+      .alloc_ready_o(),
+
+      // CDB interface
+      .cdb_interface(cdb_interface.lsq),  
+
+      // Memory interface
+      .mem_req_valid_o(),
+      .mem_req_is_store_o(),
+      .mem_req_addr_o(),
+      .mem_req_data_o(),
+      .mem_req_be_o(),
+      .mem_req_size_o(),
+      .mem_req_sign_extend_o(),
+      .mem_req_ready_i(),
+      .mem_resp_valid_i(),
+      .mem_resp_data_i(),
+
+      // Status outputs
+      .lsq_count_o(),
+      .lsq_full_o(),
+      .lsq_empty_o()
+   );
 
     logic [1:0] active_rs_number;
     assign active_rs_number = cdb_interface.cdb_valid_0 +

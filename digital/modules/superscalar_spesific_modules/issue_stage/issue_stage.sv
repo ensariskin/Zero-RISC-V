@@ -73,6 +73,7 @@ module issue_stage #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] rs1_phys_0, rs1_phys_1, rs1_phys_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] rs2_phys_0, rs2_phys_1, rs2_phys_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_0, rd_phys_1, rd_phys_2;
+    logic [2:0] alloc_tag_0, alloc_tag_1, alloc_tag_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2; /// TODO : add recovery logic
     logic [2:0] rename_valid_internal;
     logic [2:0] rename_ready;
@@ -94,6 +95,7 @@ module issue_stage #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] rs2_phys_reg_0, rs2_phys_reg_1, rs2_phys_reg_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_reg_0, rd_phys_reg_1, rd_phys_reg_2;
     logic [ARCH_REG_ADDR_WIDTH-1:0] rd_arch_reg_0, rd_arch_reg_1, rd_arch_reg_2;
+    logic [2:0] alloc_tag_reg_0, alloc_tag_reg_1, alloc_tag_reg_2;
 
     
     //==========================================================================
@@ -169,6 +171,7 @@ module issue_stage #(
         .rs1_phys_0(rs1_phys_0), .rs1_phys_1(rs1_phys_1), .rs1_phys_2(rs1_phys_2),
         .rs2_phys_0(rs2_phys_0), .rs2_phys_1(rs2_phys_1), .rs2_phys_2(rs2_phys_2),
         .rd_phys_0(rd_phys_0),   .rd_phys_1(rd_phys_1),   .rd_phys_2(rd_phys_2),
+        .alloc_tag_0(alloc_tag_0), .alloc_tag_1(alloc_tag_1), .alloc_tag_2(alloc_tag_2),
         .old_rd_phys_0(old_rd_phys_0), .old_rd_phys_1(old_rd_phys_1), .old_rd_phys_2(old_rd_phys_2),
         .rename_valid(rename_valid_internal),
         .rename_ready(rename_ready), // Indicates RAT can allocate physical registers
@@ -232,7 +235,9 @@ module issue_stage #(
             rs2_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
             rs2_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
             rs2_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
-
+            alloc_tag_reg_0 <= #D 3'b000;
+            alloc_tag_reg_1 <= #D 3'b000;
+            alloc_tag_reg_2 <= #D 3'b000;
             rd_arch_reg_0 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
             rd_arch_reg_1 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
             rd_arch_reg_2 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
@@ -267,6 +272,9 @@ module issue_stage #(
                 rs2_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
                 rs2_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
                 rs2_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                alloc_tag_reg_0 <= #D 3'b000;
+                alloc_tag_reg_1 <= #D 3'b000;
+                alloc_tag_reg_2 <= #D 3'b000;
                 rd_arch_reg_0 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
                 rd_arch_reg_1 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
                 rd_arch_reg_2 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
@@ -284,6 +292,7 @@ module issue_stage #(
                     rd_phys_reg_0 <= #D decode_valid_i[0] ? rd_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs1_phys_reg_0 <= #D decode_valid_i[0] ? rs1_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs2_phys_reg_0 <= #D decode_valid_i[0] ? rs2_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    alloc_tag_reg_0 <= #D decode_valid_i[0] ? alloc_tag_0 : 3'b000;
                     rd_arch_reg_0 <= #D decode_valid_i[0] ? rd_arch_0 : {ARCH_REG_ADDR_WIDTH{1'b0}};
                 end
                 else 
@@ -303,6 +312,7 @@ module issue_stage #(
                     rd_phys_reg_1 <= #D decode_valid_i[1] ? rd_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs1_phys_reg_1 <= #D decode_valid_i[1] ? rs1_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs2_phys_reg_1 <= #D decode_valid_i[1] ? rs2_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    alloc_tag_reg_1 <= #D decode_valid_i[1] ? alloc_tag_1 : 3'b000;
                     rd_arch_reg_1 <= #D decode_valid_i[1] ? rd_arch_1 : {ARCH_REG_ADDR_WIDTH{1'b0}};
                 end
                 else 
@@ -322,6 +332,7 @@ module issue_stage #(
                     rd_phys_reg_2 <= #D decode_valid_i[2] ? rd_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs1_phys_reg_2 <= #D decode_valid_i[2] ? rs1_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     rs2_phys_reg_2 <= #D decode_valid_i[2] ? rs2_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    alloc_tag_reg_2 <= #D decode_valid_i[2] ? alloc_tag_2 : 3'b000;
                     rd_arch_reg_2 <= #D decode_valid_i[2] ? rd_arch_2 : {ARCH_REG_ADDR_WIDTH{1'b0}};
                     
                 end
@@ -352,6 +363,7 @@ module issue_stage #(
     assign issue_to_dispatch_0.branch_sel = branch_sel_reg_0;
     assign issue_to_dispatch_0.branch_prediction = branch_prediction_reg_0;
     assign issue_to_dispatch_0.rd_arch_addr = rd_arch_reg_0;
+    assign issue_to_dispatch_0.alloc_tag = alloc_tag_reg_0;
     // Issue to Dispatch Channel 1
     assign issue_to_dispatch_1.dispatch_valid = decode_valid_reg[1];
     assign issue_to_dispatch_1.control_signals = control_signal_reg_1[10:0]; // Remove register addresses, use bits [10:0]
@@ -364,6 +376,7 @@ module issue_stage #(
     assign issue_to_dispatch_1.branch_sel = branch_sel_reg_1;
     assign issue_to_dispatch_1.branch_prediction = branch_prediction_reg_1;
     assign issue_to_dispatch_1.rd_arch_addr = rd_arch_reg_1;
+    assign issue_to_dispatch_1.alloc_tag = alloc_tag_reg_1;
     
     // Issue to Dispatch Channel 2
     assign issue_to_dispatch_2.dispatch_valid = decode_valid_reg[2];
@@ -377,6 +390,7 @@ module issue_stage #(
     assign issue_to_dispatch_2.branch_sel = branch_sel_reg_2;
     assign issue_to_dispatch_2.branch_prediction = branch_prediction_reg_2;
     assign issue_to_dispatch_2.rd_arch_addr = rd_arch_reg_2;
+    assign issue_to_dispatch_2.alloc_tag = alloc_tag_reg_2;
     //==========================================================================
     // DUMMY TRACER INTERFACES (for future tracing support)
     //==========================================================================

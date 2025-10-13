@@ -20,7 +20,7 @@ package lsq_package;
     parameter int LSQ_DEPTH = 16;           // Total queue entries
     parameter int LSQ_ADDR_WIDTH = $clog2(LSQ_DEPTH);  // 4 bits for 16 entries
     parameter int DATA_WIDTH = 32;          // Data width
-    parameter int TAG_WIDTH = 2;            // CDB tag width
+    parameter int TAG_WIDTH = 3;            // CDB tag width
     parameter int ROB_ADDR_WIDTH = 5;       // ROB index width (32 entries)
     parameter int PHYS_REG_WIDTH = 6;       // Physical register address width
     parameter int FORWARD_WINDOW = 4;       // Store forwarding window size
@@ -63,10 +63,11 @@ package lsq_package;
     } lsq_entry_t;
 
     // Tag constants
-    localparam logic [TAG_WIDTH-1:0] TAG_ALU0  = 2'b00;
-    localparam logic [TAG_WIDTH-1:0] TAG_ALU1  = 2'b01;
-    localparam logic [TAG_WIDTH-1:0] TAG_ALU2  = 2'b10;
-    localparam logic [TAG_WIDTH-1:0] TAG_READY = 2'b11;
+    localparam logic [TAG_WIDTH-1:0] TAG_ALU0  = 3'b000;
+    localparam logic [TAG_WIDTH-1:0] TAG_ALU1  = 3'b001;
+    localparam logic [TAG_WIDTH-1:0] TAG_ALU2  = 3'b010;
+    localparam logic [TAG_WIDTH-1:0] TAG_LSQ   = 3'b011;
+    localparam logic [TAG_WIDTH-1:0] TAG_READY = 3'b111;
 
     // Helper function: Extract bytes from word based on address and size
     function automatic logic [DATA_WIDTH-1:0] extract_bytes(
