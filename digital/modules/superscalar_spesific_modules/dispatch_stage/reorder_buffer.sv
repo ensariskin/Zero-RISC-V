@@ -539,25 +539,25 @@ module reorder_buffer #(
             //==================================================================
             // CDB UPDATES - Write results from execution units
             //==================================================================
-            if (cdb_valid_0) begin
+            if (cdb_valid_0 && buffer_tag[cdb_addr_0] == 3'b000) begin
                 buffer_data[cdb_addr_0] <= #D cdb_data_0;
                 buffer_tag[cdb_addr_0] <= #D TAG_VALID;
                 buffer_executed[cdb_addr_0] <= #D 1'b1;
                 buffer_exception[cdb_addr_0] <= #D cdb_exception_0;
             end
-            if (cdb_valid_1) begin
+            if (cdb_valid_1 && buffer_tag[cdb_addr_1] == 3'b001) begin
                 buffer_data[cdb_addr_1] <= #D cdb_data_1;
                 buffer_tag[cdb_addr_1] <= #D TAG_VALID;
                 buffer_executed[cdb_addr_1] <= #D 1'b1;
                 buffer_exception[cdb_addr_1] <= #D cdb_exception_1;
             end
-            if (cdb_valid_2) begin
+            if (cdb_valid_2 && buffer_tag[cdb_addr_2] == 3'b010) begin
                 buffer_data[cdb_addr_2] <= #D cdb_data_2;
                 buffer_tag[cdb_addr_2] <= #D TAG_VALID;
                 buffer_executed[cdb_addr_2] <= #D 1'b1;
                 buffer_exception[cdb_addr_2] <= #D cdb_exception_2;
             end
-            if (cdb_valid_3) begin
+            if (cdb_valid_3 && buffer_tag[cdb_addr_3] == 3'b011) begin
                 buffer_data[cdb_addr_3] <= #D cdb_data_3;
                 buffer_tag[cdb_addr_3] <= #D TAG_VALID;
                 buffer_executed[cdb_addr_3] <= #D 1'b1;

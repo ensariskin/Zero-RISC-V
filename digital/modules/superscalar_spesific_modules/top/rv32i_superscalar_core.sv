@@ -307,7 +307,9 @@ module rv32i_superscalar_core #(
         // Issue to Dispatch Stage Interfaces
         .issue_to_dispatch_0(issue_to_dispatch_0_if.issue),
         .issue_to_dispatch_1(issue_to_dispatch_1_if.issue),
-        .issue_to_dispatch_2(issue_to_dispatch_2_if.issue)
+        .issue_to_dispatch_2(issue_to_dispatch_2_if.issue),
+
+        .lsq_commit(cdb_interface.cdb_valid_3)
     );
     
     //==========================================================================

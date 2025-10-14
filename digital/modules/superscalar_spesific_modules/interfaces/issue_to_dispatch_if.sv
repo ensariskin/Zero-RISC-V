@@ -43,6 +43,8 @@ interface issue_to_dispatch_if #(
     logic [2:0]                     alloc_tag;
     // Immediate value (for immediate instructions)
     logic [DATA_WIDTH-1:0] immediate_value;         // Sign-extended immediate
+
+    logic lsq_alloc_valid;
     
     //==========================================================================
     // MODPORTS FOR DIFFERENT STAGES
@@ -62,7 +64,8 @@ interface issue_to_dispatch_if #(
         output rd_phys_addr,
         output rd_arch_addr,
         output alloc_tag,
-        output immediate_value
+        output immediate_value,
+        output lsq_alloc_valid
     );
     
     // Dispatch stage perspective (slave)
@@ -79,7 +82,8 @@ interface issue_to_dispatch_if #(
         input  rd_phys_addr,
         input  rd_arch_addr,
         input  alloc_tag,
-        input  immediate_value
+        input  immediate_value,
+        input  lsq_alloc_valid
     );
 
 endinterface

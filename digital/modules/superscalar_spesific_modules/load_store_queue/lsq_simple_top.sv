@@ -288,6 +288,10 @@ module lsq_simple_top
 
          if (mem_resp_valid_i & lsq_buffer[head_idx].mem_issued) begin
             lsq_buffer[head_idx].mem_complete <= #D 1'b1;
+            if(!lsq_buffer[head_idx].is_store) begin
+               lsq_buffer[head_idx].data <= #D mem_resp_data_i; // For loads, store response data
+               lsq_buffer[head_idx].data_valid <= #D 1'b1;
+            end
          end
 
          for (int i = 0; i < LSQ_DEPTH; i++) begin
@@ -384,9 +388,9 @@ module lsq_simple_top
    assign load_result_rob_idx_o = lsq_buffer[head_idx].rob_idx;
    */
    // todo use buffer data
-   assign cdb_interface.cdb_valid_3 = mem_resp_valid_i;
+   assign cdb_interface.cdb_valid_3 = lsq_buffer[head_idx].mem_complete;
    assign cdb_interface.cdb_tag_3 = 3'b011;
-   assign cdb_interface.cdb_data_3 = mem_resp_data_i;
+   assign cdb_interface.cdb_data_3 = lsq_buffer[head_idx].data;
    assign cdb_interface.cdb_dest_reg_3 = lsq_buffer[head_idx].phys_reg;
 
 

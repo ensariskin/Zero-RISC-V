@@ -31,7 +31,7 @@ module register_alias_table #(
     input logic [ARCH_ADDR_WIDTH-1:0] rd_arch_0, rd_arch_1, rd_arch_2,
     input logic [2:0] decode_valid,
     input logic rd_write_enable_0, rd_write_enable_1, rd_write_enable_2,
-    //input logic load_store_0, load_store_1, load_store_2, // Indicates if instruction is load/store (for LSQ allocation)
+    
     // Rename outputs (physical register addresses)
     output logic [PHYS_ADDR_WIDTH-1:0] rs1_phys_0, rs1_phys_1, rs1_phys_2,
     output logic [PHYS_ADDR_WIDTH-1:0] rs2_phys_0, rs2_phys_1, rs2_phys_2,
@@ -40,7 +40,7 @@ module register_alias_table #(
     output logic [PHYS_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2,
     output logic [2:0] rename_valid,
     output logic [2:0] rename_ready, // Indicates RAT can allocate physical registers
-    //output logic [2:0] lsq_alloc_ready,
+    
 
     // Commit interface (from ROB - frees old physical registers)
     input logic [4:0] commit_addr_0,
@@ -49,9 +49,13 @@ module register_alias_table #(
     input logic [4:0] commit_rob_idx_0,
     input logic [4:0] commit_rob_idx_1,
     input logic [4:0] commit_rob_idx_2,
-    input logic [2:0] commit_valid
-    //input logic [PHYS_ADDR_WIDTH-1:0] free_phys_reg_0, free_phys_reg_1, free_phys_reg_2
-    //input logic lsq_commit
+    input logic [2:0] commit_valid,
+
+    input logic load_store_0, load_store_1, load_store_2, // Indicates if instruction is load/store (for LSQ allocation)
+    output logic [2:0] lsq_alloc_ready,
+    output logic lsq_alloc_0_valid, lsq_alloc_1_valid, lsq_alloc_2_valid,
+    input logic lsq_commit
+    
 );
     localparam D = 1; // Delay for non-blocking assignments (for simulation purposes)
 
@@ -60,7 +64,7 @@ module register_alias_table #(
 
     // Free List - available physical registers
     logic [5:0] free_count;
-    logic [5:0] lsq_free_count;
+    logic [3:0] lsq_free_count;
 
     // Internal allocation signals
     logic [PHYS_ADDR_WIDTH-1:0] allocated_phys_reg [2:0];
@@ -70,7 +74,7 @@ module register_alias_table #(
     logic [5:0] first_free, second_free, third_free;
     logic found_first, found_second, found_third;
 
-    logic [5:0] lsq_first_free, lsq_second_free, lsq_third_free;
+    logic [3:0] lsq_first_free, lsq_second_free, lsq_third_free;
     logic lsq_found_first, lsq_found_second, lsq_found_third;
 
     // Allocation requirement signals
@@ -96,8 +100,8 @@ module register_alias_table #(
         .buffer_full(),
         .buffer_count(free_count)
     );
-    /* 
-    circular_buffer_3port #(.BUFFER_DEPTH(16)) lsq_address_buffer(
+    
+    circular_buffer_3port #(.BUFFER_DEPTH(8)) lsq_address_buffer(
         .clk(clk),
         .rst_n(reset),
         .read_en_0(need_lsq_alloc_0),
@@ -116,29 +120,29 @@ module register_alias_table #(
         .buffer_full(),
         .buffer_count(lsq_free_count)
     );
-    */
+    
     // Count free registers
     assign rename_ready = (free_count >= 3) ? 3'b111 :
                           (free_count == 2) ? 3'b011 :
                           (free_count == 1) ? 3'b001 : 3'b000;
 
-    /*assign lsq_alloc_ready = (lsq_free_count >= 3) ? 3'b111 :
+    assign lsq_alloc_ready = (lsq_free_count >= 3) ? 3'b111 :
                              (lsq_free_count == 2) ? 3'b011 :
-                             (lsq_free_count == 1) ? 3'b001 : 3'b000;*/
+                             (lsq_free_count == 1) ? 3'b001 : 3'b000;
 
     // Pre-compute allocation requirements (separate combinational logic)
     always_comb begin
         need_alloc_0 = decode_valid[0] && rd_write_enable_0 && rd_arch_0 != 5'h0;
         need_alloc_1 = decode_valid[1] && rd_write_enable_1 && rd_arch_1 != 5'h0;
         need_alloc_2 = decode_valid[2] && rd_write_enable_2 && rd_arch_2 != 5'h0;
-        /* 
+        
         need_lsq_alloc_0 = decode_valid[0] && load_store_0;
         need_lsq_alloc_1 = decode_valid[1] && load_store_1;
-        need_lsq_alloc_2 = decode_valid[2] && load_store_2;*/
+        need_lsq_alloc_2 = decode_valid[2] && load_store_2;
 
-        alloc_tag_0 = 3'b000; // need_lsq_alloc_0 ? 3'b011: 3'b000;
-        alloc_tag_1 = 3'b001; // need_lsq_alloc_1 ? 3'b011: 3'b001;
-        alloc_tag_2 = 3'b010; // need_lsq_alloc_2 ? 3'b011: 3'b010;
+        alloc_tag_0 = need_lsq_alloc_0 ? 3'b011: 3'b000;
+        alloc_tag_1 = need_lsq_alloc_1 ? 3'b011: 3'b001;
+        alloc_tag_2 = need_lsq_alloc_2 ? 3'b011: 3'b010;
     end
 
     // Allocate physical registers for new destinations - FIXED: No combinational loops
@@ -168,6 +172,13 @@ module register_alias_table #(
             allocation_success[2] = 1'b1;
         end
 
+    end 
+
+    always_comb begin
+        // LSQ Allocation logic
+        lsq_alloc_0_valid = need_lsq_alloc_0 && lsq_found_first;
+        lsq_alloc_1_valid = need_lsq_alloc_1 && lsq_found_second;
+        lsq_alloc_2_valid = need_lsq_alloc_2 && lsq_found_third;
     end
 
     //==========================================================================

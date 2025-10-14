@@ -113,7 +113,7 @@ module dispatch_stage #(
         .alloc_tag_0(issue_to_dispatch_0.alloc_tag),
         .alloc_tag_1(issue_to_dispatch_1.alloc_tag),
         .alloc_tag_2(issue_to_dispatch_2.alloc_tag),
-        .cdb_valid_0(cdb_interface.cdb_valid_0 & cdb_interface.cdb_dest_reg_0[5]),
+        .cdb_valid_0(cdb_interface.cdb_valid_0 & cdb_interface.cdb_dest_reg_0[5]), // todo check for we = 0 and also load operations
         .cdb_valid_1(cdb_interface.cdb_valid_1 & cdb_interface.cdb_dest_reg_1[5]),
         .cdb_valid_2(cdb_interface.cdb_valid_2 & cdb_interface.cdb_dest_reg_2[5]),
         .cdb_valid_3(cdb_interface.cdb_valid_3 & cdb_interface.cdb_dest_reg_3[5]),
@@ -338,40 +338,49 @@ module dispatch_stage #(
         .exec_if(dispatch_to_alu_2)
     );
 
+    logic mem_req_valid, mem_req_valid_d1;
+
+    always_ff @(posedge clk or negedge reset) begin // todo delete - for test case
+        if (!reset) begin
+            mem_req_valid_d1 <= 1'b0;
+        end else begin
+            mem_req_valid_d1 <= mem_req_valid;
+        end
+    end
     // LSQ instance (simple, all ports explicit, connections skipped)
-    lsq_simple_top u_lsq_simple (
+    lsq_simple_top lsq (
       // Clock and reset
       .clk(clk),
       .rst_n(reset),
 
       // Allocation interface (from Issue Stage)
       // Allocation 0
-      .alloc_valid_0_i(),
-      .alloc_is_store_0_i(),
-      .alloc_phys_reg_0_i(),
-      .alloc_addr_tag_0_i(),
-      .alloc_data_operand_0_i(),
-      .alloc_data_tag_0_i(),
-      .alloc_size_0_i(),
-      .alloc_sign_extend_0_i(),
+      .alloc_valid_0_i(issue_to_dispatch_0.lsq_alloc_valid),
+      .alloc_is_store_0_i(issue_to_dispatch_0.control_signals[3] & ~issue_to_dispatch_0.control_signals[6]), // Store if immediate and not writing to rd
+      .alloc_phys_reg_0_i(issue_to_dispatch_0.rd_phys_addr),
+      .alloc_addr_tag_0_i(3'b000),
+      .alloc_data_operand_0_i(inst_0_read_data_b),
+      .alloc_data_tag_0_i(inst_0_read_tag_b),
+      .alloc_size_0_i(issue_to_dispatch_0.control_signals[1:0]),
+      .alloc_sign_extend_0_i(issue_to_dispatch_0.control_signals[2]),
       // Allocation 1
-      .alloc_valid_1_i(),
-      .alloc_is_store_1_i(),
-      .alloc_phys_reg_1_i(),
-      .alloc_addr_tag_1_i(),
-      .alloc_data_operand_1_i(),
-      .alloc_data_tag_1_i(),
-      .alloc_size_1_i(),
-      .alloc_sign_extend_1_i(),
+      .alloc_valid_1_i(issue_to_dispatch_1.lsq_alloc_valid),
+      .alloc_is_store_1_i(issue_to_dispatch_1.control_signals[3] & ~issue_to_dispatch_1.control_signals[6]),
+      .alloc_phys_reg_1_i(issue_to_dispatch_1.rd_phys_addr),
+      .alloc_addr_tag_1_i(3'b001),
+      .alloc_data_operand_1_i(inst_1_read_data_b),
+      .alloc_data_tag_1_i(inst_1_read_tag_b),
+      .alloc_size_1_i(issue_to_dispatch_1.control_signals[1:0]),
+      .alloc_sign_extend_1_i(issue_to_dispatch_1.control_signals[2]),
       // Allocation 2
-      .alloc_valid_2_i(),
-      .alloc_is_store_2_i(),
-      .alloc_phys_reg_2_i(),
-      .alloc_addr_tag_2_i(),
-      .alloc_data_operand_2_i(),
-      .alloc_data_tag_2_i(),
-      .alloc_size_2_i(),
-      .alloc_sign_extend_2_i(),
+      .alloc_valid_2_i(issue_to_dispatch_2.lsq_alloc_valid),
+      .alloc_is_store_2_i(issue_to_dispatch_1.control_signals[3] & ~issue_to_dispatch_1.control_signals[6]),
+      .alloc_phys_reg_2_i(issue_to_dispatch_1.rd_phys_addr),
+      .alloc_addr_tag_2_i(3'b010),
+      .alloc_data_operand_2_i(inst_2_read_data_b),
+      .alloc_data_tag_2_i(inst_2_read_tag_b),
+      .alloc_size_2_i(issue_to_dispatch_2.control_signals[1:0]),
+      .alloc_sign_extend_2_i(issue_to_dispatch_2.control_signals[2]),
       // Allocation output
       .alloc_ready_o(),
 
@@ -379,16 +388,16 @@ module dispatch_stage #(
       .cdb_interface(cdb_interface.lsq),  
 
       // Memory interface
-      .mem_req_valid_o(),
+      .mem_req_valid_o(mem_req_valid),
       .mem_req_is_store_o(),
       .mem_req_addr_o(),
       .mem_req_data_o(),
       .mem_req_be_o(),
       .mem_req_size_o(),
       .mem_req_sign_extend_o(),
-      .mem_req_ready_i(),
-      .mem_resp_valid_i(),
-      .mem_resp_data_i(),
+      .mem_req_ready_i(1'b1),
+      .mem_resp_valid_i(mem_req_valid_d1),
+      .mem_resp_data_i(32'hDEADBEEF),
 
       // Status outputs
       .lsq_count_o(),

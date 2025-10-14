@@ -50,9 +50,9 @@ module issue_stage #(
     input logic [4:0] commit_rob_idx_1, 
     input logic [4:0] commit_rob_idx_2,
 
-    //input logic [PHYS_REG_ADDR_WIDTH-1:0] commit_free_phys_reg_i_0, commit_free_phys_reg_i_1, commit_free_phys_reg_i_2,
-    
-    // Dispatch Stage Interfaces (NEW - replaces reservation station interfaces)
+    input logic lsq_commit, 
+   
+    // Dispatch Stage Interfaces 
     issue_to_dispatch_if.issue issue_to_dispatch_0,
     issue_to_dispatch_if.issue issue_to_dispatch_1,
     issue_to_dispatch_if.issue issue_to_dispatch_2
@@ -80,6 +80,11 @@ module issue_stage #(
     
     // Write enable signals for destinations
     logic rd_write_enable_0, rd_write_enable_1, rd_write_enable_2;
+    // Load store
+    logic load_store_0, load_store_1, load_store_2; 
+    logic [2:0] lsq_alloc_ready;
+    logic lsq_alloc_0_valid, lsq_alloc_1_valid, lsq_alloc_2_valid;
+
     
     // Pipeline registers - SIMPLIFIED (no data, only control and addresses)
     logic [2:0] decode_valid_reg;
@@ -96,6 +101,8 @@ module issue_stage #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_reg_0, rd_phys_reg_1, rd_phys_reg_2;
     logic [ARCH_REG_ADDR_WIDTH-1:0] rd_arch_reg_0, rd_arch_reg_1, rd_arch_reg_2;
     logic [2:0] alloc_tag_reg_0, alloc_tag_reg_1, alloc_tag_reg_2;
+    logic lsq_alloc_0_valid_reg, lsq_alloc_1_valid_reg, lsq_alloc_2_valid_reg;
+
 
     
     //==========================================================================
@@ -146,7 +153,10 @@ module issue_stage #(
     assign rd_write_enable_0 = control_signal_internal_0[6]; // we bit from control word
     assign rd_write_enable_1 = control_signal_internal_1[6];
     assign rd_write_enable_2 = control_signal_internal_2[6];
-    
+    // Load Store
+    assign load_store_0 = control_signal_internal_0[4] || (control_signal_internal_0[3] & ~control_signal_internal_0[6]); 
+    assign load_store_1 = control_signal_internal_1[4] || (control_signal_internal_1[3] & ~control_signal_internal_1[6]);
+    assign load_store_2 = control_signal_internal_2[4] || (control_signal_internal_2[3] & ~control_signal_internal_2[6]);
     //==========================================================================
     // REGISTER ALIAS TABLE (RAT) - RENAME LOGIC
     //==========================================================================
@@ -183,8 +193,16 @@ module issue_stage #(
         .commit_addr_2(commit_addr_2_i),
         .commit_rob_idx_0(commit_rob_idx_0),
         .commit_rob_idx_1(commit_rob_idx_1),
-        .commit_rob_idx_2(commit_rob_idx_2)
-        //.free_phys_reg_0(commit_free_phys_reg_i_0), .free_phys_reg_1(commit_free_phys_reg_i_1), .free_phys_reg_2(commit_free_phys_reg_i_2)
+        .commit_rob_idx_2(commit_rob_idx_2),
+
+        .load_store_0(load_store_0),
+        .load_store_1(load_store_1),
+        .load_store_2(load_store_2),
+        .lsq_alloc_0_valid(lsq_alloc_0_valid),
+        .lsq_alloc_1_valid(lsq_alloc_1_valid),
+        .lsq_alloc_2_valid(lsq_alloc_2_valid),
+        .lsq_alloc_ready(lsq_alloc_ready),
+        .lsq_commit(lsq_commit)
     );
     
     //==========================================================================
@@ -199,7 +217,7 @@ module issue_stage #(
     //==========================================================================
     
     // Ready signal indicates RAT can allocate physical registers and dispatch stage can accept
-    assign decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready} & rename_ready;
+    assign decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready} & rename_ready; //& lsq_alloc_ready;
   
     //==========================================================================
     // ISSUE STAGE PIPELINE REGISTERS (CONTROL AND ADDRESSES ONLY)
@@ -241,6 +259,10 @@ module issue_stage #(
             rd_arch_reg_0 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
             rd_arch_reg_1 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
             rd_arch_reg_2 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
+
+            lsq_alloc_0_valid_reg <= #D 1'b0;
+            lsq_alloc_1_valid_reg <= #D 1'b0;
+            lsq_alloc_2_valid_reg <= #D 1'b0;
         end else begin
             if (flush | bubble) begin
                 // Insert NOPs on flush for all channels
@@ -278,6 +300,10 @@ module issue_stage #(
                 rd_arch_reg_0 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
                 rd_arch_reg_1 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
                 rd_arch_reg_2 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
+
+                lsq_alloc_0_valid_reg <= #D 1'b0;
+                lsq_alloc_1_valid_reg <= #D 1'b0;
+                lsq_alloc_2_valid_reg <= #D 1'b0;
             end else begin
                 // Channel 0: Update only when dispatch_ready[0] is high
                 if (issue_to_dispatch_0.dispatch_ready) begin
@@ -294,6 +320,7 @@ module issue_stage #(
                     rs2_phys_reg_0 <= #D decode_valid_i[0] ? rs2_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     alloc_tag_reg_0 <= #D decode_valid_i[0] ? alloc_tag_0 : 3'b000;
                     rd_arch_reg_0 <= #D decode_valid_i[0] ? rd_arch_0 : {ARCH_REG_ADDR_WIDTH{1'b0}};
+                    lsq_alloc_0_valid_reg <= #D decode_valid_i[0] ? lsq_alloc_0_valid : 1'b0;
                 end
                 else 
                     decode_valid_reg[0] <= #D 0;
@@ -314,6 +341,7 @@ module issue_stage #(
                     rs2_phys_reg_1 <= #D decode_valid_i[1] ? rs2_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     alloc_tag_reg_1 <= #D decode_valid_i[1] ? alloc_tag_1 : 3'b000;
                     rd_arch_reg_1 <= #D decode_valid_i[1] ? rd_arch_1 : {ARCH_REG_ADDR_WIDTH{1'b0}};
+                    lsq_alloc_1_valid_reg <= #D decode_valid_i[1] ? lsq_alloc_1_valid : 1'b0;
                 end
                 else 
                     decode_valid_reg[1] <= #D 0;
@@ -334,7 +362,7 @@ module issue_stage #(
                     rs2_phys_reg_2 <= #D decode_valid_i[2] ? rs2_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
                     alloc_tag_reg_2 <= #D decode_valid_i[2] ? alloc_tag_2 : 3'b000;
                     rd_arch_reg_2 <= #D decode_valid_i[2] ? rd_arch_2 : {ARCH_REG_ADDR_WIDTH{1'b0}};
-                    
+                    lsq_alloc_2_valid_reg <= #D decode_valid_i[2] ? lsq_alloc_2_valid : 1'b0;
                 end
                 else 
                     decode_valid_reg[2] <= #D 0;
@@ -364,6 +392,7 @@ module issue_stage #(
     assign issue_to_dispatch_0.branch_prediction = branch_prediction_reg_0;
     assign issue_to_dispatch_0.rd_arch_addr = rd_arch_reg_0;
     assign issue_to_dispatch_0.alloc_tag = alloc_tag_reg_0;
+    assign issue_to_dispatch_0.lsq_alloc_valid = lsq_alloc_0_valid_reg;
     // Issue to Dispatch Channel 1
     assign issue_to_dispatch_1.dispatch_valid = decode_valid_reg[1];
     assign issue_to_dispatch_1.control_signals = control_signal_reg_1[10:0]; // Remove register addresses, use bits [10:0]
@@ -377,7 +406,7 @@ module issue_stage #(
     assign issue_to_dispatch_1.branch_prediction = branch_prediction_reg_1;
     assign issue_to_dispatch_1.rd_arch_addr = rd_arch_reg_1;
     assign issue_to_dispatch_1.alloc_tag = alloc_tag_reg_1;
-    
+    assign issue_to_dispatch_1.lsq_alloc_valid = lsq_alloc_1_valid_reg;
     // Issue to Dispatch Channel 2
     assign issue_to_dispatch_2.dispatch_valid = decode_valid_reg[2];
     assign issue_to_dispatch_2.control_signals = control_signal_reg_2[10:0]; // Remove register addresses, use bits [10:0]
@@ -391,6 +420,7 @@ module issue_stage #(
     assign issue_to_dispatch_2.branch_prediction = branch_prediction_reg_2;
     assign issue_to_dispatch_2.rd_arch_addr = rd_arch_reg_2;
     assign issue_to_dispatch_2.alloc_tag = alloc_tag_reg_2;
+    assign issue_to_dispatch_2.lsq_alloc_valid = lsq_alloc_2_valid_reg;
     //==========================================================================
     // DUMMY TRACER INTERFACES (for future tracing support)
     //==========================================================================
