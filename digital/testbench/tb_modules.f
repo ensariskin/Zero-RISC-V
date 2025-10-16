@@ -1,7 +1,7 @@
 +incdir+tb_modules
 +incdir+include
 
-tb_modules/data_organizer.sv
+//tb_modules/data_organizer.sv
 tb_modules/memory_2rw_wb.v
 tb_modules/memory_2rw_old.sv
 tb_modules/memory_3rw.sv

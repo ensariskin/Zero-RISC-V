@@ -20,6 +20,7 @@ module rv32i_superscalar_data_wb_adapter (
     input  logic        core_req_i,
     output logic        core_ack_o,
     output logic        core_err_o,
+    //output logic        core_mem_ready_o,
     
     // Wishbone B4 interface
     output logic        wb_cyc_o,
@@ -109,5 +110,6 @@ module rv32i_superscalar_data_wb_adapter (
     assign core_data_o = wb_dat_i;
     assign core_ack_o  = wb_ack_i && (current_state == ACCESS);
     assign core_err_o  = wb_err_i && (current_state == ACCESS);
+    //assign core_mem_ready_o = !wb_stall_i;
 
 endmodule

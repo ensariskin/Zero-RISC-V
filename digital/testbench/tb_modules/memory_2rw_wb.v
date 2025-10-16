@@ -54,7 +54,7 @@ wire [DATA_WIDTH-1:0] din1;
 wire [DATA_WIDTH-1:0] dout1;
 
 // Byte-addressable memory to support misaligned accesses
-reg [7:0] mem [0:RAM_BYTE_DEPTH-1] /*verilator public*/;
+reg [7:0] mem [0:RAM_BYTE_DEPTH-1] ;
 
 assign clk0 = port0_wb_clk_i;
 assign cs0 = ~port0_wb_stb_i;
@@ -63,7 +63,7 @@ assign wmask0 = port0_wb_sel_i;
 // Byte address within the memory
 assign addr0 = port0_wb_adr_i[BYTE_ADDR_WIDTH-1:0];
 assign din0 = port0_wb_dat_i;
-assign port0_wb_stall_o = 1'b0;
+assign port0_wb_stall_o = 1'b0; // todo testbench stall to check cpu behavior
 reg port0_ack;
 always @(posedge port0_wb_clk_i or posedge port0_wb_rst_i)
 begin
@@ -71,6 +71,8 @@ begin
         port0_ack <= #D 1'b0;
     else if(port0_wb_cyc_i)
         port0_ack <= #D port0_wb_stb_i;
+    else 
+        port0_ack <= #D 1'b0;
 end
 assign port0_wb_ack_o = port0_ack;
 assign port0_wb_err_o = 1'b0;

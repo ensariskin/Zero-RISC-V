@@ -338,6 +338,14 @@ module rv32i_superscalar_core #(
         .dispatch_to_alu_1(dispatch_to_alu_1_if.reservation_station),
         .dispatch_to_alu_2(dispatch_to_alu_2_if.reservation_station),
 
+        .data_addr,
+        .data_write,
+        .data_read,
+        .data_we,
+        .data_be,
+        .data_req,
+        .data_ack,
+
         .cdb_interface(cdb_interface),
 
         .commit_valid(commit_valid),
@@ -434,11 +442,6 @@ module rv32i_superscalar_core #(
     
     // For now, no memory operations
     // TODO: Implement memory pipeline stage
-    assign data_addr = 32'h0;
-    assign data_write = 32'h0;
-    assign data_we = 1'b0;
-    assign data_be = 4'h0;
-    assign data_req = 1'b0;
     assign mem_valid = 1'b0;
     assign mem_result = 32'h0;
     assign mem_rd = 5'h0;

@@ -22,8 +22,8 @@ module dv_top_superscalar;
     parameter INST_BASE_addR = 32'h80000000;
     
     // Default region base addresses (can be overridden via plusargs)
-    parameter REGION0_BASE_addR_DEFAULT = 32'h80000000;  // Default Region 0 start address
-    parameter REGION1_BASE_addR_DEFAULT = 32'h80001000;  // Default Region 1 start address
+    parameter REGION0_BASE_addR_DEFAULT = 32'h00000000;  // Default Region 0 start address
+    parameter REGION1_BASE_addR_DEFAULT = 32'h00001000;  // Default Region 1 start address
     
     // Runtime configurable region base addresses
     logic [31:0] region0_base_addr;

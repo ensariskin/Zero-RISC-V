@@ -45,6 +45,14 @@ module dispatch_stage #(
 
     cdb_if cdb_interface,  // Common Data Bus interface
 
+    output logic [DATA_WIDTH-1:0] data_addr,
+    output logic [DATA_WIDTH-1:0] data_write,
+    input  logic [DATA_WIDTH-1:0] data_read,
+    output logic data_we,
+    output logic [3:0] data_be,
+    output logic data_req,
+    input  logic data_ack,
+
     output logic [2:0] commit_valid,
     output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0,
     output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_1,
@@ -338,15 +346,20 @@ module dispatch_stage #(
         .exec_if(dispatch_to_alu_2)
     );
 
-    logic mem_req_valid, mem_req_valid_d1;
+    logic [31:0] lsq_load_data_i;
+    logic [31:0] lsq_store_data_o;
+    logic [2:0]  data_organizer_type_sel;
+    data_organizer #(.size(32)) load_data_organizer (
+        .data_in(data_read),
+        .Type_sel(data_organizer_type_sel),
+        .data_out(lsq_load_data_i)
+    );
 
-    always_ff @(posedge clk or negedge reset) begin // todo delete - for test case
-        if (!reset) begin
-            mem_req_valid_d1 <= 1'b0;
-        end else begin
-            mem_req_valid_d1 <= mem_req_valid;
-        end
-    end
+    data_organizer #(.size(32)) store_data_organizer (
+        .data_in(lsq_store_data_o),
+        .Type_sel(data_organizer_type_sel),
+        .data_out(data_write)
+    );
     // LSQ instance (simple, all ports explicit, connections skipped)
     lsq_simple_top lsq (
       // Clock and reset
@@ -388,22 +401,26 @@ module dispatch_stage #(
       .cdb_interface(cdb_interface.lsq),  
 
       // Memory interface
-      .mem_req_valid_o(mem_req_valid),
-      .mem_req_is_store_o(),
-      .mem_req_addr_o(),
-      .mem_req_data_o(),
-      .mem_req_be_o(),
-      .mem_req_size_o(),
-      .mem_req_sign_extend_o(),
-      .mem_req_ready_i(1'b1),
-      .mem_resp_valid_i(mem_req_valid_d1),
-      .mem_resp_data_i(32'hDEADBEEF),
-
+      .mem_req_addr_o(data_addr),    // data_addr
+      .mem_req_data_o(lsq_store_data_o),    // data_write
+      .mem_resp_data_i(lsq_load_data_i),   // data_read
+      .mem_req_is_store_o(data_we), // data_we
+      .mem_req_be_o(data_be),       // data_be
+      .mem_req_valid_o(data_req), // data_req
+      .mem_resp_valid_i(data_ack), //data_ack
+      .mem_req_ready_i(1'b1), //mem_ready
+     
+      .mem_req_size_o(data_organizer_type_sel[1:0]),
+      .mem_req_sign_extend_o(data_organizer_type_sel[2]),
+      
+     
       // Status outputs
       .lsq_count_o(),
       .lsq_full_o(),
       .lsq_empty_o()
-   );
+    );
+    
+    
 
     logic [1:0] active_rs_number;
     assign active_rs_number = cdb_interface.cdb_valid_0 +

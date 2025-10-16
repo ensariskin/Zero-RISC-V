@@ -352,7 +352,7 @@ module lsq_simple_top
    always_comb begin
       head_ready = 1'b0;
 
-      if (!lsq_empty_o && lsq_buffer[head_idx].valid && !lsq_buffer[head_idx].mem_issued) begin
+      if (!lsq_empty_o && lsq_buffer[head_idx].valid && !lsq_buffer[head_idx].mem_issued) begin // TODO LATCH???
          // Head entry is ready if address is valid
          // For stores, also need data to be valid
          if (lsq_buffer[head_idx].addr_valid) begin
@@ -367,12 +367,13 @@ module lsq_simple_top
 
    // Issue memory request
    assign mem_req_valid_o = head_ready;
-   assign mem_req_is_store_o = lsq_buffer[head_idx].is_store;
-   assign mem_req_addr_o = lsq_buffer[head_idx].address;
-   assign mem_req_data_o = lsq_buffer[head_idx].data;
-   assign mem_req_size_o = lsq_buffer[head_idx].size;
-   assign mem_req_sign_extend_o = lsq_buffer[head_idx].sign_extend;
-   assign mem_req_be_o = generate_byte_enable( // todo check
+   assign mem_req_is_store_o = lsq_buffer[head_idx].mem_complete ? 1'b0  : lsq_buffer[head_idx].is_store;
+   assign mem_req_addr_o     = lsq_buffer[head_idx].mem_complete ? 32'd0 : lsq_buffer[head_idx].address;
+   assign mem_req_data_o     = lsq_buffer[head_idx].mem_complete ? 32'd0 : lsq_buffer[head_idx].data;
+   assign mem_req_size_o     = lsq_buffer[head_idx].mem_complete ? 2'd0  : lsq_buffer[head_idx].size;
+   assign mem_req_sign_extend_o = lsq_buffer[head_idx].mem_complete ? 1'b0  : lsq_buffer[head_idx].sign_extend;
+   assign mem_req_be_o = lsq_buffer[head_idx].mem_complete ? 4'd0  : 
+      generate_byte_enable( // todo check
          lsq_buffer[head_idx].address[1:0],
          lsq_buffer[head_idx].size
       );
@@ -381,13 +382,7 @@ module lsq_simple_top
    //==========================================================================
    // MEMORY RESPONSE AND CDB BROADCAST (for loads)
    //==========================================================================
-   /* 
-   assign load_result_valid_o = mem_resp_valid_i && !lsq_buffer[head_idx].is_store;
-   assign load_result_data_o = mem_resp_data_i;
-   assign load_result_phys_reg_o = lsq_buffer[head_idx].phys_reg;
-   assign load_result_rob_idx_o = lsq_buffer[head_idx].rob_idx;
-   */
-   // todo use buffer data
+
    assign cdb_interface.cdb_valid_3 = lsq_buffer[head_idx].mem_complete;
    assign cdb_interface.cdb_tag_3 = 3'b011;
    assign cdb_interface.cdb_data_3 = lsq_buffer[head_idx].data;
