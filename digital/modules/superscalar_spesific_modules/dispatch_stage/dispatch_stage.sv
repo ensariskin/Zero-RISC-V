@@ -112,9 +112,9 @@ module dispatch_stage #(
         .clk(clk),
         .reset(reset),
 
-        .alloc_enable_0(issue_to_dispatch_0.dispatch_valid & issue_to_dispatch_0.control_signals[6] & issue_to_dispatch_0.rd_arch_addr != 5'b0), // Do not allocate for x0
-        .alloc_enable_1(issue_to_dispatch_1.dispatch_valid & issue_to_dispatch_1.control_signals[6] & issue_to_dispatch_1.rd_arch_addr != 5'b0),
-        .alloc_enable_2(issue_to_dispatch_2.dispatch_valid & issue_to_dispatch_2.control_signals[6] & issue_to_dispatch_2.rd_arch_addr != 5'b0),
+        .alloc_enable_0(issue_to_dispatch_0.dispatch_valid & ((issue_to_dispatch_0.control_signals[6] & issue_to_dispatch_0.rd_arch_addr != 5'b0) | issue_to_dispatch_0.branch_sel != 3'd0)), 
+        .alloc_enable_1(issue_to_dispatch_1.dispatch_valid & ((issue_to_dispatch_1.control_signals[6] & issue_to_dispatch_1.rd_arch_addr != 5'b0) | issue_to_dispatch_1.branch_sel != 3'd0)),
+        .alloc_enable_2(issue_to_dispatch_2.dispatch_valid & ((issue_to_dispatch_2.control_signals[6] & issue_to_dispatch_2.rd_arch_addr != 5'b0) | issue_to_dispatch_2.branch_sel != 3'd0)),
         .alloc_addr_0(issue_to_dispatch_0.rd_arch_addr),
         .alloc_addr_1(issue_to_dispatch_1.rd_arch_addr),
         .alloc_addr_2(issue_to_dispatch_2.rd_arch_addr),
@@ -137,6 +137,9 @@ module dispatch_stage #(
         .cdb_exception_1(1'b0),  //(cdb_interface.cdb_exception_1),
         .cdb_exception_2(1'b0),  //(cdb_interface.cdb_exception_2),
         .cdb_exception_3(1'b0),  //(cdb_interface.cdb_exception_3),
+        .cdb_mem_addr_calculation_0(cdb_interface.cdb_mem_addr_calculation_0),
+        .cdb_mem_addr_calculation_1(cdb_interface.cdb_mem_addr_calculation_1),
+        .cdb_mem_addr_calculation_2(cdb_interface.cdb_mem_addr_calculation_2),
 
         .read_addr_0(inst_0_read_addr_a[4:0]),
         .read_addr_1(inst_0_read_addr_b[4:0]),

@@ -243,6 +243,8 @@ module circular_buffer_3port #(
             // Check for overflow
             if ((num_writes > 0) && buffer_full) begin
                 $warning("[%t] Circular buffer write overflow attempt", $time);
+                #3ns;
+                $finish;
             end
             
             // Verify pointer wraparound

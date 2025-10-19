@@ -63,6 +63,9 @@ module reorder_buffer #(
     input  logic cdb_exception_1,
     input  logic cdb_exception_2,
     input  logic cdb_exception_3,
+    input  logic cdb_mem_addr_calculation_0,
+    input  logic cdb_mem_addr_calculation_1,
+    input  logic cdb_mem_addr_calculation_2,
 
     //==========================================================================
     // READ INTERFACE (for reservation stations)
@@ -233,34 +236,34 @@ module reorder_buffer #(
     logic read_4_match_cdb_0, read_4_match_cdb_1, read_4_match_cdb_2, read_4_match_cdb_3;
     logic read_5_match_cdb_0, read_5_match_cdb_1, read_5_match_cdb_2, read_5_match_cdb_3;
 
-    assign read_0_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_0);
-    assign read_0_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_0);
-    assign read_0_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_0);
+    assign read_0_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_0) && !cdb_mem_addr_calculation_0;
+    assign read_0_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_0) && !cdb_mem_addr_calculation_1;
+    assign read_0_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_0) && !cdb_mem_addr_calculation_2;
     assign read_0_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_0);
 
-    assign read_1_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_1);
-    assign read_1_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_1);
-    assign read_1_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_1);
+    assign read_1_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_1) && !cdb_mem_addr_calculation_0;
+    assign read_1_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_1) && !cdb_mem_addr_calculation_1;
+    assign read_1_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_1) && !cdb_mem_addr_calculation_2;
     assign read_1_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_1);
 
-    assign read_2_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_2);
-    assign read_2_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_2);
-    assign read_2_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_2);
+    assign read_2_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_2) && !cdb_mem_addr_calculation_0;
+    assign read_2_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_2) && !cdb_mem_addr_calculation_1;
+    assign read_2_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_2) && !cdb_mem_addr_calculation_2;
     assign read_2_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_2);
 
-    assign read_3_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_3);
-    assign read_3_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_3);
-    assign read_3_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_3);
+    assign read_3_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_3) && !cdb_mem_addr_calculation_0;
+    assign read_3_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_3) && !cdb_mem_addr_calculation_1;
+    assign read_3_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_3) && !cdb_mem_addr_calculation_2;
     assign read_3_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_3);
 
-    assign read_4_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_4);
-    assign read_4_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_4);
-    assign read_4_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_4);
+    assign read_4_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_4) && !cdb_mem_addr_calculation_0;
+    assign read_4_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_4) && !cdb_mem_addr_calculation_1;
+    assign read_4_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_4) && !cdb_mem_addr_calculation_2;
     assign read_4_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_4);
 
-    assign read_5_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_5);
-    assign read_5_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_5);
-    assign read_5_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_5);
+    assign read_5_match_cdb_0 = cdb_valid_0 && (cdb_addr_0 == read_addr_5) && !cdb_mem_addr_calculation_0;
+    assign read_5_match_cdb_1 = cdb_valid_1 && (cdb_addr_1 == read_addr_5) && !cdb_mem_addr_calculation_1;
+    assign read_5_match_cdb_2 = cdb_valid_2 && (cdb_addr_2 == read_addr_5) && !cdb_mem_addr_calculation_2;
     assign read_5_match_cdb_3 = cdb_valid_3 && (cdb_addr_3 == read_addr_5);
 
     //==========================================================================
@@ -325,8 +328,13 @@ module reorder_buffer #(
             read_data_0 = '0; // New allocation, data not ready
             read_tag_0 = alloc_tag_0;
         end else begin
-            read_data_0 = buffer_data[read_addr_0];
+            //read_data_0 = buffer_data[read_addr_0]; send lsq destination address if value expected from LSQ
             read_tag_0 = buffer_tag[read_addr_0];
+            if(read_tag_0 == 3'b011) begin
+                read_data_0 = {26'd0, 1'b1, read_addr_0}; // LSQ destination address
+            end else begin
+                read_data_0 = buffer_data[read_addr_0];
+            end
         end
     end
 
@@ -354,8 +362,12 @@ module reorder_buffer #(
             read_data_1 = '0; // New allocation, data not ready
             read_tag_1 = alloc_tag_0;
         end else begin
-            read_data_1 = buffer_data[read_addr_1];
             read_tag_1 = buffer_tag[read_addr_1];
+            if(read_tag_1 == 3'b011) begin
+                read_data_1 = {26'd0, 1'b1, read_addr_1}; // LSQ destination address
+            end else begin
+                read_data_1 = buffer_data[read_addr_1];
+            end
         end
     end
 
@@ -383,8 +395,12 @@ module reorder_buffer #(
             read_data_2 = '0; // New allocation, data not ready
             read_tag_2 = alloc_tag_0;
         end else begin
-            read_data_2 = buffer_data[read_addr_2];
             read_tag_2 = buffer_tag[read_addr_2];
+            if(read_tag_2 == 3'b011) begin
+                read_data_2 = {26'd0, 1'b1, read_addr_2}; // LSQ destination address
+            end else begin
+                read_data_2 = buffer_data[read_addr_2];
+            end
         end
     end
 
@@ -412,8 +428,12 @@ module reorder_buffer #(
             read_data_3 = '0; // New allocation, data not ready
             read_tag_3 = alloc_tag_0;
         end else begin
-            read_data_3 = buffer_data[read_addr_3];
             read_tag_3 = buffer_tag[read_addr_3];
+            if(read_tag_3 == 3'b011) begin
+                read_data_3 = {26'd0, 1'b1, read_addr_3}; // LSQ destination address
+            end else begin
+                read_data_3 = buffer_data[read_addr_3];
+            end
         end
     end
 
@@ -441,8 +461,12 @@ module reorder_buffer #(
             read_data_4 = '0; // New allocation, data not ready
             read_tag_4 = alloc_tag_0;
         end else begin
-            read_data_4 = buffer_data[read_addr_4];
             read_tag_4 = buffer_tag[read_addr_4];
+            if(read_tag_4 == 3'b011) begin
+                read_data_4 = {26'd0, 1'b1, read_addr_4}; // LSQ destination address
+            end else begin
+                read_data_4 = buffer_data[read_addr_4];
+            end
         end
     end
 
@@ -470,8 +494,12 @@ module reorder_buffer #(
             read_data_5 = '0; // New allocation, data not ready
             read_tag_5 = alloc_tag_0;
         end else begin
-            read_data_5 = buffer_data[read_addr_5];
             read_tag_5 = buffer_tag[read_addr_5];
+            if(read_tag_5 == 3'b011) begin
+                read_data_5 = {26'd0, 1'b1, read_addr_5}; // LSQ destination address
+            end else begin
+                read_data_5 = buffer_data[read_addr_5];
+            end
         end
     end
 

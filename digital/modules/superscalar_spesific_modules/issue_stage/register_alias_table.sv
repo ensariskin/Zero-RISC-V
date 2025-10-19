@@ -31,6 +31,7 @@ module register_alias_table #(
     input logic [ARCH_ADDR_WIDTH-1:0] rd_arch_0, rd_arch_1, rd_arch_2,
     input logic [2:0] decode_valid,
     input logic rd_write_enable_0, rd_write_enable_1, rd_write_enable_2,
+    input logic branch_0, branch_1, branch_2,
     
     // Rename outputs (physical register addresses)
     output logic [PHYS_ADDR_WIDTH-1:0] rs1_phys_0, rs1_phys_1, rs1_phys_2,
@@ -132,9 +133,9 @@ module register_alias_table #(
 
     // Pre-compute allocation requirements (separate combinational logic)
     always_comb begin
-        need_alloc_0 = decode_valid[0] && rd_write_enable_0 && rd_arch_0 != 5'h0;
-        need_alloc_1 = decode_valid[1] && rd_write_enable_1 && rd_arch_1 != 5'h0;
-        need_alloc_2 = decode_valid[2] && rd_write_enable_2 && rd_arch_2 != 5'h0;
+        need_alloc_0 = decode_valid[0] && ((rd_write_enable_0 && rd_arch_0 != 5'h0) | branch_0); 
+        need_alloc_1 = decode_valid[1] && ((rd_write_enable_1 && rd_arch_1 != 5'h0) | branch_1); 
+        need_alloc_2 = decode_valid[2] && ((rd_write_enable_2 && rd_arch_2 != 5'h0) | branch_2); 
         
         need_lsq_alloc_0 = decode_valid[0] && load_store_0;
         need_lsq_alloc_1 = decode_valid[1] && load_store_1;
@@ -215,7 +216,7 @@ module register_alias_table #(
     // Destination register handling
     always_comb begin
         // Instruction 0
-        if (decode_valid[0] && rd_write_enable_0 && rd_arch_0 != 5'h0) begin
+        if (need_alloc_0) begin
             rd_phys_0 = allocated_phys_reg[0];
             old_rd_phys_0 = rat_table[rd_arch_0];
             rename_valid[0] = allocation_success[0];
@@ -226,7 +227,7 @@ module register_alias_table #(
         end
 
         // Instruction 1
-        if (decode_valid[1] && rd_write_enable_1 && rd_arch_1 != 5'h0) begin
+        if (need_alloc_1) begin
             rd_phys_1 = allocated_phys_reg[1];
             old_rd_phys_1 = rat_table[rd_arch_1];
             rename_valid[1] = allocation_success[1];
@@ -237,7 +238,7 @@ module register_alias_table #(
         end
 
         // Instruction 2
-        if (decode_valid[2] && rd_write_enable_2 && rd_arch_2 != 5'h0) begin
+        if (need_alloc_2) begin
             rd_phys_2 = allocated_phys_reg[2];
             old_rd_phys_2 = rat_table[rd_arch_2];
             rename_valid[2] = allocation_success[2];
@@ -276,18 +277,17 @@ module register_alias_table #(
                 end
             end
 
-            if (decode_valid[0] && rd_write_enable_0 && rd_arch_0 != 5'h0 && allocation_success[0]) begin
+            if (need_alloc_0 && rd_arch_0 != 0) begin
                 rat_table[rd_arch_0] <= #D allocated_phys_reg[0];
             end
 
-            if (decode_valid[1] && rd_write_enable_1 && rd_arch_1 != 5'h0 && allocation_success[1]) begin
+            if (need_alloc_1 && rd_arch_1 != 0) begin
                 rat_table[rd_arch_1] <= #D allocated_phys_reg[1];
             end
 
-            if (decode_valid[2] && rd_write_enable_2 && rd_arch_2 != 5'h0 && allocation_success[2]) begin
+            if (need_alloc_2 && rd_arch_2 != 0) begin
                 rat_table[rd_arch_2] <= #D allocated_phys_reg[2];
             end
-
 
         end
     end

@@ -85,6 +85,8 @@ module issue_stage #(
     logic [2:0] lsq_alloc_ready;
     logic lsq_alloc_0_valid, lsq_alloc_1_valid, lsq_alloc_2_valid;
 
+    // logic branch signals
+    logic branch_0, branch_1, branch_2;
     
     // Pipeline registers - SIMPLIFIED (no data, only control and addresses)
     logic [2:0] decode_valid_reg;
@@ -157,6 +159,10 @@ module issue_stage #(
     assign load_store_0 = control_signal_internal_0[4] || (control_signal_internal_0[3] & ~control_signal_internal_0[6]); 
     assign load_store_1 = control_signal_internal_1[4] || (control_signal_internal_1[3] & ~control_signal_internal_1[6]);
     assign load_store_2 = control_signal_internal_2[4] || (control_signal_internal_2[3] & ~control_signal_internal_2[6]);
+    
+    assign branch_0 = branch_sel_internal_0 != 3'b000;
+    assign branch_1 = branch_sel_internal_1 != 3'b000;
+    assign branch_2 = branch_sel_internal_2 != 3'b000;
     //==========================================================================
     // REGISTER ALIAS TABLE (RAT) - RENAME LOGIC
     //==========================================================================
@@ -176,6 +182,7 @@ module issue_stage #(
         .rd_arch_0(rd_arch_0), .rd_arch_1(rd_arch_1), .rd_arch_2(rd_arch_2),
         .decode_valid(decode_valid_i),
         .rd_write_enable_0(rd_write_enable_0), .rd_write_enable_1(rd_write_enable_1), .rd_write_enable_2(rd_write_enable_2),
+        .branch_0(branch_0), .branch_1(branch_1), .branch_2(branch_2),
         
         // Rename outputs - separated signals
         .rs1_phys_0(rs1_phys_0), .rs1_phys_1(rs1_phys_1), .rs1_phys_2(rs1_phys_2),

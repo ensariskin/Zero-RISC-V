@@ -42,6 +42,9 @@ interface rs_to_exec_if #(
     
     // Functional unit result (Functional Unit → RS → CDB)
     logic [DATA_WIDTH-1:0] data_result; // Computed result to be forwarded to CDB
+    //logic mis_predicted_branch; // Indicates if branch was mispredicted
+    //logic correct_pc;
+    logic mem_addr_calculation;
     
     // Modport definitions
     modport reservation_station (
@@ -56,7 +59,9 @@ interface rs_to_exec_if #(
         output pc_value_at_prediction,
         output branch_sel,
         output branch_prediction,
-        input  data_result
+        input  data_result,
+        input mem_addr_calculation
+
     );
     
     modport functional_unit (
@@ -71,7 +76,8 @@ interface rs_to_exec_if #(
         input  pc_value_at_prediction,
         input  branch_sel,
         input  branch_prediction,
-        output data_result
+        output data_result,
+        output mem_addr_calculation
     );
 
 endinterface

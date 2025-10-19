@@ -579,7 +579,7 @@ module dv_top_superscalar;
             */
              
             // Phase 1: Load integer values into first 6 registers (x1-x6)
-            instruction_memory.mem[0] = 32'h00100093;  // addi x1, x0, 1       -> x1 = 1 //0
+            instruction_memory.mem[0] = 32'h00108093;  // addi x1, x1, 1       -> x1 = 1 //0
             instruction_memory.mem[1] = 32'h00200113;  // addi x2, x0, 2       -> x2 = 2 //1
             instruction_memory.mem[2] = 32'h00300193;  // addi x3, x0, 3       -> x3 = 3 //2
             instruction_memory.mem[3] = 32'h00400213;  // addi x4, x0, 4       -> x4 = 4 //3
@@ -590,7 +590,7 @@ module dv_top_superscalar;
             instruction_memory.mem[6]  = 32'h005203b3; // add  x7, x4, x5      -> x7 = 4 + 5 = 9 //6
             instruction_memory.mem[7]  = 32'h40438433; // sub  x8, x7, x4      -> x8 = 9 - 4 = 5 //7
             instruction_memory.mem[8]  = 32'h005303b3; // add  x7, x6, x5      -> x7 = 6 + 5 = 11 //8
-            instruction_memory.mem[9]  = 32'h40138533; // sub x10, x7, x1      -> x10 = 11 - 1 = 1x0 //9
+            instruction_memory.mem[9]  = 32'h40138533; // sub x10, x7, x1      -> x10 = 11 - 1 = 10 //9
             instruction_memory.mem[10] = 32'h006505b3; // add x11, x10, x6     -> x11 = 10 + 6 = 16 //10
             instruction_memory.mem[11] = 32'h40538633; // sub x12, x7, x5      -> x12 = 11 - 5 = 6  //11
 
@@ -616,7 +616,8 @@ module dv_top_superscalar;
             instruction_memory.mem[29] = 32'h00317eb3; // and x29, x2, x3        -> x29 = 2 & 3 = 2  //29
             instruction_memory.mem[30] = 32'h18b22823; // sw x11, 400(x4)        -> mem[404] = 16
             instruction_memory.mem[31] = 32'h19022f03; // lw x30, 400(x4)        -> x30 = mem[404] (16)
-            
+            instruction_memory.mem[32] = 32'hf8bf00e3;
+
             // Phase 2: Arithmetic Operations
             //instruction_memory.mem[6]  = 32'h002083b3; // add  x7, x1, x2      -> x7 = 1 + 2 = 3 -
             //instruction_memory.mem[7]  = 32'h40208433; // sub  x8, x1, x2      -> x8 = 1 - 2 = -1

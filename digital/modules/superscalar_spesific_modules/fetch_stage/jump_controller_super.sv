@@ -55,7 +55,7 @@ module jump_controller_super #(parameter size = 32)(
 	output logic jalr_1,
 	output logic jalr_2
 	);
-
+	localparam D = 1;
 	logic j_type_0;
 	logic b_type_0;
 	logic branch_taken_0;
@@ -95,31 +95,31 @@ module jump_controller_super #(parameter size = 32)(
 	// Register jump decisions to use in next cycle (breaks combinational loop)
 	always @(posedge clk or negedge reset) begin
 		if (!reset) begin
-			jump_0_reg <= 1'b0;
-			jump_1_reg <= 1'b0;
-			jump_2_reg <= 1'b0;
-			jalr_0_reg <= 1'b0;
-			jalr_1_reg <= 1'b0;
-			jalr_2_reg <= 1'b0;
+			jump_0_reg <= #D 1'b0;
+			jump_1_reg <= #D 1'b0;
+			jump_2_reg <= #D 1'b0;
+			jalr_0_reg <= #D 1'b0;
+			jalr_1_reg <= #D 1'b0;
+			jalr_2_reg <= #D 1'b0;
 		end else begin
-			jump_0_reg <= jump_0_next;
-			jump_1_reg <= jump_1_next;
-			jump_2_reg <= jump_2_next;
-			jalr_0_reg <= jalr_0_next;
-			jalr_1_reg <= jalr_1_next;
-			jalr_2_reg <= jalr_2_next;
+			jump_0_reg <= #D jump_0_next;
+			jump_1_reg <= #D jump_1_next;
+			jump_2_reg <= #D jump_2_next;
+			jalr_0_reg <= #D jalr_0_next;
+			jalr_1_reg <= #D jalr_1_next;
+			jalr_2_reg <= #D jalr_2_next;
 		end
 	end
 
 	// Use registered values for PC calculation (breaks loop)
-	assign jump_0 = jump_0_reg;
-	assign jalr_0 = jalr_0_reg;
+	assign jump_0 = jump_0_next; //jump_0_reg;
+	assign jalr_0 = jalr_0_next; //jalr_0_reg;
 
-	assign jump_1 = jump_1_reg;
-	assign jalr_1 = jalr_1_reg;
+	assign jump_1 = jump_1_next; //jump_1_reg;
+	assign jalr_1 = jalr_1_next; //jalr_1_reg;
 
-	assign jump_2 = jump_2_reg;
-	assign jalr_2 = jalr_2_reg;
+	assign jump_2 = jump_2_next; //jump_2_reg;
+	assign jalr_2 = jalr_2_next; //jalr_2_reg;
 
 	// Instantiate branch predictor
 	branch_predictor_super #(.ADDR_WIDTH(32),.ENTRIES(32)) branch_predictor_inst (

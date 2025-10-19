@@ -337,6 +337,20 @@ module lsq_simple_top
          if (deallocate_head) begin
             lsq_buffer[head_idx].valid <= #D 1'b0;
             head_ptr <= #D head_ptr + 1'b1;
+            lsq_buffer[head_idx].addr_tag <= #D 3'd0;
+            lsq_buffer[head_idx].addr_valid <= #D 1'b0;
+            lsq_buffer[head_idx].address <= #D 32'd0;
+            lsq_buffer[head_idx].data <= #D 32'd0;
+            lsq_buffer[head_idx].data_tag <= #D 3'd0;
+            lsq_buffer[head_idx].data_valid <= #D 1'b0;
+            lsq_buffer[head_idx].is_store <= #D 1'b0;
+            lsq_buffer[head_idx].mem_complete <= #D 1'b0;
+            lsq_buffer[head_idx].mem_issued <= #D 1'b0;
+            lsq_buffer[head_idx].phys_reg <= #D '0;
+            lsq_buffer[head_idx].sign_extend <= #D 1'b0;
+            lsq_buffer[head_idx].size <= #D mem_size_t'(0);
+
+            
          end
       end
    end

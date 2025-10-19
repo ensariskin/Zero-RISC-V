@@ -94,14 +94,14 @@ module reservation_station #(
                                      (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 3'b001) ||
                                      (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 3'b010) ||
                                      (cdb_if_port.cdb_valid_3 && stored_operand_a_tag == 3'b011 && 
-                                     stored_rd_phys_addr == cdb_if_port.cdb_dest_reg_3) : 1'b0;
+                                     stored_operand_a_data == cdb_if_port.cdb_dest_reg_3) : 1'b0;
 
         operand_b_valid_from_stored = occupied ? (stored_operand_b_tag == TAG_READY) ||
                                      (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 3'b000) ||
                                      (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 3'b001) ||
                                      (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 3'b010) ||
                                      (cdb_if_port.cdb_valid_3 && stored_operand_b_tag == 3'b011 && 
-                                     stored_rd_phys_addr == cdb_if_port.cdb_dest_reg_3) : 1'b0;
+                                     stored_operand_b_data == cdb_if_port.cdb_dest_reg_3) : 1'b0;
 
         // Determine what data to use and when to issue
         if (occupied && operand_a_valid_from_stored && operand_b_valid_from_stored) begin
@@ -215,7 +215,7 @@ module reservation_station #(
                     end else if (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 3'b010) begin
                         stored_operand_a_data <= #D cdb_if_port.cdb_data_2;
                         stored_operand_a_tag <= #D TAG_READY;
-                    end else if (cdb_if_port.cdb_valid_3 && stored_operand_a_tag == 3'b011 && stored_rd_phys_addr == cdb_if_port.cdb_dest_reg_3) begin
+                    end else if (cdb_if_port.cdb_valid_3 && stored_operand_a_tag == 3'b011 && stored_operand_a_data == cdb_if_port.cdb_dest_reg_3) begin
                         stored_operand_a_data <= #D cdb_if_port.cdb_data_3;
                         stored_operand_a_tag <= #D TAG_READY;
                     end
@@ -232,7 +232,7 @@ module reservation_station #(
                     end else if (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 2'b10) begin
                         stored_operand_b_data <= #D cdb_if_port.cdb_data_2;
                         stored_operand_b_tag <= #D TAG_READY;
-                    end else if (cdb_if_port.cdb_valid_3 && stored_operand_b_tag == 2'b11 && stored_rd_phys_addr == cdb_if_port.cdb_dest_reg_3) begin
+                    end else if (cdb_if_port.cdb_valid_3 && stored_operand_b_tag == 2'b11 && stored_operand_b_data == cdb_if_port.cdb_dest_reg_3) begin
                         stored_operand_b_data <= #D cdb_if_port.cdb_data_3;
                         stored_operand_b_tag <= #D TAG_READY;
                     end
@@ -306,18 +306,21 @@ module reservation_station #(
             assign cdb_if_port.cdb_tag_0 = ALU_TAG;
             assign cdb_if_port.cdb_data_0 = exec_if.data_result;
             assign cdb_if_port.cdb_dest_reg_0 = exec_if.rd_phys_addr;
+            assign cdb_if_port.cdb_mem_addr_calculation_0 = exec_if.mem_addr_calculation;
         end else if (ALU_TAG == 3'b001) begin : gen_alu1_cdb
             // ALU1 broadcasts on channel 1
             assign cdb_if_port.cdb_valid_1 = exec_if.issue_valid && exec_if.issue_ready; // Result valid when FU completes
             assign cdb_if_port.cdb_tag_1 = ALU_TAG;
             assign cdb_if_port.cdb_data_1 = exec_if.data_result;
             assign cdb_if_port.cdb_dest_reg_1 = exec_if.rd_phys_addr;
+            assign cdb_if_port.cdb_mem_addr_calculation_1 = exec_if.mem_addr_calculation;
         end else if (ALU_TAG == 3'b010) begin : gen_alu2_cdb
             // ALU2 broadcasts on channel 2
             assign cdb_if_port.cdb_valid_2 = exec_if.issue_valid && exec_if.issue_ready; // Result valid when FU completes
             assign cdb_if_port.cdb_tag_2 = ALU_TAG;
             assign cdb_if_port.cdb_data_2 = exec_if.data_result;
             assign cdb_if_port.cdb_dest_reg_2 = exec_if.rd_phys_addr;
+            assign cdb_if_port.cdb_mem_addr_calculation_2 = exec_if.mem_addr_calculation;
         end
     endgenerate
 

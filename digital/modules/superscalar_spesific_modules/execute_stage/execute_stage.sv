@@ -99,6 +99,8 @@ module superscalar_execute_stage #(
     // Result assignment
     assign rs_to_exec_0.data_result = fu0_corrected_result;
 
+    assign rs_to_exec_0.mem_addr_calculation = (rs_to_exec_0.control_signals[4] ) || (rs_to_exec_0.control_signals[3] && !rs_to_exec_0.control_signals[6]); 
+
     //=======================================================================
     // Functional Unit 1 (FU1)
     //=======================================================================
@@ -118,6 +120,7 @@ module superscalar_execute_stage #(
     assign fu1_corrected_result = rs_to_exec_1.control_signals[5] ? {rs_to_exec_1.pc[31:2], 2'b00} : fu1_result;
     
     assign rs_to_exec_1.data_result = fu1_corrected_result;
+    assign rs_to_exec_1.mem_addr_calculation = (rs_to_exec_1.control_signals[4] ) || (rs_to_exec_1.control_signals[3] && !rs_to_exec_1.control_signals[6]); 
 
     //=======================================================================
     // Functional Unit 2 (FU2)
@@ -137,7 +140,8 @@ module superscalar_execute_stage #(
     // Result selection: save PC for JAL/JALR or ALU result (FU2)
     assign fu2_corrected_result = rs_to_exec_2.control_signals[5] ? {rs_to_exec_2.pc[31:2], 2'b00} : fu2_result;
     
-    assign rs_to_exec_2.data_result = fu2_corrected_result;
+    assign rs_to_exec_2.data_result = fu2_corrected_result; 
+    assign rs_to_exec_2.mem_addr_calculation = (rs_to_exec_2.control_signals[4] ) || (rs_to_exec_2.control_signals[3] && !rs_to_exec_2.control_signals[6]);
 
     //=======================================================================
     // Legacy Functional Unit Instances
