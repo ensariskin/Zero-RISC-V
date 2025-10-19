@@ -168,7 +168,7 @@ module lsq_simple_top
 
       num_allocs = {1'b0, actual_alloc_0} + {1'b0, actual_alloc_1} + {1'b0, actual_alloc_2};
       new_tail = tail_ptr + num_allocs;
-      alloc_0_ptr = tail_ptr;
+      alloc_0_ptr = tail_ptr[LSQ_ADDR_WIDTH-1:0];
       alloc_1_ptr = tail_ptr + actual_alloc_0;
       alloc_2_ptr = tail_ptr + actual_alloc_0 + actual_alloc_1;
    end
