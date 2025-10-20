@@ -307,6 +307,11 @@ module reservation_station #(
             assign cdb_if_port.cdb_data_0 = exec_if.data_result;
             assign cdb_if_port.cdb_dest_reg_0 = exec_if.rd_phys_addr;
             assign cdb_if_port.cdb_mem_addr_calculation_0 = exec_if.mem_addr_calculation;
+            assign cdb_if_port.cdb_misprediction_0 = exec_if.misprediction;
+            assign cdb_if_port.cdb_is_branch_0 = exec_if.is_branch;
+            assign cdb_if_port.cdb_correct_pc_0 = exec_if.correct_pc;
+
+
         end else if (ALU_TAG == 3'b001) begin : gen_alu1_cdb
             // ALU1 broadcasts on channel 1
             assign cdb_if_port.cdb_valid_1 = exec_if.issue_valid && exec_if.issue_ready; // Result valid when FU completes
@@ -314,6 +319,9 @@ module reservation_station #(
             assign cdb_if_port.cdb_data_1 = exec_if.data_result;
             assign cdb_if_port.cdb_dest_reg_1 = exec_if.rd_phys_addr;
             assign cdb_if_port.cdb_mem_addr_calculation_1 = exec_if.mem_addr_calculation;
+            assign cdb_if_port.cdb_misprediction_1 = exec_if.misprediction;
+            assign cdb_if_port.cdb_is_branch_1 = exec_if.is_branch;
+            assign cdb_if_port.cdb_correct_pc_1 = exec_if.correct_pc;
         end else if (ALU_TAG == 3'b010) begin : gen_alu2_cdb
             // ALU2 broadcasts on channel 2
             assign cdb_if_port.cdb_valid_2 = exec_if.issue_valid && exec_if.issue_ready; // Result valid when FU completes
@@ -321,6 +329,9 @@ module reservation_station #(
             assign cdb_if_port.cdb_data_2 = exec_if.data_result;
             assign cdb_if_port.cdb_dest_reg_2 = exec_if.rd_phys_addr;
             assign cdb_if_port.cdb_mem_addr_calculation_2 = exec_if.mem_addr_calculation;
+            assign cdb_if_port.cdb_misprediction_2 = exec_if.misprediction;
+            assign cdb_if_port.cdb_is_branch_2 = exec_if.is_branch;
+            assign cdb_if_port.cdb_correct_pc_2 = exec_if.correct_pc;
         end
     endgenerate
 

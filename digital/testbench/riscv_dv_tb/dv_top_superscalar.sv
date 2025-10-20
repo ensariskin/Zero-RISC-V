@@ -525,12 +525,12 @@ module dv_top_superscalar;
             for (int i = 0; i < 16384; i++) begin
                 instruction_memory.mem[i] = 32'h00000013; // NOP (addi x0, x0, 0)
             end
-            /* 
-            instruction_memory.mem[0] = 32'h00590913; 
-            instruction_memory.mem[1] = 32'h00590913; 
-            instruction_memory.mem[2] = 32'h00590913; 
-            instruction_memory.mem[3] = 32'h00590913; 
-            instruction_memory.mem[4] = 32'h00590913; 
+            
+            instruction_memory.mem[0] = 32'h00a00093; 
+            instruction_memory.mem[1] = 32'h00110113; 
+            instruction_memory.mem[2] = 32'hfe114ce3; 
+            instruction_memory.mem[3] = 32'h06410113; 
+            /*instruction_memory.mem[4] = 32'h00590913; 
             instruction_memory.mem[5] = 32'h00590913; 
             instruction_memory.mem[6] = 32'h00590913; 
             instruction_memory.mem[7] = 32'h00590913; 
@@ -577,7 +577,7 @@ module dv_top_superscalar;
             instruction_memory.mem[48] = 32'h00590913; 
             instruction_memory.mem[49] = 32'h00590913; 
             */
-             
+            /* 
             // Phase 1: Load integer values into first 6 registers (x1-x6)
             instruction_memory.mem[0] = 32'h00108093;  // addi x1, x1, 1       -> x1 = 1 //0
             instruction_memory.mem[1] = 32'h00200113;  // addi x2, x0, 2       -> x2 = 2 //1
@@ -598,25 +598,27 @@ module dv_top_superscalar;
             instruction_memory.mem[12] = 32'h0020c6b3; // xor x13, x1, x2      -> x13 = 1 ^ 2 = 3  //12
             instruction_memory.mem[13] = 32'h0020e733; // or  x14, x1, x2      -> x14 = 1 | 2 = 3  //13
             instruction_memory.mem[14] = 32'h0020f7b3; // and x15, x1, x2      -> x15 = 1 & 2 = 0  //14
-            instruction_memory.mem[15] = 32'h00324833; // xor x16, x4, x3      -> x16 = 4 ^ 3 = 7  //15
-            instruction_memory.mem[16] = 32'h003268b3; // or  x17, x4, x3      -> x17 = 4 | 3 = 7  //16
-            instruction_memory.mem[17] = 32'h00327933; // and x18, x4, x3      -> x18 = 4 & 3 = 0  //17
+            instruction_memory.mem[15] = 32'h18b22823; // sw x11, 400(x4)        -> mem[404] = 16
+            instruction_memory.mem[16] = 32'h00324833; // xor x16, x4, x3      -> x16 = 4 ^ 3 = 7  //15
+            instruction_memory.mem[17] = 32'h003268b3; // or  x17, x4, x3      -> x17 = 4 | 3 = 7  //16
+            instruction_memory.mem[18] = 32'h00327933; // and x18, x4, x3      -> x18 = 4 & 3 = 0  //17
 
-            instruction_memory.mem[18] = 32'h0108c933; // xor x18, x17, x16      -> x18 = 7 ^ 7 = 0  //18
-            instruction_memory.mem[19] = 32'h011949b3; // xor x19, x18, x17      -> x19 = 0 ^ 7 = 7  //19
-            instruction_memory.mem[20] = 32'h01397a33; // and x20, x18, x19      -> x20 = 0 & 7 = 0  //20
-            instruction_memory.mem[21] = 32'h01394ab3; // xor x21, x18, x19      -> x21 = 0 ^ 7 = 7  //21
-            instruction_memory.mem[22] = 32'h01396b33; // or  x22, x18, x19      -> x22 = 0 | 7 = 7  //22
-            instruction_memory.mem[23] = 32'h0128fbb3; // and x23, x17, x18      -> x23 = 7 & 0 = 0  //23
-            instruction_memory.mem[24] = 32'h0170cc33; // xor x24, x1, x23       -> x24 = 1 ^ 0 = 1  //24
-            instruction_memory.mem[25] = 32'h01896cb3; // or  x25, x18, x24      -> x25 = 0 | 1 = 1  //25 **
-            instruction_memory.mem[26] = 32'h019b7d33; // and x26, x22, x25      -> x26 = 7 & 1 = 1  //26 **
-            instruction_memory.mem[27] = 32'h017ccdb3; // xor x27, x25, x23      -> x27 = 1 ^ 0 = 1  //27 **
-            instruction_memory.mem[28] = 32'h01adee33; // or  x28, x27, x26      -> x28 = 1 | 1 = 1  //28 **
-            instruction_memory.mem[29] = 32'h00317eb3; // and x29, x2, x3        -> x29 = 2 & 3 = 2  //29
-            instruction_memory.mem[30] = 32'h18b22823; // sw x11, 400(x4)        -> mem[404] = 16
+            instruction_memory.mem[19] = 32'h0108c933; // xor x18, x17, x16      -> x18 = 7 ^ 7 = 0  //18
+            instruction_memory.mem[20] = 32'h011949b3; // xor x19, x18, x17      -> x19 = 0 ^ 7 = 7  //19
+            instruction_memory.mem[21] = 32'h01397a33; // and x20, x18, x19      -> x20 = 0 & 7 = 0  //20
+            instruction_memory.mem[22] = 32'h01394ab3; // xor x21, x18, x19      -> x21 = 0 ^ 7 = 7  //21
+            instruction_memory.mem[23] = 32'h01396b33; // or  x22, x18, x19      -> x22 = 0 | 7 = 7  //22
+            instruction_memory.mem[24] = 32'h0128fbb3; // and x23, x17, x18      -> x23 = 7 & 0 = 0  //23
+            instruction_memory.mem[25] = 32'h0170cc33; // xor x24, x1, x23       -> x24 = 1 ^ 0 = 1  //24
+            instruction_memory.mem[26] = 32'h01896cb3; // or  x25, x18, x24      -> x25 = 0 | 1 = 1  //25 **
+            instruction_memory.mem[27] = 32'h019b7d33; // and x26, x22, x25      -> x26 = 7 & 1 = 1  //26 **
+            instruction_memory.mem[28] = 32'h017ccdb3; // xor x27, x25, x23      -> x27 = 1 ^ 0 = 1  //27 **
+            instruction_memory.mem[29] = 32'h01adee33; // or  x28, x27, x26      -> x28 = 1 | 1 = 1  //28 **
+            instruction_memory.mem[30] = 32'h00317eb3; // and x29, x2, x3        -> x29 = 2 & 3 = 2  //29
+            
             instruction_memory.mem[31] = 32'h19022f03; // lw x30, 400(x4)        -> x30 = mem[404] (16)
             instruction_memory.mem[32] = 32'hf8bf00e3;
+            */
 
             // Phase 2: Arithmetic Operations
             //instruction_memory.mem[6]  = 32'h002083b3; // add  x7, x1, x2      -> x7 = 1 + 2 = 3 -

@@ -170,6 +170,12 @@ module rv32i_superscalar_core #(
     logic [1:0] privilege_mode;
     logic halted;
 
+    // misprediction signal from ROB
+    logic misprediction_detected;
+    logic [DATA_WIDTH-1:0] commit_correct_pc_0;
+    logic commit_is_branch_0;
+    logic [DATA_WIDTH-1:0] upadate_predictor_pc_0;
+
     cdb_if #(
         .DATA_WIDTH(DATA_WIDTH),
         .PHYS_REG_ADDR_WIDTH(6)
@@ -195,15 +201,15 @@ module rv32i_superscalar_core #(
         .instruction_i_2(instruction_i_2),
         
         // Pipeline control
-        .flush(pipeline_flush),
+        .flush(misprediction_detected),
         .buble(pipeline_stall),
         
         // Branch prediction interface
         .pc_value_at_prediction_0(bp_pc_0),
         .branch_prediction_o_0(bp_prediction_0),
-        .update_prediction_valid_i_0(bp_update_valid_0),
-        .update_prediction_pc_0(bp_update_pc_0),
-        .misprediction_0(bp_misprediction_0),
+        .update_prediction_valid_i_0(commit_is_branch_0),
+        .update_prediction_pc_0(upadate_predictor_pc_0),
+        .misprediction_0(misprediction_detected),
         
         .pc_value_at_prediction_1(bp_pc_1),
         .branch_prediction_o_1(bp_prediction_1),
@@ -217,7 +223,7 @@ module rv32i_superscalar_core #(
         .update_prediction_pc_2(bp_update_pc_2),
         .misprediction_2(bp_misprediction_2),
         
-        .correct_pc(bp_correct_pc),
+        .correct_pc(commit_correct_pc_0),
         
         // Output to decode stages
         .decode_valid_o(decode_valid),
@@ -270,7 +276,7 @@ module rv32i_superscalar_core #(
         .reset(reset),
         
         // Pipeline control
-        .flush(pipeline_flush),
+        .flush(misprediction_detected),
         .bubble(pipeline_stall),
         
         // Input from fetch/buffer stage
@@ -354,7 +360,12 @@ module rv32i_superscalar_core #(
         .commit_addr_2(commit_addr_2),
         .commit_rob_idx_0(commit_rob_idx_0),
         .commit_rob_idx_1(commit_rob_idx_1),
-        .commit_rob_idx_2(commit_rob_idx_2)
+        .commit_rob_idx_2(commit_rob_idx_2),
+
+        .misprediction_detected(misprediction_detected),
+        .commit_correct_pc_0(commit_correct_pc_0),
+        .commit_is_branch_0(commit_is_branch_0),
+        .upadate_predictor_pc_0(upadate_predictor_pc_0)
     );
     
     //==========================================================================

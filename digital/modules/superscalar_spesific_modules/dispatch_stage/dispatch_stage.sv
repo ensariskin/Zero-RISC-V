@@ -59,7 +59,12 @@ module dispatch_stage #(
     output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_2,
     output logic [4:0] commit_rob_idx_0,
     output logic [4:0] commit_rob_idx_1,
-    output logic [4:0] commit_rob_idx_2
+    output logic [4:0] commit_rob_idx_2,
+
+    output logic commit_is_branch_0,
+    output logic [DATA_WIDTH-1:0] commit_correct_pc_0,
+    output logic [DATA_WIDTH-1:0] upadate_predictor_pc_0,
+    output logic misprediction_detected
 );
 
     //==========================================================================
@@ -98,7 +103,7 @@ module dispatch_stage #(
 
     logic [4:0] rob_head_idx;
 
-    logic commit_exception_0, commit_exception_1, commit_exception_2;
+    //logic commit_exception_0, commit_exception_1, commit_exception_2;
 
     assign commit_rob_idx_0 = rob_head_idx;
     assign commit_rob_idx_1 = rob_head_idx + 1;
@@ -133,10 +138,16 @@ module dispatch_stage #(
         .cdb_data_1(cdb_interface.cdb_data_1),
         .cdb_data_2(cdb_interface.cdb_data_2),
         .cdb_data_3(cdb_interface.cdb_data_3),
-        .cdb_exception_0(1'b0),  //(cdb_interface.cdb_exception_0),
-        .cdb_exception_1(1'b0),  //(cdb_interface.cdb_exception_1),
-        .cdb_exception_2(1'b0),  //(cdb_interface.cdb_exception_2),
+        .cdb_exception_0(cdb_interface.cdb_misprediction_0),  
+        .cdb_exception_1(cdb_interface.cdb_misprediction_1),  
+        .cdb_exception_2(cdb_interface.cdb_misprediction_2),  
         .cdb_exception_3(1'b0),  //(cdb_interface.cdb_exception_3),
+        .cdb_correct_pc_0(cdb_interface.cdb_correct_pc_0),
+        .cdb_correct_pc_1(cdb_interface.cdb_correct_pc_1),
+        .cdb_correct_pc_2(cdb_interface.cdb_correct_pc_2),
+        .cdb_is_branch_0(cdb_interface.cdb_is_branch_0),
+        .cdb_is_branch_1(cdb_interface.cdb_is_branch_1),
+        .cdb_is_branch_2(cdb_interface.cdb_is_branch_2),
         .cdb_mem_addr_calculation_0(cdb_interface.cdb_mem_addr_calculation_0),
         .cdb_mem_addr_calculation_1(cdb_interface.cdb_mem_addr_calculation_1),
         .cdb_mem_addr_calculation_2(cdb_interface.cdb_mem_addr_calculation_2),
@@ -169,9 +180,18 @@ module dispatch_stage #(
         .commit_addr_0(commit_addr_0),
         .commit_addr_1(commit_addr_1),
         .commit_addr_2(commit_addr_2),
-        .commit_exception_0(commit_exception_0),
-        .commit_exception_1(commit_exception_1),
-        .commit_exception_2(commit_exception_2),
+        .commit_exception_0(misprediction_detected),
+        .commit_exception_1(),
+        .commit_exception_2(),
+        .commit_correct_pc_0(commit_correct_pc_0),
+        .commit_correct_pc_1(),
+        .commit_correct_pc_2(),
+        .commit_is_branch_0(commit_is_branch_0),
+        .commit_is_branch_1(),
+        .commit_is_branch_2(),
+        .upadate_predictor_pc_0(upadate_predictor_pc_0),
+        .upadate_predictor_pc_1(),
+        .upadate_predictor_pc_2(),
         .head_ptr(rob_head_idx)
     );
 
@@ -293,7 +313,7 @@ module dispatch_stage #(
         .ALU_TAG(3'b000)  // ALU0 tag
     ) rs_0 (
         .clk(clk),
-        .reset(reset),
+        .reset(reset & !misprediction_detected), // todo don't use mispredicted signal for async reset
 
         // Interface to issue stage
         .decode_if(internal_rs_if_0),
@@ -315,7 +335,7 @@ module dispatch_stage #(
         .ALU_TAG(3'b001)  // ALU1 tag
     ) rs_1 (
         .clk(clk),
-        .reset(reset),
+        .reset(reset & !misprediction_detected),
 
         // Interface to issue stage
         .decode_if(internal_rs_if_1),
@@ -337,7 +357,7 @@ module dispatch_stage #(
         .ALU_TAG(3'b010)  // ALU2 tag
     ) rs_2 (
         .clk(clk),
-        .reset(reset),
+        .reset(reset & !misprediction_detected),
 
         // Interface to issue stage
         .decode_if(internal_rs_if_2),
@@ -367,7 +387,7 @@ module dispatch_stage #(
     lsq_simple_top lsq (
       // Clock and reset
       .clk(clk),
-      .rst_n(reset),
+      .rst_n(reset & !misprediction_detected),
 
       // Allocation interface (from Issue Stage)
       // Allocation 0
@@ -390,8 +410,8 @@ module dispatch_stage #(
       .alloc_sign_extend_1_i(issue_to_dispatch_1.control_signals[2]),
       // Allocation 2
       .alloc_valid_2_i(issue_to_dispatch_2.lsq_alloc_valid),
-      .alloc_is_store_2_i(issue_to_dispatch_1.control_signals[3] & ~issue_to_dispatch_1.control_signals[6]),
-      .alloc_phys_reg_2_i(issue_to_dispatch_1.rd_phys_addr),
+      .alloc_is_store_2_i(issue_to_dispatch_2.control_signals[3] & ~issue_to_dispatch_2.control_signals[6]),
+      .alloc_phys_reg_2_i(issue_to_dispatch_2.rd_phys_addr),
       .alloc_addr_tag_2_i(3'b010),
       .alloc_data_operand_2_i(inst_2_read_data_b),
       .alloc_data_tag_2_i(inst_2_read_tag_b),
@@ -423,8 +443,6 @@ module dispatch_stage #(
       .lsq_empty_o()
     );
     
-    
-
     logic [1:0] active_rs_number;
     assign active_rs_number = cdb_interface.cdb_valid_0 +
                               cdb_interface.cdb_valid_1 +

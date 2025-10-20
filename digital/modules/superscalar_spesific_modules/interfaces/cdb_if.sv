@@ -19,13 +19,17 @@
 interface cdb_if #(
     parameter DATA_WIDTH = 32,
     parameter PHYS_REG_ADDR_WIDTH = 6
-);
+);  
+    // TODO REMOVE CDB prefix
     // CDB Channel 0 (from RS/ALU 0)
     logic cdb_valid_0;                              // Valid result on channel 0
     logic [2:0] cdb_tag_0;                          // Tag for channel 0 (2'b00 = ALU0)
     logic [DATA_WIDTH-1:0] cdb_data_0;              // Result data from ALU 0
     logic [PHYS_REG_ADDR_WIDTH-1:0] cdb_dest_reg_0; // Destination physical register
     logic cdb_mem_addr_calculation_0;
+    logic cdb_misprediction_0;
+    logic cdb_is_branch_0;
+    logic [DATA_WIDTH-1:0] cdb_correct_pc_0;
     
     // CDB Channel 1 (from RS/ALU 1)
     logic cdb_valid_1;                              // Valid result on channel 1
@@ -33,6 +37,9 @@ interface cdb_if #(
     logic [DATA_WIDTH-1:0] cdb_data_1;              // Result data from ALU 1
     logic [PHYS_REG_ADDR_WIDTH-1:0] cdb_dest_reg_1; // Destination physical register
     logic cdb_mem_addr_calculation_1;
+    logic cdb_misprediction_1;
+    logic cdb_is_branch_1;
+    logic [DATA_WIDTH-1:0] cdb_correct_pc_1;
     
     // CDB Channel 2 (from RS/ALU 2)
     logic cdb_valid_2;                              // Valid result on channel 2
@@ -40,6 +47,9 @@ interface cdb_if #(
     logic [DATA_WIDTH-1:0] cdb_data_2;              // Result data from ALU 2
     logic [PHYS_REG_ADDR_WIDTH-1:0] cdb_dest_reg_2; // Destination physical register
     logic cdb_mem_addr_calculation_2;
+    logic cdb_misprediction_2;
+    logic cdb_is_branch_2;
+    logic [DATA_WIDTH-1:0] cdb_correct_pc_2;
 
     // CDB Channel 3 (from LSQ)
     logic cdb_valid_3;                              // Valid result on channel 2
@@ -55,6 +65,9 @@ interface cdb_if #(
         output cdb_data_0,
         output cdb_dest_reg_0,
         output cdb_mem_addr_calculation_0,
+        output cdb_misprediction_0,
+        output cdb_is_branch_0,
+        output cdb_correct_pc_0,
         
         // Listening (CDB → RS0)
         input  cdb_valid_1,
@@ -71,6 +84,7 @@ interface cdb_if #(
         input  cdb_tag_3,
         input  cdb_data_3,
         input  cdb_dest_reg_3
+        // todo currently branch related signals of other channels are not added as input, if we need them add here
     );
     
     // Modport for Reservation Station 1 (can broadcast on channel 1, listen to all)
@@ -81,6 +95,9 @@ interface cdb_if #(
         output cdb_data_1,
         output cdb_dest_reg_1,
         output cdb_mem_addr_calculation_1,
+        output cdb_misprediction_1,
+        output cdb_is_branch_1,
+        output cdb_correct_pc_1,
         
         // Listening (CDB → RS1)
         input  cdb_valid_0,
@@ -107,6 +124,9 @@ interface cdb_if #(
         output cdb_data_2,
         output cdb_dest_reg_2,
         output cdb_mem_addr_calculation_2,
+        output cdb_misprediction_2,
+        output cdb_is_branch_2,
+        output cdb_correct_pc_2,
         
         // Listening (CDB → RS2)
         input  cdb_valid_0,
@@ -157,16 +177,25 @@ interface cdb_if #(
         input  cdb_data_0,
         input  cdb_dest_reg_0,
         input  cdb_mem_addr_calculation_0,
+        input  cdb_misprediction_0,
+        input  cdb_is_branch_0,
+        input  cdb_correct_pc_0,
         input  cdb_valid_1,
         input  cdb_tag_1,
         input  cdb_data_1,
         input  cdb_dest_reg_1,
         input  cdb_mem_addr_calculation_1,
+        input  cdb_misprediction_1,
+        input  cdb_is_branch_1,
+        input  cdb_correct_pc_1,
         input  cdb_valid_2,
         input  cdb_tag_2,
         input  cdb_data_2,
         input  cdb_dest_reg_2,
         input  cdb_mem_addr_calculation_2,
+        input  cdb_misprediction_2,
+        input  cdb_is_branch_2,
+        input  cdb_correct_pc_2,
         input  cdb_valid_3,
         input  cdb_tag_3,
         input  cdb_data_3,

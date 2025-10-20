@@ -24,6 +24,7 @@ module register_alias_table #(
 )(
     input logic clk,
     input logic reset,
+    input logic flush,
 
     // 3-way decode interface (architectural register addresses from decoders)
     input logic [ARCH_ADDR_WIDTH-1:0] rs1_arch_0, rs1_arch_1, rs1_arch_2,
@@ -84,7 +85,7 @@ module register_alias_table #(
 
     circular_buffer_3port free_address_buffer(
         .clk(clk),
-        .rst_n(reset),
+        .rst_n(reset & !flush),
         .read_en_0(need_alloc_0),
         .read_en_1(need_alloc_1),
         .read_en_2(need_alloc_2),
@@ -104,7 +105,7 @@ module register_alias_table #(
     
     circular_buffer_3port #(.BUFFER_DEPTH(8)) lsq_address_buffer(
         .clk(clk),
-        .rst_n(reset),
+        .rst_n(reset & !flush),
         .read_en_0(need_lsq_alloc_0),
         .read_en_1(need_lsq_alloc_1),
         .read_en_2(need_lsq_alloc_2),
@@ -260,6 +261,7 @@ module register_alias_table #(
                 rat_table[i] <= #D i[PHYS_ADDR_WIDTH-1:0];
             end
         end else begin
+            
             // Update RAT for new allocations
             if(commit_valid[0] && commit_addr_0 != 0) begin
                 if(commit_rob_idx_0 == rat_table[commit_addr_0][4:0]) begin // Only free if the mapping matches
@@ -287,6 +289,13 @@ module register_alias_table #(
 
             if (need_alloc_2 && rd_arch_2 != 0) begin
                 rat_table[rd_arch_2] <= #D allocated_phys_reg[2];
+            end
+
+            if (flush) begin
+                // On flush, reset RAT to initial state
+                for (int i = 0; i < ARCH_REGS; i++) begin
+                    rat_table[i] <= #D i[PHYS_ADDR_WIDTH-1:0];
+                end
             end
 
         end

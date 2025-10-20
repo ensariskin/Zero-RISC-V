@@ -175,6 +175,7 @@ module issue_stage #(
     ) rat_inst (
         .clk(clk),
         .reset(reset),
+        .flush(flush),
         
         // Decode interface - separated signals
         .rs1_arch_0(rs1_arch_0), .rs1_arch_1(rs1_arch_1), .rs1_arch_2(rs1_arch_2),

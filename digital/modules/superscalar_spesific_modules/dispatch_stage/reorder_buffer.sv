@@ -63,6 +63,15 @@ module reorder_buffer #(
     input  logic cdb_exception_1,
     input  logic cdb_exception_2,
     input  logic cdb_exception_3,
+
+    input  logic [DATA_WIDTH-1:0] cdb_correct_pc_0, // Correct PC for branch/jalr
+    input  logic [DATA_WIDTH-1:0] cdb_correct_pc_1,
+    input  logic [DATA_WIDTH-1:0] cdb_correct_pc_2,
+
+    input  logic cdb_is_branch_0, // Is the instruction a branch
+    input  logic cdb_is_branch_1,
+    input  logic cdb_is_branch_2,
+
     input  logic cdb_mem_addr_calculation_0,
     input  logic cdb_mem_addr_calculation_1,
     input  logic cdb_mem_addr_calculation_2,
@@ -101,9 +110,22 @@ module reorder_buffer #(
     output logic [ADDR_WIDTH-1:0] commit_addr_0,
     output logic [ADDR_WIDTH-1:0] commit_addr_1,
     output logic [ADDR_WIDTH-1:0] commit_addr_2,
+    
     output logic commit_exception_0,
     output logic commit_exception_1,
     output logic commit_exception_2,
+
+    output logic [DATA_WIDTH-1:0] commit_correct_pc_0,
+    output logic [DATA_WIDTH-1:0] commit_correct_pc_1,
+    output logic [DATA_WIDTH-1:0] commit_correct_pc_2,
+
+    output logic commit_is_branch_0,
+    output logic commit_is_branch_1,
+    output logic commit_is_branch_2,
+
+    output logic [DATA_WIDTH-1:0] upadate_predictor_pc_0, // For branch predictor update
+    output logic [DATA_WIDTH-1:0] upadate_predictor_pc_1,
+    output logic [DATA_WIDTH-1:0] upadate_predictor_pc_2,
 
     //==========================================================================
     // STATUS OUTPUTS
@@ -129,9 +151,15 @@ module reorder_buffer #(
     logic [BUFFER_DEPTH-1:0] buffer_executed;
     logic [BUFFER_DEPTH-1:0] buffer_exception;
 
+    /// branch and jalr related buffers (not efficient but easy to implement)
+    logic [BUFFER_DEPTH-1:0] [DATA_WIDTH-1:0] buffer_correct_pc;
+    logic [BUFFER_DEPTH-1:0] buffer_is_branch;
+
     // Head and tail pointers (extra bit for full/empty detection)
     logic [ADDR_WIDTH:0] head_ptr_reg;
     logic [ADDR_WIDTH:0] tail_ptr_reg;
+
+    logic exception_detected;
 
     // Assign outputs
     assign head_ptr = head_ptr_reg[ADDR_WIDTH-1:0];
@@ -160,6 +188,14 @@ module reorder_buffer #(
     logic [1:0] num_alloc_requests;
     logic [ADDR_WIDTH:0] next_tail_ptr;
 
+
+    logic [ADDR_WIDTH-1:0] head_idx, head_plus_1_idx, head_plus_2_idx;
+    logic [ADDR_WIDTH-1:0] head_idx_d1, head_plus_1_idx_d1, head_plus_2_idx_d1;
+    logic [1:0] num_commits;
+    logic [ADDR_WIDTH:0] next_head_ptr;
+
+    assign exception_detected = buffer_exception[head_idx];
+
     // Count number of allocation requests
     always_comb begin
         num_alloc_requests = alloc_enable_0 + alloc_enable_1 + alloc_enable_2;
@@ -179,30 +215,25 @@ module reorder_buffer #(
         if (alloc_success && !buffer_full) begin
             next_tail_ptr = tail_ptr_reg + num_alloc_requests;
         end
+        if(exception_detected) begin
+            next_tail_ptr = 0; // Flush on exception
+        end
     end
-
-    //==========================================================================
-    // COMMIT LOGIC (In-order commits from head)
-    //==========================================================================
-
-    logic [ADDR_WIDTH-1:0] head_idx, head_plus_1_idx, head_plus_2_idx;
-    logic [ADDR_WIDTH-1:0] head_idx_d1, head_plus_1_idx_d1, head_plus_2_idx_d1;
-    logic [1:0] num_commits;
-    logic [ADDR_WIDTH:0] next_head_ptr;
 
     assign head_idx = head_ptr_reg[ADDR_WIDTH-1:0];
     assign head_plus_1_idx = (head_ptr_reg[ADDR_WIDTH-1:0] + 1'b1) % BUFFER_DEPTH;
     assign head_plus_2_idx = (head_ptr_reg[ADDR_WIDTH-1:0] + 2'b10) % BUFFER_DEPTH;
 
     // Commit ready signals - in-order commit requirement
-    assign commit_ready_0 = !buffer_empty && buffer_executed[head_idx];
-    assign commit_ready_1 = (entries_used >= 2) && buffer_executed[head_idx] &&
-                            buffer_executed[head_plus_1_idx];
-    assign commit_ready_2 = (entries_used >= 3) && buffer_executed[head_idx] &&
-                            buffer_executed[head_plus_1_idx] &&
-                            buffer_executed[head_plus_2_idx];
-                            // todo maybe check misprediction here too?
+    assign commit_ready_0 = buffer_executed[head_idx]; //& !buffer_is_branch[head_idx];
 
+    assign commit_ready_1 = buffer_executed[head_idx]        & !buffer_exception[head_idx] &
+                            buffer_executed[head_plus_1_idx]; // & !buffer_is_branch[head_plus_1_idx];
+
+    assign commit_ready_2 = buffer_executed[head_idx]        & !buffer_exception[head_idx] &
+                            buffer_executed[head_plus_1_idx] & !buffer_exception[head_plus_1_idx] &
+                            buffer_executed[head_plus_2_idx]; // & !buffer_is_branch[head_plus_2_idx];
+    
     // Commit data outputs
     assign commit_data_0 = buffer_data[head_idx];
     assign commit_data_1 = buffer_data[head_plus_1_idx];
@@ -210,9 +241,22 @@ module reorder_buffer #(
     assign commit_addr_0 = buffer_addr[head_idx];
     assign commit_addr_1 = buffer_addr[head_plus_1_idx];
     assign commit_addr_2 = buffer_addr[head_plus_2_idx];
+
     assign commit_exception_0 = buffer_exception[head_idx];
-    assign commit_exception_1 = buffer_exception[head_plus_1_idx];
-    assign commit_exception_2 = buffer_exception[head_plus_2_idx];
+    assign commit_exception_1 = 1'b0; //buffer_exception[head_plus_1_idx];
+    assign commit_exception_2 = 1'b0; //buffer_exception[head_plus_2_idx];
+
+    assign commit_correct_pc_0 = buffer_correct_pc[head_idx];
+    assign commit_correct_pc_1 = '0; //buffer_correct_pc[head_plus_1_idx];
+    assign commit_correct_pc_2 = '0; //buffer_correct_pc[head_plus_2_idx];
+
+    assign commit_is_branch_0 = buffer_is_branch[head_idx];
+    assign commit_is_branch_1 = 1'b0; //buffer_is_branch[head_plus_1_idx];
+    assign commit_is_branch_2 = 1'b0; //buffer_is_branch[head_plus_2_idx];
+
+    assign upadate_predictor_pc_0 = buffer_data[head_idx];
+    assign upadate_predictor_pc_1 = '0;//buffer_data[head_plus_1_idx];
+    assign upadate_predictor_pc_2 = '0; //buffer_data[head_plus_2_idx];
 
     // Count number of commits
     always_comb begin
@@ -222,6 +266,10 @@ module reorder_buffer #(
     // Calculate next head pointer
     always_comb begin
         next_head_ptr = head_ptr_reg + num_commits; // default
+
+        if(exception_detected) begin
+            next_head_ptr = 0; // Flush on exception
+        end
     end
 
     //==========================================================================
@@ -319,13 +367,13 @@ module reorder_buffer #(
             read_data_0 = cdb_data_0;
             read_tag_0 = TAG_VALID;
         end else if (read_0_match_alloc_2) begin
-            read_data_0 = '0; // New allocation, data not ready
+            read_data_0 = {26'd0, 1'b1, alloc_idx_2}; // New allocation, data not ready
             read_tag_0 = alloc_tag_2;
         end else if (read_0_match_alloc_1) begin
-            read_data_0 = '0; // New allocation, data not ready
+            read_data_0 = {26'd0, 1'b1, alloc_idx_1}; // New allocation, data not ready
             read_tag_0 = alloc_tag_1;
         end else if (read_0_match_alloc_0) begin
-            read_data_0 = '0; // New allocation, data not ready
+            read_data_0 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_0 = alloc_tag_0;
         end else begin
             //read_data_0 = buffer_data[read_addr_0]; send lsq destination address if value expected from LSQ
@@ -353,13 +401,13 @@ module reorder_buffer #(
             read_data_1 = cdb_data_0;
             read_tag_1 = TAG_VALID;
         end else if (read_1_match_alloc_2) begin
-            read_data_1 = '0; // New allocation, data not ready
+            read_data_1 = {26'd0, 1'b1, alloc_idx_2}; // New allocation, data not ready
             read_tag_1 = alloc_tag_2;
         end else if (read_1_match_alloc_1) begin
-            read_data_1 = '0; // New allocation, data not ready
+            read_data_1 = {26'd0, 1'b1, alloc_idx_1}; // New allocation, data not ready
             read_tag_1 = alloc_tag_1;
         end else if (read_1_match_alloc_0) begin
-            read_data_1 = '0; // New allocation, data not ready
+            read_data_1 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_1 = alloc_tag_0;
         end else begin
             read_tag_1 = buffer_tag[read_addr_1];
@@ -386,13 +434,13 @@ module reorder_buffer #(
             read_data_2 = cdb_data_0;
             read_tag_2 = TAG_VALID;
         end else if (read_2_match_alloc_2) begin
-            read_data_2 = '0; // New allocation, data not ready
+            read_data_2 = {26'd0, 1'b1, alloc_idx_2}; // New allocation, data not ready
             read_tag_2 = alloc_tag_2;
         end else if (read_2_match_alloc_1) begin
-            read_data_2 = '0; // New allocation, data not ready
+            read_data_2 = {26'd0, 1'b1, alloc_idx_1}; // New allocation, data not ready
             read_tag_2 = alloc_tag_1;
         end else if (read_2_match_alloc_0) begin
-            read_data_2 = '0; // New allocation, data not ready
+            read_data_2 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_2 = alloc_tag_0;
         end else begin
             read_tag_2 = buffer_tag[read_addr_2];
@@ -419,13 +467,13 @@ module reorder_buffer #(
             read_data_3 = cdb_data_0;
             read_tag_3 = TAG_VALID;
         end else if (read_3_match_alloc_2) begin
-            read_data_3 = '0; // New allocation, data not ready
+            read_data_3 = {26'd0, 1'b1, alloc_idx_2}; // New allocation, data not ready
             read_tag_3 = alloc_tag_2;
         end else if (read_3_match_alloc_1) begin
-            read_data_3 = '0; // New allocation, data not ready
+            read_data_3 = {26'd0, 1'b1, alloc_idx_1}; // New allocation, data not ready
             read_tag_3 = alloc_tag_1;
         end else if (read_3_match_alloc_0) begin
-            read_data_3 = '0; // New allocation, data not ready
+            read_data_3 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_3 = alloc_tag_0;
         end else begin
             read_tag_3 = buffer_tag[read_addr_3];
@@ -452,13 +500,13 @@ module reorder_buffer #(
             read_data_4 = cdb_data_0;
             read_tag_4 = TAG_VALID;
         end else if (read_4_match_alloc_2) begin
-            read_data_4 = '0; // New allocation, data not ready
+            read_data_4 = {26'd0, 1'b1, alloc_idx_2}; // New allocation, data not ready
             read_tag_4 = alloc_tag_2;
         end else if (read_4_match_alloc_1) begin
-            read_data_4 = '0; // New allocation, data not ready
+            read_data_4 = {26'd0, 1'b1, alloc_idx_1}; // New allocation, data not ready
             read_tag_4 = alloc_tag_1;
         end else if (read_4_match_alloc_0) begin
-            read_data_4 = '0; // New allocation, data not ready
+            read_data_4 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_4 = alloc_tag_0;
         end else begin
             read_tag_4 = buffer_tag[read_addr_4];
@@ -485,13 +533,13 @@ module reorder_buffer #(
             read_data_5 = cdb_data_0;
             read_tag_5 = TAG_VALID;
         end else if (read_5_match_alloc_2) begin
-            read_data_5 = '0; // New allocation, data not ready
+            read_data_5 = {26'd0, 1'b1, alloc_idx_2}; // New allocation, data not ready
             read_tag_5 = alloc_tag_2;
         end else if (read_5_match_alloc_1) begin
-            read_data_5 = '0; // New allocation, data not ready
+            read_data_5 = {26'd0, 1'b1, alloc_idx_1}; // New allocation, data not ready
             read_tag_5 = alloc_tag_1;
         end else if (read_5_match_alloc_0) begin
-            read_data_5 = '0; // New allocation, data not ready
+            read_data_5 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_5 = alloc_tag_0;
         end else begin
             read_tag_5 = buffer_tag[read_addr_5];
@@ -516,6 +564,9 @@ module reorder_buffer #(
                 buffer_addr[i] <= #D '0;
                 buffer_executed[i] <= #D 1'b0;
                 buffer_exception[i] <= #D 1'b0;
+
+                buffer_correct_pc[i] <= #D '0;
+                buffer_is_branch[i] <= #D 1'b0;
             end
 
             // Reset pointers
@@ -527,95 +578,147 @@ module reorder_buffer #(
             head_plus_2_idx_d1 <= #D 5'd2;
 
         end else begin
-            // Update head pointer (commits)
-            head_ptr_reg <= #D next_head_ptr;
-            // Update tail pointer (allocations)
-            tail_ptr_reg <= #D next_tail_ptr;
+            if(exception_detected) begin
+                // On exception, flush the buffer
+                for (int i = 0; i < BUFFER_DEPTH; i++) begin
+                    buffer_data[i] <= #D '0;
+                    buffer_tag[i] <= #D '0;
+                    buffer_addr[i] <= #D '0;
+                    buffer_executed[i] <= #D 1'b0;
+                    buffer_exception[i] <= #D 1'b0;
 
-            // Update delayed head indices
-            head_idx_d1 <= #D head_idx;
-            head_plus_1_idx_d1 <= #D head_plus_1_idx;
-            head_plus_2_idx_d1 <= #D head_plus_2_idx;
-
-            //==================================================================
-            // ALLOCATION - Initialize new entries
-            //==================================================================
-            if (alloc_success) begin
-                if (alloc_enable_0) begin
-                    buffer_data[alloc_idx_0] <= #D '0;
-                    buffer_tag[alloc_idx_0] <= #D alloc_tag_0;
-                    buffer_addr[alloc_idx_0] <= #D alloc_addr_0;
-                    buffer_executed[alloc_idx_0] <= #D 1'b0;
-                    buffer_exception[alloc_idx_0] <= #D 1'b0;
+                    buffer_correct_pc[i] <= #D '0;
+                    buffer_is_branch[i] <= #D 1'b0;
                 end
-                if (alloc_enable_1) begin
-                    buffer_data[alloc_idx_1] <= #D '0;
-                    buffer_tag[alloc_idx_1] <= #D alloc_tag_1;
-                    buffer_addr[alloc_idx_1] <= #D alloc_addr_1;
-                    buffer_executed[alloc_idx_1] <= #D 1'b0;
-                    buffer_exception[alloc_idx_1] <= #D 1'b0;
+
+                // Reset pointers
+                head_ptr_reg <= #D '0;
+                tail_ptr_reg <= #D '0;
+
+                head_idx_d1 <= #D 5'd0;
+                head_plus_1_idx_d1 <= #D 5'd1;
+                head_plus_2_idx_d1 <= #D 5'd2;
+            end else begin
+                // Update head pointer (commits)
+                head_ptr_reg <= #D next_head_ptr;
+                // Update tail pointer (allocations)
+                tail_ptr_reg <= #D next_tail_ptr;
+
+                // Update delayed head indices
+                head_idx_d1 <= #D head_idx;
+                head_plus_1_idx_d1 <= #D head_plus_1_idx;
+                head_plus_2_idx_d1 <= #D head_plus_2_idx;
+
+                //==================================================================
+                // ALLOCATION - Initialize new entries
+                //==================================================================
+                if (alloc_success) begin
+                    if (alloc_enable_0) begin
+                        buffer_data[alloc_idx_0] <= #D '0;
+                        buffer_tag[alloc_idx_0] <= #D alloc_tag_0;
+                        buffer_addr[alloc_idx_0] <= #D alloc_addr_0;
+                        buffer_executed[alloc_idx_0] <= #D 1'b0;
+                        buffer_exception[alloc_idx_0] <= #D 1'b0;
+
+                        buffer_correct_pc[alloc_idx_0] <= #D '0;
+                        buffer_is_branch[alloc_idx_0] <= #D 1'b0;
+
+                    end
+                    if (alloc_enable_1) begin
+                        buffer_data[alloc_idx_1] <= #D '0;
+                        buffer_tag[alloc_idx_1] <= #D alloc_tag_1;
+                        buffer_addr[alloc_idx_1] <= #D alloc_addr_1;
+                        buffer_executed[alloc_idx_1] <= #D 1'b0;
+                        buffer_exception[alloc_idx_1] <= #D 1'b0;
+
+                        buffer_correct_pc[alloc_idx_1] <= #D '0;
+                        buffer_is_branch[alloc_idx_1] <= #D 1'b0;
+                    end
+                    if (alloc_enable_2) begin
+                        buffer_data[alloc_idx_2] <= #D '0;
+                        buffer_tag[alloc_idx_2] <= #D alloc_tag_2;
+                        buffer_addr[alloc_idx_2] <= #D alloc_addr_2;
+                        buffer_executed[alloc_idx_2] <= #D 1'b0;
+                        buffer_exception[alloc_idx_2] <= #D 1'b0;
+
+                        buffer_correct_pc[alloc_idx_2] <= #D '0;
+                        buffer_is_branch[alloc_idx_2] <= #D 1'b0;
+                    end
                 end
-                if (alloc_enable_2) begin
-                    buffer_data[alloc_idx_2] <= #D '0;
-                    buffer_tag[alloc_idx_2] <= #D alloc_tag_2;
-                    buffer_addr[alloc_idx_2] <= #D alloc_addr_2;
-                    buffer_executed[alloc_idx_2] <= #D 1'b0;
-                    buffer_exception[alloc_idx_2] <= #D 1'b0;
+
+                //==================================================================
+                // CDB UPDATES - Write results from execution units
+                //==================================================================
+                if (cdb_valid_0 && buffer_tag[cdb_addr_0] == 3'b000) begin
+                    buffer_data[cdb_addr_0] <= #D cdb_data_0;
+                    buffer_tag[cdb_addr_0] <= #D TAG_VALID;
+                    buffer_executed[cdb_addr_0] <= #D 1'b1;
+                    buffer_exception[cdb_addr_0] <= #D cdb_exception_0;
+
+                    buffer_correct_pc[cdb_addr_0] <= #D cdb_correct_pc_0;
+                    buffer_is_branch[cdb_addr_0] <= #D cdb_is_branch_0;
                 end
-            end
+                if (cdb_valid_1 && buffer_tag[cdb_addr_1] == 3'b001) begin
+                    buffer_data[cdb_addr_1] <= #D cdb_data_1;
+                    buffer_tag[cdb_addr_1] <= #D TAG_VALID;
+                    buffer_executed[cdb_addr_1] <= #D 1'b1;
+                    buffer_exception[cdb_addr_1] <= #D cdb_exception_1;
 
-            //==================================================================
-            // CDB UPDATES - Write results from execution units
-            //==================================================================
-            if (cdb_valid_0 && buffer_tag[cdb_addr_0] == 3'b000) begin
-                buffer_data[cdb_addr_0] <= #D cdb_data_0;
-                buffer_tag[cdb_addr_0] <= #D TAG_VALID;
-                buffer_executed[cdb_addr_0] <= #D 1'b1;
-                buffer_exception[cdb_addr_0] <= #D cdb_exception_0;
-            end
-            if (cdb_valid_1 && buffer_tag[cdb_addr_1] == 3'b001) begin
-                buffer_data[cdb_addr_1] <= #D cdb_data_1;
-                buffer_tag[cdb_addr_1] <= #D TAG_VALID;
-                buffer_executed[cdb_addr_1] <= #D 1'b1;
-                buffer_exception[cdb_addr_1] <= #D cdb_exception_1;
-            end
-            if (cdb_valid_2 && buffer_tag[cdb_addr_2] == 3'b010) begin
-                buffer_data[cdb_addr_2] <= #D cdb_data_2;
-                buffer_tag[cdb_addr_2] <= #D TAG_VALID;
-                buffer_executed[cdb_addr_2] <= #D 1'b1;
-                buffer_exception[cdb_addr_2] <= #D cdb_exception_2;
-            end
-            if (cdb_valid_3 && buffer_tag[cdb_addr_3] == 3'b011) begin
-                buffer_data[cdb_addr_3] <= #D cdb_data_3;
-                buffer_tag[cdb_addr_3] <= #D TAG_VALID;
-                buffer_executed[cdb_addr_3] <= #D 1'b1;
-                buffer_exception[cdb_addr_3] <= #D cdb_exception_3;
-            end
-
-          if(head_idx_d1 != head_idx) begin // detected commit
-            // Clear committed entries (head, head+1, head+2)
-            buffer_data[head_idx_d1] <= #D '0;
-            buffer_tag[head_idx_d1] <= #D '0;
-            buffer_addr[head_idx_d1] <= #D '0;
-            buffer_executed[head_idx_d1] <= #D 1'b0;
-            buffer_exception[head_idx_d1] <= #D 1'b0;
-            if(head_plus_1_idx_d1 != head_idx) begin // if only one commit happened, head idx will be same as head+1 idx, so don't clear if they are same
-                buffer_data[head_plus_1_idx_d1] <= #D '0;
-                buffer_tag[head_plus_1_idx_d1] <= #D '0;
-                buffer_addr[head_plus_1_idx_d1] <= #D '0;
-                buffer_executed[head_plus_1_idx_d1] <= #D 1'b0;
-                buffer_exception[head_plus_1_idx_d1] <= #D 1'b0;
-                if(head_plus_2_idx_d1 != head_idx) begin
-                    buffer_data[head_plus_2_idx_d1] <= #D '0;
-                    buffer_tag[head_plus_2_idx_d1] <= #D '0;
-                    buffer_addr[head_plus_2_idx_d1] <= #D '0;
-                    buffer_executed[head_plus_2_idx_d1] <= #D 1'b0;
-                    buffer_exception[head_plus_2_idx_d1] <= #D 1'b0;
+                    buffer_correct_pc[cdb_addr_1] <= #D cdb_correct_pc_1;
+                    buffer_is_branch[cdb_addr_1] <= #D cdb_is_branch_1;
                 end
+                if (cdb_valid_2 && buffer_tag[cdb_addr_2] == 3'b010) begin
+                    buffer_data[cdb_addr_2] <= #D cdb_data_2;
+                    buffer_tag[cdb_addr_2] <= #D TAG_VALID;
+                    buffer_executed[cdb_addr_2] <= #D 1'b1;
+                    buffer_exception[cdb_addr_2] <= #D cdb_exception_2;
+
+                    buffer_correct_pc[cdb_addr_2] <= #D cdb_correct_pc_2;
+                    buffer_is_branch[cdb_addr_2] <= #D cdb_is_branch_2;
+                end
+                if (cdb_valid_3 && buffer_tag[cdb_addr_3] == 3'b011) begin
+                    buffer_data[cdb_addr_3] <= #D cdb_data_3;
+                    buffer_tag[cdb_addr_3] <= #D TAG_VALID;
+                    buffer_executed[cdb_addr_3] <= #D 1'b1;
+                    buffer_exception[cdb_addr_3] <= #D cdb_exception_3;
+
+                    buffer_correct_pc[cdb_addr_3] <= #D '0;
+                    buffer_is_branch[cdb_addr_3] <= #D 1'b0;
+                end
+
+                if(head_idx_d1 != head_idx) begin // detected commit
+                    // Clear committed entries (head, head+1, head+2)
+                    buffer_data[head_idx_d1] <= #D '0;
+                    buffer_tag[head_idx_d1] <= #D '0;
+                    buffer_addr[head_idx_d1] <= #D '0;
+                    buffer_executed[head_idx_d1] <= #D 1'b0;
+                    buffer_exception[head_idx_d1] <= #D 1'b0;
+
+                    buffer_correct_pc[head_idx_d1] <= #D '0;
+                    buffer_is_branch[head_idx_d1] <= #D 1'b0;
+                    if(head_plus_1_idx_d1 != head_idx) begin // if only one commit happened, head idx will be same as head+1 idx, so don't clear if they are same
+                        buffer_data[head_plus_1_idx_d1] <= #D '0;
+                        buffer_tag[head_plus_1_idx_d1] <= #D '0;
+                        buffer_addr[head_plus_1_idx_d1] <= #D '0;
+                        buffer_executed[head_plus_1_idx_d1] <= #D 1'b0;
+                        buffer_exception[head_plus_1_idx_d1] <= #D 1'b0;
+
+                        buffer_correct_pc[head_plus_1_idx_d1] <= #D '0;
+                        buffer_is_branch[head_plus_1_idx_d1] <= #D 1'b0;
+                        if(head_plus_2_idx_d1 != head_idx) begin
+                            buffer_data[head_plus_2_idx_d1] <= #D '0;
+                            buffer_tag[head_plus_2_idx_d1] <= #D '0;
+                            buffer_addr[head_plus_2_idx_d1] <= #D '0;
+                            buffer_executed[head_plus_2_idx_d1] <= #D 1'b0;
+                            buffer_exception[head_plus_2_idx_d1] <= #D 1'b0;
+
+                            buffer_correct_pc[head_plus_2_idx_d1] <= #D '0;
+                            buffer_is_branch[head_plus_2_idx_d1] <= #D 1'b0;
+                        end
+                    end
+                end
+
             end
-          end
-
-
         end
     end
 

@@ -45,6 +45,11 @@ interface rs_to_exec_if #(
     //logic mis_predicted_branch; // Indicates if branch was mispredicted
     //logic correct_pc;
     logic mem_addr_calculation;
+
+    logic misprediction;
+    logic is_branch;
+    logic [DATA_WIDTH-1:0] correct_pc;
+
     
     // Modport definitions
     modport reservation_station (
@@ -60,7 +65,10 @@ interface rs_to_exec_if #(
         output branch_sel,
         output branch_prediction,
         input  data_result,
-        input mem_addr_calculation
+        input mem_addr_calculation,
+        input misprediction,
+        input is_branch,
+        input correct_pc
 
     );
     
@@ -77,7 +85,10 @@ interface rs_to_exec_if #(
         input  branch_sel,
         input  branch_prediction,
         output data_result,
-        output mem_addr_calculation
+        output mem_addr_calculation,
+        output misprediction,
+        output is_branch,
+        output correct_pc
     );
 
 endinterface
