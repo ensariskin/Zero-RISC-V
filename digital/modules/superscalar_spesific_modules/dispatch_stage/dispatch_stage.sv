@@ -102,7 +102,15 @@ module dispatch_stage #(
     logic [DATA_WIDTH-1:0] commit_data_0, commit_data_1, commit_data_2;
 
     logic [4:0] rob_head_idx;
+    
+    // load store 
+    logic alloc_0_is_store, alloc_1_is_store, alloc_2_is_store;
+    assign alloc_0_is_store = issue_to_dispatch_0.control_signals[3] & ~issue_to_dispatch_0.control_signals[6];
+    assign alloc_1_is_store = issue_to_dispatch_1.control_signals[3] & ~issue_to_dispatch_1.control_signals[6];
+    assign alloc_2_is_store = issue_to_dispatch_2.control_signals[3] & ~issue_to_dispatch_2.control_signals[6];
 
+    logic store_can_issue;
+    logic [DATA_WIDTH-1:0] allowed_store_address;
     //logic commit_exception_0, commit_exception_1, commit_exception_2;
 
     assign commit_rob_idx_0 = rob_head_idx;
@@ -117,15 +125,18 @@ module dispatch_stage #(
         .clk(clk),
         .reset(reset),
 
-        .alloc_enable_0(issue_to_dispatch_0.dispatch_valid & ((issue_to_dispatch_0.control_signals[6] & issue_to_dispatch_0.rd_arch_addr != 5'b0) | issue_to_dispatch_0.branch_sel != 3'd0)), 
-        .alloc_enable_1(issue_to_dispatch_1.dispatch_valid & ((issue_to_dispatch_1.control_signals[6] & issue_to_dispatch_1.rd_arch_addr != 5'b0) | issue_to_dispatch_1.branch_sel != 3'd0)),
-        .alloc_enable_2(issue_to_dispatch_2.dispatch_valid & ((issue_to_dispatch_2.control_signals[6] & issue_to_dispatch_2.rd_arch_addr != 5'b0) | issue_to_dispatch_2.branch_sel != 3'd0)),
+        .alloc_enable_0(issue_to_dispatch_0.dispatch_valid), 
+        .alloc_enable_1(issue_to_dispatch_1.dispatch_valid),
+        .alloc_enable_2(issue_to_dispatch_2.dispatch_valid),
         .alloc_addr_0(issue_to_dispatch_0.rd_arch_addr),
         .alloc_addr_1(issue_to_dispatch_1.rd_arch_addr),
         .alloc_addr_2(issue_to_dispatch_2.rd_arch_addr),
         .alloc_tag_0(issue_to_dispatch_0.alloc_tag),
         .alloc_tag_1(issue_to_dispatch_1.alloc_tag),
         .alloc_tag_2(issue_to_dispatch_2.alloc_tag),
+        .alloc_is_store_0(alloc_0_is_store),
+        .alloc_is_store_1(alloc_1_is_store),
+        .alloc_is_store_2(alloc_2_is_store),
         .cdb_valid_0(cdb_interface.cdb_valid_0 & cdb_interface.cdb_dest_reg_0[5]), // todo check for we = 0 and also load operations
         .cdb_valid_1(cdb_interface.cdb_valid_1 & cdb_interface.cdb_dest_reg_1[5]),
         .cdb_valid_2(cdb_interface.cdb_valid_2 & cdb_interface.cdb_dest_reg_2[5]),
@@ -189,6 +200,8 @@ module dispatch_stage #(
         .commit_is_branch_0(commit_is_branch_0),
         .commit_is_branch_1(),
         .commit_is_branch_2(),
+        .store_can_issue(store_can_issue),
+        .allowed_store_address(allowed_store_address),
         .upadate_predictor_pc_0(upadate_predictor_pc_0),
         .upadate_predictor_pc_1(),
         .upadate_predictor_pc_2(),
@@ -383,16 +396,18 @@ module dispatch_stage #(
         .Type_sel(data_organizer_type_sel),
         .data_out(data_write)
     );
+    
     // LSQ instance (simple, all ports explicit, connections skipped)
     lsq_simple_top lsq (
       // Clock and reset
       .clk(clk),
       .rst_n(reset & !misprediction_detected),
-
+      .store_can_issue(store_can_issue), 
+      .allowed_store_address(allowed_store_address),
       // Allocation interface (from Issue Stage)
       // Allocation 0
-      .alloc_valid_0_i(issue_to_dispatch_0.lsq_alloc_valid),
-      .alloc_is_store_0_i(issue_to_dispatch_0.control_signals[3] & ~issue_to_dispatch_0.control_signals[6]), // Store if immediate and not writing to rd
+      .alloc_valid_0_i(issue_to_dispatch_0.lsq_alloc_valid & issue_to_dispatch_0.dispatch_valid ),
+      .alloc_is_store_0_i(alloc_0_is_store), // Store if immediate and not writing to rd
       .alloc_phys_reg_0_i(issue_to_dispatch_0.rd_phys_addr),
       .alloc_addr_tag_0_i(3'b000),
       .alloc_data_operand_0_i(inst_0_read_data_b),
@@ -400,8 +415,8 @@ module dispatch_stage #(
       .alloc_size_0_i(issue_to_dispatch_0.control_signals[1:0]),
       .alloc_sign_extend_0_i(issue_to_dispatch_0.control_signals[2]),
       // Allocation 1
-      .alloc_valid_1_i(issue_to_dispatch_1.lsq_alloc_valid),
-      .alloc_is_store_1_i(issue_to_dispatch_1.control_signals[3] & ~issue_to_dispatch_1.control_signals[6]),
+      .alloc_valid_1_i(issue_to_dispatch_1.lsq_alloc_valid & issue_to_dispatch_1.dispatch_valid ),
+      .alloc_is_store_1_i(alloc_1_is_store),
       .alloc_phys_reg_1_i(issue_to_dispatch_1.rd_phys_addr),
       .alloc_addr_tag_1_i(3'b001),
       .alloc_data_operand_1_i(inst_1_read_data_b),
@@ -409,8 +424,8 @@ module dispatch_stage #(
       .alloc_size_1_i(issue_to_dispatch_1.control_signals[1:0]),
       .alloc_sign_extend_1_i(issue_to_dispatch_1.control_signals[2]),
       // Allocation 2
-      .alloc_valid_2_i(issue_to_dispatch_2.lsq_alloc_valid),
-      .alloc_is_store_2_i(issue_to_dispatch_2.control_signals[3] & ~issue_to_dispatch_2.control_signals[6]),
+      .alloc_valid_2_i(issue_to_dispatch_2.lsq_alloc_valid & issue_to_dispatch_2.dispatch_valid ),
+      .alloc_is_store_2_i(alloc_2_is_store),
       .alloc_phys_reg_2_i(issue_to_dispatch_2.rd_phys_addr),
       .alloc_addr_tag_2_i(3'b010),
       .alloc_data_operand_2_i(inst_2_read_data_b),

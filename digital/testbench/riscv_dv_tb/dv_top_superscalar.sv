@@ -23,7 +23,7 @@ module dv_top_superscalar;
     
     // Default region base addresses (can be overridden via plusargs)
     parameter REGION0_BASE_addR_DEFAULT = 32'h00000000;  // Default Region 0 start address
-    parameter REGION1_BASE_addR_DEFAULT = 32'h00001000;  // Default Region 1 start address
+    parameter REGION1_BASE_addR_DEFAULT = 32'h7FFEFFF0;  // Default Region 1 start address
     
     // Runtime configurable region base addresses
     logic [31:0] region0_base_addr;
@@ -125,17 +125,6 @@ module dv_top_superscalar;
         $display("=================================================================");
     end
 
-    // Initialize region base addresses from plusargs or use defaults
-    initial begin
-        if (!$value$plusargs("region0_base=%h", region0_base_addr)) begin
-            region0_base_addr = REGION0_BASE_addR_DEFAULT;
-            $display("Using default Region 0 base address: 0x%08x", region0_base_addr);
-        end
-        if (!$value$plusargs("region1_base=%h", region1_base_addr)) begin
-            region1_base_addr = REGION1_BASE_addR_DEFAULT;
-            $display("Using default Region 1 base address: 0x%08x", region1_base_addr);
-        end
-    end
     
     //==========================================================================
     // CLOCK and RESET GENERATION
@@ -395,7 +384,7 @@ module dv_top_superscalar;
     );
     
     // Region 0 data memory (4KB = 1K words)
-    memory_2rw_wb #(
+    memory_2rw_old #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(10),  // 1K words = 4KB memory (2^10 = 1024 words)
         .NUM_WMASKS(4)
@@ -429,7 +418,7 @@ module dv_top_superscalar;
     );
     
     // Region 1 data memory (64KB = 16K words)
-    memory_2rw_wb #(
+    memory_2rw_old #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
@@ -501,17 +490,40 @@ module dv_top_superscalar;
     // Load program from hex file
     initial begin
         string hex_file;
+        
+        for (int i = 0; i < 16384; i++) begin
+            instruction_memory.mem[i] = 32'h00000013; // NOP (addi x0, x0, 0)
+        end
+       
         if ($value$plusargs("hex_file=%s", hex_file)) begin
             $display("[%t] Loading program from %s", $time, hex_file);
             $readmemh(hex_file, instruction_memory.mem);
             $display("[%t] Program loaded successfully", $time);
         end else begin
-            $display("[%t] No hex file specified, using default test program", $time);
-            // Load a simple test program
-            load_default_test_program();
+            
+            if ($fopen("inst_init.hex", "r")) begin
+                $display("Loading inst_init.hex");
+                $readmemh("inst_init.hex", instruction_memory.mem);
+            end else begin
+                $display("[%t] No hex file specified, using default test program", $time);
+                load_default_test_program();
+            end
+        end
+            
+    end
+  
+    // Initialize region base addresses from plusargs or use defaults
+    initial begin
+        if (!$value$plusargs("region0_base=%h", region0_base_addr)) begin
+            region0_base_addr = REGION0_BASE_addR_DEFAULT;
+            $display("Using default Region 0 base address: 0x%08x", region0_base_addr);
+        end
+        if (!$value$plusargs("region1_base=%h", region1_base_addr)) begin
+            region1_base_addr = REGION1_BASE_addR_DEFAULT;
+            $display("Using default Region 1 base address: 0x%08x", region1_base_addr);
         end
     end
-    
+
     // Default test program for basic functionality
     task load_default_test_program();
         begin
@@ -521,10 +533,6 @@ module dv_top_superscalar;
             // COMPREHENSIVE SUPERSCALAR TEST PROGRAM
             // Tests: Register loading, arithmetic, and logical operations
             // =====================================================================
-            
-            for (int i = 0; i < 16384; i++) begin
-                instruction_memory.mem[i] = 32'h00000013; // NOP (addi x0, x0, 0)
-            end
             
             instruction_memory.mem[0] = 32'h00a00093; 
             instruction_memory.mem[1] = 32'h00110113; 

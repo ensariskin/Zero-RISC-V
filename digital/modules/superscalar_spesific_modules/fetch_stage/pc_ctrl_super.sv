@@ -53,13 +53,18 @@ module pc_ctrl_super #(parameter size = 32)(
 	output logic [size-1 : 0] current_pc_1,
 	output logic [size-1 : 0] current_pc_2,
 
-	output logic [size-1 : 0] pc_save);
+	output logic [size-1 : 0] pc_save_0,
+	output logic [size-1 : 0] pc_save_1,
+	output logic [size-1 : 0] pc_save_2);
 
 	localparam D = 1; // Delay for simulation purposes
 
    logic [size-1 : 0] pc_current_val;
    logic [size-1 : 0] pc_new_val;
-	logic [size-1 : 0] pc_plus_four;
+	logic [size-1 : 0] pc_plus_four_0;
+	logic [size-1 : 0] pc_plus_four_1;
+	logic [size-1 : 0] pc_plus_four_2;
+	logic [size-1 : 0] pc_plus_incr;
 	logic [size-1 : 0] pc_plus_imm;
    logic [size-1 : 0] pc_plus_imm_0;
 	logic [size-1 : 0] pc_plus_imm_1;
@@ -109,13 +114,19 @@ module pc_ctrl_super #(parameter size = 32)(
 
 	always @(posedge clk or negedge reset) begin
 		if (!reset) begin
-			pc_current_val <= #D 32'h80000000; // Reset PC to a known value, e.g., 0x80000000
+			pc_current_val <= #D 32'h00000000; // Reset PC to a known value, e.g., 0x80000000
 		end else if (~buble) begin
+			pc_current_val <= #D pc_new_val;
+		end else if (misprediction) begin
 			pc_current_val <= #D pc_new_val;
 		end
 	end
 
-	assign pc_plus_four = pc_current_val + increment_value; // 32'd4
+	assign pc_plus_four_0 = pc_current_val + 32'd4; 
+	assign pc_plus_four_1 = parallel_mode ? pc_current_val + 32'd8 : pc_plus_four_0;
+	assign pc_plus_four_2 = parallel_mode ? pc_current_val + 32'd12 : pc_plus_four_0;
+
+	assign pc_plus_incr = pc_current_val + increment_value; 
 	assign pc_plus_imm_0  = current_pc_0 + {imm_i_0[31:2], 2'b00}; // prevent misalignment issues, don't use 2 LSBs
 	assign pc_plus_imm_1  = current_pc_1 + {imm_i_1[31:2], 2'b00}; // prevent misalignment issues, don't use 2 LSBs
 	assign pc_plus_imm_2  = current_pc_2 + {imm_i_2[31:2], 2'b00}; // prevent misalignment issues, don't use 2 L
@@ -129,7 +140,7 @@ module pc_ctrl_super #(parameter size = 32)(
 	// TODO : handle jalr case
 	parametric_mux #(.mem_width(size), .mem_depth(4)) immeadiate_mux(
 		.addr({jalr, jump}),
-		.data_in({rs1_plus_imm_prediction, rs1_plus_imm_prediction, pc_plus_imm, pc_plus_four}),
+		.data_in({rs1_plus_imm_prediction, rs1_plus_imm_prediction, pc_plus_imm, pc_plus_incr}),
 		.data_out(pc_plus));
 
    parametric_mux #(.mem_width(size), .mem_depth(2)) correction_mux(  // correct pc value in case of branch misprediction
@@ -139,11 +150,21 @@ module pc_ctrl_super #(parameter size = 32)(
 
 	// pc value to save, if JAL or JALR save PC + 4, if auipc save PC + imm
 	parametric_mux #(.mem_width(size), .mem_depth(2)) out_mux(
-		.addr(jump| jalr),
-		.data_in({pc_plus_four, pc_plus_imm}),
-		.data_out(pc_save));
+		.addr(jump_0| jalr_0),
+		.data_in({pc_plus_four_0, pc_plus_imm_0}),
+		.data_out(pc_save_0));
+
+	parametric_mux #(.mem_width(size), .mem_depth(2)) out_mux_1(
+		.addr(jump_1| jalr_1),
+		.data_in({pc_plus_four_1, pc_plus_imm_1}),
+		.data_out(pc_save_1));	
 	
-	assign inst_addr_0 = reset ? (buble? pc_current_val : pc_new_val) : 32'h80000000;
+	parametric_mux #(.mem_width(size), .mem_depth(2)) out_mux_2(
+		.addr(jump_2| jalr_2),
+		.data_in({pc_plus_four_2, pc_plus_imm_2}),
+		.data_out(pc_save_2));
+	
+	assign inst_addr_0 = reset ? (misprediction? pc_new_val : buble? pc_current_val : pc_new_val) : 32'h00000000;
 	assign inst_addr_1 = parallel_mode ? inst_addr_0 + 32'd4 : inst_addr_0;
 	assign inst_addr_2 = parallel_mode ? inst_addr_0 + 32'd8 : inst_addr_0;
 	assign current_pc_0 = pc_current_val;

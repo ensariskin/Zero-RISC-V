@@ -134,9 +134,9 @@ module register_alias_table #(
 
     // Pre-compute allocation requirements (separate combinational logic)
     always_comb begin
-        need_alloc_0 = decode_valid[0] && ((rd_write_enable_0 && rd_arch_0 != 5'h0) | branch_0); 
-        need_alloc_1 = decode_valid[1] && ((rd_write_enable_1 && rd_arch_1 != 5'h0) | branch_1); 
-        need_alloc_2 = decode_valid[2] && ((rd_write_enable_2 && rd_arch_2 != 5'h0) | branch_2); 
+        need_alloc_0 = decode_valid[0];
+        need_alloc_1 = decode_valid[1]; 
+        need_alloc_2 = decode_valid[2]; 
         
         need_lsq_alloc_0 = decode_valid[0] && load_store_0;
         need_lsq_alloc_1 = decode_valid[1] && load_store_1;

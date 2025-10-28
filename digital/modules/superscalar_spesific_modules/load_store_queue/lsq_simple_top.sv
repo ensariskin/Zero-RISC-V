@@ -32,7 +32,8 @@ module lsq_simple_top
    (
       input  logic clk,
       input  logic rst_n,
-
+      input  logic store_can_issue, // signal from ROB that store at head can be issued
+      input  logic [31:0] allowed_store_address, // allowed store address from ROB
       // Allocation interface (from Issue Stage)
       // Allocation 0
       input  logic                            alloc_valid_0_i,
@@ -207,7 +208,7 @@ module lsq_simple_top
                   lsq_buffer[alloc_0_ptr].data_tag   <= #D TAG_READY;
                end else begin
                   lsq_buffer[alloc_0_ptr].data_valid <= #D 1'b0;
-                  lsq_buffer[alloc_0_ptr].data       <= #D '0;
+                  lsq_buffer[alloc_0_ptr].data       <= #D alloc_data_operand_0_i;
                   lsq_buffer[alloc_0_ptr].data_tag   <= #D alloc_data_tag_0_i;
                end
             end else begin
@@ -240,7 +241,7 @@ module lsq_simple_top
                   lsq_buffer[alloc_1_ptr].data_tag   <= #D TAG_READY;
                end else begin
                   lsq_buffer[alloc_1_ptr].data_valid <= #D 1'b0;
-                  lsq_buffer[alloc_1_ptr].data       <= #D '0;
+                  lsq_buffer[alloc_1_ptr].data       <= #D alloc_data_operand_1_i;
                   lsq_buffer[alloc_1_ptr].data_tag   <= #D alloc_data_tag_1_i;
                end
             end else begin
@@ -270,7 +271,7 @@ module lsq_simple_top
                   lsq_buffer[alloc_2_ptr].data_tag   <= #D TAG_READY;
                end else begin
                   lsq_buffer[alloc_2_ptr].data_valid <= #D 1'b0;
-                  lsq_buffer[alloc_2_ptr].data       <= #D '0;
+                  lsq_buffer[alloc_2_ptr].data       <= #D alloc_data_operand_2_i;
                   lsq_buffer[alloc_2_ptr].data_tag   <= #D alloc_data_tag_2_i;
                end
             end else begin
@@ -299,8 +300,8 @@ module lsq_simple_top
                // Address resolution
                if (!lsq_buffer[i].addr_valid) begin
                   if ((cdb_interface.cdb_valid_0 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_0) ||
-                        (cdb_interface.cdb_valid_1 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_1) ||
-                        (cdb_interface.cdb_valid_2 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_2)) begin
+                      (cdb_interface.cdb_valid_1 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_1) ||
+                      (cdb_interface.cdb_valid_2 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_2)) begin
 
                      lsq_buffer[i].addr_valid <= #D 1'b1;
                      lsq_buffer[i].addr_tag   <= #D TAG_READY;
@@ -315,10 +316,15 @@ module lsq_simple_top
                end
 
                // Data resolution (stores only)
+               // data can coming from memory so we need to check cdb 3 also 
+               // but to get correct data we need to check phys reg, for the store operations we can store
+               // phy reg of source load operation to data field, if tag is 3 --- fixed
                if (lsq_buffer[i].is_store && !lsq_buffer[i].data_valid) begin
                   if ((cdb_interface.cdb_valid_0 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_0) ||
-                        (cdb_interface.cdb_valid_1 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_1) ||
-                        (cdb_interface.cdb_valid_2 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_2)) begin
+                      (cdb_interface.cdb_valid_1 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_1) ||
+                      (cdb_interface.cdb_valid_2 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_2) ||
+                      (cdb_interface.cdb_valid_3 && lsq_buffer[i].data_tag == 3'b011 && 
+                                                    lsq_buffer[i].data == cdb_interface.cdb_dest_reg_3)) begin 
 
                      lsq_buffer[i].data_valid <= #D 1'b1;
                      lsq_buffer[i].data_tag   <= #D TAG_READY;
@@ -327,8 +333,10 @@ module lsq_simple_top
                         lsq_buffer[i].data <= #D cdb_interface.cdb_data_0;
                      else if (cdb_interface.cdb_valid_1 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_1)
                         lsq_buffer[i].data <= #D cdb_interface.cdb_data_1;
-                     else
+                     else if (cdb_interface.cdb_valid_2 && lsq_buffer[i].data_tag == cdb_interface.cdb_tag_2)
                         lsq_buffer[i].data <= #D cdb_interface.cdb_data_2;
+                     else
+                        lsq_buffer[i].data <= #D cdb_interface.cdb_data_3;
                   end
                end
             end
@@ -370,8 +378,13 @@ module lsq_simple_top
          // Head entry is ready if address is valid
          // For stores, also need data to be valid
          if (lsq_buffer[head_idx].addr_valid) begin
-            if (lsq_buffer[head_idx].is_store) begin
-               head_ready = lsq_buffer[head_idx].data_valid;
+            if (lsq_buffer[head_idx].is_store) begin 
+               //we need a permission for store from ROB because store operation at LSQ should not be issued before branch prediction is resolved
+               if(store_can_issue && (lsq_buffer[head_idx].address == allowed_store_address)) begin
+                  head_ready = lsq_buffer[head_idx].data_valid;
+               end else begin
+                  head_ready = 1'b0;
+               end
             end else begin
                head_ready = 1'b1;  // Load only needs address
             end
@@ -382,12 +395,11 @@ module lsq_simple_top
    // Issue memory request
    assign mem_req_valid_o = head_ready;
    assign mem_req_is_store_o = lsq_buffer[head_idx].mem_complete ? 1'b0  : lsq_buffer[head_idx].is_store;
-   assign mem_req_addr_o     = lsq_buffer[head_idx].mem_complete ? 32'd0 : lsq_buffer[head_idx].address;
-   assign mem_req_data_o     = lsq_buffer[head_idx].mem_complete ? 32'd0 : lsq_buffer[head_idx].data;
-   assign mem_req_size_o     = lsq_buffer[head_idx].mem_complete ? 2'd0  : lsq_buffer[head_idx].size;
-   assign mem_req_sign_extend_o = lsq_buffer[head_idx].mem_complete ? 1'b0  : lsq_buffer[head_idx].sign_extend;
-   assign mem_req_be_o = lsq_buffer[head_idx].mem_complete ? 4'd0  : 
-      generate_byte_enable( // todo check
+   assign mem_req_addr_o     = lsq_buffer[head_idx].address;
+   assign mem_req_data_o     = lsq_buffer[head_idx].data;
+   assign mem_req_size_o     = lsq_buffer[head_idx].size;
+   assign mem_req_sign_extend_o = lsq_buffer[head_idx].sign_extend;
+   assign mem_req_be_o =  generate_byte_enable( // todo check
          lsq_buffer[head_idx].address[1:0],
          lsq_buffer[head_idx].size
       );

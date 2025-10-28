@@ -152,9 +152,9 @@ module reservation_station #(
     //==========================================================================
     // DECODE INTERFACE CONTROL
     //==========================================================================
-
+    logic enable;
     // Ready to accept new instruction when not occupied or when issuing from stored
-    assign decode_if.dispatch_ready = all_valid && exec_if.issue_ready; //!occupied  && exec_if.issue_ready; //(occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready);
+    assign decode_if.dispatch_ready = all_valid && exec_if.issue_ready && enable; //!occupied  && exec_if.issue_ready; //(occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready);
 
     //==========================================================================
     // RESERVATION STATION STORAGE UPDATE
@@ -162,6 +162,7 @@ module reservation_station #(
 
     always_ff @(posedge clk or negedge reset) begin
         if (!reset) begin
+            enable <= #D 1'b0;
             occupied <= #D 1'b0;
             stored_control_signals <= #D '0;
             stored_pc <= #D '0;
@@ -176,6 +177,7 @@ module reservation_station #(
             stored_operand_b_tag <= #D 0;
             issued <= #D 1'b0;
         end else begin
+            enable <= #D 1'b1;
             // Handle instruction dispatch that needs storage
             if(decode_if.dispatch_valid)
                 issued <= #D 1'b1;

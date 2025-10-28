@@ -51,11 +51,7 @@ module multi_fetch #(parameter size = 32)(
       output logic [size-1 : 0] imm_o_1,
 
       output logic [size-1 : 0] instruction_o_2,
-      output logic [size-1 : 0] imm_o_2,
-
-      output logic [size-1 : 0] pc_plus_o
-
-      // we will need tracer interface here
+      output logic [size-1 : 0] imm_o_2
 
    );
 
@@ -93,11 +89,7 @@ module multi_fetch #(parameter size = 32)(
    // New buffer interface signals
    logic internal_bubble; // Combine bubble with buffer backpressure
    
-   // Drive PC outputs for instruction buffer
-   assign pc_o_0 = current_pc_0;
-   assign pc_o_1 = current_pc_1;
-   assign pc_o_2 = current_pc_2;
-   
+
    // Smart fetch valid signals based on branch prediction
    // If a branch is predicted taken, don't fetch instructions after it
    logic base_valid;
@@ -108,8 +100,8 @@ module multi_fetch #(parameter size = 32)(
    assign base_valid = ~flush & fetch_ready_i & reset;
    
    // Branch prediction invalidation logic
-   assign invalidate_1_2 = jump_0;  // If inst_0 is predicted taken, invalidate inst_1 and inst_2
-   assign invalidate_2 = jump_1;    // If inst_1 is predicted taken, invalidate inst_2
+   assign invalidate_1_2 = jump_0 | jalr_0;  // If inst_0 is predicted taken, invalidate inst_1 and inst_2
+   assign invalidate_2 = jump_1 | jalr_1;    // If inst_1 is predicted taken, invalidate inst_2
    
    // Final fetch valid signals
    assign fetch_valid_o[0] = base_valid;                                    // inst_0 always valid (if base conditions met)
@@ -197,7 +189,9 @@ module multi_fetch #(parameter size = 32)(
       .current_pc_1(current_pc_1),
       .current_pc_2(current_pc_2),
 
-      .pc_save(pc_save)
+      .pc_save_0(pc_o_0),
+      .pc_save_1(pc_o_1),
+      .pc_save_2(pc_o_2)
    );
 
    assign instruction_o_0 =  instruction_i_0;
@@ -214,7 +208,7 @@ module multi_fetch #(parameter size = 32)(
 
    assign branch_prediction_o_0 = jump_0;
    assign branch_prediction_o_1 = jump_1;
-   assign  branch_prediction_o_2 = jump_2;
-   assign pc_plus_o = pc_save;
+   assign branch_prediction_o_2 = jump_2;
+   //assign pc_plus_o = pc_save;
 
 endmodule

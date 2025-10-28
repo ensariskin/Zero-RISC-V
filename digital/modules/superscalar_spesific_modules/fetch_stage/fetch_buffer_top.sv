@@ -38,9 +38,6 @@ module fetch_buffer_top #(
     input  logic flush,
     input  logic buble,
     
-    // Branch prediction interface (from multi_fetch)
-    output logic [DATA_WIDTH-1:0] pc_value_at_prediction_0, pc_value_at_prediction_1, pc_value_at_prediction_2,
-    output logic branch_prediction_o_0, branch_prediction_o_1, branch_prediction_o_2,
     input  logic update_prediction_valid_i_0, update_prediction_valid_i_1, update_prediction_valid_i_2,
     input  logic [DATA_WIDTH-1:0] update_prediction_pc_0, update_prediction_pc_1, update_prediction_pc_2,
     input  logic misprediction_0, misprediction_1, misprediction_2,
@@ -52,19 +49,15 @@ module fetch_buffer_top #(
     output logic [DATA_WIDTH-1:0] pc_decode_o_0, pc_decode_o_1, pc_decode_o_2,
     output logic [DATA_WIDTH-1:0] imm_decode_o_0, imm_decode_o_1, imm_decode_o_2,
     output logic branch_prediction_decode_o_0, branch_prediction_decode_o_1, branch_prediction_decode_o_2,
-    
+    output logic [DATA_WIDTH-1:0] pc_value_at_prediction_0, pc_value_at_prediction_1, pc_value_at_prediction_2,
+
     // Decode stage ready signals
     input  logic [2:0] decode_ready_i,          // Which decode stages are ready to accept instructions
     
     // Status outputs
     output logic buffer_empty_o,
     output logic buffer_full_o,
-    output logic [$clog2(BUFFER_DEPTH):0] occupancy_o,
-    
-    // Legacy outputs for compatibility (until decode stages are updated)
-    output logic [DATA_WIDTH-1:0] legacy_instruction_o_0, legacy_instruction_o_1, legacy_instruction_o_2,
-    output logic [DATA_WIDTH-1:0] legacy_imm_o_0, legacy_imm_o_1, legacy_imm_o_2,
-    output logic [DATA_WIDTH-1:0] pc_plus_o
+    output logic [$clog2(BUFFER_DEPTH):0] occupancy_o
 );
 
     // Internal connections between multi_fetch and instruction_buffer
@@ -72,6 +65,8 @@ module fetch_buffer_top #(
     logic fetch_ready;
     logic [DATA_WIDTH-1:0] fetch_pc_0, fetch_pc_1, fetch_pc_2;
     logic [DATA_WIDTH-1:0] fetch_imm_0, fetch_imm_1, fetch_imm_2;
+    logic [DATA_WIDTH-1:0] fetch_inst_0, fetch_inst_1, fetch_inst_2;
+    logic [DATA_WIDTH-1:0] fetch_pc_value_at_prediction_0, fetch_pc_value_at_prediction_1, fetch_pc_value_at_prediction_2;
     logic fetch_branch_pred_0, fetch_branch_pred_1, fetch_branch_pred_2;
     
     // Multi-Fetch Unit
@@ -92,20 +87,20 @@ module fetch_buffer_top #(
         .buble(buble),
         
         // Branch prediction interface
-        .pc_value_at_prediction_0(pc_value_at_prediction_0),
-        .branch_prediction_o_0(branch_prediction_o_0),
+        .pc_value_at_prediction_0(fetch_pc_value_at_prediction_0),
+        .branch_prediction_o_0(fetch_branch_pred_0),
         .update_prediction_valid_i_0(update_prediction_valid_i_0),
         .update_prediction_pc_0(update_prediction_pc_0),
         .misprediction_0(misprediction_0),
         
-        .pc_value_at_prediction_1(pc_value_at_prediction_1),
-        .branch_prediction_o_1(branch_prediction_o_1),
+        .pc_value_at_prediction_1(fetch_pc_value_at_prediction_1),
+        .branch_prediction_o_1(fetch_branch_pred_1),
         .update_prediction_valid_i_1(update_prediction_valid_i_1),
         .update_prediction_pc_1(update_prediction_pc_1),
         .misprediction_1(misprediction_1),
         
-        .pc_value_at_prediction_2(pc_value_at_prediction_2),
-        .branch_prediction_o_2(branch_prediction_o_2),
+        .pc_value_at_prediction_2(fetch_pc_value_at_prediction_2),
+        .branch_prediction_o_2(fetch_branch_pred_2),
         .update_prediction_valid_i_2(update_prediction_valid_i_2),
         .update_prediction_pc_2(update_prediction_pc_2),
         .misprediction_2(misprediction_2),
@@ -120,27 +115,19 @@ module fetch_buffer_top #(
         .pc_o_2(fetch_pc_2),
         
         // Legacy outputs (for compatibility)
-        .instruction_o_0(legacy_instruction_o_0),
-        .imm_o_0(legacy_imm_o_0),
-        .instruction_o_1(legacy_instruction_o_1),
-        .imm_o_1(legacy_imm_o_1),
-        .instruction_o_2(legacy_instruction_o_2),
-        .imm_o_2(legacy_imm_o_2),
-        .pc_plus_o(pc_plus_o)
+        .instruction_o_0(fetch_inst_0),
+        .imm_o_0(fetch_imm_0),
+        .instruction_o_1(fetch_inst_1),
+        .imm_o_1(fetch_imm_1),
+        .instruction_o_2(fetch_inst_2),
+        .imm_o_2(fetch_imm_2)
     );
     // TODO : There are one clock cycle latency from fetch to buffer due to multi_fetch internal registers
     //       : This can be optimized by removing some internal registers in multi_fetch if needed
     
-    // Get immediate values from multi_fetch legacy outputs for now
-    assign fetch_imm_0 = legacy_imm_o_0;
-    assign fetch_imm_1 = legacy_imm_o_1;
-    assign fetch_imm_2 = legacy_imm_o_2;
+
     
-    // Get branch predictions from multi_fetch branch prediction outputs
-    assign fetch_branch_pred_0 = branch_prediction_o_0;
-    assign fetch_branch_pred_1 = branch_prediction_o_1;
-    assign fetch_branch_pred_2 = branch_prediction_o_2;
-    
+
     // Instruction Buffer
     instruction_buffer_new #(
         .BUFFER_DEPTH(BUFFER_DEPTH),
@@ -148,12 +135,13 @@ module fetch_buffer_top #(
     ) inst_buffer (
         .clk(clk),
         .reset(reset),
-        
+        .flush_i(flush),
         // Input from multi_fetch
         .fetch_valid_i(fetch_valid),
-        .instruction_i_0(legacy_instruction_o_0),
-        .instruction_i_1(legacy_instruction_o_1),
-        .instruction_i_2(legacy_instruction_o_2),
+        .fetch_ready_o(fetch_ready),
+        .instruction_i_0(fetch_inst_0),
+        .instruction_i_1(fetch_inst_1),
+        .instruction_i_2(fetch_inst_2),
         .pc_i_0(fetch_pc_0),
         .pc_i_1(fetch_pc_1),
         .pc_i_2(fetch_pc_2),
@@ -163,9 +151,14 @@ module fetch_buffer_top #(
         .branch_prediction_i_0(fetch_branch_pred_0),
         .branch_prediction_i_1(fetch_branch_pred_1),
         .branch_prediction_i_2(fetch_branch_pred_2),
+        .pc_at_prediction_i_0(fetch_pc_value_at_prediction_0),
+        .pc_at_prediction_i_1(fetch_pc_value_at_prediction_1),
+        .pc_at_prediction_i_2(fetch_pc_value_at_prediction_2),
         
         // Output to decode stages
+        .decode_ready_i(decode_ready_i),
         .decode_valid_o(decode_valid_o),
+
         .instruction_o_0(instruction_o_0),
         .instruction_o_1(instruction_o_1),
         .instruction_o_2(instruction_o_2),
@@ -178,11 +171,12 @@ module fetch_buffer_top #(
         .branch_prediction_o_0(branch_prediction_decode_o_0),
         .branch_prediction_o_1(branch_prediction_decode_o_1),
         .branch_prediction_o_2(branch_prediction_decode_o_2),
+        .pc_value_at_prediction_o_0(pc_value_at_prediction_0),
+        .pc_value_at_prediction_o_1(pc_value_at_prediction_1),
+        .pc_value_at_prediction_o_2(pc_value_at_prediction_2),
         
-        // Control signals
-        .decode_ready_i(decode_ready_i),
-        .fetch_ready_o(fetch_ready),
-        .flush_i(flush),
+ 
+        
         
         // Status outputs
         .buffer_empty_o(buffer_empty_o),

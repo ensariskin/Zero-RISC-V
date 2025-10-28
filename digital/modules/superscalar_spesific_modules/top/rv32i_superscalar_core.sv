@@ -91,7 +91,7 @@ module rv32i_superscalar_core #(
     
     // Branch Prediction Interface
     logic [DATA_WIDTH-1:0] bp_pc_0, bp_pc_1, bp_pc_2;
-    logic bp_prediction_0, bp_prediction_1, bp_prediction_2;
+    
     logic bp_update_valid_0, bp_update_valid_1, bp_update_valid_2;
     logic [DATA_WIDTH-1:0] bp_update_pc_0, bp_update_pc_1, bp_update_pc_2;
     logic bp_misprediction_0, bp_misprediction_1, bp_misprediction_2;
@@ -206,19 +206,16 @@ module rv32i_superscalar_core #(
         
         // Branch prediction interface
         .pc_value_at_prediction_0(bp_pc_0),
-        .branch_prediction_o_0(bp_prediction_0),
         .update_prediction_valid_i_0(commit_is_branch_0),
         .update_prediction_pc_0(upadate_predictor_pc_0),
         .misprediction_0(misprediction_detected),
         
         .pc_value_at_prediction_1(bp_pc_1),
-        .branch_prediction_o_1(bp_prediction_1),
         .update_prediction_valid_i_1(bp_update_valid_1),
         .update_prediction_pc_1(bp_update_pc_1),
         .misprediction_1(bp_misprediction_1),
         
         .pc_value_at_prediction_2(bp_pc_2),
-        .branch_prediction_o_2(bp_prediction_2),
         .update_prediction_valid_i_2(bp_update_valid_2),
         .update_prediction_pc_2(bp_update_pc_2),
         .misprediction_2(bp_misprediction_2),
@@ -246,16 +243,8 @@ module rv32i_superscalar_core #(
         // Status outputs
         .buffer_empty_o(buffer_empty),
         .buffer_full_o(buffer_full),
-        .occupancy_o(buffer_occupancy),
+        .occupancy_o(buffer_occupancy)
         
-        // Legacy outputs (not used in superscalar)
-        .legacy_instruction_o_0(),
-        .legacy_instruction_o_1(),
-        .legacy_instruction_o_2(),
-        .legacy_imm_o_0(),
-        .legacy_imm_o_1(),
-        .legacy_imm_o_2(),
-        .pc_plus_o()
     );
 
     
@@ -290,9 +279,9 @@ module rv32i_superscalar_core #(
         .pc_i_0(fetch_pc_0),
         .pc_i_1(fetch_pc_1),
         .pc_i_2(fetch_pc_2),
-        .pc_value_at_prediction_i_0(fetch_pc_0), // Using PC for now
-        .pc_value_at_prediction_i_1(fetch_pc_1),
-        .pc_value_at_prediction_i_2(fetch_pc_2),
+        .pc_value_at_prediction_i_0(bp_pc_0), // Using PC for now
+        .pc_value_at_prediction_i_1(bp_pc_1),
+        .pc_value_at_prediction_i_2(bp_pc_2),
         .branch_prediction_i_0(fetch_branch_pred_0),
         .branch_prediction_i_1(fetch_branch_pred_1),
         .branch_prediction_i_2(fetch_branch_pred_2),

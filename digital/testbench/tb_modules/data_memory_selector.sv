@@ -156,6 +156,11 @@ module data_memory_selector (
         $display("Region 1 base address: 0x%08x (Size: %0d bytes) , Region 1 end_address = 0x%08x", REGION1_BASE, REGION1_SIZE, REGION1_END);
     end
     
+    always @(posedge clk) begin
+        if (rst_n && core_wb_cyc_i && core_wb_stb_i && !addr_valid) begin
+            $display("[%t] ERROR: Memory Selector - Invalid address access 0x%08x", $time, core_wb_adr_i);
+        end
+    end
     // Debug information
     `ifdef DEBUG_MEMORY_SELECTOR
     always @(posedge clk) begin

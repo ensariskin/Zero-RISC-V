@@ -42,6 +42,9 @@ module reorder_buffer #(
     input logic [ADDR_WIDTH-1:0] alloc_addr_0,  // Allocated ROB index
     input logic [ADDR_WIDTH-1:0] alloc_addr_1,
     input logic [ADDR_WIDTH-1:0] alloc_addr_2,
+    input logic alloc_is_store_0,
+    input logic alloc_is_store_1,
+    input logic alloc_is_store_2,
     output logic alloc_success,  // All requested allocations succeeded
 
     //==========================================================================
@@ -127,6 +130,12 @@ module reorder_buffer #(
     output logic [DATA_WIDTH-1:0] upadate_predictor_pc_1,
     output logic [DATA_WIDTH-1:0] upadate_predictor_pc_2,
 
+    
+    //==========================================================================
+    // STORE PERMISSION OUTPUTS
+    //==========================================================================
+    output logic store_can_issue,
+    output logic [DATA_WIDTH-1:0] allowed_store_address,
     //==========================================================================
     // STATUS OUTPUTS
     //==========================================================================
@@ -154,6 +163,7 @@ module reorder_buffer #(
     /// branch and jalr related buffers (not efficient but easy to implement)
     logic [BUFFER_DEPTH-1:0] [DATA_WIDTH-1:0] buffer_correct_pc;
     logic [BUFFER_DEPTH-1:0] buffer_is_branch;
+    logic [BUFFER_DEPTH-1:0] buffer_is_store;
 
     // Head and tail pointers (extra bit for full/empty detection)
     logic [ADDR_WIDTH:0] head_ptr_reg;
@@ -225,14 +235,14 @@ module reorder_buffer #(
     assign head_plus_2_idx = (head_ptr_reg[ADDR_WIDTH-1:0] + 2'b10) % BUFFER_DEPTH;
 
     // Commit ready signals - in-order commit requirement
+    // TODO STORES CAN COUSE BOTTLECK HERE - OPTIMEZE LATER
     assign commit_ready_0 = buffer_executed[head_idx]; //& !buffer_is_branch[head_idx];
 
-    assign commit_ready_1 = buffer_executed[head_idx]        & !buffer_exception[head_idx] &
-                            buffer_executed[head_plus_1_idx]; // & !buffer_is_branch[head_plus_1_idx];
+    assign commit_ready_1 = commit_ready_0 & !buffer_exception[head_idx] & !buffer_is_store[head_idx] &
+                            buffer_executed[head_plus_1_idx] & !buffer_exception[head_plus_1_idx] & !buffer_is_store[head_plus_1_idx] ;
 
-    assign commit_ready_2 = buffer_executed[head_idx]        & !buffer_exception[head_idx] &
-                            buffer_executed[head_plus_1_idx] & !buffer_exception[head_plus_1_idx] &
-                            buffer_executed[head_plus_2_idx]; // & !buffer_is_branch[head_plus_2_idx];
+    assign commit_ready_2 = commit_ready_0 & commit_ready_1  & !buffer_exception[head_plus_1_idx] &
+                            buffer_executed[head_plus_2_idx] & !buffer_exception[head_plus_2_idx] & !buffer_is_store[head_plus_2_idx] ;;
     
     // Commit data outputs
     assign commit_data_0 = buffer_data[head_idx];
@@ -250,13 +260,18 @@ module reorder_buffer #(
     assign commit_correct_pc_1 = '0; //buffer_correct_pc[head_plus_1_idx];
     assign commit_correct_pc_2 = '0; //buffer_correct_pc[head_plus_2_idx];
 
-    assign commit_is_branch_0 = buffer_is_branch[head_idx];
-    assign commit_is_branch_1 = 1'b0; //buffer_is_branch[head_plus_1_idx];
-    assign commit_is_branch_2 = 1'b0; //buffer_is_branch[head_plus_2_idx];
+    assign commit_is_branch_0 = buffer_is_branch[head_idx] & commit_ready_0;
+    assign commit_is_branch_1 = buffer_is_branch[head_plus_1_idx] & commit_ready_1;
+    assign commit_is_branch_2 = buffer_is_branch[head_plus_2_idx] & commit_ready_2;
 
     assign upadate_predictor_pc_0 = buffer_data[head_idx];
-    assign upadate_predictor_pc_1 = '0;//buffer_data[head_plus_1_idx];
-    assign upadate_predictor_pc_2 = '0; //buffer_data[head_plus_2_idx];
+    assign upadate_predictor_pc_1 = buffer_data[head_plus_1_idx];
+    assign upadate_predictor_pc_2 = buffer_data[head_plus_2_idx];
+
+
+    // Store permission outputs
+    assign store_can_issue =  buffer_is_store[head_idx] && buffer_tag[head_idx]==TAG_VALID;
+    assign allowed_store_address = buffer_data[head_idx];
 
     // Count number of commits
     always_comb begin
@@ -567,6 +582,7 @@ module reorder_buffer #(
 
                 buffer_correct_pc[i] <= #D '0;
                 buffer_is_branch[i] <= #D 1'b0;
+                buffer_is_store[i] <= #D 1'b0;
             end
 
             // Reset pointers
@@ -589,6 +605,7 @@ module reorder_buffer #(
 
                     buffer_correct_pc[i] <= #D '0;
                     buffer_is_branch[i] <= #D 1'b0;
+                    buffer_is_store[i] <= #D 1'b0;
                 end
 
                 // Reset pointers
@@ -622,6 +639,7 @@ module reorder_buffer #(
 
                         buffer_correct_pc[alloc_idx_0] <= #D '0;
                         buffer_is_branch[alloc_idx_0] <= #D 1'b0;
+                        buffer_is_store[alloc_idx_0] <= #D alloc_is_store_0;
 
                     end
                     if (alloc_enable_1) begin
@@ -633,6 +651,7 @@ module reorder_buffer #(
 
                         buffer_correct_pc[alloc_idx_1] <= #D '0;
                         buffer_is_branch[alloc_idx_1] <= #D 1'b0;
+                        buffer_is_store[alloc_idx_1] <= #D alloc_is_store_1;
                     end
                     if (alloc_enable_2) begin
                         buffer_data[alloc_idx_2] <= #D '0;
@@ -643,40 +662,41 @@ module reorder_buffer #(
 
                         buffer_correct_pc[alloc_idx_2] <= #D '0;
                         buffer_is_branch[alloc_idx_2] <= #D 1'b0;
+                        buffer_is_store[alloc_idx_2] <= #D alloc_is_store_2;
                     end
                 end
 
                 //==================================================================
                 // CDB UPDATES - Write results from execution units
                 //==================================================================
-                if (cdb_valid_0 && buffer_tag[cdb_addr_0] == 3'b000) begin
+                if (cdb_valid_0 && (buffer_tag[cdb_addr_0] == 3'b000 | (buffer_tag[cdb_addr_0] == 3'b011 & buffer_is_store[cdb_addr_0] & cdb_mem_addr_calculation_0))) begin
                     buffer_data[cdb_addr_0] <= #D cdb_data_0;
                     buffer_tag[cdb_addr_0] <= #D TAG_VALID;
-                    buffer_executed[cdb_addr_0] <= #D 1'b1;
+                    buffer_executed[cdb_addr_0] <= #D !cdb_mem_addr_calculation_0;
                     buffer_exception[cdb_addr_0] <= #D cdb_exception_0;
 
                     buffer_correct_pc[cdb_addr_0] <= #D cdb_correct_pc_0;
                     buffer_is_branch[cdb_addr_0] <= #D cdb_is_branch_0;
                 end
-                if (cdb_valid_1 && buffer_tag[cdb_addr_1] == 3'b001) begin
+                if (cdb_valid_1 && (buffer_tag[cdb_addr_1] == 3'b001 | (buffer_tag[cdb_addr_1] == 3'b011 & buffer_is_store[cdb_addr_1] & cdb_mem_addr_calculation_1))) begin
                     buffer_data[cdb_addr_1] <= #D cdb_data_1;
                     buffer_tag[cdb_addr_1] <= #D TAG_VALID;
-                    buffer_executed[cdb_addr_1] <= #D 1'b1;
+                    buffer_executed[cdb_addr_1] <= #D !cdb_mem_addr_calculation_1;
                     buffer_exception[cdb_addr_1] <= #D cdb_exception_1;
 
                     buffer_correct_pc[cdb_addr_1] <= #D cdb_correct_pc_1;
                     buffer_is_branch[cdb_addr_1] <= #D cdb_is_branch_1;
                 end
-                if (cdb_valid_2 && buffer_tag[cdb_addr_2] == 3'b010) begin
+                if (cdb_valid_2 && (buffer_tag[cdb_addr_2] == 3'b010 | (buffer_tag[cdb_addr_2] == 3'b011 & buffer_is_store[cdb_addr_2] & cdb_mem_addr_calculation_2))) begin
                     buffer_data[cdb_addr_2] <= #D cdb_data_2;
                     buffer_tag[cdb_addr_2] <= #D TAG_VALID;
-                    buffer_executed[cdb_addr_2] <= #D 1'b1;
+                    buffer_executed[cdb_addr_2] <= #D !cdb_mem_addr_calculation_2;
                     buffer_exception[cdb_addr_2] <= #D cdb_exception_2;
 
                     buffer_correct_pc[cdb_addr_2] <= #D cdb_correct_pc_2;
                     buffer_is_branch[cdb_addr_2] <= #D cdb_is_branch_2;
                 end
-                if (cdb_valid_3 && buffer_tag[cdb_addr_3] == 3'b011) begin
+                if (cdb_valid_3 && (buffer_tag[cdb_addr_3] == 3'b011 | buffer_tag[cdb_addr_3] == TAG_VALID) ) begin
                     buffer_data[cdb_addr_3] <= #D cdb_data_3;
                     buffer_tag[cdb_addr_3] <= #D TAG_VALID;
                     buffer_executed[cdb_addr_3] <= #D 1'b1;
@@ -696,6 +716,7 @@ module reorder_buffer #(
 
                     buffer_correct_pc[head_idx_d1] <= #D '0;
                     buffer_is_branch[head_idx_d1] <= #D 1'b0;
+                    buffer_is_store[head_idx_d1] <= #D 1'b0;
                     if(head_plus_1_idx_d1 != head_idx) begin // if only one commit happened, head idx will be same as head+1 idx, so don't clear if they are same
                         buffer_data[head_plus_1_idx_d1] <= #D '0;
                         buffer_tag[head_plus_1_idx_d1] <= #D '0;
@@ -705,6 +726,7 @@ module reorder_buffer #(
 
                         buffer_correct_pc[head_plus_1_idx_d1] <= #D '0;
                         buffer_is_branch[head_plus_1_idx_d1] <= #D 1'b0;
+                        buffer_is_store[head_plus_1_idx_d1] <= #D 1'b0;
                         if(head_plus_2_idx_d1 != head_idx) begin
                             buffer_data[head_plus_2_idx_d1] <= #D '0;
                             buffer_tag[head_plus_2_idx_d1] <= #D '0;
@@ -714,6 +736,7 @@ module reorder_buffer #(
 
                             buffer_correct_pc[head_plus_2_idx_d1] <= #D '0;
                             buffer_is_branch[head_plus_2_idx_d1] <= #D 1'b0;
+                            buffer_is_store[head_plus_2_idx_d1] <= #D 1'b0;
                         end
                     end
                 end

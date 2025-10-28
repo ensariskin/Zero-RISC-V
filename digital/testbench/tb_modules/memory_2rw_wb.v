@@ -106,6 +106,12 @@ initial $readmemh("bootloader.mem",mem,7488,8191);
   // Write Operation : When we0 = 0, cs0 = 0
 always @(posedge clk0)
 begin
+    if(port0_wb_rst_i) begin
+        integer j;
+        for (j = 0; j < RAM_BYTE_DEPTH; j = j + 1) begin
+            mem[j] <= 8'h00;
+        end
+    end else
     if (!cs0 && !we0) begin
         integer i;
         for (i = 0; i < 4; i = i + 1) begin
