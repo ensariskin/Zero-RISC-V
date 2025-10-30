@@ -66,7 +66,7 @@ module register_alias_table #(
 
     // Free List - available physical registers
     logic [5:0] free_count;
-    logic [3:0] lsq_free_count;
+    logic [5:0] lsq_free_count;
 
     // Internal allocation signals
     logic [PHYS_ADDR_WIDTH-1:0] allocated_phys_reg [2:0];
@@ -76,7 +76,7 @@ module register_alias_table #(
     logic [5:0] first_free, second_free, third_free;
     logic found_first, found_second, found_third;
 
-    logic [3:0] lsq_first_free, lsq_second_free, lsq_third_free;
+    logic [5:0] lsq_first_free, lsq_second_free, lsq_third_free;
     logic lsq_found_first, lsq_found_second, lsq_found_third;
 
     // Allocation requirement signals
@@ -103,7 +103,7 @@ module register_alias_table #(
         .buffer_count(free_count)
     );
     
-    circular_buffer_3port #(.BUFFER_DEPTH(8)) lsq_address_buffer(
+    circular_buffer_3port #(.BUFFER_DEPTH(32)) lsq_address_buffer(
         .clk(clk),
         .rst_n(reset & !flush),
         .read_en_0(need_lsq_alloc_0),

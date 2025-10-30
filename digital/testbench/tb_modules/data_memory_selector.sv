@@ -56,7 +56,7 @@ module data_memory_selector (
 
     // Address mapping parameters
 
-    parameter logic [31:0] REGION0_SIZE = 32'h00001000;  // 4KB (4096 bytes)
+    parameter logic [31:0] REGION0_SIZE = 32'h00010000;  // 4KB (4096 bytes)
     parameter logic [31:0] REGION1_SIZE = 32'h00010000;  // 64KB (65536 bytes)
     
     // Calculate end addresses

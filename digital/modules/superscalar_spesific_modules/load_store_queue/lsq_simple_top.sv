@@ -152,8 +152,8 @@ module lsq_simple_top
 
    logic deallocate_head;
    assign deallocate_head = !lsq_empty_o &&
-      lsq_buffer[head_idx].valid &&
-      lsq_buffer[head_idx].mem_complete;
+      lsq_buffer[head_idx].valid && lsq_buffer[head_idx].mem_issued && mem_resp_valid_i;
+      //lsq_buffer[head_idx].mem_complete;
 
    always_comb begin
       actual_alloc_0 = 1'b0;
@@ -286,7 +286,7 @@ module lsq_simple_top
          if (mem_req_valid_o && mem_req_ready_i) begin
             lsq_buffer[head_idx].mem_issued <= #D 1'b1;
          end
-
+         /* 
          if (mem_resp_valid_i & lsq_buffer[head_idx].mem_issued) begin
             lsq_buffer[head_idx].mem_complete <= #D 1'b1;
             if(!lsq_buffer[head_idx].is_store) begin
@@ -294,13 +294,14 @@ module lsq_simple_top
                lsq_buffer[head_idx].data_valid <= #D 1'b1;
             end
          end
+         */
 
          for (int i = 0; i < LSQ_DEPTH; i++) begin
             if (lsq_buffer[i].valid) begin
                // Address resolution
                if (!lsq_buffer[i].addr_valid) begin
                   if ((cdb_interface.cdb_valid_0 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_0) ||
-                      (cdb_interface.cdb_valid_1 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_1) ||
+                      (cdb_interface.cdb_valid_1 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_1) || 
                       (cdb_interface.cdb_valid_2 && lsq_buffer[i].addr_tag == cdb_interface.cdb_tag_2)) begin
 
                      lsq_buffer[i].addr_valid <= #D 1'b1;
@@ -394,7 +395,7 @@ module lsq_simple_top
 
    // Issue memory request
    assign mem_req_valid_o = head_ready;
-   assign mem_req_is_store_o = lsq_buffer[head_idx].mem_complete ? 1'b0  : lsq_buffer[head_idx].is_store;
+   assign mem_req_is_store_o = mem_resp_valid_i ? 1'b0  : lsq_buffer[head_idx].is_store;
    assign mem_req_addr_o     = lsq_buffer[head_idx].address;
    assign mem_req_data_o     = lsq_buffer[head_idx].data;
    assign mem_req_size_o     = lsq_buffer[head_idx].size;
@@ -409,9 +410,9 @@ module lsq_simple_top
    // MEMORY RESPONSE AND CDB BROADCAST (for loads)
    //==========================================================================
 
-   assign cdb_interface.cdb_valid_3 = lsq_buffer[head_idx].mem_complete;
+   assign cdb_interface.cdb_valid_3 = mem_resp_valid_i; //lsq_buffer[head_idx].mem_complete;
    assign cdb_interface.cdb_tag_3 = 3'b011;
-   assign cdb_interface.cdb_data_3 = lsq_buffer[head_idx].data;
+   assign cdb_interface.cdb_data_3 = mem_resp_data_i; //lsq_buffer[head_idx].data;
    assign cdb_interface.cdb_dest_reg_3 = lsq_buffer[head_idx].phys_reg;
 
 

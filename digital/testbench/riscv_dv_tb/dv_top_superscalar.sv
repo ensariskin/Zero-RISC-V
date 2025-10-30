@@ -455,7 +455,7 @@ module dv_top_superscalar;
     //==========================================================================
     // PERForMANCE MONITorING
     //==========================================================================
-    
+    /* 
     // Monitor performance counters and detect progress
     always_ff @(posedge clk) begin
         if (rst_n) begin
@@ -482,7 +482,145 @@ module dv_top_superscalar;
             end
         end
     end
-    
+    */
+
+    //==========================================================================
+    // INSTRUCTION DECODE ACTIVITY MONITORING
+    //==========================================================================
+
+    // Decode activity counters
+    integer decode_ready_count;
+    integer decode_valid_count;
+    integer decode_sample_cycles;
+
+    integer rs_0_ready_count;
+    integer rs_1_ready_count;
+    integer rs_2_ready_count;
+    integer rename_ready_count;
+    integer lsq_ready_count;
+
+    integer cdb_0_valid_count;
+    integer cdb_1_valid_count;
+    integer cdb_2_valid_count;
+    integer cdb_3_valid_count;
+    integer cdb_all_valid_count;
+
+    integer commit_count;
+
+
+    real avg_decode_ready;
+    real avg_decode_valid;
+    real avg_rs_0_ready;
+    real avg_rs_1_ready;
+    real avg_rs_2_ready;
+    real avg_rename_ready;
+    real avg_lsq_ready;
+    real avg_cdb_0_valid;
+    real avg_cdb_1_valid;
+    real avg_cdb_2_valid;
+    real avg_cdb_3_valid;
+    real avg_cdb_all_valid;
+    real avg_commit_rate;
+
+
+
+    // Periodic decode activity sampling
+    always @(posedge clk) begin
+        if (rst_n) begin
+            decode_ready_count =  decode_ready_count +
+                                     dut.issue_stage_unit.decode_ready_o[2] +
+                                     dut.issue_stage_unit.decode_ready_o[1] +
+                                     dut.issue_stage_unit.decode_ready_o[0];
+            decode_valid_count =  decode_valid_count + 
+                                     dut.issue_stage_unit.decode_valid_i[2] +
+                                     dut.issue_stage_unit.decode_valid_i[1] +
+                                     dut.issue_stage_unit.decode_valid_i[0];
+
+            rs_0_ready_count =  rs_0_ready_count + dut.issue_to_dispatch_0_if.dispatch_ready;
+            rs_1_ready_count =  rs_1_ready_count + dut.issue_to_dispatch_1_if.dispatch_ready;
+            rs_2_ready_count =  rs_2_ready_count + dut.issue_to_dispatch_2_if.dispatch_ready;
+
+            rename_ready_count =  rename_ready_count + dut.issue_stage_unit.rename_ready[2] +
+                                         dut.issue_stage_unit.rename_ready[1] +
+                                         dut.issue_stage_unit.rename_ready[0];
+
+            lsq_ready_count =  lsq_ready_count + dut.issue_stage_unit.lsq_alloc_ready[2] +
+                                     dut.issue_stage_unit.lsq_alloc_ready[1] +
+                                     dut.issue_stage_unit.lsq_alloc_ready[0];
+
+
+            cdb_0_valid_count =  cdb_0_valid_count + dut.cdb_interface.cdb_valid_0;
+            cdb_1_valid_count =  cdb_1_valid_count + dut.cdb_interface.cdb_valid_1;
+            cdb_2_valid_count =  cdb_2_valid_count + dut.cdb_interface.cdb_valid_2;
+            cdb_3_valid_count =  cdb_3_valid_count + dut.cdb_interface.cdb_valid_3;
+            cdb_all_valid_count =  cdb_all_valid_count + 
+                                      dut.cdb_interface.cdb_valid_0 +
+                                      dut.cdb_interface.cdb_valid_1 +
+                                      dut.cdb_interface.cdb_valid_2 +
+                                      dut.cdb_interface.cdb_valid_3;
+            
+            commit_count = commit_count + dut.dispatch_stage_unit.rob.commit_ready_0 +
+                                          dut.dispatch_stage_unit.rob.commit_ready_1 +
+                                          dut.dispatch_stage_unit.rob.commit_ready_2;
+                                     
+            decode_sample_cycles++;
+            cycle_count++;
+
+            // Report every 10000 cycles
+            if (cycle_count % 10000 == 0 && cycle_count > 0) begin
+                avg_decode_ready =  decode_ready_count / real'(cycle_count);
+                avg_decode_valid =  decode_valid_count / real'(cycle_count);
+                avg_rs_0_ready  =  rs_0_ready_count / real'(cycle_count);
+                avg_rs_1_ready  =  rs_1_ready_count / real'(cycle_count);
+                avg_rs_2_ready  =  rs_2_ready_count / real'(cycle_count);
+                avg_rename_ready =  rename_ready_count / real'(cycle_count);
+                avg_lsq_ready   =  lsq_ready_count / real'(cycle_count);
+
+
+                avg_cdb_0_valid  =  cdb_0_valid_count / real'(cycle_count);
+                avg_cdb_1_valid  =  cdb_1_valid_count / real'(cycle_count);
+                avg_cdb_2_valid  =  cdb_2_valid_count / real'(cycle_count);
+                avg_cdb_3_valid  =  cdb_3_valid_count / real'(cycle_count);
+                avg_cdb_all_valid =  cdb_all_valid_count / real'(cycle_count);
+
+                avg_commit_rate = commit_count / real'(cycle_count);
+
+                $display("[%t]\n Activity Report (last %0d cycles):", $time, cycle_count);
+                $display("  Avg decode_ready_o: %.2f instructions/cycle", avg_decode_ready);
+                $display("  Avg decode_valid_i: %.2f instructions/cycle", avg_decode_valid);
+                $display("  Avg RS0 ready: %.2f instructions/cycle", avg_rs_0_ready);
+                $display("  Avg RS1 ready: %.2f instructions/cycle", avg_rs_1_ready);
+                $display("  Avg RS2 ready: %.2f instructions/cycle", avg_rs_2_ready);
+                $display("  Avg rename ready: %.2f instructions/cycle", avg_rename_ready);
+                $display("  Avg LSQ ready: %.2f instructions/cycle", avg_lsq_ready);
+                $display("  Avg CDB0 valid: %.2f broadcasts/cycle", avg_cdb_0_valid);
+                $display("  Avg CDB1 valid: %.2f broadcasts/cycle", avg_cdb_1_valid);
+                $display("  Avg CDB2 valid: %.2f broadcasts/cycle", avg_cdb_2_valid);
+                $display("  Avg CDB3 valid: %.2f broadcasts/cycle", avg_cdb_3_valid);
+                $display("  Avg CDB all valid: %.2f broadcasts/cycle", avg_cdb_all_valid);
+                $display("  Avg Commit rate: %.2f instructions/cycle", avg_commit_rate);
+                $display("---------------------------------------------------------------------" );
+            end
+            
+           
+        end else begin
+            decode_ready_count <= #D 0;
+            decode_valid_count <= #D 0;
+            decode_sample_cycles <= #D 0;
+            cdb_0_valid_count <= #D 0;
+            cdb_1_valid_count <= #D 0;
+            cdb_2_valid_count <= #D 0;
+            cdb_3_valid_count <= #D 0;
+            cdb_all_valid_count <= #D 0;
+            rs_0_ready_count <= #D 0;
+            rs_1_ready_count <= #D 0;
+            rs_2_ready_count <= #D 0;
+            rename_ready_count <= #D 0;
+            lsq_ready_count <= #D 0;
+            commit_count <= #D 0;
+            cycle_count <= #D 0;
+        end
+    end
     //==========================================================================
     // PROGRAM LOADING
     //==========================================================================

@@ -17,7 +17,7 @@
 package lsq_package;
 
     // LSQ Parameters
-    parameter int LSQ_DEPTH = 16;           // Total queue entries
+    parameter int LSQ_DEPTH = 32;           // Total queue entries
     parameter int LSQ_ADDR_WIDTH = $clog2(LSQ_DEPTH);  // 4 bits for 16 entries
     parameter int DATA_WIDTH = 32;          // Data width
     parameter int TAG_WIDTH = 3;            // CDB tag width

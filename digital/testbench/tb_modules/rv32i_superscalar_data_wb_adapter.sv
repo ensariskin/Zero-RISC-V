@@ -99,8 +99,8 @@ module rv32i_superscalar_data_wb_adapter (
     end
     
     // Wishbone output assignments
-    assign wb_cyc_o = (current_state == ACCESS);
-    assign wb_stb_o = (current_state == ACCESS);
+    assign wb_cyc_o = core_req_i; //(current_state == ACCESS);
+    assign wb_stb_o = core_req_i; //(current_state == ACCESS);
     assign wb_we_o  = core_we_i;
     assign wb_adr_o = core_addr_i;
     assign wb_dat_o = core_data_i;
@@ -108,8 +108,8 @@ module rv32i_superscalar_data_wb_adapter (
     
     // Core output assignments
     assign core_data_o = wb_dat_i;
-    assign core_ack_o  = wb_ack_i && (current_state == ACCESS);
-    assign core_err_o  = wb_err_i && (current_state == ACCESS);
+    assign core_ack_o  = wb_ack_i; //&& (current_state == ACCESS);
+    assign core_err_o  = wb_err_i; //&& (current_state == ACCESS);
     //assign core_mem_ready_o = !wb_stall_i;
 
 endmodule
