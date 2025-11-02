@@ -33,14 +33,20 @@ module pc_ctrl_super #(parameter size = 32)(
 	input  logic jump_0,
 	input  logic jump_1,
 	input  logic jump_2,
+	input  logic jump_3,
+	input  logic jump_4,
 
 	input  logic jalr_0,	
 	input  logic jalr_1,
 	input  logic jalr_2,
+	input  logic jalr_3,
+	input  logic jalr_4,
 
 	input  logic [size-1 : 0] imm_i_0,
 	input  logic [size-1 : 0] imm_i_1,
 	input  logic [size-1 : 0] imm_i_2,
+	input  logic [size-1 : 0] imm_i_3,
+	input  logic [size-1 : 0] imm_i_4,
 
 	input  logic 			     misprediction,
 	input  logic [size-1 : 0] correct_pc,
@@ -48,14 +54,21 @@ module pc_ctrl_super #(parameter size = 32)(
 	output logic [size-1 : 0] inst_addr_0,
 	output logic [size-1 : 0] inst_addr_1,
 	output logic [size-1 : 0] inst_addr_2,
+	output logic [size-1 : 0] inst_addr_3,
+	output logic [size-1 : 0] inst_addr_4,
 
 	output logic [size-1 : 0] current_pc_0,
 	output logic [size-1 : 0] current_pc_1,
 	output logic [size-1 : 0] current_pc_2,
+	output logic [size-1 : 0] current_pc_3,
+	output logic [size-1 : 0] current_pc_4,
 
 	output logic [size-1 : 0] pc_save_0,
 	output logic [size-1 : 0] pc_save_1,
-	output logic [size-1 : 0] pc_save_2);
+	output logic [size-1 : 0] pc_save_2,
+	output logic [size-1 : 0] pc_save_3,
+	output logic [size-1 : 0] pc_save_4
+);
 
 	localparam D = 1; // Delay for simulation purposes
 
@@ -64,23 +77,30 @@ module pc_ctrl_super #(parameter size = 32)(
 	logic [size-1 : 0] pc_plus_four_0;
 	logic [size-1 : 0] pc_plus_four_1;
 	logic [size-1 : 0] pc_plus_four_2;
+	logic [size-1 : 0] pc_plus_four_3;
+	logic [size-1 : 0] pc_plus_four_4;
 	logic [size-1 : 0] pc_plus_incr;
 	logic [size-1 : 0] pc_plus_imm;
    logic [size-1 : 0] pc_plus_imm_0;
 	logic [size-1 : 0] pc_plus_imm_1;
 	logic [size-1 : 0] pc_plus_imm_2;
+	logic [size-1 : 0] pc_plus_imm_3;
+	logic [size-1 : 0] pc_plus_imm_4;
 	logic [size-1 : 0] rs1_plus_imm_prediction;
 	logic [size-1 : 0] rs1_plus_imm_prediction_0;
 	logic [size-1 : 0] rs1_plus_imm_prediction_1;
 	logic [size-1 : 0] rs1_plus_imm_prediction_2;
+	logic [size-1 : 0] rs1_plus_imm_prediction_3;
+	logic [size-1 : 0] rs1_plus_imm_prediction_4;
+
 	logic [size-1 : 0] pc_plus;
-	logic [3      : 0] increment_value;
+	logic [4      : 0] increment_value;
 	logic					 jalr;
 	logic              jump;
 
-   assign increment_value = parallel_mode ? 4'd12 : 4'd4;  
-	assign jalr = jalr_0 | (!jump_0 & jalr_1) | (!jump_0 & !jump_1 & jalr_2);
-	assign jump = jump_0 | jump_1 | jump_2;  
+   assign increment_value = parallel_mode ? 5'd20 : 5'd4;  
+	assign jalr = jalr_0 | (!jump_0 & jalr_1) | (!jump_0 & !jump_1 & jalr_2) | (!jump_0 & !jump_1 & !jump_2 & jalr_3) | (!jump_0 & !jump_1 & !jump_2 & !jump_3 & jalr_4);
+	assign jump = jump_0 | jump_1 | jump_2 | jump_3 | jump_4;  
 
 	always_comb begin
 		if(jump_0) begin
@@ -91,6 +111,12 @@ module pc_ctrl_super #(parameter size = 32)(
 		end
 		else if(jump_2) begin
 			pc_plus_imm = pc_plus_imm_2;
+		end
+		else if(jump_3) begin
+			pc_plus_imm = pc_plus_imm_3;
+		end
+		else if(jump_4) begin
+			pc_plus_imm = pc_plus_imm_4;
 		end
 		else begin
 			pc_plus_imm = 32'd0;
@@ -106,6 +132,12 @@ module pc_ctrl_super #(parameter size = 32)(
 		end
 		else if(jalr_2) begin
 			rs1_plus_imm_prediction = rs1_plus_imm_prediction_2;
+		end
+		else if(jalr_3) begin
+			rs1_plus_imm_prediction = rs1_plus_imm_prediction_3;
+		end
+		else if(jalr_4) begin
+			rs1_plus_imm_prediction = rs1_plus_imm_prediction_4;
 		end
 		else begin
 			rs1_plus_imm_prediction = 32'd0;
@@ -125,16 +157,21 @@ module pc_ctrl_super #(parameter size = 32)(
 	assign pc_plus_four_0 = pc_current_val + 32'd4; 
 	assign pc_plus_four_1 = parallel_mode ? pc_current_val + 32'd8 : pc_plus_four_0;
 	assign pc_plus_four_2 = parallel_mode ? pc_current_val + 32'd12 : pc_plus_four_0;
+	assign pc_plus_four_3 = parallel_mode ? pc_current_val + 32'd16 : pc_plus_four_0;
+	assign pc_plus_four_4 = parallel_mode ? pc_current_val + 32'd20 : pc_plus_four_0;
 
 	assign pc_plus_incr = pc_current_val + increment_value; 
 	assign pc_plus_imm_0  = current_pc_0 + {imm_i_0[31:2], 2'b00}; // prevent misalignment issues, don't use 2 LSBs
 	assign pc_plus_imm_1  = current_pc_1 + {imm_i_1[31:2], 2'b00}; // prevent misalignment issues, don't use 2 LSBs
 	assign pc_plus_imm_2  = current_pc_2 + {imm_i_2[31:2], 2'b00}; // prevent misalignment issues, don't use 2 L
-	
+	assign pc_plus_imm_3  = current_pc_3 + {imm_i_3[31:2], 2'b00}; // prevent misalignment issues, don't use 2 LSBs
+	assign pc_plus_imm_4  = current_pc_4 + {imm_i_4[31:2], 2'b00}; // prevent misalignment issues, don't use 2
 	// TODO : use rs1 value instead of pc_current_val, how can we predict rs1 value? or should we wait until execuete stage calculate correct result
 	assign rs1_plus_imm_prediction_0 = current_pc_0 + {imm_i_0[31:2], 2'b00};
 	assign rs1_plus_imm_prediction_1 = current_pc_1 + {imm_i_1[31:2], 2'b00};
 	assign rs1_plus_imm_prediction_2 = current_pc_2 + {imm_i_2[31:2], 2'b00};
+	assign rs1_plus_imm_prediction_3 = current_pc_3 + {imm_i_3[31:2], 2'b00};
+	assign rs1_plus_imm_prediction_4 = current_pc_4 + {imm_i_4[31:2], 2'b00};
 
 	// next pc value, 
 	// TODO : handle jalr case
@@ -164,12 +201,26 @@ module pc_ctrl_super #(parameter size = 32)(
 		.data_in({pc_plus_four_2, pc_plus_imm_2}),
 		.data_out(pc_save_2));
 	
+	parametric_mux #(.mem_width(size), .mem_depth(2)) out_mux_3(
+		.addr(jump_3| jalr_3),
+		.data_in({pc_plus_four_3, pc_plus_imm_3}),
+		.data_out(pc_save_3));
+
+	parametric_mux #(.mem_width(size), .mem_depth(2)) out_mux_4(
+		.addr(jump_4| jalr_4),
+		.data_in({pc_plus_four_4, pc_plus_imm_4}),
+		.data_out(pc_save_4));
+	
 	assign inst_addr_0 = reset ? (misprediction? pc_new_val : buble? pc_current_val : pc_new_val) : 32'h00000000;
 	assign inst_addr_1 = parallel_mode ? inst_addr_0 + 32'd4 : inst_addr_0;
 	assign inst_addr_2 = parallel_mode ? inst_addr_0 + 32'd8 : inst_addr_0;
+	assign inst_addr_3 = parallel_mode ? inst_addr_0 + 32'd12 : inst_addr_0;
+	assign inst_addr_4 = parallel_mode ? inst_addr_0 + 32'd16 : inst_addr_0;
 	assign current_pc_0 = pc_current_val;
 	assign current_pc_1 = parallel_mode ? pc_current_val + 32'd4 : current_pc_0;
 	assign current_pc_2 = parallel_mode ? pc_current_val + 32'd8 : current_pc_0;
+	assign current_pc_3 = parallel_mode ? pc_current_val + 32'd12 : current_pc_0;
+	assign current_pc_4 = parallel_mode ? pc_current_val + 32'd16 : current_pc_0;
 
 	// TODO : We can store some pc values in case of JAL, JALR instruction then we can use them in case of new JALR calculation
 

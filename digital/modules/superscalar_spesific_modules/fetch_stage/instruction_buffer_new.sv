@@ -33,12 +33,12 @@ module instruction_buffer_new #(
     input  logic reset,
     
     // Input from multi_fetch (up to 3 instructions per cycle)
-    input  logic [2:0] fetch_valid_i,           // Which of the 3 fetch slots are valid
-    input  logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2,
-    input  logic [DATA_WIDTH-1:0] pc_i_0, pc_i_1, pc_i_2,
-    input  logic [DATA_WIDTH-1:0] imm_i_0, imm_i_1, imm_i_2,
-    input  logic [DATA_WIDTH-1:0] pc_at_prediction_i_0, pc_at_prediction_i_1, pc_at_prediction_i_2,
-    input  logic branch_prediction_i_0, branch_prediction_i_1, branch_prediction_i_2,
+    input  logic [4:0] fetch_valid_i,           // Which of the 3 fetch slots are valid
+    input  logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2, instruction_i_3, instruction_i_4,
+    input  logic [DATA_WIDTH-1:0] pc_i_0, pc_i_1, pc_i_2, pc_i_3, pc_i_4,
+    input  logic [DATA_WIDTH-1:0] imm_i_0, imm_i_1, imm_i_2, imm_i_3, imm_i_4,
+    input  logic [DATA_WIDTH-1:0] pc_at_prediction_i_0, pc_at_prediction_i_1, pc_at_prediction_i_2, pc_at_prediction_i_3, pc_at_prediction_i_4,
+    input  logic branch_prediction_i_0, branch_prediction_i_1, branch_prediction_i_2, branch_prediction_i_3, branch_prediction_i_4,
     
     // Output to decode stages (up to 3 instructions per cycle)
     output logic [2:0] decode_valid_o,          // How many instructions are available for decode
@@ -77,11 +77,11 @@ module instruction_buffer_new #(
     logic [$clog2(BUFFER_DEPTH):0] decode_2_read_offset;   
     
     // Write enable signals for each slot
-    logic write_en_0, write_en_1, write_en_2;
+    logic write_en_0, write_en_1, write_en_2, write_en_3, write_en_4;
     logic read_en_0, read_en_1, read_en_2;
     
     // Determine how many instructions we can actually write
-    logic [2:0] num_to_write;
+    logic [3:0] num_to_write;
     logic [2:0] num_to_read;
     logic [$clog2(BUFFER_DEPTH):0] space_available;
     logic [2:0] instructions_available;
@@ -98,14 +98,17 @@ module instruction_buffer_new #(
     assign occupancy_o = count;
     
     // Backpressure logic - conservative to prevent deadlock
-    assign fetch_ready_o = !flush_i && !buffer_full_o && (space_available >= 3);
+    assign fetch_ready_o = !flush_i && !buffer_full_o && (space_available >= 5);
     
+    /* */
     // Calculate how many instructions to write this cycle
     always_comb begin
         if (flush_i || !fetch_ready_o) begin
-            num_to_write = 3'd0;
+            num_to_write = 4'd0;
         end else begin
             // Count valid input instructions
+            num_to_write = fetch_valid_i[0] + fetch_valid_i[1] + fetch_valid_i[2] + fetch_valid_i[3] + fetch_valid_i[4];
+            /* 
             case ({fetch_valid_i[2], fetch_valid_i[1], fetch_valid_i[0]})
                 3'b001: num_to_write = (space_available >= 1) ? 3'd1 : 3'd0;
                 3'b010: num_to_write = (space_available >= 1) ? 3'd0 : 3'd0;
@@ -116,6 +119,7 @@ module instruction_buffer_new #(
                 3'b111: num_to_write = (space_available >= 3) ? 3'd3 : 3'd0;
                 default: num_to_write = 3'd0;
             endcase
+            */
         end
     end
     
@@ -139,9 +143,11 @@ module instruction_buffer_new #(
     end
     
     // Generate write enables
-    assign write_en_0 = (num_to_write >= 1) && fetch_valid_i[0];
-    assign write_en_1 = (num_to_write >= 2) && fetch_valid_i[1];
-    assign write_en_2 = (num_to_write >= 3) && fetch_valid_i[2];
+    assign write_en_0 = fetch_valid_i[0];
+    assign write_en_1 = fetch_valid_i[1];
+    assign write_en_2 = fetch_valid_i[2];
+    assign write_en_3 = fetch_valid_i[3];
+    assign write_en_4 = fetch_valid_i[4];
     
     // Generate read enables
     assign read_en_0 = decode_ready_i[0];
@@ -177,7 +183,7 @@ module instruction_buffer_new #(
                 
             end else begin
                 // Update pointers and count
-                if (write_en_0 || write_en_1 || write_en_2) begin
+                if (write_en_0 || write_en_1 || write_en_2 || write_en_3 || write_en_4) begin // we can only check write_en_0
                     tail_ptr <= #D (tail_ptr + num_to_write) % BUFFER_DEPTH;
                 end
                 
@@ -212,8 +218,21 @@ module instruction_buffer_new #(
                     imm_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D imm_i_2;
                     branch_prediction_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D branch_prediction_i_2;
                     pc_at_prediction_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D pc_at_prediction_i_2;
-                   
                 end
+                if (write_en_3) begin
+                    instruction_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D instruction_i_3;
+                    pc_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D pc_i_3;
+                    imm_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D imm_i_3;
+                    branch_prediction_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D branch_prediction_i_3;
+                    pc_at_prediction_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D pc_at_prediction_i_3;
+                end
+                if (write_en_4) begin
+                    instruction_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D instruction_i_4;
+                    pc_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D pc_i_4;
+                    imm_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D imm_i_4;
+                    branch_prediction_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D branch_prediction_i_4;
+                    pc_at_prediction_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D pc_at_prediction_i_4;
+                end                    
             end
         end
     end

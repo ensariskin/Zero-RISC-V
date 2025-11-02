@@ -31,8 +31,8 @@ module fetch_buffer_top #(
     input  logic reset,
     
     // Memory interface (3-port for parallel fetch)
-    output logic [DATA_WIDTH-1:0] inst_addr_0, inst_addr_1, inst_addr_2,
-    input  logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2,
+    output logic [DATA_WIDTH-1:0] inst_addr_0, inst_addr_1, inst_addr_2, inst_addr_3, inst_addr_4,
+    input  logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2, instruction_i_3, instruction_i_4,
     
     // Pipeline control signals
     input  logic flush,
@@ -61,13 +61,13 @@ module fetch_buffer_top #(
 );
 
     // Internal connections between multi_fetch and instruction_buffer
-    logic [2:0] fetch_valid;
-    logic fetch_ready;
-    logic [DATA_WIDTH-1:0] fetch_pc_0, fetch_pc_1, fetch_pc_2;
-    logic [DATA_WIDTH-1:0] fetch_imm_0, fetch_imm_1, fetch_imm_2;
-    logic [DATA_WIDTH-1:0] fetch_inst_0, fetch_inst_1, fetch_inst_2;
-    logic [DATA_WIDTH-1:0] fetch_pc_value_at_prediction_0, fetch_pc_value_at_prediction_1, fetch_pc_value_at_prediction_2;
-    logic fetch_branch_pred_0, fetch_branch_pred_1, fetch_branch_pred_2;
+    logic [4:0] fetch_valid;
+    logic fetch_ready; // todo : I am not sure about using indpendent ready signals for each instruction, if there  is not enough spaace to store all three instructions we can wait I think
+    logic [DATA_WIDTH-1:0] fetch_pc_0, fetch_pc_1, fetch_pc_2, fetch_pc_3, fetch_pc_4;
+    logic [DATA_WIDTH-1:0] fetch_imm_0, fetch_imm_1, fetch_imm_2, fetch_imm_3, fetch_imm_4;
+    logic [DATA_WIDTH-1:0] fetch_inst_0, fetch_inst_1, fetch_inst_2, fetch_inst_3, fetch_inst_4;
+    logic [DATA_WIDTH-1:0] fetch_pc_value_at_prediction_0, fetch_pc_value_at_prediction_1, fetch_pc_value_at_prediction_2, fetch_pc_value_at_prediction_3, fetch_pc_value_at_prediction_4;
+    logic fetch_branch_pred_0, fetch_branch_pred_1, fetch_branch_pred_2, fetch_branch_pred_3, fetch_branch_pred_4;
     
     // Multi-Fetch Unit
     multi_fetch #(.size(DATA_WIDTH)) fetch_unit (
@@ -76,12 +76,17 @@ module fetch_buffer_top #(
         
         // Memory interface
         .inst_addr_0(inst_addr_0),
-        .instruction_i_0(instruction_i_0),
         .inst_addr_1(inst_addr_1),
+        .inst_addr_2(inst_addr_2),       
+        .inst_addr_3(inst_addr_3),
+        .inst_addr_4(inst_addr_4),
+
+        .instruction_i_0(instruction_i_0),
         .instruction_i_1(instruction_i_1),
-        .inst_addr_2(inst_addr_2),
         .instruction_i_2(instruction_i_2),
-        
+        .instruction_i_3(instruction_i_3),
+        .instruction_i_4(instruction_i_4),
+
         // Pipeline control
         .flush(flush),
         .buble(buble),
@@ -104,6 +109,11 @@ module fetch_buffer_top #(
         .update_prediction_valid_i_2(update_prediction_valid_i_2),
         .update_prediction_pc_2(update_prediction_pc_2),
         .misprediction_2(misprediction_2),
+
+        .pc_value_at_prediction_3(fetch_pc_value_at_prediction_3),
+        .branch_prediction_o_3(fetch_branch_pred_3),
+        .pc_value_at_prediction_4(fetch_pc_value_at_prediction_4),
+        .branch_prediction_o_4(fetch_branch_pred_4),
         
         .correct_pc(correct_pc),
         
@@ -113,14 +123,19 @@ module fetch_buffer_top #(
         .pc_o_0(fetch_pc_0),
         .pc_o_1(fetch_pc_1),
         .pc_o_2(fetch_pc_2),
-        
-        // Legacy outputs (for compatibility)
+        .pc_o_3(fetch_pc_3),
+        .pc_o_4(fetch_pc_4),
+        // Legacy outputs (for compatibility) // todo consider removing immediate outputs, sending them probably more costly than recalculating in decode
         .instruction_o_0(fetch_inst_0),
-        .imm_o_0(fetch_imm_0),
         .instruction_o_1(fetch_inst_1),
-        .imm_o_1(fetch_imm_1),
         .instruction_o_2(fetch_inst_2),
-        .imm_o_2(fetch_imm_2)
+        .instruction_o_3(fetch_inst_3),
+        .instruction_o_4(fetch_inst_4),
+        .imm_o_0(fetch_imm_0),
+        .imm_o_1(fetch_imm_1),
+        .imm_o_2(fetch_imm_2),
+        .imm_o_3(fetch_imm_3),
+        .imm_o_4(fetch_imm_4)
     );
     // TODO : There are one clock cycle latency from fetch to buffer due to multi_fetch internal registers
     //       : This can be optimized by removing some internal registers in multi_fetch if needed
@@ -139,21 +154,36 @@ module fetch_buffer_top #(
         // Input from multi_fetch
         .fetch_valid_i(fetch_valid),
         .fetch_ready_o(fetch_ready),
+
         .instruction_i_0(fetch_inst_0),
         .instruction_i_1(fetch_inst_1),
         .instruction_i_2(fetch_inst_2),
+        .instruction_i_3(fetch_inst_3),
+        .instruction_i_4(fetch_inst_4),
+        
         .pc_i_0(fetch_pc_0),
         .pc_i_1(fetch_pc_1),
         .pc_i_2(fetch_pc_2),
+        .pc_i_3(fetch_pc_3),
+        .pc_i_4(fetch_pc_4),
+
         .imm_i_0(fetch_imm_0),
         .imm_i_1(fetch_imm_1),
         .imm_i_2(fetch_imm_2),
+        .imm_i_3(fetch_imm_3),
+        .imm_i_4(fetch_imm_4),
+
         .branch_prediction_i_0(fetch_branch_pred_0),
         .branch_prediction_i_1(fetch_branch_pred_1),
         .branch_prediction_i_2(fetch_branch_pred_2),
+        .branch_prediction_i_3(fetch_branch_pred_3),
+        .branch_prediction_i_4(fetch_branch_pred_4),
+
         .pc_at_prediction_i_0(fetch_pc_value_at_prediction_0),
         .pc_at_prediction_i_1(fetch_pc_value_at_prediction_1),
         .pc_at_prediction_i_2(fetch_pc_value_at_prediction_2),
+        .pc_at_prediction_i_3(fetch_pc_value_at_prediction_3),
+        .pc_at_prediction_i_4(fetch_pc_value_at_prediction_4),
         
         // Output to decode stages
         .decode_ready_i(decode_ready_i),
@@ -174,8 +204,6 @@ module fetch_buffer_top #(
         .pc_value_at_prediction_o_0(pc_value_at_prediction_0),
         .pc_value_at_prediction_o_1(pc_value_at_prediction_1),
         .pc_value_at_prediction_o_2(pc_value_at_prediction_2),
-        
- 
         
         
         // Status outputs

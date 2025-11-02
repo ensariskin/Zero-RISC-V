@@ -36,18 +36,36 @@ module dv_top_superscalar;
     logic rst_n;
     
     // Superscalar core signals (3-port instruction interface)
-    logic [DATA_WIDTH-1:0] inst_addr_0, inst_addr_1, inst_addr_2;
-    logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2;
+    logic [DATA_WIDTH-1:0] inst_addr_0, inst_addr_1, inst_addr_2, inst_addr_3, inst_addr_4;
+    logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2, instruction_i_3, instruction_i_4;
     
     // Data memory interface
-    logic [DATA_WIDTH-1:0] data_addr;
-    logic [DATA_WIDTH-1:0] data_write;
-    logic [DATA_WIDTH-1:0] data_read;
-    logic data_we;
-    logic [3:0] data_be;
-    logic data_req;
-    logic data_ack;
-    logic data_err;
+    logic [DATA_WIDTH-1:0] data_0_addr;
+    logic [DATA_WIDTH-1:0] data_0_write;
+    logic [DATA_WIDTH-1:0] data_0_read;
+    logic                  data_0_we;
+    logic [3:0]            data_0_be;
+    logic                  data_0_req;
+    logic                  data_0_ack;
+    logic                  data_0_err;
+
+    logic [DATA_WIDTH-1:0] data_1_addr;
+    logic [DATA_WIDTH-1:0] data_1_write;
+    logic [DATA_WIDTH-1:0] data_1_read;
+    logic                  data_1_we;
+    logic [3:0]            data_1_be;
+    logic                  data_1_req;
+    logic                  data_1_ack;
+    logic                  data_1_err;
+
+    logic [DATA_WIDTH-1:0] data_2_addr;
+    logic [DATA_WIDTH-1:0] data_2_write;
+    logic [DATA_WIDTH-1:0] data_2_read;
+    logic                  data_2_we;
+    logic [3:0]            data_2_be;
+    logic                  data_2_req;
+    logic                  data_2_ack;
+    logic                  data_2_err;
     
     // External interrupt interface
     logic external_interrupt;
@@ -85,23 +103,65 @@ module dv_top_superscalar;
     logic [31:0] inst2_wb_adr, inst2_wb_dat_o, inst2_wb_dat_i;
     logic [3:0] inst2_wb_sel;
     logic inst2_wb_stall, inst2_wb_ack, inst2_wb_err;
+
+    logic inst3_wb_cyc, inst3_wb_stb, inst3_wb_we;
+    logic [31:0] inst3_wb_adr, inst3_wb_dat_o, inst3_wb_dat_i;
+    logic [3:0] inst3_wb_sel;
+    logic inst3_wb_stall, inst3_wb_ack, inst3_wb_err;
+
+    logic inst4_wb_cyc, inst4_wb_stb, inst4_wb_we;
+    logic [31:0] inst4_wb_adr, inst4_wb_dat_o, inst4_wb_dat_i;
+    logic [3:0] inst4_wb_sel;
+    logic inst4_wb_stall, inst4_wb_ack, inst4_wb_err;
     
     // Wishbone signals for data memory
-    logic data_wb_cyc, data_wb_stb, data_wb_we;
-    logic [31:0] data_wb_adr, data_wb_dat_o, data_wb_dat_i;
-    logic [3:0] data_wb_sel;
-    logic data_wb_stall, data_wb_ack, data_wb_err;
+    logic data_0_wb_cyc, data_0_wb_stb, data_0_wb_we;
+    logic [31:0] data_0_wb_adr, data_0_wb_dat_o, data_0_wb_dat_i;
+    logic [3:0] data_0_wb_sel;
+    logic data_0_wb_stall, data_0_wb_ack, data_0_wb_err;
+
+    logic data_1_wb_cyc, data_1_wb_stb, data_1_wb_we;
+    logic [31:0] data_1_wb_adr, data_1_wb_dat_o, data_1_wb_dat_i;
+    logic [3:0] data_1_wb_sel;
+    logic data_1_wb_stall, data_1_wb_ack, data_1_wb_err;
+
+    logic data_2_wb_cyc, data_2_wb_stb, data_2_wb_we;
+    logic [31:0] data_2_wb_adr, data_2_wb_dat_o, data_2_wb_dat_i;
+    logic [3:0] data_2_wb_sel;
+    logic data_2_wb_stall, data_2_wb_ack, data_2_wb_err;
     
     // Region memory signals
-    logic region0_wb_cyc, region0_wb_stb, region0_wb_we;
-    logic [31:0] region0_wb_adr, region0_wb_dat_o, region0_wb_dat_i;
-    logic [3:0] region0_wb_sel;
-    logic region0_wb_stall, region0_wb_ack, region0_wb_err;
+    logic region0_0_wb_cyc, region0_0_wb_stb, region0_0_wb_we;
+    logic [31:0] region0_0_wb_adr, region0_0_wb_dat_o, region0_0_wb_dat_i;
+    logic [3:0] region0_0_wb_sel;
+    logic region0_0_wb_stall, region0_0_wb_ack, region0_0_wb_err;
+
+    logic region0_1_wb_cyc, region0_1_wb_stb, region0_1_wb_we;
+    logic [31:0] region0_1_wb_adr, region0_1_wb_dat_o, region0_1_wb_dat_i;
+    logic [3:0] region0_1_wb_sel;
+    logic region0_1_wb_stall, region0_1_wb_ack, region0_1_wb_err;
+
+    logic region0_2_wb_cyc, region0_2_wb_stb, region0_2_wb_we;
+    logic [31:0] region0_2_wb_adr, region0_2_wb_dat_o, region0_2_wb_dat_i;
+    logic [3:0] region0_2_wb_sel;
+    logic region0_2_wb_stall, region0_2_wb_ack, region0_2_wb_err;
     
-    logic region1_wb_cyc, region1_wb_stb, region1_wb_we;
-    logic [31:0] region1_wb_adr, region1_wb_dat_o, region1_wb_dat_i;
-    logic [3:0] region1_wb_sel;
-    logic region1_wb_stall, region1_wb_ack, region1_wb_err;
+
+    logic region1_0_wb_cyc, region1_0_wb_stb, region1_0_wb_we;
+    logic [31:0] region1_0_wb_adr, region1_0_wb_dat_o, region1_0_wb_dat_i;
+    logic [3:0] region1_0_wb_sel;
+    logic region1_0_wb_stall, region1_0_wb_ack, region1_0_wb_err;
+
+    logic region1_1_wb_cyc, region1_1_wb_stb, region1_1_wb_we;
+    logic [31:0] region1_1_wb_adr, region1_1_wb_dat_o, region1_1_wb_dat_i;
+    logic [3:0] region1_1_wb_sel;
+    logic region1_1_wb_stall, region1_1_wb_ack, region1_1_wb_err;
+
+    logic region1_2_wb_cyc, region1_2_wb_stb, region1_2_wb_we;
+    logic [31:0] region1_2_wb_adr, region1_2_wb_dat_o, region1_2_wb_dat_i;
+    logic [3:0] region1_2_wb_sel;
+    logic region1_2_wb_stall, region1_2_wb_ack, region1_2_wb_err;
+    
     
     // Test control
     logic test_failed;
@@ -164,19 +224,40 @@ module dv_top_superscalar;
         .inst_addr_0(inst_addr_0),
         .inst_addr_1(inst_addr_1), 
         .inst_addr_2(inst_addr_2),
+        .inst_addr_3(inst_addr_3),
+        .inst_addr_4(inst_addr_4),
         .instruction_i_0(instruction_i_0),
         .instruction_i_1(instruction_i_1),
         .instruction_i_2(instruction_i_2),
-        
+        .instruction_i_3(instruction_i_3),
+        .instruction_i_4(instruction_i_4),
         // Data Memory Interface
-        .data_addr(data_addr),
-        .data_write(data_write),
-        .data_read(data_read),
-        .data_we(data_we),
-        .data_be(data_be),
-        .data_req(data_req),
-        .data_ack(data_ack),
-        .data_err(data_err),
+        .data_0_addr (data_0_addr),
+        .data_0_write(data_0_write),
+        .data_0_read (data_0_read),
+        .data_0_we   (data_0_we),
+        .data_0_be   (data_0_be),
+        .data_0_req  (data_0_req),
+        .data_0_ack  (data_0_ack),
+        .data_0_err  (data_0_err),
+
+        .data_1_addr (data_1_addr),
+        .data_1_write(data_1_write),
+        .data_1_read (data_1_read),
+        .data_1_we   (data_1_we),
+        .data_1_be   (data_1_be),
+        .data_1_req  (data_1_req),
+        .data_1_ack  (data_1_ack),
+        .data_1_err  (data_1_err),
+
+        .data_2_addr (data_2_addr),
+        .data_2_write(data_2_write),
+        .data_2_read (data_2_read),
+        .data_2_we   (data_2_we),
+        .data_2_be   (data_2_be),
+        .data_2_req  (data_2_req),
+        .data_2_ack  (data_2_ack),
+        .data_2_err  (data_2_err),
         
         // External Interrupt Interface
         .external_interrupt(external_interrupt),
@@ -257,40 +338,45 @@ module dv_top_superscalar;
         .wb_dat_i(inst2_wb_dat_i),
         .wb_err_i(inst2_wb_err)
     );
-    
-    //==========================================================================
-    // DATA MEMorY ADAPTER
-    //==========================================================================
-    
-    rv32i_superscalar_data_wb_adapter data_wb_adapter (
+
+    // Port 3 instruction memory adapter
+    rv32i_inst_wb_adapter inst3_wb_adapter (
         .clk(clk),
         .rst_n(rst_n),
-        .core_addr_i(data_addr),
-        .core_data_i(data_write),
-        .core_data_o(data_read),
-        .core_we_i(data_we),
-        .core_be_i(data_be),
-        .core_req_i(data_req),
-        .core_ack_o(data_ack),
-        .core_err_o(data_err),
-        .wb_cyc_o(data_wb_cyc),
-        .wb_stb_o(data_wb_stb),
-        .wb_we_o(data_wb_we),
-        .wb_adr_o(data_wb_adr),
-        .wb_dat_o(data_wb_dat_o),
-        .wb_sel_o(data_wb_sel),
-        .wb_stall_i(data_wb_stall),
-        .wb_ack_i(data_wb_ack),
-        .wb_dat_i(data_wb_dat_i),
-        .wb_err_i(data_wb_err)
+        .core_addr_i(inst_addr_3),
+        .core_data_o(instruction_i_3),
+        .wb_cyc_o(inst3_wb_cyc),
+        .wb_stb_o(inst3_wb_stb),
+        .wb_we_o(inst3_wb_we),
+        .wb_adr_o(inst3_wb_adr),
+        .wb_dat_o(inst3_wb_dat_o),
+        .wb_sel_o(inst3_wb_sel),
+        .wb_stall_i(inst3_wb_stall),
+        .wb_ack_i(inst3_wb_ack),
+        .wb_dat_i(inst3_wb_dat_i),
+        .wb_err_i(inst3_wb_err)
     );
     
-    //==========================================================================
-    // MEMorY subSYSTEM (3-PorT INSTRUCTION + DATA)
-    //==========================================================================
-    
-    // 3-port instruction memory (64KB = 16K words)
-    memory_3rw #(
+    // Port 4 instruction memory adapter
+    rv32i_inst_wb_adapter inst4_wb_adapter (
+        .clk(clk),
+        .rst_n(rst_n),
+        .core_addr_i(inst_addr_4),
+        .core_data_o(instruction_i_4),
+        .wb_cyc_o(inst4_wb_cyc),
+        .wb_stb_o(inst4_wb_stb),
+        .wb_we_o(inst4_wb_we),
+        .wb_adr_o(inst4_wb_adr),
+        .wb_dat_o(inst4_wb_dat_o),
+        .wb_sel_o(inst4_wb_sel),
+        .wb_stall_i(inst4_wb_stall),
+        .wb_ack_i(inst4_wb_ack),
+        .wb_dat_i(inst4_wb_dat_i),
+        .wb_err_i(inst4_wb_err)
+    );
+
+        // 3-port instruction memory (64KB = 16K words)
+    memory_5rw #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(14), // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
@@ -335,120 +421,341 @@ module dv_top_superscalar;
         .port2_wb_dat_o(inst2_wb_dat_i),
         .port2_wb_err_o(inst2_wb_err),
         .port2_wb_rst_i(~rst_n),
-        .port2_wb_clk_i(clk)
+        .port2_wb_clk_i(clk),
+
+        // Port 3 (fetch 3)
+        .port3_wb_cyc_i(inst3_wb_cyc),
+        .port3_wb_stb_i(inst3_wb_stb),
+        .port3_wb_we_i(inst3_wb_we),
+        .port3_wb_adr_i(inst3_wb_adr),
+        .port3_wb_dat_i(inst3_wb_dat_o),
+        .port3_wb_sel_i(inst3_wb_sel),
+        .port3_wb_stall_o(inst3_wb_stall),
+        .port3_wb_ack_o(inst3_wb_ack),
+        .port3_wb_dat_o(inst3_wb_dat_i),
+        .port3_wb_err_o(inst3_wb_err),
+        .port3_wb_rst_i(~rst_n),
+        .port3_wb_clk_i(clk),
+
+        // Port 4 (fetch 4)
+        .port4_wb_cyc_i(inst4_wb_cyc),
+        .port4_wb_stb_i(inst4_wb_stb),
+        .port4_wb_we_i(inst4_wb_we),
+        .port4_wb_adr_i(inst4_wb_adr),
+        .port4_wb_dat_i(inst4_wb_dat_o),
+        .port4_wb_sel_i(inst4_wb_sel),
+        .port4_wb_stall_o(inst4_wb_stall),
+        .port4_wb_ack_o(inst4_wb_ack),
+        .port4_wb_dat_o(inst4_wb_dat_i),
+        .port4_wb_err_o(inst4_wb_err),
+        .port4_wb_rst_i(~rst_n),
+        .port4_wb_clk_i(clk)
+    );
+    //==========================================================================
+    // DATA MEMorY ADAPTER
+    //==========================================================================
+    
+    rv32i_superscalar_data_wb_adapter data_0_wb_adapter (
+        .clk(clk),
+        .rst_n(rst_n),
+        .core_addr_i(data_0_addr),
+        .core_data_i(data_0_write),
+        .core_data_o(data_0_read),
+        .core_we_i  (data_0_we),
+        .core_be_i  (data_0_be),
+        .core_req_i (data_0_req),
+        .core_ack_o (data_0_ack),
+        .core_err_o (data_0_err),
+        .wb_cyc_o   (data_0_wb_cyc),
+        .wb_stb_o   (data_0_wb_stb),
+        .wb_we_o    (data_0_wb_we),
+        .wb_adr_o   (data_0_wb_adr),
+        .wb_dat_o   (data_0_wb_dat_o),
+        .wb_sel_o   (data_0_wb_sel),
+        .wb_stall_i (data_0_wb_stall),
+        .wb_ack_i   (data_0_wb_ack),
+        .wb_dat_i   (data_0_wb_dat_i),
+        .wb_err_i   (data_0_wb_err)
+    );
+
+    rv32i_superscalar_data_wb_adapter data_1_wb_adapter (
+        .clk(clk),
+        .rst_n(rst_n),
+        .core_addr_i(data_1_addr),
+        .core_data_i(data_1_write),
+        .core_data_o(data_1_read),
+        .core_we_i  (data_1_we),
+        .core_be_i  (data_1_be),
+        .core_req_i (data_1_req),
+        .core_ack_o (data_1_ack),
+        .core_err_o (data_1_err),
+        .wb_cyc_o   (data_1_wb_cyc),
+        .wb_stb_o   (data_1_wb_stb),
+        .wb_we_o    (data_1_wb_we),
+        .wb_adr_o   (data_1_wb_adr),
+        .wb_dat_o   (data_1_wb_dat_o),
+        .wb_sel_o   (data_1_wb_sel),
+        .wb_stall_i (data_1_wb_stall),
+        .wb_ack_i   (data_1_wb_ack),
+        .wb_dat_i   (data_1_wb_dat_i),
+        .wb_err_i   (data_1_wb_err)
+    );
+
+     rv32i_superscalar_data_wb_adapter data_2_wb_adapter (
+        .clk(clk),
+        .rst_n(rst_n),
+        .core_addr_i(data_2_addr),
+        .core_data_i(data_2_write),
+        .core_data_o(data_2_read),
+        .core_we_i  (data_2_we),
+        .core_be_i  (data_2_be),
+        .core_req_i (data_2_req),
+        .core_ack_o (data_2_ack),
+        .core_err_o (data_2_err),
+        .wb_cyc_o   (data_2_wb_cyc),
+        .wb_stb_o   (data_2_wb_stb),
+        .wb_we_o    (data_2_wb_we),
+        .wb_adr_o   (data_2_wb_adr),
+        .wb_dat_o   (data_2_wb_dat_o),
+        .wb_sel_o   (data_2_wb_sel),
+        .wb_stall_i (data_2_wb_stall),
+        .wb_ack_i   (data_2_wb_ack),
+        .wb_dat_i   (data_2_wb_dat_i),
+        .wb_err_i   (data_2_wb_err)
     );
     
+    //==========================================================================
+    // MEMorY subSYSTEM (3-PorT INSTRUCTION + DATA)
+    //==========================================================================
+    
+    
     // Data memory selector/router
-    data_memory_selector data_mem_selector (
+    data_memory_selector data_0_mem_selector (
         .clk(clk),
         .rst_n(rst_n),
         
         // Core interface (from data wb adapter)
-        .core_wb_cyc_i(data_wb_cyc),
-        .core_wb_stb_i(data_wb_stb),
-        .core_wb_we_i(data_wb_we),
-        .core_wb_adr_i(data_wb_adr),
-        .core_wb_dat_i(data_wb_dat_o),
-        .core_wb_sel_i(data_wb_sel),
-        .core_wb_stall_o(data_wb_stall),
-        .core_wb_ack_o(data_wb_ack),
-        .core_wb_dat_o(data_wb_dat_i),
-        .core_wb_err_o(data_wb_err),
+        .core_wb_cyc_i  (data_0_wb_cyc),
+        .core_wb_stb_i  (data_0_wb_stb),
+        .core_wb_we_i   (data_0_wb_we),
+        .core_wb_adr_i  (data_0_wb_adr),
+        .core_wb_dat_i  (data_0_wb_dat_o),
+        .core_wb_sel_i  (data_0_wb_sel),
+        .core_wb_stall_o(data_0_wb_stall),
+        .core_wb_ack_o  (data_0_wb_ack),
+        .core_wb_dat_o  (data_0_wb_dat_i),
+        .core_wb_err_o  (data_0_wb_err),
         
         // Region 0 memory interface  
-        .region0_wb_cyc_o(region0_wb_cyc),
-        .region0_wb_stb_o(region0_wb_stb),
-        .region0_wb_we_o(region0_wb_we),
-        .region0_wb_adr_o(region0_wb_adr),
-        .region0_wb_dat_o(region0_wb_dat_o),
-        .region0_wb_sel_o(region0_wb_sel),
-        .region0_wb_stall_i(region0_wb_stall),
-        .region0_wb_ack_i(region0_wb_ack),
-        .region0_wb_dat_i(region0_wb_dat_i),
-        .region0_wb_err_i(region0_wb_err),
+        .region0_wb_cyc_o  (region0_0_wb_cyc),
+        .region0_wb_stb_o  (region0_0_wb_stb),
+        .region0_wb_we_o   (region0_0_wb_we),
+        .region0_wb_adr_o  (region0_0_wb_adr),
+        .region0_wb_dat_o  (region0_0_wb_dat_o),
+        .region0_wb_sel_o  (region0_0_wb_sel),
+        .region0_wb_stall_i(region0_0_wb_stall),
+        .region0_wb_ack_i  (region0_0_wb_ack),
+        .region0_wb_dat_i  (region0_0_wb_dat_i),
+        .region0_wb_err_i  (region0_0_wb_err),
         
         // Region 1 memory interface
-        .region1_wb_cyc_o(region1_wb_cyc),
-        .region1_wb_stb_o(region1_wb_stb),
-        .region1_wb_we_o(region1_wb_we),
-        .region1_wb_adr_o(region1_wb_adr),
-        .region1_wb_dat_o(region1_wb_dat_o),
-        .region1_wb_sel_o(region1_wb_sel),
-        .region1_wb_stall_i(region1_wb_stall),
-        .region1_wb_ack_i(region1_wb_ack),
-        .region1_wb_dat_i(region1_wb_dat_i),
-        .region1_wb_err_i(region1_wb_err),
+        .region1_wb_cyc_o  (region1_0_wb_cyc),
+        .region1_wb_stb_o  (region1_0_wb_stb),
+        .region1_wb_we_o   (region1_0_wb_we),
+        .region1_wb_adr_o  (region1_0_wb_adr),
+        .region1_wb_dat_o  (region1_0_wb_dat_o),
+        .region1_wb_sel_o  (region1_0_wb_sel),
+        .region1_wb_stall_i(region1_0_wb_stall),
+        .region1_wb_ack_i  (region1_0_wb_ack),
+        .region1_wb_dat_i  (region1_0_wb_dat_i),
+        .region1_wb_err_i  (region1_0_wb_err),
+
+        .REGION0_BASE(region0_base_addr),
+        .REGION1_BASE(region1_base_addr)
+    );
+
+    data_memory_selector data_1_mem_selector (
+        .clk(clk),
+        .rst_n(rst_n),
+        
+        // Core interface (from data wb adapter)
+        .core_wb_cyc_i  (data_1_wb_cyc),
+        .core_wb_stb_i  (data_1_wb_stb),
+        .core_wb_we_i   (data_1_wb_we),
+        .core_wb_adr_i  (data_1_wb_adr),
+        .core_wb_dat_i  (data_1_wb_dat_o),
+        .core_wb_sel_i  (data_1_wb_sel),
+        .core_wb_stall_o(data_1_wb_stall),
+        .core_wb_ack_o  (data_1_wb_ack),
+        .core_wb_dat_o  (data_1_wb_dat_i),
+        .core_wb_err_o  (data_1_wb_err),
+        
+        // Region 0 memory interface  
+        .region0_wb_cyc_o  (region0_1_wb_cyc),
+        .region0_wb_stb_o  (region0_1_wb_stb),
+        .region0_wb_we_o   (region0_1_wb_we),
+        .region0_wb_adr_o  (region0_1_wb_adr),
+        .region0_wb_dat_o  (region0_1_wb_dat_o),
+        .region0_wb_sel_o  (region0_1_wb_sel),
+        .region0_wb_stall_i(region0_1_wb_stall),
+        .region0_wb_ack_i  (region0_1_wb_ack),
+        .region0_wb_dat_i  (region0_1_wb_dat_i),
+        .region0_wb_err_i  (region0_1_wb_err),
+        
+        // Region 1 memory interface
+        .region1_wb_cyc_o  (region1_1_wb_cyc),
+        .region1_wb_stb_o  (region1_1_wb_stb),
+        .region1_wb_we_o   (region1_1_wb_we),
+        .region1_wb_adr_o  (region1_1_wb_adr),
+        .region1_wb_dat_o  (region1_1_wb_dat_o),
+        .region1_wb_sel_o  (region1_1_wb_sel),
+        .region1_wb_stall_i(region1_1_wb_stall),
+        .region1_wb_ack_i  (region1_1_wb_ack),
+        .region1_wb_dat_i  (region1_1_wb_dat_i),
+        .region1_wb_err_i  (region1_1_wb_err),
+
+        .REGION0_BASE(region0_base_addr),
+        .REGION1_BASE(region1_base_addr)
+    );
+
+    data_memory_selector data_2_mem_selector (
+        .clk(clk),
+        .rst_n(rst_n),
+        
+        // Core interface (from data wb adapter)
+        .core_wb_cyc_i  (data_2_wb_cyc),
+        .core_wb_stb_i  (data_2_wb_stb),
+        .core_wb_we_i   (data_2_wb_we),
+        .core_wb_adr_i  (data_2_wb_adr),
+        .core_wb_dat_i  (data_2_wb_dat_o),
+        .core_wb_sel_i  (data_2_wb_sel),
+        .core_wb_stall_o(data_2_wb_stall),
+        .core_wb_ack_o  (data_2_wb_ack),
+        .core_wb_dat_o  (data_2_wb_dat_i),
+        .core_wb_err_o  (data_2_wb_err),
+        
+        // Region 0 memory interface  
+        .region0_wb_cyc_o  (region0_2_wb_cyc),
+        .region0_wb_stb_o  (region0_2_wb_stb),
+        .region0_wb_we_o   (region0_2_wb_we),
+        .region0_wb_adr_o  (region0_2_wb_adr),
+        .region0_wb_dat_o  (region0_2_wb_dat_o),
+        .region0_wb_sel_o  (region0_2_wb_sel),
+        .region0_wb_stall_i(region0_2_wb_stall),
+        .region0_wb_ack_i  (region0_2_wb_ack),
+        .region0_wb_dat_i  (region0_2_wb_dat_i),
+        .region0_wb_err_i  (region0_2_wb_err),
+        
+        // Region 1 memory interface
+        .region1_wb_cyc_o  (region1_2_wb_cyc),
+        .region1_wb_stb_o  (region1_2_wb_stb),
+        .region1_wb_we_o   (region1_2_wb_we),
+        .region1_wb_adr_o  (region1_2_wb_adr),
+        .region1_wb_dat_o  (region1_2_wb_dat_o),
+        .region1_wb_sel_o  (region1_2_wb_sel),
+        .region1_wb_stall_i(region1_2_wb_stall),
+        .region1_wb_ack_i  (region1_2_wb_ack),
+        .region1_wb_dat_i  (region1_2_wb_dat_i),
+        .region1_wb_err_i  (region1_2_wb_err),
 
         .REGION0_BASE(region0_base_addr),
         .REGION1_BASE(region1_base_addr)
     );
     
     // Region 0 data memory (4KB = 1K words)
-    memory_2rw_old #(
+    memory_3rw #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(10),  // 1K words = 4KB memory (2^10 = 1024 words)
         .NUM_WMASKS(4)
     ) region0_data_memory (
-        .port0_wb_cyc_i(region0_wb_cyc),
-        .port0_wb_stb_i(region0_wb_stb),
-        .port0_wb_we_i(region0_wb_we),
-        .port0_wb_adr_i(region0_wb_adr),
-        .port0_wb_dat_i(region0_wb_dat_o),
-        .port0_wb_sel_i(region0_wb_sel),
-        .port0_wb_stall_o(region0_wb_stall),
-        .port0_wb_ack_o(region0_wb_ack),
-        .port0_wb_dat_o(region0_wb_dat_i),
-        .port0_wb_err_o(region0_wb_err),
+        .port0_wb_cyc_i  (region0_0_wb_cyc),
+        .port0_wb_stb_i  (region0_0_wb_stb),
+        .port0_wb_we_i   (region0_0_wb_we),
+        .port0_wb_adr_i  (region0_0_wb_adr),
+        .port0_wb_dat_i  (region0_0_wb_dat_o),
+        .port0_wb_sel_i  (region0_0_wb_sel),
+        .port0_wb_stall_o(region0_0_wb_stall),
+        .port0_wb_ack_o  (region0_0_wb_ack),
+        .port0_wb_dat_o  (region0_0_wb_dat_i),
+        .port0_wb_err_o  (region0_0_wb_err),
         .port0_wb_rst_i(~rst_n),
         .port0_wb_clk_i(clk),
         
         // Port 1 unused for region 0
-        .port1_wb_cyc_i(1'b0),
-        .port1_wb_stb_i(1'b0),
-        .port1_wb_we_i(1'b0),
-        .port1_wb_adr_i(32'h0),
-        .port1_wb_dat_i(32'h0),
-        .port1_wb_sel_i(4'h0),
-        .port1_wb_stall_o(),
-        .port1_wb_ack_o(),
-        .port1_wb_dat_o(),
-        .port1_wb_err_o(),
+        .port1_wb_cyc_i  (region0_1_wb_cyc),
+        .port1_wb_stb_i  (region0_1_wb_stb),
+        .port1_wb_we_i   (region0_1_wb_we),
+        .port1_wb_adr_i  (region0_1_wb_adr),
+        .port1_wb_dat_i  (region0_1_wb_dat_o),
+        .port1_wb_sel_i  (region0_1_wb_sel),
+        .port1_wb_stall_o(region0_1_wb_stall),
+        .port1_wb_ack_o  (region0_1_wb_ack),
+        .port1_wb_dat_o  (region0_1_wb_dat_i),
+        .port1_wb_err_o  (region0_1_wb_err),
         .port1_wb_rst_i(~rst_n),
-        .port1_wb_clk_i(clk)
+        .port1_wb_clk_i(clk),
+
+        // Port 2 unused for region 0
+        .port2_wb_cyc_i  (region0_2_wb_cyc),
+        .port2_wb_stb_i  (region0_2_wb_stb),
+        .port2_wb_we_i   (region0_2_wb_we),
+        .port2_wb_adr_i  (region0_2_wb_adr),
+        .port2_wb_dat_i  (region0_2_wb_dat_o),
+        .port2_wb_sel_i  (region0_2_wb_sel),
+        .port2_wb_stall_o(region0_2_wb_stall),
+        .port2_wb_ack_o  (region0_2_wb_ack),
+        .port2_wb_dat_o  (region0_2_wb_dat_i),
+        .port2_wb_err_o  (region0_2_wb_err),
+        .port2_wb_rst_i(~rst_n),
+        .port2_wb_clk_i(clk)
     );
     
     // Region 1 data memory (64KB = 16K words)
-    memory_2rw_old #(
+    memory_3rw #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
     ) region1_data_memory (
-        .port0_wb_cyc_i(region1_wb_cyc),
-        .port0_wb_stb_i(region1_wb_stb),
-        .port0_wb_we_i(region1_wb_we),
-        .port0_wb_adr_i(region1_wb_adr),
-        .port0_wb_dat_i(region1_wb_dat_o),
-        .port0_wb_sel_i(region1_wb_sel),
-        .port0_wb_stall_o(region1_wb_stall),
-        .port0_wb_ack_o(region1_wb_ack),
-        .port0_wb_dat_o(region1_wb_dat_i),
-        .port0_wb_err_o(region1_wb_err),
+        .port0_wb_cyc_i  (region1_0_wb_cyc),
+        .port0_wb_stb_i  (region1_0_wb_stb),
+        .port0_wb_we_i   (region1_0_wb_we),
+        .port0_wb_adr_i  (region1_0_wb_adr),
+        .port0_wb_dat_i  (region1_0_wb_dat_o),
+        .port0_wb_sel_i  (region1_0_wb_sel),
+        .port0_wb_stall_o(region1_0_wb_stall),
+        .port0_wb_ack_o  (region1_0_wb_ack),
+        .port0_wb_dat_o  (region1_0_wb_dat_i),
+        .port0_wb_err_o  (region1_0_wb_err),
         .port0_wb_rst_i(~rst_n),
         .port0_wb_clk_i(clk),
         
-        // Port 1 unused for region 1
-        .port1_wb_cyc_i(1'b0),
-        .port1_wb_stb_i(1'b0),
-        .port1_wb_we_i(1'b0),
-        .port1_wb_adr_i(32'h0),
-        .port1_wb_dat_i(32'h0),
-        .port1_wb_sel_i(4'h0),
-        .port1_wb_stall_o(),
-        .port1_wb_ack_o(),
-        .port1_wb_dat_o(),
-        .port1_wb_err_o(),
+        // Port 1 unused for region 0
+        .port1_wb_cyc_i  (region1_1_wb_cyc),
+        .port1_wb_stb_i  (region1_1_wb_stb),
+        .port1_wb_we_i   (region1_1_wb_we),
+        .port1_wb_adr_i  (region1_1_wb_adr),
+        .port1_wb_dat_i  (region1_1_wb_dat_o),
+        .port1_wb_sel_i  (region1_1_wb_sel),
+        .port1_wb_stall_o(region1_1_wb_stall),
+        .port1_wb_ack_o  (region1_1_wb_ack),
+        .port1_wb_dat_o  (region1_1_wb_dat_i),
+        .port1_wb_err_o  (region1_1_wb_err),
         .port1_wb_rst_i(~rst_n),
-        .port1_wb_clk_i(clk)
+        .port1_wb_clk_i(clk),
+
+        // Port 2 unused for region 0
+        .port2_wb_cyc_i  (region1_2_wb_cyc),
+        .port2_wb_stb_i  (region1_2_wb_stb),
+        .port2_wb_we_i   (region1_2_wb_we),
+        .port2_wb_adr_i  (region1_2_wb_adr),
+        .port2_wb_dat_i  (region1_2_wb_dat_o),
+        .port2_wb_sel_i  (region1_2_wb_sel),
+        .port2_wb_stall_o(region1_2_wb_stall),
+        .port2_wb_ack_o  (region1_2_wb_ack),
+        .port2_wb_dat_o  (region1_2_wb_dat_i),
+        .port2_wb_err_o  (region1_2_wb_err),
+        .port2_wb_rst_i(~rst_n),
+        .port2_wb_clk_i(clk)
     );
     
 
@@ -502,7 +809,9 @@ module dv_top_superscalar;
     integer cdb_0_valid_count;
     integer cdb_1_valid_count;
     integer cdb_2_valid_count;
-    integer cdb_3_valid_count;
+    integer cdb_3_0_valid_count;
+    integer cdb_3_1_valid_count;
+    integer cdb_3_2_valid_count;
     integer cdb_all_valid_count;
 
     integer commit_count;
@@ -518,7 +827,9 @@ module dv_top_superscalar;
     real avg_cdb_0_valid;
     real avg_cdb_1_valid;
     real avg_cdb_2_valid;
-    real avg_cdb_3_valid;
+    real avg_cdb_3_0_valid;
+    real avg_cdb_3_1_valid;
+    real avg_cdb_3_2_valid;
     real avg_cdb_all_valid;
     real avg_commit_rate;
 
@@ -552,12 +863,16 @@ module dv_top_superscalar;
             cdb_0_valid_count =  cdb_0_valid_count + dut.cdb_interface.cdb_valid_0;
             cdb_1_valid_count =  cdb_1_valid_count + dut.cdb_interface.cdb_valid_1;
             cdb_2_valid_count =  cdb_2_valid_count + dut.cdb_interface.cdb_valid_2;
-            cdb_3_valid_count =  cdb_3_valid_count + dut.cdb_interface.cdb_valid_3;
+            cdb_3_0_valid_count =  cdb_3_0_valid_count + dut.cdb_interface.cdb_valid_3_0;
+            cdb_3_1_valid_count =  cdb_3_1_valid_count + dut.cdb_interface.cdb_valid_3_1;
+            cdb_3_2_valid_count =  cdb_3_2_valid_count + dut.cdb_interface.cdb_valid_3_2;
             cdb_all_valid_count =  cdb_all_valid_count + 
                                       dut.cdb_interface.cdb_valid_0 +
                                       dut.cdb_interface.cdb_valid_1 +
                                       dut.cdb_interface.cdb_valid_2 +
-                                      dut.cdb_interface.cdb_valid_3;
+                                      dut.cdb_interface.cdb_valid_3_0 +
+                                      dut.cdb_interface.cdb_valid_3_1 +
+                                      dut.cdb_interface.cdb_valid_3_2;
             
             commit_count = commit_count + dut.dispatch_stage_unit.rob.commit_ready_0 +
                                           dut.dispatch_stage_unit.rob.commit_ready_1 +
@@ -580,7 +895,9 @@ module dv_top_superscalar;
                 avg_cdb_0_valid  =  cdb_0_valid_count / real'(cycle_count);
                 avg_cdb_1_valid  =  cdb_1_valid_count / real'(cycle_count);
                 avg_cdb_2_valid  =  cdb_2_valid_count / real'(cycle_count);
-                avg_cdb_3_valid  =  cdb_3_valid_count / real'(cycle_count);
+                avg_cdb_3_0_valid  =  cdb_3_0_valid_count / real'(cycle_count);
+                avg_cdb_3_1_valid  =  cdb_3_1_valid_count / real'(cycle_count);
+                avg_cdb_3_2_valid  =  cdb_3_2_valid_count / real'(cycle_count);
                 avg_cdb_all_valid =  cdb_all_valid_count / real'(cycle_count);
 
                 avg_commit_rate = commit_count / real'(cycle_count);
@@ -596,7 +913,9 @@ module dv_top_superscalar;
                 $display("  Avg CDB0 valid: %.2f broadcasts/cycle", avg_cdb_0_valid);
                 $display("  Avg CDB1 valid: %.2f broadcasts/cycle", avg_cdb_1_valid);
                 $display("  Avg CDB2 valid: %.2f broadcasts/cycle", avg_cdb_2_valid);
-                $display("  Avg CDB3 valid: %.2f broadcasts/cycle", avg_cdb_3_valid);
+                $display("  Avg CDB3_0 valid: %.2f broadcasts/cycle", avg_cdb_3_0_valid);
+                $display("  Avg CDB3_1 valid: %.2f broadcasts/cycle", avg_cdb_3_1_valid);
+                $display("  Avg CDB3_2 valid: %.2f broadcasts/cycle", avg_cdb_3_2_valid);
                 $display("  Avg CDB all valid: %.2f broadcasts/cycle", avg_cdb_all_valid);
                 $display("  Avg Commit rate: %.2f instructions/cycle", avg_commit_rate);
                 $display("---------------------------------------------------------------------" );
@@ -610,7 +929,9 @@ module dv_top_superscalar;
             cdb_0_valid_count <= #D 0;
             cdb_1_valid_count <= #D 0;
             cdb_2_valid_count <= #D 0;
-            cdb_3_valid_count <= #D 0;
+            cdb_3_0_valid_count <= #D 0;
+            cdb_3_1_valid_count <= #D 0;
+            cdb_3_2_valid_count <= #D 0;
             cdb_all_valid_count <= #D 0;
             rs_0_ready_count <= #D 0;
             rs_1_ready_count <= #D 0;

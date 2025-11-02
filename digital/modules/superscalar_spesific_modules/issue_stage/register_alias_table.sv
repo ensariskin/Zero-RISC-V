@@ -56,7 +56,9 @@ module register_alias_table #(
     input logic load_store_0, load_store_1, load_store_2, // Indicates if instruction is load/store (for LSQ allocation)
     output logic [2:0] lsq_alloc_ready,
     output logic lsq_alloc_0_valid, lsq_alloc_1_valid, lsq_alloc_2_valid,
-    input logic lsq_commit
+    input logic lsq_commit_0,
+    input logic lsq_commit_1,
+    input logic lsq_commit_2
     
 );
     localparam D = 1; // Delay for non-blocking assignments (for simulation purposes)
@@ -115,9 +117,9 @@ module register_alias_table #(
         .read_valid_0(lsq_found_first),
         .read_valid_1(lsq_found_second),
         .read_valid_2(lsq_found_third),
-        .write_en_0(lsq_commit),
-        .write_en_1(1'b0),
-        .write_en_2(1'b0),
+        .write_en_0(lsq_commit_0),
+        .write_en_1(lsq_commit_1),
+        .write_en_2(lsq_commit_2),
         .buffer_empty(),
         .buffer_full(),
         .buffer_count(lsq_free_count)

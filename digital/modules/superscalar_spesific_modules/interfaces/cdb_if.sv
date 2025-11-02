@@ -52,10 +52,22 @@ interface cdb_if #(
     logic [DATA_WIDTH-1:0] cdb_correct_pc_2;
 
     // CDB Channel 3 (from LSQ)
-    logic cdb_valid_3;                              // Valid result on channel 2
-    logic [2:0] cdb_tag_3;                          // Tag for channel 2 (2'b10 = ALU2)
-    logic [DATA_WIDTH-1:0] cdb_data_3;              // Result data from ALU 2
-    logic [PHYS_REG_ADDR_WIDTH-1:0] cdb_dest_reg_3; // Destination physical register
+    logic cdb_valid_3_0;                              // Valid result on channel 2
+    logic [2:0] cdb_tag_3_0;                          // Tag for channel 2 (2'b10 = ALU2)
+    logic [DATA_WIDTH-1:0] cdb_data_3_0;              // Result data from ALU 2
+    logic [PHYS_REG_ADDR_WIDTH-1:0] cdb_dest_reg_3_0; // Destination physical register
+
+    // CDB Channel 3 (from LSQ)
+    logic cdb_valid_3_1;                              // Valid result on channel 2
+    logic [2:0] cdb_tag_3_1;                          // Tag for channel 2 (2'b10 = ALU2)
+    logic [DATA_WIDTH-1:0] cdb_data_3_1;              // Result data from ALU 2
+    logic [PHYS_REG_ADDR_WIDTH-1:0] cdb_dest_reg_3_1; // Destination physical register
+
+    // CDB Channel 3 (from LSQ)
+    logic cdb_valid_3_2;                              // Valid result on channel 2
+    logic [2:0] cdb_tag_3_2;                          // Tag for channel 2 (2'b10 = ALU2)
+    logic [DATA_WIDTH-1:0] cdb_data_3_2;              // Result data from ALU 2
+    logic [PHYS_REG_ADDR_WIDTH-1:0] cdb_dest_reg_3_2; // Destination physical register
     
     // Modport for Reservation Station 0 (can broadcast on channel 0, listen to all)
     modport rs0 (
@@ -80,11 +92,21 @@ interface cdb_if #(
         input  cdb_data_2,
         input  cdb_dest_reg_2,
         input  cdb_mem_addr_calculation_2,
-        input  cdb_valid_3,
-        input  cdb_tag_3,
-        input  cdb_data_3,
-        input  cdb_dest_reg_3
-        // todo currently branch related signals of other channels are not added as input, if we need them add here
+
+        input  cdb_valid_3_0,
+        input  cdb_tag_3_0,
+        input  cdb_data_3_0,
+        input  cdb_dest_reg_3_0,
+
+        input  cdb_valid_3_1,
+        input  cdb_tag_3_1,
+        input  cdb_data_3_1,
+        input  cdb_dest_reg_3_1,
+
+        input  cdb_valid_3_2,
+        input  cdb_tag_3_2,
+        input  cdb_data_3_2,
+        input  cdb_dest_reg_3_2
     );
     
     // Modport for Reservation Station 1 (can broadcast on channel 1, listen to all)
@@ -110,10 +132,21 @@ interface cdb_if #(
         input  cdb_data_2,
         input  cdb_dest_reg_2,
         input  cdb_mem_addr_calculation_2,
-        input  cdb_valid_3,
-        input  cdb_tag_3,
-        input  cdb_data_3,
-        input  cdb_dest_reg_3
+
+        input  cdb_valid_3_0,
+        input  cdb_tag_3_0,
+        input  cdb_data_3_0,
+        input  cdb_dest_reg_3_0,
+
+        input  cdb_valid_3_1,
+        input  cdb_tag_3_1,
+        input  cdb_data_3_1,
+        input  cdb_dest_reg_3_1,
+
+        input  cdb_valid_3_2,
+        input  cdb_tag_3_2,
+        input  cdb_data_3_2,
+        input  cdb_dest_reg_3_2
     );
     
     // Modport for Reservation Station 2 (can broadcast on channel 2, listen to all)
@@ -139,18 +172,39 @@ interface cdb_if #(
         input  cdb_data_1,
         input  cdb_dest_reg_1,
         input  cdb_mem_addr_calculation_1,
-        input  cdb_valid_3,
-        input  cdb_tag_3,
-        input  cdb_data_3,
-        input  cdb_dest_reg_3
+
+        input  cdb_valid_3_0,
+        input  cdb_tag_3_0,
+        input  cdb_data_3_0,
+        input  cdb_dest_reg_3_0,
+
+        input  cdb_valid_3_1,
+        input  cdb_tag_3_1,
+        input  cdb_data_3_1,
+        input  cdb_dest_reg_3_1,
+
+        input  cdb_valid_3_2,
+        input  cdb_tag_3_2,
+        input  cdb_data_3_2,
+        input  cdb_dest_reg_3_2
     );
 
     modport lsq (
         // Broadcasting (LSQ → CDB)
-        output cdb_valid_3,
-        output cdb_tag_3,
-        output cdb_data_3,
-        output cdb_dest_reg_3,
+        output cdb_valid_3_0,
+        output cdb_tag_3_0,
+        output cdb_data_3_0,
+        output cdb_dest_reg_3_0,
+
+        output cdb_valid_3_1,
+        output cdb_tag_3_1,
+        output cdb_data_3_1,
+        output cdb_dest_reg_3_1,
+
+        output cdb_valid_3_2,
+        output cdb_tag_3_2,
+        output cdb_data_3_2,
+        output cdb_dest_reg_3_2,
         
         // Listening (CDB → LSQ)
         input  cdb_valid_0,
@@ -196,10 +250,21 @@ interface cdb_if #(
         input  cdb_misprediction_2,
         input  cdb_is_branch_2,
         input  cdb_correct_pc_2,
-        input  cdb_valid_3,
-        input  cdb_tag_3,
-        input  cdb_data_3,
-        input  cdb_dest_reg_3
+
+        input  cdb_valid_3_0,
+        input  cdb_tag_3_0,
+        input  cdb_data_3_0,
+        input  cdb_dest_reg_3_0,
+
+        input  cdb_valid_3_1,
+        input  cdb_tag_3_1,
+        input  cdb_data_3_1,
+        input  cdb_dest_reg_3_1,
+
+        input  cdb_valid_3_2,
+        input  cdb_tag_3_2,
+        input  cdb_data_3_2,
+        input  cdb_dest_reg_3_2
     );
 
 endinterface

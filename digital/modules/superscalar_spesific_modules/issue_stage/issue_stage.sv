@@ -50,7 +50,7 @@ module issue_stage #(
     input logic [4:0] commit_rob_idx_1, 
     input logic [4:0] commit_rob_idx_2,
 
-    input logic lsq_commit, 
+    input logic lsq_commit_0, lsq_commit_1, lsq_commit_2, 
    
     // Dispatch Stage Interfaces 
     issue_to_dispatch_if.issue issue_to_dispatch_0,
@@ -210,7 +210,9 @@ module issue_stage #(
         .lsq_alloc_1_valid(lsq_alloc_1_valid),
         .lsq_alloc_2_valid(lsq_alloc_2_valid),
         .lsq_alloc_ready(lsq_alloc_ready),
-        .lsq_commit(lsq_commit)
+        .lsq_commit_0(lsq_commit_0),
+        .lsq_commit_1(lsq_commit_1),
+        .lsq_commit_2(lsq_commit_2)
     );
     
     //==========================================================================
@@ -225,7 +227,7 @@ module issue_stage #(
     //==========================================================================
     
     // Ready signal indicates RAT can allocate physical registers and dispatch stage can accept
-    assign decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready} & rename_ready & lsq_alloc_ready;
+    assign decode_ready_o =(lsq_alloc_ready == 3'b111)? ( {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready} & rename_ready) : 3'b000;
   
     //==========================================================================
     // ISSUE STAGE PIPELINE REGISTERS (CONTROL AND ADDRESSES ONLY)

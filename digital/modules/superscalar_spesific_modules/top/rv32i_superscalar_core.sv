@@ -37,18 +37,36 @@ module rv32i_superscalar_core #(
     input  logic reset,
     
     // Instruction Memory Interface (3-port for parallel fetch)
-    output logic [DATA_WIDTH-1:0] inst_addr_0, inst_addr_1, inst_addr_2,
-    input  logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2,
+    output logic [DATA_WIDTH-1:0] inst_addr_0, inst_addr_1, inst_addr_2, inst_addr_3, inst_addr_4,
+    input  logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2, instruction_i_3, instruction_i_4,
     
     // Data Memory Interface (for load/store operations)
-    output logic [DATA_WIDTH-1:0] data_addr,
-    output logic [DATA_WIDTH-1:0] data_write,
-    input  logic [DATA_WIDTH-1:0] data_read,
-    output logic data_we,
-    output logic [3:0] data_be,
-    output logic data_req,
-    input  logic data_ack,
-    input  logic data_err,
+    output logic [DATA_WIDTH-1:0] data_0_addr,
+    output logic [DATA_WIDTH-1:0] data_0_write,
+    input  logic [DATA_WIDTH-1:0] data_0_read,
+    output logic                  data_0_we,
+    output logic [3:0]            data_0_be,
+    output logic                  data_0_req,
+    input  logic                  data_0_ack,
+    input  logic                  data_0_err,
+
+    output logic [DATA_WIDTH-1:0] data_1_addr,
+    output logic [DATA_WIDTH-1:0] data_1_write,
+    input  logic [DATA_WIDTH-1:0] data_1_read,
+    output logic                  data_1_we,
+    output logic [3:0]            data_1_be,
+    output logic                  data_1_req,
+    input  logic                  data_1_ack,
+    input  logic                  data_1_err,
+
+    output logic [DATA_WIDTH-1:0] data_2_addr,
+    output logic [DATA_WIDTH-1:0] data_2_write,
+    input  logic [DATA_WIDTH-1:0] data_2_read,
+    output logic                  data_2_we,
+    output logic [3:0]            data_2_be,
+    output logic                  data_2_req,
+    input  logic                  data_2_ack,
+    input  logic                  data_2_err,
     
     // External Interrupt Interface
     input  logic external_interrupt,
@@ -199,6 +217,10 @@ module rv32i_superscalar_core #(
         .instruction_i_1(instruction_i_1),
         .inst_addr_2(inst_addr_2),
         .instruction_i_2(instruction_i_2),
+        .inst_addr_3(inst_addr_3),
+        .instruction_i_3(instruction_i_3),
+        .inst_addr_4(inst_addr_4),
+        .instruction_i_4(instruction_i_4),
         
         // Pipeline control
         .flush(misprediction_detected),
@@ -304,7 +326,10 @@ module rv32i_superscalar_core #(
         .issue_to_dispatch_1(issue_to_dispatch_1_if.issue),
         .issue_to_dispatch_2(issue_to_dispatch_2_if.issue),
 
-        .lsq_commit(cdb_interface.cdb_valid_3)
+        .lsq_commit_0(cdb_interface.cdb_valid_3_0),
+        .lsq_commit_1(cdb_interface.cdb_valid_3_1),
+        .lsq_commit_2(cdb_interface.cdb_valid_3_2)
+
     );
     
     //==========================================================================
@@ -333,13 +358,29 @@ module rv32i_superscalar_core #(
         .dispatch_to_alu_1(dispatch_to_alu_1_if.reservation_station),
         .dispatch_to_alu_2(dispatch_to_alu_2_if.reservation_station),
 
-        .data_addr,
-        .data_write,
-        .data_read,
-        .data_we,
-        .data_be,
-        .data_req,
-        .data_ack,
+        .data_0_addr,
+        .data_0_write,
+        .data_0_read,
+        .data_0_we,
+        .data_0_be,
+        .data_0_req,
+        .data_0_ack,
+
+        .data_1_addr,
+        .data_1_write,
+        .data_1_read,
+        .data_1_we,
+        .data_1_be,
+        .data_1_req,
+        .data_1_ack,
+
+        .data_2_addr,
+        .data_2_write,
+        .data_2_read,
+        .data_2_we,
+        .data_2_be,
+        .data_2_req,
+        .data_2_ack,
 
         .cdb_interface(cdb_interface),
 

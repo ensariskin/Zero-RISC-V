@@ -9,6 +9,7 @@ tb_modules/data_memory_selector.sv
 tb_modules/memory_2rw_old.sv
 tb_modules/memory_2rw_wb.v
 tb_modules/memory_3rw.sv
+tb_modules/memory_5rw.sv
 
 // Superscalar-specific testbench modules
 tb_modules/rv32i_inst_wb_adapter.sv

@@ -45,13 +45,29 @@ module dispatch_stage #(
 
     cdb_if cdb_interface,  // Common Data Bus interface
 
-    output logic [DATA_WIDTH-1:0] data_addr,
-    output logic [DATA_WIDTH-1:0] data_write,
-    input  logic [DATA_WIDTH-1:0] data_read,
-    output logic data_we,
-    output logic [3:0] data_be,
-    output logic data_req,
-    input  logic data_ack,
+    output logic [DATA_WIDTH-1:0] data_0_addr,
+    output logic [DATA_WIDTH-1:0] data_0_write,
+    input  logic [DATA_WIDTH-1:0] data_0_read,
+    output logic data_0_we,
+    output logic [3:0] data_0_be,
+    output logic data_0_req,
+    input  logic data_0_ack,
+
+    output logic [DATA_WIDTH-1:0] data_1_addr,
+    output logic [DATA_WIDTH-1:0] data_1_write,
+    input  logic [DATA_WIDTH-1:0] data_1_read,
+    output logic data_1_we,
+    output logic [3:0] data_1_be,
+    output logic data_1_req,
+    input  logic data_1_ack,
+
+    output logic [DATA_WIDTH-1:0] data_2_addr,
+    output logic [DATA_WIDTH-1:0] data_2_write,
+    input  logic [DATA_WIDTH-1:0] data_2_read,
+    output logic data_2_we,
+    output logic [3:0] data_2_be,
+    output logic data_2_req,
+    input  logic data_2_ack,
 
     output logic [2:0] commit_valid,
     output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0,
@@ -109,8 +125,8 @@ module dispatch_stage #(
     assign alloc_1_is_store = issue_to_dispatch_1.control_signals[3] & ~issue_to_dispatch_1.control_signals[6];
     assign alloc_2_is_store = issue_to_dispatch_2.control_signals[3] & ~issue_to_dispatch_2.control_signals[6];
 
-    logic store_can_issue;
-    logic [DATA_WIDTH-1:0] allowed_store_address;
+    logic store_can_issue_0, store_can_issue_1, store_can_issue_2;
+    logic [DATA_WIDTH-1:0] allowed_store_address_0, allowed_store_address_1, allowed_store_address_2;
     //logic commit_exception_0, commit_exception_1, commit_exception_2;
 
     assign commit_rob_idx_0 = rob_head_idx;
@@ -137,22 +153,35 @@ module dispatch_stage #(
         .alloc_is_store_0(alloc_0_is_store),
         .alloc_is_store_1(alloc_1_is_store),
         .alloc_is_store_2(alloc_2_is_store),
-        .cdb_valid_0(cdb_interface.cdb_valid_0 & cdb_interface.cdb_dest_reg_0[5]), // todo check for we = 0 and also load operations
+        
+        .cdb_valid_0(cdb_interface.cdb_valid_0 & cdb_interface.cdb_dest_reg_0[5]),
         .cdb_valid_1(cdb_interface.cdb_valid_1 & cdb_interface.cdb_dest_reg_1[5]),
         .cdb_valid_2(cdb_interface.cdb_valid_2 & cdb_interface.cdb_dest_reg_2[5]),
-        .cdb_valid_3(cdb_interface.cdb_valid_3 & cdb_interface.cdb_dest_reg_3[5]),
+        .cdb_valid_3_2(cdb_interface.cdb_valid_3_2 & cdb_interface.cdb_dest_reg_3_2[5]),
+        .cdb_valid_3_1(cdb_interface.cdb_valid_3_1 & cdb_interface.cdb_dest_reg_3_1[5]),
+        .cdb_valid_3_0(cdb_interface.cdb_valid_3_0 & cdb_interface.cdb_dest_reg_3_0[5]),
+
         .cdb_addr_0(cdb_interface.cdb_dest_reg_0[4:0]),
         .cdb_addr_1(cdb_interface.cdb_dest_reg_1[4:0]),
         .cdb_addr_2(cdb_interface.cdb_dest_reg_2[4:0]),
-        .cdb_addr_3(cdb_interface.cdb_dest_reg_3[4:0]),
+        .cdb_addr_3_2(cdb_interface.cdb_dest_reg_3_2[4:0]),
+        .cdb_addr_3_1(cdb_interface.cdb_dest_reg_3_1[4:0]),
+        .cdb_addr_3_0(cdb_interface.cdb_dest_reg_3_0[4:0]),
+
         .cdb_data_0(cdb_interface.cdb_data_0),
         .cdb_data_1(cdb_interface.cdb_data_1),
         .cdb_data_2(cdb_interface.cdb_data_2),
-        .cdb_data_3(cdb_interface.cdb_data_3),
+        .cdb_data_3_2(cdb_interface.cdb_data_3_2),
+        .cdb_data_3_1(cdb_interface.cdb_data_3_1),
+        .cdb_data_3_0(cdb_interface.cdb_data_3_0),
+
         .cdb_exception_0(cdb_interface.cdb_misprediction_0),  
         .cdb_exception_1(cdb_interface.cdb_misprediction_1),  
         .cdb_exception_2(cdb_interface.cdb_misprediction_2),  
-        .cdb_exception_3(1'b0),  //(cdb_interface.cdb_exception_3),
+        .cdb_exception_3_2(0),  
+        .cdb_exception_3_1(0),
+        .cdb_exception_3_0(0),    
+        
         .cdb_correct_pc_0(cdb_interface.cdb_correct_pc_0),
         .cdb_correct_pc_1(cdb_interface.cdb_correct_pc_1),
         .cdb_correct_pc_2(cdb_interface.cdb_correct_pc_2),
@@ -200,8 +229,10 @@ module dispatch_stage #(
         .commit_is_branch_0(commit_is_branch_0),
         .commit_is_branch_1(),
         .commit_is_branch_2(),
-        .store_can_issue(store_can_issue),
-        .allowed_store_address(allowed_store_address),
+
+        .store_can_issue_0(store_can_issue_0),
+        .allowed_store_address_0(allowed_store_address_0),
+
         .upadate_predictor_pc_0(upadate_predictor_pc_0),
         .upadate_predictor_pc_1(),
         .upadate_predictor_pc_2(),
@@ -382,28 +413,13 @@ module dispatch_stage #(
         .exec_if(dispatch_to_alu_2)
     );
 
-    logic [31:0] lsq_load_data_i;
-    logic [31:0] lsq_store_data_o;
-    logic [2:0]  data_organizer_type_sel;
-    data_organizer #(.size(32)) load_data_organizer (
-        .data_in(data_read),
-        .Type_sel(data_organizer_type_sel),
-        .data_out(lsq_load_data_i)
-    );
-
-    data_organizer #(.size(32)) store_data_organizer (
-        .data_in(lsq_store_data_o),
-        .Type_sel(data_organizer_type_sel),
-        .data_out(data_write)
-    );
-    
     // LSQ instance (simple, all ports explicit, connections skipped)
     lsq_simple_top lsq (
       // Clock and reset
       .clk(clk),
       .rst_n(reset & !misprediction_detected),
-      .store_can_issue(store_can_issue), 
-      .allowed_store_address(allowed_store_address),
+      .store_can_issue(store_can_issue_0), 
+      .allowed_store_address(allowed_store_address_0),
       // Allocation interface (from Issue Stage)
       // Allocation 0
       .alloc_valid_0_i(issue_to_dispatch_0.lsq_alloc_valid & issue_to_dispatch_0.dispatch_valid ),
@@ -439,19 +455,33 @@ module dispatch_stage #(
       .cdb_interface(cdb_interface.lsq),  
 
       // Memory interface
-      .mem_req_addr_o(data_addr),    // data_addr
-      .mem_req_data_o(lsq_store_data_o),    // data_write
-      .mem_resp_data_i(lsq_load_data_i),   // data_read
-      .mem_req_is_store_o(data_we), // data_we
-      .mem_req_be_o(data_be),       // data_be
-      .mem_req_valid_o(data_req), // data_req
-      .mem_resp_valid_i(data_ack), //data_ack
-      .mem_req_ready_i(1'b1), //mem_ready
+      .mem_0_req_addr_o(data_0_addr),    // data_addr
+      .mem_0_req_data_o(data_0_write),    // data_write
+      .mem_0_resp_data_i(data_0_read),   // data_read
+      .mem_0_req_is_store_o(data_0_we), // data_we
+      .mem_0_req_be_o(data_0_be),       // data_be
+      .mem_0_req_valid_o(data_0_req), // data_req
+      .mem_0_resp_valid_i(data_0_ack), //data_ack
+      .mem_0_req_ready_i(1'b1), //mem_ready
      
-      .mem_req_size_o(data_organizer_type_sel[1:0]),
-      .mem_req_sign_extend_o(data_organizer_type_sel[2]),
-      
-     
+      .mem_1_req_addr_o(data_1_addr),    // data_addr
+      .mem_1_req_data_o(data_1_write),    // data_write
+      .mem_1_resp_data_i(data_1_read),   // data_read
+      .mem_1_req_is_store_o(data_1_we), // data_we
+      .mem_1_req_be_o(data_1_be),       // data_be
+      .mem_1_req_valid_o(data_1_req), // data_req
+      .mem_1_resp_valid_i(data_1_ack), //data_ack
+      .mem_1_req_ready_i(1'b1), //mem_ready
+
+      .mem_2_req_addr_o(data_2_addr),    // data_addr
+      .mem_2_req_data_o(data_2_write),    // data_write
+      .mem_2_resp_data_i(data_2_read),   // data_read
+      .mem_2_req_is_store_o(data_2_we), // data_we
+      .mem_2_req_be_o(data_2_be),       // data_be
+      .mem_2_req_valid_o(data_2_req), // data_req
+      .mem_2_resp_valid_i(data_2_ack), //data_ack
+      .mem_2_req_ready_i(1'b1), //mem_ready
+    
       // Status outputs
       .lsq_count_o(),
       .lsq_full_o(),

@@ -37,11 +37,19 @@ module branch_predictor_super #(
 
     input  logic [ADDR_WIDTH-1:0] current_pc_2,
     input  logic is_branch_i_2,                       // Current instruction is branch/jump
+
+    input  logic [ADDR_WIDTH-1:0] current_pc_3,
+    input  logic is_branch_i_3,                       // Current instruction is branch/jump
+
+    input  logic [ADDR_WIDTH-1:0] current_pc_4,
+    input  logic is_branch_i_4,                       // Current instruction is branch/jump
     
     // Prediction outputs
     output logic branch_taken_o_0,                    // Branch predicted taken
     output logic branch_taken_o_1,                    // Branch predicted taken
     output logic branch_taken_o_2,                    // Branch predicted taken
+    output logic branch_taken_o_3,                    // Branch predicted taken
+    output logic branch_taken_o_4,                    // Branch predicted taken
     
     // Update interface (from execute/writeback stage)
     input  logic [ADDR_WIDTH-1:0] update_prediction_pc_0,
@@ -72,7 +80,7 @@ module branch_predictor_super #(
     predictor_entry_t predictor_table [ENTRIES-1:0];
     
     // Index calculation (simple PC-based)
-    logic [INDEX_WIDTH-1:0] predict_index_0, predict_index_1, predict_index_2;
+    logic [INDEX_WIDTH-1:0] predict_index_0, predict_index_1, predict_index_2, predict_index_3, predict_index_4;
     logic [INDEX_WIDTH-1:0] update_index_0, update_index_1, update_index_2;
     
     assign predict_index_0 = current_pc_0[INDEX_WIDTH+1:2];  // Skip lower 2 bits (byte aligned)
@@ -83,33 +91,15 @@ module branch_predictor_super #(
 
     assign predict_index_2 = current_pc_2[INDEX_WIDTH+1:2];  // Skip lower 2 bits (byte aligned)
     assign update_index_2 = update_prediction_pc_2[INDEX_WIDTH+1:2];
-    
-    // Prediction logic
-    always_comb begin
-        if (is_branch_i_0) begin
-            // Prediction based on counter MSB
-            branch_taken_o_0 = predictor_table[predict_index_0].counter[1];  // MSB = taken/not taken
-        end else begin
-            // No prediction for non-branch instructions
-             branch_taken_o_0 = 0;
-        end
-        
-        if (is_branch_i_1) begin
-            // Prediction based on counter MSB
-            branch_taken_o_1 = predictor_table[predict_index_1].counter[1];  // MSB = taken/not taken
-        end else begin
-            // No prediction for non-branch instructions
-             branch_taken_o_1 = 0;
-        end
 
-        if (is_branch_i_2) begin
-            // Prediction based on counter MSB
-            branch_taken_o_2 = predictor_table[predict_index_2].counter[1];  // MSB = taken/not taken
-        end else begin
-            // No prediction for non-branch instructions
-             branch_taken_o_2 = 0;
-        end
-    end
+    assign predict_index_3 = current_pc_3[INDEX_WIDTH+1:2];
+    assign predict_index_4 = current_pc_4[INDEX_WIDTH+1:2];
+    
+    assign branch_taken_o_0 = is_branch_i_0 ? predictor_table[predict_index_0].counter[1] : 1'b0;  // MSB = taken/not taken
+    assign branch_taken_o_1 = is_branch_i_1 ? predictor_table[predict_index_1].counter[1] : 1'b0;  // MSB = taken/not taken
+    assign branch_taken_o_2 = is_branch_i_2 ? predictor_table[predict_index_2].counter[1] : 1'b0;  // MSB = taken/not
+    assign branch_taken_o_3 = is_branch_i_3 ? predictor_table[predict_index_3].counter[1] : 1'b0;  // MSB = taken/not taken
+    assign branch_taken_o_4 = is_branch_i_4 ? predictor_table[predict_index_4].counter[1] : 1'b0;  // MSB = taken/not
     
     // Update logic
     always_ff @(posedge clk or negedge reset) begin
