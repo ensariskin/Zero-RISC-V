@@ -32,8 +32,15 @@ module lsq_simple_top
    (
       input  logic clk,
       input  logic rst_n,
-      input  logic store_can_issue, // signal from ROB that store at head can be issued
-      input  logic [31:0] allowed_store_address, // allowed store address from ROB
+
+      input  logic store_can_issue_0, // signal from ROB that store at head can be issued
+      input  logic [PHYS_REG_WIDTH-1:0] allowed_store_address_0, // allowed store address from ROB
+
+      input  logic store_can_issue_1, // signal from ROB that store at head can be issued
+      input  logic [PHYS_REG_WIDTH-1:0] allowed_store_address_1, // allowed store address from ROB
+
+      input  logic store_can_issue_2, // signal from ROB that store at head can be issued
+      input  logic [PHYS_REG_WIDTH-1:0] allowed_store_address_2, // allowed store address from ROB
       // Allocation interface (from Issue Stage)
       // Allocation 0
       input  logic                            alloc_valid_0_i,
@@ -211,179 +218,176 @@ module lsq_simple_top
    logic head_0_head_2_addr_match;
    logic head_1_head_2_addr_match;
 
+   logic head_0_newer_than_head_1;
+   logic head_0_newer_than_head_2;
+   logic head_1_newer_than_head_2;
+   logic head_1_newer_than_head_0;
+   logic head_2_newer_than_head_0;
+   logic head_2_newer_than_head_1;
+
+   logic head_0_valids;
+   logic head_1_valids;
+   logic head_2_valids;
+
    always_comb begin
 
       head_0_head_1_addr_match = lsq_buffer[head_idx].addr_valid && lsq_buffer[head_idx_1].addr_valid && (lsq_buffer[head_idx].address == lsq_buffer[head_idx_1].address);
       head_0_head_2_addr_match = lsq_buffer[head_idx].addr_valid && lsq_buffer[head_idx_2].addr_valid && (lsq_buffer[head_idx].address == lsq_buffer[head_idx_2].address);
       head_1_head_2_addr_match = lsq_buffer[head_idx_1].addr_valid && lsq_buffer[head_idx_2].addr_valid && (lsq_buffer[head_idx_1].address == lsq_buffer[head_idx_2].address);
+      
+      head_0_newer_than_head_1 = (distance_0 < distance_1) ? 1'b1 : 1'b0;
+      head_0_newer_than_head_2 = (distance_0 < distance_2) ? 1'b1 : 1'b0;
+      head_1_newer_than_head_2 = (distance_1 < distance_2) ? 1'b1 : 1'b0;
+      head_1_newer_than_head_0 = (distance_1 < distance_0) ? 1'b1 : 1'b0;
+      head_2_newer_than_head_0 = (distance_2 < distance_0) ? 1'b1 : 1'b0;
+      head_2_newer_than_head_1 = (distance_2 < distance_1) ? 1'b1 : 1'b0;
+
+      head_0_valids = lsq_buffer[head_idx].addr_valid & lsq_buffer[head_idx].data_valid;
+      head_1_valids = lsq_buffer[head_idx_1].addr_valid & lsq_buffer[head_idx_1].data_valid;
+      head_2_valids = lsq_buffer[head_idx_2].addr_valid & lsq_buffer[head_idx_2].data_valid;
+
       // Head 0 forwarding
-      if(distance_1 > distance_0 && lsq_buffer[head_idx_1].is_store && !lsq_buffer[head_idx].is_store) begin // head 1 is older than head and head 1 is store and head is load
-         if(distance_2 < distance_1 && lsq_buffer[head_idx_2].is_store) begin // 2 is also store and 2 is newer than 1
-               head_0_should_wait = (!lsq_buffer[head_idx_2].data_valid || !lsq_buffer[head_idx_2].addr_valid) || (!lsq_buffer[head_idx_1].data_valid || !lsq_buffer[head_idx_1].addr_valid) || !lsq_buffer[head_idx].addr_valid; // wait all
+      head_0_should_wait = 1'b0;
+      fwd_head_0         = 1'b0;
+      head_0_fwd_source  = 2'b00;
+
+      if(lsq_buffer[head_idx].valid && !lsq_buffer[head_idx].is_store && lsq_buffer[head_idx].addr_valid) begin // If it is load
+         if(head_0_newer_than_head_1 && lsq_buffer[head_idx_1].is_store && head_0_newer_than_head_2 && lsq_buffer[head_idx_2].is_store) begin // If head is the newest
+            if(head_1_newer_than_head_2) begin // give priority to head 1
+               head_0_should_wait = !head_1_valids | (head_1_valids & !head_0_head_1_addr_match & !head_2_valids);
+               if(!head_0_should_wait) begin
+                  if(head_0_head_1_addr_match) begin
+                     fwd_head_0        = 1'b1;
+                     head_0_fwd_source = 2'b01;
+                  end else if(head_0_head_2_addr_match) begin
+                     fwd_head_0        = 1'b1;
+                     head_0_fwd_source = 2'b10;
+                  end
+               end
+            end else begin // give priority to head 2
+               head_0_should_wait = !head_2_valids | (head_2_valids & !head_0_head_2_addr_match & !head_1_valids);
                if(!head_0_should_wait) begin
                   if(head_0_head_2_addr_match) begin
-                     fwd_head_0 = 1'b1;
-                     head_0_fwd_source = 2'b10; // from head 2
+                     fwd_head_0        = 1'b1;
+                     head_0_fwd_source = 2'b10;
                   end else if(head_0_head_1_addr_match) begin
-                     fwd_head_0 = 1'b1;
-                     head_0_fwd_source = 2'b01; // from head 1
-                  end else begin
-                     fwd_head_0 = 1'b0;
-                     head_0_fwd_source = 2'b00; // no forwarding
+                     fwd_head_0        = 1'b1;
+                     head_0_fwd_source = 2'b01;
                   end
-               end else begin
-                  fwd_head_0 = 1'b0;
-                  head_0_fwd_source = 2'b00; // no forwarding
                end
-         end else begin
-            head_0_should_wait = (!lsq_buffer[head_idx_1].data_valid || !lsq_buffer[head_idx_1].addr_valid) || !lsq_buffer[head_idx].addr_valid;
-            if(!head_0_should_wait) begin
-               if(head_0_head_1_addr_match) begin
-                  fwd_head_0 = 1'b1;
-                  head_0_fwd_source = 2'b01; // from head 1
-               end else begin
-                  fwd_head_0 = 1'b0;
-                  head_0_fwd_source = 2'b00; // no forwarding
-               end
-            end else begin
-               fwd_head_0 = 1'b0;
-               head_0_fwd_source = 2'b00; // no forwarding
             end
-         end 
-      end else if(distance_2 > distance_0 && lsq_buffer[head_idx_2].is_store && !lsq_buffer[head_idx].is_store ) begin  // head 2 is older than head and head 2 is store and head is load
-         head_0_should_wait = !lsq_buffer[head_idx_2].data_valid || !lsq_buffer[head_idx_2].addr_valid || !lsq_buffer[head_idx].addr_valid;
-         if(!head_0_should_wait) begin
-            if(head_0_head_2_addr_match) begin
-               fwd_head_0 = 1'b1;
-               head_0_fwd_source = 2'b10; // from head 2
-            end else begin
-               fwd_head_0 = 1'b0;
-               head_0_fwd_source = 2'b00; // no forwarding
+         end else if(head_0_newer_than_head_1 && lsq_buffer[head_idx_1].is_store) begin // If head is newer than head 1
+            head_0_should_wait = !head_1_valids;
+            if(!head_0_should_wait && head_0_head_1_addr_match) begin
+               fwd_head_0        = 1'b1;
+               head_0_fwd_source = 2'b01;
             end
-         end else begin
-            fwd_head_0 = 1'b0;
-            head_0_fwd_source = 2'b00; // no forwarding
+        
+         end else if(head_0_newer_than_head_2 && lsq_buffer[head_idx_2].is_store) begin // If head is newer than head 2
+            head_0_should_wait = !head_2_valids;
+            if(!head_0_should_wait && head_0_head_2_addr_match) begin
+               fwd_head_0        = 1'b1;
+               head_0_fwd_source = 2'b10;
+            end
          end
-      end else begin
-         head_0_should_wait = 0;
-         fwd_head_0 = 1'b0;
-         head_0_fwd_source = 2'b00; // no forwarding
-      end
+      end 
 
       // Head 1 forwarding
-      if(distance_0 > distance_1 && lsq_buffer[head_idx].is_store && !lsq_buffer[head_idx_1].is_store) begin // head 0 is older than head 1 and head 0 is store and head 1 is load
-         if(distance_2 < distance_0 && lsq_buffer[head_idx_2].is_store) begin // 2 is also store and 2 is newer than 0
-            head_1_should_wait = (!lsq_buffer[head_idx_2].data_valid || !lsq_buffer[head_idx_2].addr_valid) || (!lsq_buffer[head_idx].data_valid || !lsq_buffer[head_idx].addr_valid)  || !lsq_buffer[head_idx_1].addr_valid; // wait both
-            
-            if(!head_1_should_wait) begin
-               if(head_1_head_2_addr_match) begin
-                  fwd_head_1 = 1'b1;
-                  head_1_fwd_source = 2'b10; // from head 2
-               end else if(head_0_head_1_addr_match) begin
-                  fwd_head_1 = 1'b1;
-                  head_1_fwd_source = 2'b00; // from head 0
-               end else begin
-                  fwd_head_1 = 1'b0;
-                  head_1_fwd_source = 2'b00; // no forwarding
+      head_1_should_wait = 1'b0;
+      fwd_head_1         = 1'b0;
+      head_1_fwd_source  = 2'b00;
+
+      if(lsq_buffer[head_idx_1].valid && !lsq_buffer[head_idx_1].is_store && lsq_buffer[head_idx_1].addr_valid) begin // If it is load
+         if(head_1_newer_than_head_0 && lsq_buffer[head_idx].is_store && head_1_newer_than_head_2 && lsq_buffer[head_idx_2].is_store) begin // If head_1 is the newest
+            if(head_0_newer_than_head_2) begin // give priority to head 0
+               head_1_should_wait = !head_0_valids | (head_0_valids & !head_0_head_1_addr_match & !head_2_valids);
+               if(!head_1_should_wait) begin
+                  if(head_0_head_1_addr_match) begin
+                     fwd_head_1        = 1'b1;
+                     head_1_fwd_source = 2'b00;
+                  end else if(head_1_head_2_addr_match) begin
+                     fwd_head_1        = 1'b1;
+                     head_1_fwd_source = 2'b10;
+                  end
                end
-            end else begin
-               fwd_head_1 = 1'b0;
-               head_1_fwd_source = 2'b00; // no forwarding
-            end
-         end else begin
-            head_1_should_wait = !lsq_buffer[head_idx].data_valid || !lsq_buffer[head_idx].addr_valid || !lsq_buffer[head_idx_1].addr_valid;
-            if(!head_1_should_wait) begin
-               if(head_0_head_1_addr_match) begin
-                  fwd_head_1 = 1'b1;
-                  head_1_fwd_source = 2'b00; // from head 0
-               end else begin
-                  fwd_head_1 = 1'b0;
-                  head_1_fwd_source = 2'b00; // no forwarding
+            end else begin // give priority to head 2
+               head_1_should_wait = !head_2_valids | (head_2_valids & !head_1_head_2_addr_match & !head_0_valids);
+               if(!head_1_should_wait) begin
+                  if(head_1_head_2_addr_match) begin
+                     fwd_head_1        = 1'b1;
+                     head_1_fwd_source = 2'b10;
+                  end else if(head_0_head_1_addr_match) begin
+                     fwd_head_1        = 1'b1;
+                     head_1_fwd_source = 2'b00;
+                  end
                end
-            end else begin
-               fwd_head_1 = 1'b0;
-               head_1_fwd_source = 2'b00; // no forwarding
             end
-         end 
-      end else if(distance_2 > distance_1 && lsq_buffer[head_idx_2].is_store && !lsq_buffer[head_idx_1].is_store) begin  // head 2 is older than head 1 and head 2 is store and head 1 is load
-         head_1_should_wait = !lsq_buffer[head_idx_2].data_valid || !lsq_buffer[head_idx_2].addr_valid || !lsq_buffer[head_idx_1].addr_valid;
-         if(!head_1_should_wait) begin
-            if(head_1_head_2_addr_match) begin
-               fwd_head_1 = 1'b1;
-               head_1_fwd_source = 2'b10; // from head 2
-            end else begin
-               fwd_head_1 = 1'b0;
-               head_1_fwd_source = 2'b00; // no forwarding
+         end else if(head_1_newer_than_head_0 && lsq_buffer[head_idx].is_store) begin // If head_1 is newer than head 0
+            head_1_should_wait = !head_0_valids;
+            if(!head_1_should_wait && head_0_head_1_addr_match) begin
+               fwd_head_1        = 1'b1;
+               head_1_fwd_source = 2'b00;
             end
-         end else begin
-            fwd_head_1 = 1'b0;
-            head_1_fwd_source = 2'b00; // no forwarding
+        
+         end else if(head_1_newer_than_head_2 && lsq_buffer[head_idx_2].is_store) begin // If head_1 is newer than head 2
+            head_1_should_wait = !head_2_valids;
+            if(!head_1_should_wait && head_1_head_2_addr_match) begin
+               fwd_head_1        = 1'b1;
+               head_1_fwd_source = 2'b10;
+            end
          end
-      end else begin
-         head_1_should_wait = 0;
-         fwd_head_1 = 1'b0;
-         head_1_fwd_source = 2'b00; // no forwarding
       end
 
       // Head 2 forwarding
-      if(distance_0 > distance_2 && lsq_buffer[head_idx].is_store && !lsq_buffer[head_idx_2].is_store) begin // head 0 is older than head 2 and head 0 is store and head 2 is load
-         if(distance_1 < distance_0 && lsq_buffer[head_idx_1].is_store) begin // 1 is also store and 1 is newer than 0
-            head_2_should_wait = (!lsq_buffer[head_idx_1].data_valid || !lsq_buffer[head_idx_1].addr_valid) || (!lsq_buffer[head_idx].data_valid || !lsq_buffer[head_idx].addr_valid) || !lsq_buffer[head_idx_2].addr_valid; // wait both
-            
-            if(!head_2_should_wait) begin
-               if(head_1_head_2_addr_match) begin
-                  fwd_head_2 = 1'b1;
-                  head_2_fwd_source = 2'b01; // from head 1
-               end else if(head_0_head_2_addr_match) begin
-                  fwd_head_2 = 1'b1;
-                  head_2_fwd_source = 2'b00; // from head 0
-               end else begin
-                  fwd_head_2 = 1'b0;
-                  head_2_fwd_source = 2'b00; // no forwarding
-               end
-            end else begin
-               fwd_head_2 = 1'b0;
-               head_2_fwd_source = 2'b00; // no forwarding
-            end
+      head_2_should_wait = 1'b0;
+      fwd_head_2         = 1'b0;
+      head_2_fwd_source  = 2'b00;
 
-         end else begin
-
-            head_2_should_wait = !lsq_buffer[head_idx].data_valid || !lsq_buffer[head_idx].addr_valid || !lsq_buffer[head_idx_2].addr_valid;
-
-            if(!head_2_should_wait) begin
-               if(head_0_head_2_addr_match) begin
-                  fwd_head_2 = 1'b1;
-                  head_2_fwd_source = 2'b00; // from head 0
-               end else begin
-                  fwd_head_2 = 1'b0;
-                  head_2_fwd_source = 2'b00; // no forwarding
+      if(lsq_buffer[head_idx_2].valid && !lsq_buffer[head_idx_2].is_store && lsq_buffer[head_idx_2].addr_valid) begin // If it is load
+         if(head_2_newer_than_head_0 && lsq_buffer[head_idx].is_store && head_2_newer_than_head_1 && lsq_buffer[head_idx_1].is_store) begin // If head_2 is the newest
+            if(head_0_newer_than_head_1) begin // give priority to head 0
+               head_2_should_wait = !head_0_valids | (head_0_valids & !head_0_head_2_addr_match & !head_1_valids);
+               if(!head_2_should_wait) begin
+                  if(head_0_head_2_addr_match) begin
+                     fwd_head_2        = 1'b1;
+                     head_2_fwd_source = 2'b00;
+                  end else if(head_1_head_2_addr_match) begin
+                     fwd_head_2        = 1'b1;
+                     head_2_fwd_source = 2'b01;
+                  end
                end
-            end else begin
-               fwd_head_2 = 1'b0;
-               head_2_fwd_source = 2'b00; // no forwarding
-            end
-         end 
-      end else if(distance_1 > distance_2 && lsq_buffer[head_idx_1].is_store && !lsq_buffer[head_idx_2].is_store) begin  // head 1 is older than head 2 and head 1 is store and head 2 is load
-         head_2_should_wait = !lsq_buffer[head_idx_1].data_valid || !lsq_buffer[head_idx_1].addr_valid || !lsq_buffer[head_idx_2].addr_valid;
-          if(!head_2_should_wait) begin
-               if(head_1_head_2_addr_match) begin
-                  fwd_head_2 = 1'b1;
-                  head_2_fwd_source = 2'b01; // from head 1
-               end else begin
-                  fwd_head_2 = 1'b0;
-                  head_2_fwd_source = 2'b00; // no forwarding
+            end else begin // give priority to head 1
+               head_2_should_wait = !head_1_valids | (head_1_valids & !head_1_head_2_addr_match & !head_0_valids);
+               if(!head_2_should_wait) begin
+                  if(head_1_head_2_addr_match) begin
+                     fwd_head_2        = 1'b1;
+                     head_2_fwd_source = 2'b01;
+                  end else if(head_0_head_2_addr_match) begin
+                     fwd_head_2        = 1'b1;
+                     head_2_fwd_source = 2'b00;
+                  end
                end
-            end else begin
-               fwd_head_2 = 1'b0;
-               head_2_fwd_source = 2'b00; // no forwarding
             end
-      end else begin
-         head_2_should_wait = 0;
-         fwd_head_2 = 1'b0;
-         head_2_fwd_source = 2'b00; // no forwarding
+         end else if(head_2_newer_than_head_0 && lsq_buffer[head_idx].is_store) begin // If head_2 is newer than head 0
+            head_2_should_wait = !head_0_valids;
+            if(!head_2_should_wait && head_0_head_2_addr_match) begin
+               fwd_head_2        = 1'b1;
+               head_2_fwd_source = 2'b00;
+            end
+        
+         end else if(head_2_newer_than_head_1 && lsq_buffer[head_idx_1].is_store) begin // If head_2 is newer than head 1
+            head_2_should_wait = !head_1_valids;
+            if(!head_2_should_wait && head_1_head_2_addr_match) begin
+               fwd_head_2        = 1'b1;
+               head_2_fwd_source = 2'b01;
+            end
+         end
       end
 
+    
    end
+
+   
    
    //==========================================================================
    // ALLOCATION LOGIC (Tail Side)
@@ -615,7 +619,7 @@ module lsq_simple_top
             end
          end
 
-         if (deallocate_head) begin
+         if (deallocate_head  | fwd_head_0) begin
             if(distance_0 < distance_1) begin
                if(distance_0 < distance_2) begin
                   head_ptr <= #D head_ptr + 1;
@@ -648,21 +652,21 @@ module lsq_simple_top
            
          end
 
-         if(deallocate_head_1) begin
+         if(deallocate_head_1 | fwd_head_1) begin
              if(distance_0 < distance_1) begin
                if(distance_0 < distance_2) begin
-                  head_ptr_1 <= #D head_ptr + 1 + deallocate_head;
+                  head_ptr_1 <= #D head_ptr + 1 + (deallocate_head | fwd_head_0);
                end
                else begin
-                  head_ptr_1 <= #D head_ptr_2 + 1 + deallocate_head;
+                  head_ptr_1 <= #D head_ptr_2 + 1 + (deallocate_head | fwd_head_0);
                end
             end
             else begin
                if(distance_1 < distance_2) begin
-                  head_ptr_1 <= #D head_ptr_1 + 1 + deallocate_head;
+                  head_ptr_1 <= #D head_ptr_1 + 1 + (deallocate_head | fwd_head_0);
                end
                else begin
-                  head_ptr_1 <= #D head_ptr_2 + 1 + deallocate_head;
+                  head_ptr_1 <= #D head_ptr_2 + 1 + (deallocate_head | fwd_head_0);
                end
             end
             lsq_buffer[head_idx_1].valid <= #D 1'b0;
@@ -680,21 +684,21 @@ module lsq_simple_top
             lsq_buffer[head_idx_1].size <= #D mem_size_t'(0);
          end
 
-         if(deallocate_head_2) begin
+         if(deallocate_head_2 | fwd_head_2) begin
             if(distance_0 < distance_1) begin
                if(distance_0 < distance_2) begin
-                  head_ptr_2 <= #D head_ptr + 1 + deallocate_head + deallocate_head_1;
+                  head_ptr_2 <= #D head_ptr + 1 + (deallocate_head | fwd_head_0) + (deallocate_head_1 | fwd_head_1);
                end
                else begin
-                  head_ptr_2 <= #D head_ptr_2 + 1 + deallocate_head + deallocate_head_1;
+                  head_ptr_2 <= #D head_ptr_2 + 1 + (deallocate_head | fwd_head_0) + (deallocate_head_1 | fwd_head_1);
                end
             end
             else begin
                if(distance_1 < distance_2) begin
-                  head_ptr_2 <= #D head_ptr_1 + 1 + deallocate_head + deallocate_head_1;
+                  head_ptr_2 <= #D head_ptr_1 + 1 + (deallocate_head | fwd_head_0) + (deallocate_head_1 | fwd_head_1);
                end
                else begin
-                  head_ptr_2 <= #D head_ptr_2 + 1 + deallocate_head + deallocate_head_1;
+                  head_ptr_2 <= #D head_ptr_2 + 1 + (deallocate_head | fwd_head_0) + (deallocate_head_1 | fwd_head_1);
                end
             end
             lsq_buffer[head_idx_2].valid <= #D 1'b0;
@@ -726,14 +730,16 @@ module lsq_simple_top
    logic head_ready;
    always_comb begin
       head_ready = 1'b0;
-      
       if (!lsq_empty_o && lsq_buffer[head_idx].valid && !lsq_buffer[head_idx].mem_issued && !(fwd_head_0 | head_0_should_wait)) begin 
          // Head entry is ready if address is valid
          // For stores, also need data to be valid
          if (lsq_buffer[head_idx].addr_valid) begin
             if (lsq_buffer[head_idx].is_store) begin 
-               //we need a permission for store from ROB because store operation at LSQ should not be issued before branch prediction is resolved
-               if(store_can_issue && (lsq_buffer[head_idx].address == allowed_store_address)) begin //todo add 2 more store enable signals
+               //we need a permission for store from ROB because store operation at LSQ should not be issued before branch prediction is resolved // todo check them with rd, it is more reliable
+               if((store_can_issue_0 && (lsq_buffer[head_idx].phys_reg == allowed_store_address_0)) ||
+                  (store_can_issue_1 && (lsq_buffer[head_idx].phys_reg == allowed_store_address_1)) ||
+                  (store_can_issue_2 && (lsq_buffer[head_idx].phys_reg == allowed_store_address_2))
+               ) begin 
                   head_ready = lsq_buffer[head_idx].data_valid;
                end else begin
                   head_ready = 1'b0;
@@ -755,7 +761,10 @@ module lsq_simple_top
          if (lsq_buffer[head_idx_1].addr_valid) begin
             if (lsq_buffer[head_idx_1].is_store) begin   
                //we need a permission for store from ROB because store operation at LSQ should not be issued before branch prediction is resolved
-               if(store_can_issue && (lsq_buffer[head_idx_1].address == allowed_store_address)) begin //todo add 2 more store enable signals
+               if((store_can_issue_0 && (lsq_buffer[head_idx_1].phys_reg == allowed_store_address_0)) ||
+                  (store_can_issue_1 && (lsq_buffer[head_idx_1].phys_reg == allowed_store_address_1)) ||
+                  (store_can_issue_2 && (lsq_buffer[head_idx_1].phys_reg == allowed_store_address_2))
+               ) begin //todo add 2 more store enable signals
                   head_ready_1 = lsq_buffer[head_idx_1].data_valid;
                end else begin
                   head_ready_1 = 1'b0;
@@ -778,7 +787,10 @@ module lsq_simple_top
          if (lsq_buffer[head_idx_2].addr_valid) begin
             if (lsq_buffer[head_idx_2].is_store) begin 
                //we need a permission for store from ROB because store operation at LSQ should not be issued before branch prediction is resolved
-               if(store_can_issue && (lsq_buffer[head_idx_2].address == allowed_store_address)) begin
+               if((store_can_issue_0 && (lsq_buffer[head_idx_2].phys_reg == allowed_store_address_0)) ||
+                  (store_can_issue_1 && (lsq_buffer[head_idx_2].phys_reg == allowed_store_address_1)) ||
+                  (store_can_issue_2 && (lsq_buffer[head_idx_2].phys_reg == allowed_store_address_2))
+               ) begin
                   head_ready_2 = lsq_buffer[head_idx_2].data_valid;
                end else begin
                   head_ready_2 = 1'b0;
@@ -864,19 +876,19 @@ module lsq_simple_top
    // MEMORY RESPONSE AND CDB BROADCAST (for loads)
    //==========================================================================
 
-   assign cdb_interface.cdb_valid_3_0 = mem_0_resp_valid_i; //lsq_buffer[head_idx].mem_complete;
+   assign cdb_interface.cdb_valid_3_0 = mem_0_resp_valid_i | fwd_head_0; //lsq_buffer[head_idx].mem_complete;
    assign cdb_interface.cdb_tag_3_0 = 3'b011;
-   assign cdb_interface.cdb_data_3_0 = load_0_data; //lsq_buffer[head_idx].data;
+   assign cdb_interface.cdb_data_3_0 = fwd_head_0 ? (head_0_fwd_source == 2) ? lsq_buffer[head_idx_2].data : lsq_buffer[head_idx_1].data : load_0_data; //lsq_buffer[head_idx].data;
    assign cdb_interface.cdb_dest_reg_3_0 = lsq_buffer[head_idx].phys_reg;
 
-   assign cdb_interface.cdb_valid_3_1 = mem_1_resp_valid_i; //lsq_buffer[head_idx_1].mem_complete;
+   assign cdb_interface.cdb_valid_3_1 = mem_1_resp_valid_i | fwd_head_1; //lsq_buffer[head_idx_1].mem_complete;
    assign cdb_interface.cdb_tag_3_1 = 3'b011;
-   assign cdb_interface.cdb_data_3_1 = load_1_data; //lsq_buffer[head_idx_1].data;
+   assign cdb_interface.cdb_data_3_1 = fwd_head_1 ? (head_1_fwd_source == 2) ? lsq_buffer[head_idx_2].data : lsq_buffer[head_idx].data : load_1_data; //lsq_buffer[head_idx_1].data;
    assign cdb_interface.cdb_dest_reg_3_1 = lsq_buffer[head_idx_1].phys_reg;
 
-   assign cdb_interface.cdb_valid_3_2 = mem_2_resp_valid_i; //lsq_buffer[head_idx_2].mem_complete;
+   assign cdb_interface.cdb_valid_3_2 = mem_2_resp_valid_i | fwd_head_2; //lsq_buffer[head_idx_2].mem_complete;
    assign cdb_interface.cdb_tag_3_2 = 3'b011;
-   assign cdb_interface.cdb_data_3_2 = load_2_data;
+   assign cdb_interface.cdb_data_3_2 = fwd_head_2 ? (head_2_fwd_source == 1) ? lsq_buffer[head_idx_1].data : lsq_buffer[head_idx].data : load_2_data;
    assign cdb_interface.cdb_dest_reg_3_2 = lsq_buffer[head_idx_2].phys_reg;
 
 

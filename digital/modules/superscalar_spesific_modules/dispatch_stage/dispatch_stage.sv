@@ -77,6 +77,10 @@ module dispatch_stage #(
     output logic [4:0] commit_rob_idx_1,
     output logic [4:0] commit_rob_idx_2,
 
+    output logic lsq_commit_valid_0,
+    output logic lsq_commit_valid_1,
+    output logic lsq_commit_valid_2,
+
     output logic commit_is_branch_0,
     output logic [DATA_WIDTH-1:0] commit_correct_pc_0,
     output logic [DATA_WIDTH-1:0] upadate_predictor_pc_0,
@@ -114,7 +118,7 @@ module dispatch_stage #(
     logic [2:0] inst_1_read_tag_a, inst_1_read_tag_b;
     logic [2:0] inst_2_read_tag_a, inst_2_read_tag_b;
 
-    logic commit_ready_0, commit_ready_1, commit_ready_2;
+    logic commit_valid_0, commit_valid_1, commit_valid_2;
     logic [DATA_WIDTH-1:0] commit_data_0, commit_data_1, commit_data_2;
 
     logic [4:0] rob_head_idx;
@@ -126,7 +130,7 @@ module dispatch_stage #(
     assign alloc_2_is_store = issue_to_dispatch_2.control_signals[3] & ~issue_to_dispatch_2.control_signals[6];
 
     logic store_can_issue_0, store_can_issue_1, store_can_issue_2;
-    logic [DATA_WIDTH-1:0] allowed_store_address_0, allowed_store_address_1, allowed_store_address_2;
+    logic [PHYS_REG_ADDR_WIDTH-1:0] allowed_store_address_0, allowed_store_address_1, allowed_store_address_2;
     //logic commit_exception_0, commit_exception_1, commit_exception_2;
 
     assign commit_rob_idx_0 = rob_head_idx;
@@ -211,9 +215,9 @@ module dispatch_stage #(
         .read_tag_4(rob_2_read_tag_a),
         .read_tag_5(rob_2_read_tag_b),
 
-        .commit_ready_0(commit_ready_0),
-        .commit_ready_1(commit_ready_1),
-        .commit_ready_2(commit_ready_2),
+        .commit_valid_0(commit_valid_0),
+        .commit_valid_1(commit_valid_1),
+        .commit_valid_2(commit_valid_2),
         .commit_data_0(commit_data_0),
         .commit_data_1(commit_data_1),
         .commit_data_2(commit_data_2),
@@ -230,8 +234,18 @@ module dispatch_stage #(
         .commit_is_branch_1(),
         .commit_is_branch_2(),
 
+        .lsq_commit_valid_0(lsq_commit_valid_0),
+        .lsq_commit_valid_1(lsq_commit_valid_1),
+        .lsq_commit_valid_2(lsq_commit_valid_2),
+
         .store_can_issue_0(store_can_issue_0),
         .allowed_store_address_0(allowed_store_address_0),
+
+        .store_can_issue_1(store_can_issue_1),
+        .allowed_store_address_1(allowed_store_address_1),
+
+        .store_can_issue_2(store_can_issue_2),
+        .allowed_store_address_2(allowed_store_address_2),
 
         .upadate_predictor_pc_0(upadate_predictor_pc_0),
         .upadate_predictor_pc_1(),
@@ -256,9 +270,9 @@ module dispatch_stage #(
         .inst_2_read_addr_b(inst_2_read_addr_b[4:0]), .inst_2_read_data_b(reg_file_read_data_b_2),   // RS2 operand B
 
         // Commit ports - write results from CDB when complete
-        .commit_enable_0(commit_ready_0), .commit_addr_0(commit_addr_0), .commit_data_0(commit_data_0),
-        .commit_enable_1(commit_ready_1), .commit_addr_1(commit_addr_1), .commit_data_1(commit_data_1),
-        .commit_enable_2(commit_ready_2), .commit_addr_2(commit_addr_2), .commit_data_2(commit_data_2)
+        .commit_enable_0(commit_valid_0), .commit_addr_0(commit_addr_0), .commit_data_0(commit_data_0),
+        .commit_enable_1(commit_valid_1), .commit_addr_1(commit_addr_1), .commit_data_1(commit_data_1),
+        .commit_enable_2(commit_valid_2), .commit_addr_2(commit_addr_2), .commit_data_2(commit_data_2)
     );
 
     assign inst_0_read_data_a = inst_0_read_addr_a[5] ? rob_0_read_data_a : reg_file_read_data_a_0;
@@ -418,8 +432,12 @@ module dispatch_stage #(
       // Clock and reset
       .clk(clk),
       .rst_n(reset & !misprediction_detected),
-      .store_can_issue(store_can_issue_0), 
-      .allowed_store_address(allowed_store_address_0),
+      .store_can_issue_0(store_can_issue_0), 
+      .allowed_store_address_0(allowed_store_address_0),
+      .store_can_issue_1(store_can_issue_1), 
+      .allowed_store_address_1(allowed_store_address_1),
+      .store_can_issue_2(store_can_issue_2), 
+      .allowed_store_address_2(allowed_store_address_2),
       // Allocation interface (from Issue Stage)
       // Allocation 0
       .alloc_valid_0_i(issue_to_dispatch_0.lsq_alloc_valid & issue_to_dispatch_0.dispatch_valid ),
@@ -493,7 +511,7 @@ module dispatch_stage #(
                               cdb_interface.cdb_valid_1 +
                               cdb_interface.cdb_valid_2;
 
-    assign commit_valid = {commit_ready_2, commit_ready_1, commit_ready_0};
+    assign commit_valid = {commit_valid_2, commit_valid_1, commit_valid_0};
 
 
     //==========================================================================

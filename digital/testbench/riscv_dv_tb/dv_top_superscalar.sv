@@ -874,9 +874,9 @@ module dv_top_superscalar;
                                       dut.cdb_interface.cdb_valid_3_1 +
                                       dut.cdb_interface.cdb_valid_3_2;
             
-            commit_count = commit_count + dut.dispatch_stage_unit.rob.commit_ready_0 +
-                                          dut.dispatch_stage_unit.rob.commit_ready_1 +
-                                          dut.dispatch_stage_unit.rob.commit_ready_2;
+            commit_count = commit_count + dut.dispatch_stage_unit.rob.commit_valid_0 +
+                                          dut.dispatch_stage_unit.rob.commit_valid_1 +
+                                          dut.dispatch_stage_unit.rob.commit_valid_2;
                                      
             decode_sample_cycles++;
             cycle_count++;
@@ -942,6 +942,256 @@ module dv_top_superscalar;
             cycle_count <= #D 0;
         end
     end
+
+    //==========================================================================
+    // CDB_3 LOGGING
+    //==========================================================================
+    
+    integer cdb_3_log_file;
+    
+    initial begin
+        cdb_3_log_file = $fopen("cdb_3_trace.log", "w");
+        if (cdb_3_log_file == 0) begin
+            $display("ERROR: Could not open cdb_3_trace.log");
+            $finish;
+        end
+    end
+    
+    // Monitor CDB_3 channels and log valid transactions (sorted by dest_reg)
+    always @(posedge clk) begin
+        if (rst_n) begin
+            automatic logic [5:0] dest_regs[3];
+            automatic logic [31:0] datas[3];
+            automatic logic valids[3];
+            automatic integer valid_count;
+            automatic logic [5:0] min_dest;
+            automatic integer min_idx;
+            
+            // Collect all CDB_3 entries
+            valids[0] = dut.cdb_interface.cdb_valid_3_0;
+            datas[0] = dut.cdb_interface.cdb_data_3_0;
+            dest_regs[0] = dut.cdb_interface.cdb_dest_reg_3_0;
+            
+            valids[1] = dut.cdb_interface.cdb_valid_3_1;
+            datas[1] = dut.cdb_interface.cdb_data_3_1;
+            dest_regs[1] = dut.cdb_interface.cdb_dest_reg_3_1;
+            
+            valids[2] = dut.cdb_interface.cdb_valid_3_2;
+            datas[2] = dut.cdb_interface.cdb_data_3_2;
+            dest_regs[2] = dut.cdb_interface.cdb_dest_reg_3_2;
+            
+            // Count valid entries
+            valid_count = 0;
+            for (int i = 0; i < 3; i++) begin
+                if (valids[i]) valid_count++;
+            end
+            
+            // Write to file if any valid entry exists
+            if (valid_count > 0) begin
+                // Selection sort: write in dest_reg order
+                for (int sorted = 0; sorted < 3; sorted++) begin
+                    min_dest = 6'h3F; // Max value
+                    min_idx = -1;
+                    
+                    // Find minimum dest_reg among remaining valid entries
+                    for (int i = 0; i < 3; i++) begin
+                        if (valids[i] && dest_regs[i] < min_dest) begin
+                            min_dest = dest_regs[i];
+                            min_idx = i;
+                        end
+                    end
+                    
+                    // Write to file and mark as used
+                    if (min_idx >= 0) begin
+                        $fwrite(cdb_3_log_file, "%t - dest_reg=p%0d, data=0x%08x\n", $time,
+                                dest_regs[min_idx], datas[min_idx]);
+                        valids[min_idx] = 1'b0; // Mark as processed
+                    end
+                end
+            end
+        end
+    end
+    
+    // Close file at end of simulation
+    final begin
+        $fclose(cdb_3_log_file);
+    end
+
+    //==========================================================================
+    // COMMIT LOGGING
+    //==========================================================================
+    
+    integer commit_log_file;
+    
+    initial begin
+        commit_log_file = $fopen("commit_trace.log", "w");
+        if (commit_log_file == 0) begin
+            $display("ERROR: Could not open commit_trace.log");
+            $finish;
+        end
+    end
+    
+    // Monitor commit channels and log valid commits (sorted by commit_0 first)
+    always @(posedge clk) begin
+        if (rst_n) begin
+            automatic logic [4:0] addrs[3];
+            automatic logic [31:0] datas[3];
+            automatic logic valids[3];
+            
+            // Collect all commit entries
+            valids[0] = dut.dispatch_stage_unit.rob.commit_valid_0;
+            datas[0] = dut.dispatch_stage_unit.rob.commit_data_0;
+            addrs[0] = dut.dispatch_stage_unit.rob.commit_addr_0;
+            
+            valids[1] = dut.dispatch_stage_unit.rob.commit_valid_1;
+            datas[1] = dut.dispatch_stage_unit.rob.commit_data_1;
+            addrs[1] = dut.dispatch_stage_unit.rob.commit_addr_1;
+            
+            valids[2] = dut.dispatch_stage_unit.rob.commit_valid_2;
+            datas[2] = dut.dispatch_stage_unit.rob.commit_data_2;
+            addrs[2] = dut.dispatch_stage_unit.rob.commit_addr_2;
+            
+            // Write commits in order: commit_0, commit_1, commit_2
+            // Only write if valid and addr != 0
+            for (int i = 0; i < 3; i++) begin
+                if (valids[i] && addrs[i] != 5'b0) begin
+                    $fwrite(commit_log_file, "%t - addr=x%0d, data=0x%08x\n", $time,
+                            addrs[i], datas[i]);
+                end
+            end
+        end
+    end
+    
+    // Close file at end of simulation
+    final begin
+        $fclose(commit_log_file);
+    end
+/* 
+    //==========================================================================
+    // LSQ ALLOCATION/DEALLOCATION CHECKER
+    //==========================================================================
+    // Tracks which physical registers are allocated for LSQ operations
+    // and verifies that CDB_3 only writes to allocated registers
+    
+    logic [63:0] lsq_allocated_regs; // Bitmap of allocated LSQ registers (64 physical regs)
+    integer lsq_error_count;
+    integer lsq_alloc_count;
+    integer lsq_dealloc_count;
+    
+    initial begin
+        lsq_allocated_regs = 64'h0;
+        lsq_error_count = 0;
+        lsq_alloc_count = 0;
+        lsq_dealloc_count = 0;
+    end
+    
+    // Monitor LSQ allocations and deallocations
+    always @(posedge clk) begin
+        if (rst_n) begin
+            // Check for allocations (when need_lsq_alloc_* is high)
+            if (dut.issue_stage_unit.rat_inst.need_lsq_alloc_0) begin
+                if (lsq_allocated_regs[dut.issue_stage_unit.rat_inst.first_free]) begin
+                    $error("[%t] LSQ ALLOCATION ERROR: Attempting to allocate already-allocated register p%0d (alloc_0)", 
+                           $time, dut.issue_stage_unit.rat_inst.first_free);
+                    lsq_error_count++;
+                end else begin
+                    lsq_allocated_regs[dut.issue_stage_unit.rat_inst.first_free] = 1'b1;
+                    lsq_alloc_count++;
+                   // $display("[%t] LSQ ALLOC: p%0d allocated (alloc_0)", $time, dut.issue_stage_unit.rat_inst.first_free);
+                end
+            end
+            
+            if (dut.issue_stage_unit.rat_inst.need_lsq_alloc_1) begin
+                if (lsq_allocated_regs[dut.issue_stage_unit.rat_inst.second_free]) begin
+                    $error("[%t] LSQ ALLOCATION ERROR: Attempting to allocate already-allocated register p%0d (alloc_1)", 
+                           $time, dut.issue_stage_unit.rat_inst.lsq_second_free);
+                    lsq_error_count++;
+                end else begin
+                    lsq_allocated_regs[dut.issue_stage_unit.rat_inst.second_free] = 1'b1;
+                    lsq_alloc_count++;
+                    //$display("[%t] LSQ ALLOC: p%0d allocated (alloc_1)", $time, dut.issue_stage_unit.rat_inst.second_free);
+                end
+            end
+            
+            if (dut.issue_stage_unit.rat_inst.need_lsq_alloc_2) begin
+                if (lsq_allocated_regs[dut.issue_stage_unit.rat_inst.third_free]) begin
+                    $error("[%t] LSQ ALLOCATION ERROR: Attempting to allocate already-allocated register p%0d (alloc_2)", 
+                           $time, dut.issue_stage_unit.rat_inst.third_free);
+                    lsq_error_count++;
+                end else begin
+                    lsq_allocated_regs[dut.issue_stage_unit.rat_inst.third_free] = 1'b1;
+                    lsq_alloc_count++;
+                    //$display("[%t] LSQ ALLOC: p%0d allocated (alloc_2)",  $time, dut.issue_stage_unit.rat_inst.third_free);
+                end
+            end
+            
+            // Check for deallocations (when CDB_3 writes complete)
+            if (dut.cdb_interface.cdb_valid_3_0) begin
+                if (!lsq_allocated_regs[dut.cdb_interface.cdb_dest_reg_3_0]) begin
+                    $error("[%t] LSQ DEALLOCATION ERROR: CDB_3_0 writing to non-allocated register p%0d (data=0x%08x)", 
+                           $time, dut.cdb_interface.cdb_dest_reg_3_0, dut.cdb_interface.cdb_data_3_0);
+                    lsq_error_count++;
+                end else begin
+                    lsq_allocated_regs[dut.cdb_interface.cdb_dest_reg_3_0] = 1'b0;
+                    lsq_dealloc_count++;
+                    //$display("[%t] LSQ DEALLOC: p%0d deallocated via CDB_3_0 (data=0x%08x)", $time, dut.cdb_interface.cdb_dest_reg_3_0, dut.cdb_interface.cdb_data_3_0);
+                end
+            end
+            
+            if (dut.cdb_interface.cdb_valid_3_1) begin
+                if (!lsq_allocated_regs[dut.cdb_interface.cdb_dest_reg_3_1]) begin
+                    $error("[%t] LSQ DEALLOCATION ERROR: CDB_3_1 writing to non-allocated register p%0d (data=0x%08x)", 
+                           $time, dut.cdb_interface.cdb_dest_reg_3_1, dut.cdb_interface.cdb_data_3_1);
+                    lsq_error_count++;
+                end else begin
+                    lsq_allocated_regs[dut.cdb_interface.cdb_dest_reg_3_1] = 1'b0;
+                    lsq_dealloc_count++;
+                    //$display("[%t] LSQ DEALLOC: p%0d deallocated via CDB_3_1 (data=0x%08x)", $time, dut.cdb_interface.cdb_dest_reg_3_1, dut.cdb_interface.cdb_data_3_1);
+                end
+            end
+            
+            if (dut.cdb_interface.cdb_valid_3_2) begin
+                if (!lsq_allocated_regs[dut.cdb_interface.cdb_dest_reg_3_2]) begin
+                    $error("[%t] LSQ DEALLOCATION ERROR: CDB_3_2 writing to non-allocated register p%0d (data=0x%08x)", 
+                           $time, dut.cdb_interface.cdb_dest_reg_3_2, dut.cdb_interface.cdb_data_3_2);
+                    lsq_error_count++;
+                end else begin
+                    lsq_allocated_regs[dut.cdb_interface.cdb_dest_reg_3_2] = 1'b0;
+                    lsq_dealloc_count++;
+                    //$display("[%t] LSQ DEALLOC: p%0d deallocated via CDB_3_2 (data=0x%08x)", $time, dut.cdb_interface.cdb_dest_reg_3_2, dut.cdb_interface.cdb_data_3_2);
+                end
+            end
+        end
+    end
+    
+    // Check for register leaks at end of simulation
+    final begin
+        automatic int leaked_count = 0;
+        $display("\n========== LSQ ALLOCATION CHECKER SUMMARY ==========");
+        $display("Total allocations:   %0d", lsq_alloc_count);
+        $display("Total deallocations: %0d", lsq_dealloc_count);
+        $display("Total errors:        %0d", lsq_error_count);
+        
+        // Check for leaked registers
+        for (int i = 0; i < 64; i++) begin
+            if (lsq_allocated_regs[i]) begin
+                $warning("LSQ LEAK WARNING: Register p%0d still allocated at end of simulation", i);
+                leaked_count++;
+            end
+        end
+        
+        if (leaked_count > 0) begin
+            $display("Leaked registers:    %0d", leaked_count);
+        end
+        
+        if (lsq_error_count > 0) begin
+            $error("LSQ CHECKER FAILED with %0d errors!", lsq_error_count);
+        end else begin
+            $display("LSQ CHECKER PASSED - No allocation/deallocation errors detected");
+        end
+        $display("====================================================\n");
+    end
+*/
     //==========================================================================
     // PROGRAM LOADING
     //==========================================================================

@@ -136,6 +136,10 @@ module rv32i_superscalar_core #(
     logic [4:0] commit_rob_idx_0;
     logic [4:0] commit_rob_idx_1;
     logic [4:0] commit_rob_idx_2;
+
+    logic lsq_commit_valid_0;
+    logic lsq_commit_valid_1;
+    logic lsq_commit_valid_2;
     
     // Execute Stage Interface
     logic [2:0] execute_ready;
@@ -326,9 +330,9 @@ module rv32i_superscalar_core #(
         .issue_to_dispatch_1(issue_to_dispatch_1_if.issue),
         .issue_to_dispatch_2(issue_to_dispatch_2_if.issue),
 
-        .lsq_commit_0(cdb_interface.cdb_valid_3_0),
-        .lsq_commit_1(cdb_interface.cdb_valid_3_1),
-        .lsq_commit_2(cdb_interface.cdb_valid_3_2)
+        .lsq_commit_0(lsq_commit_valid_0),
+        .lsq_commit_1(lsq_commit_valid_1),
+        .lsq_commit_2(lsq_commit_valid_2)
 
     );
     
@@ -391,6 +395,10 @@ module rv32i_superscalar_core #(
         .commit_rob_idx_0(commit_rob_idx_0),
         .commit_rob_idx_1(commit_rob_idx_1),
         .commit_rob_idx_2(commit_rob_idx_2),
+
+        .lsq_commit_valid_0(lsq_commit_valid_0),
+        .lsq_commit_valid_1(lsq_commit_valid_1),
+        .lsq_commit_valid_2(lsq_commit_valid_2),
 
         .misprediction_detected(misprediction_detected),
         .commit_correct_pc_0(commit_correct_pc_0),
