@@ -71,7 +71,7 @@ module multi_fetch #(parameter size = 32)(
 
    );
 
-   localparam D = 1; // Delay for simulation purposes
+   //localparam D = 1; // Delay for simulation purposes
 
    // Add parallel_mode control signal for pc_ctrl_super
    logic parallel_mode;
@@ -109,6 +109,9 @@ module multi_fetch #(parameter size = 32)(
    logic jump_4;
    logic [size-1 : 0] imm_4;
    logic jalr_4;
+
+   logic jalr_prediction_valid;
+   logic [size-1:0] jalr_predicition_target;
    
    // New buffer interface signals
    logic internal_bubble; // Combine bubble with buffer backpressure
@@ -190,6 +193,10 @@ module multi_fetch #(parameter size = 32)(
       .misprediction_1(misprediction_1),
       .misprediction_2(misprediction_2),
 
+      .correct_pc_0(correct_pc),
+      .correct_pc_1(correct_pc),
+      .correct_pc_2(correct_pc),
+
       .jump_0(jump_0),
       .jump_1(jump_1),
       .jump_2(jump_2),
@@ -200,7 +207,11 @@ module multi_fetch #(parameter size = 32)(
       .jalr_1(jalr_1),
       .jalr_2(jalr_2),
       .jalr_3(jalr_3),
-      .jalr_4(jalr_4)
+      .jalr_4(jalr_4),
+
+      .jalr_prediction_valid(jalr_prediction_valid),
+      .jalr_prediction_target(jalr_predicition_target)
+
    );
 
    // PC Control Super Module
@@ -221,6 +232,9 @@ module multi_fetch #(parameter size = 32)(
       .jalr_2(jalr_2),
       .jalr_3(jalr_3),
       .jalr_4(jalr_4),
+
+      .jalr_prediction_valid(jalr_prediction_valid),
+      .jalr_prediction_target(jalr_predicition_target),
 
       .imm_i_0(imm_0),
       .imm_i_1(imm_1),
@@ -262,17 +276,17 @@ module multi_fetch #(parameter size = 32)(
    assign imm_o_3 = imm_3;
    assign imm_o_4 = imm_4;
 
-   assign pc_value_at_prediction_0 = current_pc_0;
-   assign pc_value_at_prediction_1 = current_pc_1;
-   assign pc_value_at_prediction_2 = current_pc_2;
-   assign pc_value_at_prediction_3 = current_pc_3;
-   assign pc_value_at_prediction_4 = current_pc_4;
+   assign pc_value_at_prediction_0 = jalr_0 & jalr_prediction_valid ? jalr_predicition_target : current_pc_0;
+   assign pc_value_at_prediction_1 = jalr_1 & jalr_prediction_valid ? jalr_predicition_target : current_pc_1;
+   assign pc_value_at_prediction_2 = jalr_2 & jalr_prediction_valid ? jalr_predicition_target : current_pc_2;
+   assign pc_value_at_prediction_3 = jalr_3 & jalr_prediction_valid ? jalr_predicition_target : current_pc_3;
+   assign pc_value_at_prediction_4 = jalr_4 & jalr_prediction_valid ? jalr_predicition_target : current_pc_4;
 
-   assign branch_prediction_o_0 = jump_0;
-   assign branch_prediction_o_1 = jump_1;
-   assign branch_prediction_o_2 = jump_2;
-   assign branch_prediction_o_3 = jump_3;
-   assign branch_prediction_o_4 = jump_4;
+   assign branch_prediction_o_0 = jump_0 | jalr_0;
+   assign branch_prediction_o_1 = jump_1 | jalr_1;
+   assign branch_prediction_o_2 = jump_2 | jalr_2;;
+   assign branch_prediction_o_3 = jump_3 | jalr_3;
+   assign branch_prediction_o_4 = jump_4 | jalr_4;
    //assign pc_plus_o = pc_save;
 
 endmodule

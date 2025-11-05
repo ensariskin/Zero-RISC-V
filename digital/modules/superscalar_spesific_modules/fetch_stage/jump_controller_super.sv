@@ -50,6 +50,11 @@ module jump_controller_super #(parameter size = 32)(
 	input  logic misprediction_1,
 	input  logic misprediction_2,
 
+	// Correct PC interface (for JALR predictor updates)
+	input  logic [size-1 : 0] correct_pc_0,
+	input  logic [size-1 : 0] correct_pc_1,
+	input  logic [size-1 : 0] correct_pc_2,
+
 	// decision interface 
    output logic jump_0, // 1 : taken , 0 : not taken
 	output logic jump_1, // 1 : taken , 0 : not taken
@@ -61,7 +66,10 @@ module jump_controller_super #(parameter size = 32)(
 	output logic jalr_1,
 	output logic jalr_2,
 	output logic jalr_3,
-	output logic jalr_4
+	output logic jalr_4,
+
+	output logic jalr_prediction_valid,
+	output logic [size-1:0] jalr_prediction_target
 
 	);
 	
@@ -144,6 +152,49 @@ module jump_controller_super #(parameter size = 32)(
 		.update_prediction_pc_2(update_prediction_pc_2),
 		.update_prediction_valid_i_2(update_prediction_valid_i_2),
 		.misprediction_2(misprediction_2)
+	);
+
+	// Instantiate JALR predictor
+
+	jalr_predictor #(
+		.ADDR_WIDTH(32),
+		.ENTRIES(16)
+	) jalr_predictor_inst (
+		.clk(clk),
+		.reset(reset),
+
+		// Lookup interface
+		.current_pc_0(current_pc_0),
+		.current_pc_1(current_pc_1),
+		.current_pc_2(current_pc_2),
+		.current_pc_3(current_pc_3),
+		.current_pc_4(current_pc_4),
+
+		.is_jalr_i_0(jalr_0),
+		.is_jalr_i_1(jalr_1),
+		.is_jalr_i_2(jalr_2),
+		.is_jalr_i_3(jalr_3),
+		.is_jalr_i_4(jalr_4),
+
+		// Prediction output
+		.jalr_prediction_valid_o(jalr_prediction_valid),
+		.jalr_prediction_target_o(jalr_prediction_target),
+
+		// Update interface
+		.update_prediction_pc_0(update_prediction_pc_0),
+		.update_prediction_valid_i_0(update_prediction_valid_i_0),
+		.misprediction_0(misprediction_0),
+		.correct_pc_0(correct_pc_0),
+
+		.update_prediction_pc_1(update_prediction_pc_1),
+		.update_prediction_valid_i_1(update_prediction_valid_i_1),
+		.misprediction_1(misprediction_1),
+		.correct_pc_1(correct_pc_1),
+
+		.update_prediction_pc_2(update_prediction_pc_2),
+		.update_prediction_valid_i_2(update_prediction_valid_i_2),
+		.misprediction_2(misprediction_2),
+		.correct_pc_2(correct_pc_2)
 	);
 	
 endmodule

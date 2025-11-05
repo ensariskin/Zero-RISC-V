@@ -42,6 +42,9 @@ module pc_ctrl_super #(parameter size = 32)(
 	input  logic jalr_3,
 	input  logic jalr_4,
 
+	input  logic jalr_prediction_valid,
+	input  logic [size-1:0] jalr_prediction_target,
+
 	input  logic [size-1 : 0] imm_i_0,
 	input  logic [size-1 : 0] imm_i_1,
 	input  logic [size-1 : 0] imm_i_2,
@@ -167,14 +170,13 @@ module pc_ctrl_super #(parameter size = 32)(
 	assign pc_plus_imm_3  = current_pc_3 + {imm_i_3[31:2], 2'b00}; // prevent misalignment issues, don't use 2 LSBs
 	assign pc_plus_imm_4  = current_pc_4 + {imm_i_4[31:2], 2'b00}; // prevent misalignment issues, don't use 2
 	// TODO : use rs1 value instead of pc_current_val, how can we predict rs1 value? or should we wait until execuete stage calculate correct result
-	assign rs1_plus_imm_prediction_0 = current_pc_0 + {imm_i_0[31:2], 2'b00};
-	assign rs1_plus_imm_prediction_1 = current_pc_1 + {imm_i_1[31:2], 2'b00};
-	assign rs1_plus_imm_prediction_2 = current_pc_2 + {imm_i_2[31:2], 2'b00};
-	assign rs1_plus_imm_prediction_3 = current_pc_3 + {imm_i_3[31:2], 2'b00};
-	assign rs1_plus_imm_prediction_4 = current_pc_4 + {imm_i_4[31:2], 2'b00};
+	assign rs1_plus_imm_prediction_0 = jalr_prediction_valid ? jalr_prediction_target : current_pc_0 + 4;
+	assign rs1_plus_imm_prediction_1 = jalr_prediction_valid ? jalr_prediction_target : current_pc_1 + 4;
+	assign rs1_plus_imm_prediction_2 = jalr_prediction_valid ? jalr_prediction_target : current_pc_2 + 4;
+	assign rs1_plus_imm_prediction_3 = jalr_prediction_valid ? jalr_prediction_target : current_pc_3 + 4;
+	assign rs1_plus_imm_prediction_4 = jalr_prediction_valid ? jalr_prediction_target : current_pc_4 + 4;
 
 	// next pc value, 
-	// TODO : handle jalr case
 	parametric_mux #(.mem_width(size), .mem_depth(4)) immeadiate_mux(
 		.addr({jalr, jump}),
 		.data_in({rs1_plus_imm_prediction, rs1_plus_imm_prediction, pc_plus_imm, pc_plus_incr}),

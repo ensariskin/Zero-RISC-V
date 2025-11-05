@@ -88,7 +88,7 @@ module superscalar_execute_stage #(
     assign fu0_data_b = rs_to_exec_0.data_b;
     
     // Misprediction detection for FU0
-    assign fu0_misprediction = (fu0_mpc ^ rs_to_exec_0.branch_prediction);
+    assign fu0_misprediction = fu0_jalr ? fu0_result != rs_to_exec_0.pc_value_at_prediction : (fu0_mpc ^ rs_to_exec_0.branch_prediction);
     
     // PC correction for JALR (FU0)
     assign fu0_correct_pc = fu0_jalr ? {fu0_result[31:2], 2'b00} : {rs_to_exec_0.pc[31:2], 2'b00};
@@ -114,7 +114,7 @@ module superscalar_execute_stage #(
     assign fu1_data_b = rs_to_exec_1.data_b;
     
     // Misprediction detection for FU1
-    assign fu1_misprediction = (fu1_mpc ^ rs_to_exec_1.branch_prediction);
+    assign fu1_misprediction = fu1_jalr? fu1_result != rs_to_exec_1.pc_value_at_prediction : (fu1_mpc ^ rs_to_exec_1.branch_prediction);
     
     // PC correction for JALR (FU1)
     assign fu1_correct_pc = fu1_jalr ? {fu1_result[31:2], 2'b00} : {rs_to_exec_1.pc[31:2], 2'b00};
@@ -138,7 +138,7 @@ module superscalar_execute_stage #(
     assign fu2_data_b = rs_to_exec_2.data_b;
     
     // Misprediction detection for FU2
-    assign fu2_misprediction = (fu2_mpc ^ rs_to_exec_2.branch_prediction);
+    assign fu2_misprediction = fu2_jalr ? fu2_result != rs_to_exec_2.pc_value_at_prediction : (fu2_mpc ^ rs_to_exec_2.branch_prediction);
     
     // PC correction for JALR (FU2)
     assign fu2_correct_pc = fu2_jalr ? {fu2_result[31:2], 2'b00} : {rs_to_exec_2.pc[31:2], 2'b00};

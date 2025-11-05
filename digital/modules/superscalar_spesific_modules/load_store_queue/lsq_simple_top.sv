@@ -173,7 +173,7 @@ module lsq_simple_top
    logic [LSQ_ADDR_WIDTH+1:0] distance_1;
    logic [LSQ_ADDR_WIDTH+1:0] distance_2;
 
-   logic [LSQ_ADDR_WIDTH:0] tail_ptr;  // Points to next free entry
+   logic [LSQ_ADDR_WIDTH:0] tail_ptr, tail_plus_3;  // Points to next free entry
    logic [LSQ_ADDR_WIDTH-1:0] alloc_0_ptr;  // Points to next free entry
    logic [LSQ_ADDR_WIDTH-1:0] alloc_1_ptr;  // Points to next free entry
    logic [LSQ_ADDR_WIDTH-1:0] alloc_2_ptr;  // Points to next free entry
@@ -194,10 +194,11 @@ module lsq_simple_top
    always_comb begin
       count = 6;//tail_ptr - head_ptr;  // todo check maybe use valid
    end
+   assign tail_plus_3 = tail_ptr + 3;
+   assign distance_0 = (tail_plus_3 - head_ptr) <  (tail_ptr +3 - head_ptr) ?  (tail_plus_3 - head_ptr) : (tail_ptr +3 - head_ptr); 
+   assign distance_1 = (tail_plus_3 - head_ptr_1) <  (tail_ptr +3 - head_ptr_1) ?  (tail_plus_3 - head_ptr_1) : (tail_ptr +3 - head_ptr_1);
+   assign distance_2 = (tail_plus_3 - head_ptr_2) < (tail_ptr +3 - head_ptr_2) ? (tail_plus_3 - head_ptr_2) : (tail_ptr +3 - head_ptr_2);
 
-   assign distance_0 = (tail_ptr - head_ptr) +3;
-   assign distance_1 = (tail_ptr - head_ptr_1) +3;
-   assign distance_2 = (tail_ptr - head_ptr_2) +3;
 
    //==========================================================================
    // Forwarding Logic
