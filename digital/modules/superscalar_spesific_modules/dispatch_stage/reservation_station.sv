@@ -322,6 +322,9 @@ module reservation_station #(
     end//==========================================================================
     // CDB OUTPUT (COMBINATIONAL FOR SPEED)
     //==========================================================================
+    
+    //update this part, register should be at this part not for the rs to alu interface
+    //the source of the data is already registered!!! Update : not sure :D
 
     // Broadcast results from functional unit to CDB
     // Note: The specific CDB channel (0, 1, or 2) is determined by the modport connection

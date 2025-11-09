@@ -45,6 +45,16 @@ module dispatch_stage #(
 
     cdb_if cdb_interface,  // Common Data Bus interface
 
+    `ifndef SYNTHESIS
+    tracer_interface i_tracer_0,
+    tracer_interface i_tracer_1,
+    tracer_interface i_tracer_2,
+
+    tracer_interface o_tracer_0,
+    tracer_interface o_tracer_1,
+    tracer_interface o_tracer_2,
+    `endif
+
     output logic [DATA_WIDTH-1:0] data_0_addr,
     output logic [DATA_WIDTH-1:0] data_0_write,
     input  logic [DATA_WIDTH-1:0] data_0_read,
@@ -133,6 +143,10 @@ module dispatch_stage #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] allowed_store_address_0, allowed_store_address_1, allowed_store_address_2;
     //logic commit_exception_0, commit_exception_1, commit_exception_2;
 
+    `ifndef SYNTHESIS
+    logic [DATA_WIDTH-1:0] tracer_store_data_0, tracer_store_data_1, tracer_store_data_2;
+    `endif
+
     assign commit_rob_idx_0 = rob_head_idx;
     assign commit_rob_idx_1 = rob_head_idx + 1;
     assign commit_rob_idx_2 = rob_head_idx + 2;
@@ -195,6 +209,20 @@ module dispatch_stage #(
         .cdb_mem_addr_calculation_0(cdb_interface.cdb_mem_addr_calculation_0),
         .cdb_mem_addr_calculation_1(cdb_interface.cdb_mem_addr_calculation_1),
         .cdb_mem_addr_calculation_2(cdb_interface.cdb_mem_addr_calculation_2),
+
+        `ifndef SYNTHESIS
+        .i_tracer_0(i_tracer_0),
+        .i_tracer_1(i_tracer_1),   
+        .i_tracer_2(i_tracer_2),
+
+        .o_tracer_0(o_tracer_0),
+        .o_tracer_1(o_tracer_1),
+        .o_tracer_2(o_tracer_2),
+
+        .tracer_store_data_0(tracer_store_data_0),
+        .tracer_store_data_1(tracer_store_data_1),
+        .tracer_store_data_2(tracer_store_data_2),
+        `endif
 
         .read_addr_0(inst_0_read_addr_a[4:0]),
         .read_addr_1(inst_0_read_addr_b[4:0]),
@@ -499,6 +527,13 @@ module dispatch_stage #(
       .mem_2_req_valid_o(data_2_req), // data_req
       .mem_2_resp_valid_i(data_2_ack), //data_ack
       .mem_2_req_ready_i(1'b1), //mem_ready
+
+      `ifndef SYNTHESIS
+      .tracer_0_store_data(tracer_store_data_0),
+      .tracer_1_store_data(tracer_store_data_1),
+      .tracer_2_store_data(tracer_store_data_2),
+      `endif
+      
     
       // Status outputs
       .lsq_count_o(),

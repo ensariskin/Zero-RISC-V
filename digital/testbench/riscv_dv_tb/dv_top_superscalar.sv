@@ -22,8 +22,8 @@ module dv_top_superscalar;
     parameter INST_BASE_addR = 32'h80000000;
     
     // Default region base addresses (can be overridden via plusargs)
-    parameter REGION0_BASE_addR_DEFAULT = 32'h00000000;  // Default Region 0 start address
-    parameter REGION1_BASE_addR_DEFAULT = 32'h7FFEFFF0;  // Default Region 1 start address
+    parameter REGION0_BASE_addR_DEFAULT = 32'h80000000; //32'h00000000;  // Default Region 0 start address
+    parameter REGION1_BASE_addR_DEFAULT = 32'h80001000; //32'h7FFEFFF0;  // Default Region 1 start address
     
     // Runtime configurable region base addresses
     logic [31:0] region0_base_addr;
@@ -161,15 +161,25 @@ module dv_top_superscalar;
     logic [31:0] region1_2_wb_adr, region1_2_wb_dat_o, region1_2_wb_dat_i;
     logic [3:0] region1_2_wb_sel;
     logic region1_2_wb_stall, region1_2_wb_ack, region1_2_wb_err;
+
+    tracer_interface tracer_0();
+    tracer_interface tracer_1();
+    tracer_interface tracer_2();
     
     
     // Test control
+    logic test_passed;
     logic test_failed;
     integer cycle_count;
     
     // Previous values for change detection
     logic [31:0] prev_debug_pc;
     logic [31:0] prev_perf_instructions_executed;
+
+
+    logic ecall_detected;
+    assign ecall_detected = (tracer_0.valid && (tracer_0.instr == 32'h00000073)) | (tracer_1.valid && (tracer_1.instr == 32'h73)) | (tracer_2.valid && (tracer_2.instr == 32'h00000073)); //ECALL instruction
+    logic [31:0] max_cycles;
     
     //==========================================================================
     // SIMULATION CONTROL and MONITorING
@@ -183,6 +193,18 @@ module dv_top_superscalar;
         $display("3-way superscalar configuration");
         $display("Simulation started at time %t", $time);
         $display("=================================================================");
+        `ifdef SECURE_UNALIGN_LSQ
+            $display("SECURE UNALIGN_LSQ is defined");
+        `else
+            $display("SECURE UNALIGN_LSQ is NOT defined");
+        `endif
+
+        `ifdef DEBUG_MEMORY_SELECTOR
+            $display("DEBUG_MEMORY_SELECTOR is defined");
+        `else
+            $display("DEBUG_MEMORY_SELECTOR is NOT defined");
+        `endif
+        
     end
 
     
@@ -207,6 +229,8 @@ module dv_top_superscalar;
         rst_n = 1;
         $display("[%t] Reset released", $time);
     end
+
+
     
     //==========================================================================
     // SUPERSCALAR CorE INSTANTIATION
@@ -231,6 +255,10 @@ module dv_top_superscalar;
         .instruction_i_2(instruction_i_2),
         .instruction_i_3(instruction_i_3),
         .instruction_i_4(instruction_i_4),
+
+        .o_tracer_0(tracer_0),
+        .o_tracer_1(tracer_1),
+        .o_tracer_2(tracer_2),
         // Data Memory Interface
         .data_0_addr (data_0_addr),
         .data_0_write(data_0_write),
@@ -663,7 +691,7 @@ module dv_top_superscalar;
     );
     
     // Region 0 data memory (4KB = 1K words)
-    memory_3rw #(
+    memory_3rw_unaligned #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(10),  // 1K words = 4KB memory (2^10 = 1024 words)
         .NUM_WMASKS(4)
@@ -711,7 +739,7 @@ module dv_top_superscalar;
     );
     
     // Region 1 data memory (64KB = 16K words)
-    memory_3rw #(
+    memory_3rw_unaligned #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
@@ -756,6 +784,54 @@ module dv_top_superscalar;
         .port2_wb_err_o  (region1_2_wb_err),
         .port2_wb_rst_i(~rst_n),
         .port2_wb_clk_i(clk)
+    );
+
+
+    //==========================================================================
+    // Tracer Module 
+    //==========================================================================
+    tracer_3port tracer (
+        .clk_i      (clk),
+        .valid_0    (tracer_0.valid),
+        .pc_0       (tracer_0.pc),
+        .instr_0    (tracer_0.instr),
+        .reg_addr_0 (tracer_0.reg_addr),
+        .reg_data_0 (tracer_0.reg_data),
+        .is_load_0  (tracer_0.is_load),
+        .is_store_0 (tracer_0.is_store),
+        .is_float_0 (tracer_0.is_float),
+        .mem_size_0 (tracer_0.mem_size),
+        .mem_addr_0 (tracer_0.mem_addr),
+        .mem_data_0 (tracer_0.mem_data),
+        .fpu_flags_0(tracer_0.fpu_flags),
+
+        .valid_1    (tracer_1.valid),
+        .pc_1       (tracer_1.pc),
+        .instr_1    (tracer_1.instr),
+        .reg_addr_1 (tracer_1.reg_addr),
+        .reg_data_1 (tracer_1.reg_data),
+        .is_load_1  (tracer_1.is_load),
+        .is_store_1 (tracer_1.is_store),
+        .is_float_1 (tracer_1.is_float),
+        .mem_size_1 (tracer_1.mem_size),
+        .mem_addr_1 (tracer_1.mem_addr),
+        .mem_data_1 (tracer_1.mem_data),
+        .fpu_flags_1(tracer_1.fpu_flags),
+
+        .valid_2    (tracer_2.valid),
+        .pc_2       (tracer_2.pc),
+        .instr_2    (tracer_2.instr),
+        .reg_addr_2 (tracer_2.reg_addr),
+        .reg_data_2 (tracer_2.reg_data),
+        .is_load_2  (tracer_2.is_load),
+        .is_store_2 (tracer_2.is_store),
+        .is_float_2 (tracer_2.is_float),
+        .mem_size_2 (tracer_2.mem_size),
+        .mem_addr_2 (tracer_2.mem_addr),
+        .mem_data_2 (tracer_2.mem_data),
+        .fpu_flags_2(tracer_2.fpu_flags)
+
+
     );
     
 
@@ -833,7 +909,13 @@ module dv_top_superscalar;
     real avg_cdb_all_valid;
     real avg_commit_rate;
 
+    integer total_branches;          // Total predicted branches (update_prediction_valid)
+    integer mispredicted_branches;   // Mispredicted branches
+    integer jalr_count;              // JALR instructions (misprediction without prediction_valid)
+    integer total_rob_entries_on_mispred; // Total ROB entries when mispredictions occur
+    integer total_mispredictions;         // Total mispredictions (branches + JALR)
 
+    
 
     // Periodic decode activity sampling
     always @(posedge clk) begin
@@ -860,16 +942,16 @@ module dv_top_superscalar;
                                      dut.issue_stage_unit.lsq_alloc_ready[0];
 
 
-            cdb_0_valid_count =  cdb_0_valid_count + dut.cdb_interface.cdb_valid_0;
-            cdb_1_valid_count =  cdb_1_valid_count + dut.cdb_interface.cdb_valid_1;
-            cdb_2_valid_count =  cdb_2_valid_count + dut.cdb_interface.cdb_valid_2;
+            cdb_0_valid_count =  cdb_0_valid_count + (dut.cdb_interface.cdb_valid_0 & !dut.cdb_interface.cdb_mem_addr_calculation_0);
+            cdb_1_valid_count =  cdb_1_valid_count + (dut.cdb_interface.cdb_valid_1 & !dut.cdb_interface.cdb_mem_addr_calculation_1);
+            cdb_2_valid_count =  cdb_2_valid_count + (dut.cdb_interface.cdb_valid_2 & !dut.cdb_interface.cdb_mem_addr_calculation_2);
             cdb_3_0_valid_count =  cdb_3_0_valid_count + dut.cdb_interface.cdb_valid_3_0;
             cdb_3_1_valid_count =  cdb_3_1_valid_count + dut.cdb_interface.cdb_valid_3_1;
             cdb_3_2_valid_count =  cdb_3_2_valid_count + dut.cdb_interface.cdb_valid_3_2;
             cdb_all_valid_count =  cdb_all_valid_count + 
-                                      dut.cdb_interface.cdb_valid_0 +
-                                      dut.cdb_interface.cdb_valid_1 +
-                                      dut.cdb_interface.cdb_valid_2 +
+                                      (dut.cdb_interface.cdb_valid_0 & !dut.cdb_interface.cdb_mem_addr_calculation_0)  + 
+                                      (dut.cdb_interface.cdb_valid_1 & !dut.cdb_interface.cdb_mem_addr_calculation_1) +
+                                      (dut.cdb_interface.cdb_valid_2 & !dut.cdb_interface.cdb_mem_addr_calculation_2) +
                                       dut.cdb_interface.cdb_valid_3_0 +
                                       dut.cdb_interface.cdb_valid_3_1 +
                                       dut.cdb_interface.cdb_valid_3_2;
@@ -882,7 +964,11 @@ module dv_top_superscalar;
             cycle_count++;
 
             // Report every 10000 cycles
-            if (cycle_count % 10000 == 0 && cycle_count > 0) begin
+            if (cycle_count % 1000 == 0 && cycle_count > 0) begin
+                automatic real current_prediction_accuracy;
+                automatic real current_jalr_ratio;
+                automatic real current_avg_rob_on_mispred;
+                
                 avg_decode_ready =  decode_ready_count / real'(cycle_count);
                 avg_decode_valid =  decode_valid_count / real'(cycle_count);
                 avg_rs_0_ready  =  rs_0_ready_count / real'(cycle_count);
@@ -901,6 +987,22 @@ module dv_top_superscalar;
                 avg_cdb_all_valid =  cdb_all_valid_count / real'(cycle_count);
 
                 avg_commit_rate = commit_count / real'(cycle_count);
+                
+                // Calculate current branch prediction stats
+                if (total_branches > 0) begin
+                    current_prediction_accuracy = 100.0 * (1.0 - (real'(mispredicted_branches) / real'(total_branches)));
+                    current_jalr_ratio = 100.0 * (real'(jalr_count) / real'(total_branches));
+                end else begin
+                    current_prediction_accuracy = 0.0;
+                    current_jalr_ratio = 0.0;
+                end
+                
+                // Calculate average ROB occupancy on misprediction
+                if (total_mispredictions > 0) begin
+                    current_avg_rob_on_mispred = real'(total_rob_entries_on_mispred) / real'(total_mispredictions);
+                end else begin
+                    current_avg_rob_on_mispred = 0.0;
+                end
 
                 $display("[%t]\n Activity Report (last %0d cycles):", $time, cycle_count);
                 $display("  Avg decode_ready_o: %.2f instructions/cycle", avg_decode_ready);
@@ -918,6 +1020,14 @@ module dv_top_superscalar;
                 $display("  Avg CDB3_2 valid: %.2f broadcasts/cycle", avg_cdb_3_2_valid);
                 $display("  Avg CDB all valid: %.2f broadcasts/cycle", avg_cdb_all_valid);
                 $display("  Avg Commit rate: %.2f instructions/cycle", avg_commit_rate);
+                $display("  --- Branch Prediction Stats ---");
+                $display("  Total branches: %0d", total_branches);
+                $display("  Mispredicted: %0d", mispredicted_branches);
+                $display("  JALR count: %0d", jalr_count);
+                $display("  Total mispredictions: %0d", total_mispredictions);
+                $display("  Prediction accuracy: %.2f%%", current_prediction_accuracy);
+                $display("  JALR/Branch ratio: %.2f%%", current_jalr_ratio);
+                $display("  Avg ROB entries on misprediction: %.2f entries", current_avg_rob_on_mispred);
                 $display("---------------------------------------------------------------------" );
             end
             
@@ -1066,7 +1176,7 @@ module dv_top_superscalar;
     final begin
         $fclose(commit_log_file);
     end
-/* 
+
     //==========================================================================
     // LSQ ALLOCATION/DEALLOCATION CHECKER
     //==========================================================================
@@ -1077,17 +1187,28 @@ module dv_top_superscalar;
     integer lsq_error_count;
     integer lsq_alloc_count;
     integer lsq_dealloc_count;
-    
+    integer lsq_mispred_flush_count;
+
+   
     initial begin
         lsq_allocated_regs = 64'h0;
         lsq_error_count = 0;
         lsq_alloc_count = 0;
         lsq_dealloc_count = 0;
+        lsq_mispred_flush_count = 0;
     end
     
     // Monitor LSQ allocations and deallocations
     always @(posedge clk) begin
-        if (rst_n) begin
+        if (!rst_n) begin
+            // Reset on system reset
+            lsq_allocated_regs = 64'h0;
+        end else if (dut.misprediction_detected) begin
+            // Flush all LSQ allocations on misprediction
+            lsq_allocated_regs = 64'h0;
+            lsq_mispred_flush_count++;
+            //$display("[%t] LSQ FLUSH: Misprediction detected, clearing all LSQ allocations", $time);
+        end else begin
             // Check for allocations (when need_lsq_alloc_* is high)
             if (dut.issue_stage_unit.rat_inst.need_lsq_alloc_0) begin
                 if (lsq_allocated_regs[dut.issue_stage_unit.rat_inst.first_free]) begin
@@ -1166,11 +1287,13 @@ module dv_top_superscalar;
     
     // Check for register leaks at end of simulation
     final begin
+        if(!test_passed) begin
         automatic int leaked_count = 0;
         $display("\n========== LSQ ALLOCATION CHECKER SUMMARY ==========");
-        $display("Total allocations:   %0d", lsq_alloc_count);
-        $display("Total deallocations: %0d", lsq_dealloc_count);
-        $display("Total errors:        %0d", lsq_error_count);
+        $display("Total allocations:        %0d", lsq_alloc_count);
+        $display("Total deallocations:      %0d", lsq_dealloc_count);
+        $display("Misprediction flushes:    %0d", lsq_mispred_flush_count);
+        $display("Total errors:             %0d", lsq_error_count);
         
         // Check for leaked registers
         for (int i = 0; i < 64; i++) begin
@@ -1181,7 +1304,37 @@ module dv_top_superscalar;
         end
         
         if (leaked_count > 0) begin
-            $display("Leaked registers:    %0d", leaked_count);
+            $display("Leaked registers:         %0d", leaked_count);
+        end
+        
+        if (lsq_error_count > 0) begin
+            $error("LSQ CHECKER FAILED with %0d errors!", lsq_error_count);
+        end else begin
+            $display("LSQ CHECKER PASSED - No allocation/deallocation errors detected");
+        end
+        $display("====================================================\n");
+        end
+    end
+
+    initial begin
+        automatic int leaked_count = 0;
+        wait(ecall_detected);
+        $display("\n========== LSQ ALLOCATION CHECKER SUMMARY ==========");
+        $display("Total allocations:        %0d", lsq_alloc_count);
+        $display("Total deallocations:      %0d", lsq_dealloc_count);
+        $display("Misprediction flushes:    %0d", lsq_mispred_flush_count);
+        $display("Total errors:             %0d", lsq_error_count);
+        
+        // Check for leaked registers
+        for (int i = 0; i < 64; i++) begin
+            if (lsq_allocated_regs[i]) begin
+                $warning("LSQ LEAK WARNING: Register p%0d still allocated at end of simulation", i);
+                leaked_count++;
+            end
+        end
+        
+        if (leaked_count > 0) begin
+            $display("Leaked registers:         %0d", leaked_count);
         end
         
         if (lsq_error_count > 0) begin
@@ -1191,7 +1344,85 @@ module dv_top_superscalar;
         end
         $display("====================================================\n");
     end
-*/
+
+    //==========================================================================
+    // BRANCH PREDICTION & JALR STATISTICS
+    //==========================================================================
+    // Tracks branch prediction accuracy and JALR ratio
+   
+    initial begin
+        total_branches = 0;
+        mispredicted_branches = 0;
+        jalr_count = 0;
+        total_rob_entries_on_mispred = 0;
+        total_mispredictions = 0;
+    end
+    
+    // Monitor branch predictions and mispredictions
+    always @(posedge clk) begin
+        if (rst_n) begin
+            // Count total branches (when update_prediction_valid is high)
+            if (dut.fetch_buffer_unit.update_prediction_valid_i_0) begin
+                total_branches++;
+                
+                // Check if this branch was mispredicted
+                if (dut.fetch_buffer_unit.misprediction_0) begin
+                    mispredicted_branches++;
+                    total_mispredictions++;
+                    // Record ROB occupancy at misprediction
+                    total_rob_entries_on_mispred = total_rob_entries_on_mispred + dut.dispatch_stage_unit.rob.buffer_count;
+                    //$display("[%t] BRANCH MISPREDICTION: Branch #%0d was mispredicted, ROB count=%0d", 
+                    //         $time, total_branches, dut.dispatch_stage_unit.rob.buffer_count);
+                end
+            end else if (dut.misprediction_detected) begin
+                // Misprediction without prediction_valid = JALR
+                jalr_count++;
+                total_mispredictions++;
+                // Record ROB occupancy at misprediction
+                total_rob_entries_on_mispred = total_rob_entries_on_mispred + dut.dispatch_stage_unit.rob.buffer_count;
+                //$display("[%t] JALR DETECTED: Misprediction without prediction update, ROB count=%0d", 
+                //         $time, dut.dispatch_stage_unit.rob.buffer_count);
+            end
+        end
+    end
+    
+    // Display statistics at end of simulation
+    final begin
+        automatic real prediction_accuracy;
+        automatic real jalr_ratio;
+        automatic real avg_rob_on_mispred;
+        
+        $display("\n========== BRANCH PREDICTION STATISTICS ==========");
+        $display("Total branches:           %0d", total_branches);
+        $display("Mispredicted branches:    %0d", mispredicted_branches);
+        $display("JALR instructions:        %0d", jalr_count);
+        $display("Total mispredictions:     %0d", total_mispredictions);
+        
+        if (total_branches > 0) begin
+            prediction_accuracy = 100.0 * (1.0 - (real'(mispredicted_branches) / real'(total_branches)));
+            $display("Branch prediction accuracy: %.2f%%", prediction_accuracy);
+        end else begin
+            $display("Branch prediction accuracy: N/A (no branches)");
+        end
+        
+        if (total_branches > 0) begin
+            jalr_ratio = 100.0 * (real'(jalr_count) / real'(total_branches));
+            $display("JALR/Branch ratio:        %.2f%%", jalr_ratio);
+        end else begin
+            $display("JALR/Branch ratio:        N/A");
+        end
+        
+        if (total_mispredictions > 0) begin
+            avg_rob_on_mispred = real'(total_rob_entries_on_mispred) / real'(total_mispredictions);
+            $display("Avg ROB entries on misprediction: %.2f entries", avg_rob_on_mispred);
+            $display("Total ROB entries flushed: %0d entries", total_rob_entries_on_mispred);
+        end else begin
+            $display("Avg ROB entries on misprediction: N/A (no mispredictions)");
+        end
+        
+        $display("==================================================\n");
+    end
+
     //==========================================================================
     // PROGRAM LOADING
     //==========================================================================
@@ -1231,7 +1462,33 @@ module dv_top_superscalar;
             region1_base_addr = REGION1_BASE_addR_DEFAULT;
             $display("Using default Region 1 base address: 0x%08x", region1_base_addr);
         end
+        wait(rst_n);
+        // Load region data if specified
+        if ($test$plusargs("load_region_data")) begin
+            string region0_file, region1_file;
+            if ($value$plusargs("region0_hex=%s", region0_file)) begin
+                $display("Loading region 0 data from: %s", region0_file);
+                $readmemh(region0_file, region0_data_memory.mem);
+                $display("Region 0 data loaded from %s", region0_file);
+            end
+            else if ($fopen("region_0.hex", "r")) begin
+                $display("Loading default region 0 data");
+                $readmemh("region_0.hex", region0_data_memory.mem);
+            end
+
+            if ($value$plusargs("region1_hex=%s", region1_file)) begin
+                $display("Loading region 1 data from: %s", region1_file);
+                $readmemh(region1_file, region1_data_memory.mem);
+                $display("Region 1 data loaded from %s", region1_file);
+            end
+            else if ($fopen("region_1.hex", "r")) begin
+                $display("Loading default region 1 data");
+                $readmemh("region_1.hex", region1_data_memory.mem);
+            end
+        end
     end
+
+    
 
     // Default test program for basic functionality
     task load_default_test_program();
@@ -1401,10 +1658,54 @@ module dv_top_superscalar;
         }
     endgroup
     */
+
+
     //==========================================================================
     // TEST COMPLETION DETECTION
     //==========================================================================
+
+    // Test completion detection
+    // Detect test completion based on various criteria
     
+    initial begin
+        test_passed = 0;
+        test_failed = 0;
+        
+        // Get maximum cycles from plusargs or use default
+        if (!$value$plusargs("max_cycles=%d", max_cycles)) begin
+            max_cycles = TIMEOUT_CYCLES;
+        end
+        
+        // Wait for reset to be released
+        wait(rst_n);
+        $display("Test execution started, max_cycles = %d", max_cycles);
+        
+        // Wait for test completion conditions
+        fork
+            begin
+                // Wait for ECALL instruction (normal test termination)
+                wait(ecall_detected);
+                $display("ECALL detected, test completed normally");
+                test_passed = 1;
+            end
+            begin
+                // Wait for timeout
+                repeat(max_cycles) @(posedge clk);
+                $display("Test timeout after %d cycles", max_cycles);
+                test_failed = 1;
+            end
+        join_any
+        
+        // Report test result
+        if (test_passed) begin
+            $display("TEST PASSED at time %t", $time);
+        end else if (test_failed) begin
+            $display("TEST FAILED at time %t", $time);
+        end
+        
+      #100;
+        $finish;
+    end
     
     // Final cleanup
     final begin

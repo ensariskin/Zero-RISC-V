@@ -67,6 +67,12 @@ module rv32i_superscalar_core #(
     output logic                  data_2_req,
     input  logic                  data_2_ack,
     input  logic                  data_2_err,
+
+    `ifndef SYNTHESIS
+    tracer_interface o_tracer_0,
+    tracer_interface o_tracer_1,
+    tracer_interface o_tracer_2,
+    `endif
     
     // External Interrupt Interface
     input  logic external_interrupt,
@@ -282,6 +288,12 @@ module rv32i_superscalar_core #(
     issue_to_dispatch_if #(.DATA_WIDTH(DATA_WIDTH), .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1)) 
         issue_to_dispatch_0_if(), issue_to_dispatch_1_if(), issue_to_dispatch_2_if();
     
+    `ifndef SYNTHESIS
+    tracer_interface tracer_issue_0 ();
+    tracer_interface tracer_issue_1 ();
+    tracer_interface tracer_issue_2 ();
+    `endif
+    
     issue_stage #(
         .DATA_WIDTH(DATA_WIDTH),
         .ARCH_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH),
@@ -324,6 +336,11 @@ module rv32i_superscalar_core #(
         .commit_rob_idx_1(commit_rob_idx_1),
         .commit_rob_idx_2(commit_rob_idx_2),
         
+        `ifndef SYNTHESIS
+        .tracer_0(tracer_issue_0),
+        .tracer_1(tracer_issue_1),
+        .tracer_2(tracer_issue_2),
+        `endif
         
         // Issue to Dispatch Stage Interfaces
         .issue_to_dispatch_0(issue_to_dispatch_0_if.issue),
@@ -361,6 +378,16 @@ module rv32i_superscalar_core #(
         .dispatch_to_alu_0(dispatch_to_alu_0_if.reservation_station),
         .dispatch_to_alu_1(dispatch_to_alu_1_if.reservation_station),
         .dispatch_to_alu_2(dispatch_to_alu_2_if.reservation_station),
+
+        `ifndef SYNTHESIS
+        .i_tracer_0(tracer_issue_0),
+        .i_tracer_1(tracer_issue_1),
+        .i_tracer_2(tracer_issue_2),
+
+        .o_tracer_0(o_tracer_0),
+        .o_tracer_1(o_tracer_1),
+        .o_tracer_2(o_tracer_2),
+        `endif
 
         .data_0_addr,
         .data_0_write,

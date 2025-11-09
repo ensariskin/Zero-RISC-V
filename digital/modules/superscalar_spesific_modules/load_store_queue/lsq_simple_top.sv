@@ -110,6 +110,12 @@ module lsq_simple_top
       input  logic                            mem_2_resp_valid_i,
       input  logic [DATA_WIDTH-1:0]           mem_2_resp_data_i,
 
+      `ifndef SYNTHESIS
+      // Debug interface
+      output logic [DATA_WIDTH-1:0]           tracer_0_store_data,
+      output logic [DATA_WIDTH-1:0]           tracer_1_store_data,
+      output logic [DATA_WIDTH-1:0]           tracer_2_store_data,
+      `endif
       // Status outputs
       output logic [LSQ_ADDR_WIDTH:0]         lsq_count_o,
       output logic                            lsq_full_o,
@@ -130,7 +136,11 @@ module lsq_simple_top
    logic [DATA_WIDTH-1:0] store_1_data;
    logic [DATA_WIDTH-1:0] store_2_data;
 
-
+   `ifndef SYNTHESIS
+   assign tracer_0_store_data = store_0_data;
+   assign tracer_1_store_data = store_1_data;
+   assign tracer_2_store_data = store_2_data;
+   `endif
    //==========================================================================
    // CIRCULAR BUFFER STRUCTURE (like ROB)
    //==========================================================================
@@ -230,6 +240,12 @@ module lsq_simple_top
    logic head_1_valids;
    logic head_2_valids;
 
+   `ifdef SECURE_UNALIGN_LSQ
+      logic head_0_should_wait_unaligned_store;
+      logic head_1_should_wait_unaligned_store;
+      logic head_2_should_wait_unaligned_store;
+   `endif
+
    always_comb begin
 
       head_0_head_1_addr_match = lsq_buffer[head_idx].addr_valid && lsq_buffer[head_idx_1].addr_valid && (lsq_buffer[head_idx].address == lsq_buffer[head_idx_1].address);
@@ -251,6 +267,9 @@ module lsq_simple_top
       head_0_should_wait = 1'b0;
       fwd_head_0         = 1'b0;
       head_0_fwd_source  = 2'b00;
+      `ifdef SECURE_UNALIGN_LSQ
+         head_0_should_wait_unaligned_store = 0;
+      `endif
 
       if(lsq_buffer[head_idx].valid && !lsq_buffer[head_idx].is_store && lsq_buffer[head_idx].addr_valid) begin // If it is load
          if(head_0_newer_than_head_1 && lsq_buffer[head_idx_1].is_store && head_0_newer_than_head_2 && lsq_buffer[head_idx_2].is_store) begin // If head is the newest
@@ -277,19 +296,27 @@ module lsq_simple_top
                   end
                end
             end
+            `ifdef SECURE_UNALIGN_LSQ
+               head_0_should_wait_unaligned_store = (head_1_valids & lsq_buffer[head_idx_1].address[1:0] != 2'b00) | (head_2_valids & lsq_buffer[head_idx_2].address[1:0] != 2'b00);
+            `endif
          end else if(head_0_newer_than_head_1 && lsq_buffer[head_idx_1].is_store) begin // If head is newer than head 1
             head_0_should_wait = !head_1_valids;
             if(!head_0_should_wait && head_0_head_1_addr_match) begin
                fwd_head_0        = 1'b1;
                head_0_fwd_source = 2'b01;
             end
-        
+            `ifdef SECURE_UNALIGN_LSQ
+               head_0_should_wait_unaligned_store = (head_1_valids & lsq_buffer[head_idx_1].address[1:0] != 2'b00);
+            `endif
          end else if(head_0_newer_than_head_2 && lsq_buffer[head_idx_2].is_store) begin // If head is newer than head 2
             head_0_should_wait = !head_2_valids;
             if(!head_0_should_wait && head_0_head_2_addr_match) begin
                fwd_head_0        = 1'b1;
                head_0_fwd_source = 2'b10;
             end
+            `ifdef SECURE_UNALIGN_LSQ
+               head_0_should_wait_unaligned_store = (head_2_valids & lsq_buffer[head_idx_2].address[1:0] != 2'b00);
+            `endif
          end
       end 
 
@@ -297,6 +324,9 @@ module lsq_simple_top
       head_1_should_wait = 1'b0;
       fwd_head_1         = 1'b0;
       head_1_fwd_source  = 2'b00;
+      `ifdef SECURE_UNALIGN_LSQ
+         head_1_should_wait_unaligned_store = 0;
+      `endif
 
       if(lsq_buffer[head_idx_1].valid && !lsq_buffer[head_idx_1].is_store && lsq_buffer[head_idx_1].addr_valid) begin // If it is load
          if(head_1_newer_than_head_0 && lsq_buffer[head_idx].is_store && head_1_newer_than_head_2 && lsq_buffer[head_idx_2].is_store) begin // If head_1 is the newest
@@ -323,19 +353,27 @@ module lsq_simple_top
                   end
                end
             end
+            `ifdef SECURE_UNALIGN_LSQ
+               head_1_should_wait_unaligned_store = (head_0_valids & lsq_buffer[head_idx].address[1:0] != 2'b00) | (head_2_valids & lsq_buffer[head_idx_2].address[1:0] != 2'b00);
+            `endif
          end else if(head_1_newer_than_head_0 && lsq_buffer[head_idx].is_store) begin // If head_1 is newer than head 0
             head_1_should_wait = !head_0_valids;
             if(!head_1_should_wait && head_0_head_1_addr_match) begin
                fwd_head_1        = 1'b1;
                head_1_fwd_source = 2'b00;
             end
-        
+            `ifdef SECURE_UNALIGN_LSQ
+               head_1_should_wait_unaligned_store = (head_0_valids & lsq_buffer[head_idx].address[1:0] != 2'b00);
+            `endif
          end else if(head_1_newer_than_head_2 && lsq_buffer[head_idx_2].is_store) begin // If head_1 is newer than head 2
             head_1_should_wait = !head_2_valids;
             if(!head_1_should_wait && head_1_head_2_addr_match) begin
                fwd_head_1        = 1'b1;
                head_1_fwd_source = 2'b10;
             end
+            `ifdef SECURE_UNALIGN_LSQ
+               head_1_should_wait_unaligned_store = (head_2_valids & lsq_buffer[head_idx_2].address[1:0] != 2'b00);
+            `endif
          end
       end
 
@@ -343,6 +381,9 @@ module lsq_simple_top
       head_2_should_wait = 1'b0;
       fwd_head_2         = 1'b0;
       head_2_fwd_source  = 2'b00;
+      `ifdef SECURE_UNALIGN_LSQ
+         head_2_should_wait_unaligned_store = 0;
+      `endif
 
       if(lsq_buffer[head_idx_2].valid && !lsq_buffer[head_idx_2].is_store && lsq_buffer[head_idx_2].addr_valid) begin // If it is load
          if(head_2_newer_than_head_0 && lsq_buffer[head_idx].is_store && head_2_newer_than_head_1 && lsq_buffer[head_idx_1].is_store) begin // If head_2 is the newest
@@ -369,19 +410,27 @@ module lsq_simple_top
                   end
                end
             end
+            `ifdef SECURE_UNALIGN_LSQ
+               head_2_should_wait_unaligned_store = (head_0_valids & lsq_buffer[head_idx].address[1:0] != 2'b00) | (head_1_valids & lsq_buffer[head_idx_1].address[1:0] != 2'b00);
+            `endif
          end else if(head_2_newer_than_head_0 && lsq_buffer[head_idx].is_store) begin // If head_2 is newer than head 0
             head_2_should_wait = !head_0_valids;
             if(!head_2_should_wait && head_0_head_2_addr_match) begin
                fwd_head_2        = 1'b1;
                head_2_fwd_source = 2'b00;
             end
-        
+            `ifdef SECURE_UNALIGN_LSQ
+               head_2_should_wait_unaligned_store = (head_0_valids & lsq_buffer[head_idx].address[1:0] != 2'b00);
+            `endif
          end else if(head_2_newer_than_head_1 && lsq_buffer[head_idx_1].is_store) begin // If head_2 is newer than head 1
             head_2_should_wait = !head_1_valids;
             if(!head_2_should_wait && head_1_head_2_addr_match) begin
                fwd_head_2        = 1'b1;
                head_2_fwd_source = 2'b01;
             end
+            `ifdef SECURE_UNALIGN_LSQ
+               head_2_should_wait_unaligned_store = (head_1_valids & lsq_buffer[head_idx_1].address[1:0] != 2'b00);
+            `endif
          end
       end
 
@@ -731,7 +780,11 @@ module lsq_simple_top
    logic head_ready;
    always_comb begin
       head_ready = 1'b0;
+      `ifdef SECURE_UNALIGN_LSQ
+      if (!lsq_empty_o && lsq_buffer[head_idx].valid && !lsq_buffer[head_idx].mem_issued && !(fwd_head_0 | head_0_should_wait | head_0_should_wait_unaligned_store)) begin 
+      `else
       if (!lsq_empty_o && lsq_buffer[head_idx].valid && !lsq_buffer[head_idx].mem_issued && !(fwd_head_0 | head_0_should_wait)) begin 
+      `endif
          // Head entry is ready if address is valid
          // For stores, also need data to be valid
          if (lsq_buffer[head_idx].addr_valid) begin
@@ -755,8 +808,11 @@ module lsq_simple_top
    logic head_ready_1;
    always_comb begin
       head_ready_1 = 1'b0;
-
+      `ifdef SECURE_UNALIGN_LSQ
+      if (!lsq_empty_o && lsq_buffer[head_idx_1].valid && !lsq_buffer[head_idx_1].mem_issued && !(fwd_head_1 | head_1_should_wait | head_1_should_wait_unaligned_store)) begin 
+      `else
       if (!lsq_empty_o && lsq_buffer[head_idx_1].valid && !lsq_buffer[head_idx_1].mem_issued && !(fwd_head_1 | head_1_should_wait)) begin 
+      `endif
          // Head entry is ready if address is valid
          // For stores, also need data to be valid
          if (lsq_buffer[head_idx_1].addr_valid) begin
@@ -781,8 +837,11 @@ module lsq_simple_top
    logic head_ready_2;
    always_comb begin
       head_ready_2 = 1'b0;
-
+      `ifdef SECURE_UNALIGN_LSQ
+      if (!lsq_empty_o && lsq_buffer[head_idx_2].valid && !lsq_buffer[head_idx_2].mem_issued && !(fwd_head_2 | head_2_should_wait | head_2_should_wait_unaligned_store)) begin 
+      `else
       if (!lsq_empty_o && lsq_buffer[head_idx_2].valid && !lsq_buffer[head_idx_2].mem_issued && !(fwd_head_2 | head_2_should_wait)) begin 
+      `endif 
          // Head entry is ready if address is valid
          // For stores, also need data to be valid
          if (lsq_buffer[head_idx_2].addr_valid) begin
@@ -810,7 +869,7 @@ module lsq_simple_top
    assign mem_0_req_addr_o     = lsq_buffer[head_idx].address;
    assign mem_0_req_data_o     = store_0_data;
    assign mem_0_req_be_o =  generate_byte_enable( 
-         lsq_buffer[head_idx].address[1:0],
+         0, //lsq_buffer[head_idx].address[1:0],
          lsq_buffer[head_idx].size
       );
 
@@ -819,7 +878,7 @@ module lsq_simple_top
    assign mem_1_req_addr_o     = lsq_buffer[head_idx_1].address;
    assign mem_1_req_data_o     = store_1_data;
    assign mem_1_req_be_o =  generate_byte_enable(
-         lsq_buffer[head_idx_1].address[1:0],
+         0, //lsq_buffer[head_idx_1].address[1:0],
          lsq_buffer[head_idx_1].size
       );
 
@@ -828,7 +887,7 @@ module lsq_simple_top
    assign mem_2_req_addr_o     = lsq_buffer[head_idx_2].address;
    assign mem_2_req_data_o     = store_2_data;
    assign mem_2_req_be_o =  generate_byte_enable(
-         lsq_buffer[head_idx_2].address[1:0],
+         0, //lsq_buffer[head_idx_2].address[1:0],
          lsq_buffer[head_idx_2].size
       );
 
@@ -836,8 +895,16 @@ module lsq_simple_top
    assign mem_1_type_sel = {lsq_buffer[head_idx_1].sign_extend, lsq_buffer[head_idx_1].size};
    assign mem_2_type_sel = {lsq_buffer[head_idx_2].sign_extend, lsq_buffer[head_idx_2].size};
 
+   logic [31:0] load_0_src_data;
+   logic [31:0] load_1_src_data;
+   logic [31:0] load_2_src_data;
+
+   assign load_0_src_data = fwd_head_0 ? (head_0_fwd_source == 2) ? lsq_buffer[head_idx_2].data : lsq_buffer[head_idx_1].data : mem_0_resp_data_i;
+   assign load_1_src_data = fwd_head_1 ? (head_1_fwd_source == 2) ? lsq_buffer[head_idx_2].data : lsq_buffer[head_idx].data : mem_1_resp_data_i;
+   assign load_2_src_data = fwd_head_2 ? (head_2_fwd_source == 1) ? lsq_buffer[head_idx_1].data : lsq_buffer[head_idx].data : mem_2_resp_data_i;
+
    data_organizer #(.size(32)) load_0_data_organizer (
-      .data_in(mem_0_resp_data_i), 
+      .data_in(load_0_src_data), 
       .Type_sel(mem_0_type_sel),
       .data_out(load_0_data)
    );
@@ -849,7 +916,7 @@ module lsq_simple_top
    );
 
    data_organizer #(.size(32)) load_1_data_organizer (
-      .data_in(mem_1_resp_data_i), 
+      .data_in(load_1_src_data), 
       .Type_sel(mem_1_type_sel),
       .data_out(load_1_data)
    );
@@ -861,7 +928,7 @@ module lsq_simple_top
    );
 
    data_organizer #(.size(32)) load_2_data_organizer (
-      .data_in(mem_2_resp_data_i), 
+      .data_in(load_2_src_data), 
       .Type_sel(mem_2_type_sel),
       .data_out(load_2_data)
    );
@@ -879,17 +946,17 @@ module lsq_simple_top
 
    assign cdb_interface.cdb_valid_3_0 = mem_0_resp_valid_i | fwd_head_0; //lsq_buffer[head_idx].mem_complete;
    assign cdb_interface.cdb_tag_3_0 = 3'b011;
-   assign cdb_interface.cdb_data_3_0 = fwd_head_0 ? (head_0_fwd_source == 2) ? lsq_buffer[head_idx_2].data : lsq_buffer[head_idx_1].data : load_0_data; //lsq_buffer[head_idx].data;
+   assign cdb_interface.cdb_data_3_0 =  load_0_data; //lsq_buffer[head_idx].data;
    assign cdb_interface.cdb_dest_reg_3_0 = lsq_buffer[head_idx].phys_reg;
 
    assign cdb_interface.cdb_valid_3_1 = mem_1_resp_valid_i | fwd_head_1; //lsq_buffer[head_idx_1].mem_complete;
    assign cdb_interface.cdb_tag_3_1 = 3'b011;
-   assign cdb_interface.cdb_data_3_1 = fwd_head_1 ? (head_1_fwd_source == 2) ? lsq_buffer[head_idx_2].data : lsq_buffer[head_idx].data : load_1_data; //lsq_buffer[head_idx_1].data;
+   assign cdb_interface.cdb_data_3_1 =  load_1_data; //lsq_buffer[head_idx_1].data;
    assign cdb_interface.cdb_dest_reg_3_1 = lsq_buffer[head_idx_1].phys_reg;
 
    assign cdb_interface.cdb_valid_3_2 = mem_2_resp_valid_i | fwd_head_2; //lsq_buffer[head_idx_2].mem_complete;
    assign cdb_interface.cdb_tag_3_2 = 3'b011;
-   assign cdb_interface.cdb_data_3_2 = fwd_head_2 ? (head_2_fwd_source == 1) ? lsq_buffer[head_idx_1].data : lsq_buffer[head_idx].data : load_2_data;
+   assign cdb_interface.cdb_data_3_2 =  load_2_data; //we nedd mask here
    assign cdb_interface.cdb_dest_reg_3_2 = lsq_buffer[head_idx_2].phys_reg;
 
 

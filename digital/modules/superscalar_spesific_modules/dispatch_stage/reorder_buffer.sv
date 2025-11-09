@@ -91,6 +91,22 @@ module reorder_buffer #(
     input  logic cdb_mem_addr_calculation_2,
 
     //==========================================================================
+    // Tracer Interface (for debugging, non-synthesis)
+    //==========================================================================
+    `ifndef SYNTHESIS
+    tracer_interface.sink i_tracer_0,
+    tracer_interface.sink i_tracer_1,
+    tracer_interface.sink i_tracer_2,
+
+    tracer_interface.source o_tracer_0,
+    tracer_interface.source o_tracer_1,
+    tracer_interface.source o_tracer_2,
+
+    input logic [DATA_WIDTH-1:0] tracer_store_data_0,
+    input logic [DATA_WIDTH-1:0] tracer_store_data_1,
+    input logic [DATA_WIDTH-1:0] tracer_store_data_2,
+    `endif
+    //==========================================================================
     // READ INTERFACE (for reservation stations)
     //==========================================================================
     input  logic [ADDR_WIDTH-1:0] read_addr_0,
@@ -182,6 +198,25 @@ module reorder_buffer #(
     logic [BUFFER_DEPTH-1:0][ADDR_WIDTH-1:0] buffer_addr;
     logic [BUFFER_DEPTH-1:0] buffer_executed;
     logic [BUFFER_DEPTH-1:0] buffer_exception;
+
+    `ifndef SYNTHESIS
+    // Tracer instances for debugging (non-synthesis)
+    typedef struct packed {
+        logic valid;
+        logic [31:0] pc;
+        logic [31:0] instr;
+        logic [4:0] reg_addr;
+        logic [31:0] reg_data;
+        logic is_load; 
+        logic is_store; 
+        logic is_float;
+        logic [1:0] mem_size;
+        logic [31:0] mem_addr;
+        logic [31:0] mem_data;
+        logic [31:0] fpu_flags;
+    } lsq_simple_entry_t;
+    lsq_simple_entry_t [BUFFER_DEPTH-1:0] tracer_buffer;
+    `endif
 
     /// branch and jalr related buffers (not efficient but easy to implement)
     logic [BUFFER_DEPTH-1:0] [DATA_WIDTH-1:0] buffer_correct_pc;
@@ -666,6 +701,8 @@ module reorder_buffer #(
                 buffer_correct_pc[i] <= #D '0;
                 buffer_is_branch[i] <= #D 1'b0;
                 buffer_is_store[i] <= #D 1'b0;
+
+                tracer_buffer <= #D '0;
             end
 
             // Reset pointers
@@ -689,6 +726,8 @@ module reorder_buffer #(
                     buffer_correct_pc[i] <= #D '0;
                     buffer_is_branch[i] <= #D 1'b0;
                     buffer_is_store[i] <= #D 1'b0;
+
+                    tracer_buffer <= #D '0;
                 end
 
                 // Reset pointers
@@ -723,6 +762,22 @@ module reorder_buffer #(
                         buffer_correct_pc[alloc_idx_0] <= #D '0;
                         buffer_is_branch[alloc_idx_0] <= #D 1'b0; // todo set is_branch at allocation
                         buffer_is_store[alloc_idx_0] <= #D alloc_is_store_0;
+                        
+                        `ifndef SYNTHESIS
+                        tracer_buffer[alloc_idx_0].valid     <= #D i_tracer_0.valid;
+                        tracer_buffer[alloc_idx_0].pc        <= #D i_tracer_0.pc;
+                        tracer_buffer[alloc_idx_0].instr     <= #D i_tracer_0.instr;
+                        tracer_buffer[alloc_idx_0].reg_addr  <= #D i_tracer_0.reg_addr;
+                        tracer_buffer[alloc_idx_0].reg_data  <= #D i_tracer_0.reg_data;
+                        tracer_buffer[alloc_idx_0].is_load   <= #D i_tracer_0.is_load;
+                        tracer_buffer[alloc_idx_0].is_store  <= #D i_tracer_0.is_store;
+                        tracer_buffer[alloc_idx_0].is_float  <= #D i_tracer_0.is_float;
+                        tracer_buffer[alloc_idx_0].mem_size  <= #D i_tracer_0.mem_size;
+                        tracer_buffer[alloc_idx_0].mem_addr  <= #D i_tracer_0.mem_addr;
+                        tracer_buffer[alloc_idx_0].mem_data  <= #D i_tracer_0.mem_data;
+                        tracer_buffer[alloc_idx_0].fpu_flags <= #D i_tracer_0.fpu_flags;
+                        `endif
+                    
 
                     end
                     if (alloc_enable_1) begin
@@ -735,6 +790,21 @@ module reorder_buffer #(
                         buffer_correct_pc[alloc_idx_1] <= #D '0;
                         buffer_is_branch[alloc_idx_1] <= #D 1'b0;
                         buffer_is_store[alloc_idx_1] <= #D alloc_is_store_1;
+
+                        `ifndef SYNTHESIS
+                        tracer_buffer[alloc_idx_1].valid     <= #D i_tracer_1.valid;
+                        tracer_buffer[alloc_idx_1].pc        <= #D i_tracer_1.pc;
+                        tracer_buffer[alloc_idx_1].instr     <= #D i_tracer_1.instr;
+                        tracer_buffer[alloc_idx_1].reg_addr  <= #D i_tracer_1.reg_addr;
+                        tracer_buffer[alloc_idx_1].reg_data  <= #D i_tracer_1.reg_data;
+                        tracer_buffer[alloc_idx_1].is_load   <= #D i_tracer_1.is_load;
+                        tracer_buffer[alloc_idx_1].is_store  <= #D i_tracer_1.is_store;
+                        tracer_buffer[alloc_idx_1].is_float  <= #D i_tracer_1.is_float;
+                        tracer_buffer[alloc_idx_1].mem_size  <= #D i_tracer_1.mem_size;
+                        tracer_buffer[alloc_idx_1].mem_addr  <= #D i_tracer_1.mem_addr;
+                        tracer_buffer[alloc_idx_1].mem_data  <= #D i_tracer_1.mem_data;
+                        tracer_buffer[alloc_idx_1].fpu_flags <= #D i_tracer_1.fpu_flags;
+                        `endif
                     end
                     if (alloc_enable_2) begin
                         buffer_data[alloc_idx_2] <= #D '0;
@@ -746,6 +816,21 @@ module reorder_buffer #(
                         buffer_correct_pc[alloc_idx_2] <= #D '0;
                         buffer_is_branch[alloc_idx_2] <= #D 1'b0;
                         buffer_is_store[alloc_idx_2] <= #D alloc_is_store_2;
+
+                        `ifndef SYNTHESIS
+                        tracer_buffer[alloc_idx_2].valid     <= #D i_tracer_2.valid;
+                        tracer_buffer[alloc_idx_2].pc        <= #D i_tracer_2.pc;
+                        tracer_buffer[alloc_idx_2].instr     <= #D i_tracer_2.instr;
+                        tracer_buffer[alloc_idx_2].reg_addr  <= #D i_tracer_2.reg_addr;
+                        tracer_buffer[alloc_idx_2].reg_data  <= #D i_tracer_2.reg_data;
+                        tracer_buffer[alloc_idx_2].is_load   <= #D i_tracer_2.is_load;
+                        tracer_buffer[alloc_idx_2].is_store  <= #D i_tracer_2.is_store;
+                        tracer_buffer[alloc_idx_2].is_float  <= #D i_tracer_2.is_float;
+                        tracer_buffer[alloc_idx_2].mem_size  <= #D i_tracer_2.mem_size;
+                        tracer_buffer[alloc_idx_2].mem_addr  <= #D i_tracer_2.mem_addr;
+                        tracer_buffer[alloc_idx_2].mem_data  <= #D i_tracer_2.mem_data;
+                        tracer_buffer[alloc_idx_2].fpu_flags <= #D i_tracer_2.fpu_flags;
+                        `endif
                     end
                 end
 
@@ -761,7 +846,18 @@ module reorder_buffer #(
                     buffer_correct_pc[cdb_addr_0] <= #D cdb_correct_pc_0;
                     buffer_is_branch[cdb_addr_0] <= #D cdb_is_branch_0;
                 end
-                if (cdb_valid_1 && (buffer_tag[cdb_addr_1] == 3'b001 | (buffer_tag[cdb_addr_1] == 3'b011 & buffer_is_store[cdb_addr_1] & cdb_mem_addr_calculation_1))) begin
+                `ifndef SYNTHESIS
+                 if (cdb_valid_0 && (buffer_tag[cdb_addr_0] == 3'b000 | (buffer_tag[cdb_addr_0] == 3'b011 & cdb_mem_addr_calculation_0))) begin
+                    // Update tracer info on execution completion
+                    if(cdb_mem_addr_calculation_0) begin
+                        tracer_buffer[cdb_addr_0].mem_addr <= #D cdb_data_0;
+                    end
+                    else begin
+                        tracer_buffer[cdb_addr_0].reg_data <= #D cdb_data_0;
+                    end
+                    `endif
+                end
+                if (cdb_valid_1 && (buffer_tag[cdb_addr_1] == 3'b001 | (buffer_tag[cdb_addr_1] == 3'b011 & buffer_is_store[cdb_addr_1] & cdb_mem_addr_calculation_1))) begin //todo do we need store address anymore?
                     buffer_data[cdb_addr_1] <= #D cdb_data_1;
                     buffer_tag[cdb_addr_1] <= #D TAG_VALID;
                     buffer_executed[cdb_addr_1] <= #D !cdb_mem_addr_calculation_1;
@@ -769,6 +865,18 @@ module reorder_buffer #(
 
                     buffer_correct_pc[cdb_addr_1] <= #D cdb_correct_pc_1;
                     buffer_is_branch[cdb_addr_1] <= #D cdb_is_branch_1;
+
+                end
+                `ifndef SYNTHESIS
+                if (cdb_valid_1 && (buffer_tag[cdb_addr_1] == 3'b001 | (buffer_tag[cdb_addr_1] == 3'b011 & cdb_mem_addr_calculation_1))) begin //todo do we need store address anymore?
+                    // Update tracer info on execution completion
+                    if(cdb_mem_addr_calculation_1) begin
+                        tracer_buffer[cdb_addr_1].mem_addr <= #D cdb_data_1;
+                    end
+                    else begin
+                        tracer_buffer[cdb_addr_1].reg_data <= #D cdb_data_1;
+                    end
+                    `endif
                 end
                 if (cdb_valid_2 && (buffer_tag[cdb_addr_2] == 3'b010 | (buffer_tag[cdb_addr_2] == 3'b011 & buffer_is_store[cdb_addr_2] & cdb_mem_addr_calculation_2))) begin
                     buffer_data[cdb_addr_2] <= #D cdb_data_2;
@@ -778,6 +886,19 @@ module reorder_buffer #(
 
                     buffer_correct_pc[cdb_addr_2] <= #D cdb_correct_pc_2;
                     buffer_is_branch[cdb_addr_2] <= #D cdb_is_branch_2;
+                    
+                   
+                end
+                `ifndef SYNTHESIS
+                if (cdb_valid_2 && (buffer_tag[cdb_addr_2] == 3'b010 | (buffer_tag[cdb_addr_2] == 3'b011 & cdb_mem_addr_calculation_2))) begin
+
+                    if(cdb_mem_addr_calculation_2) begin
+                        tracer_buffer[cdb_addr_2].mem_addr <= #D cdb_data_2;
+                    end
+                    else begin
+                        tracer_buffer[cdb_addr_2].reg_data <= #D cdb_data_2;
+                    end
+                    `endif
                 end
                 if (cdb_valid_3_2 && (buffer_tag[cdb_addr_3_2] == 3'b011 | buffer_tag[cdb_addr_3_2] == TAG_VALID) ) begin 
                     buffer_data[cdb_addr_3_2] <= #D cdb_data_3_2;
@@ -788,6 +909,11 @@ module reorder_buffer #(
 
                     buffer_correct_pc[cdb_addr_3_2] <= #D '0;
                     buffer_is_branch[cdb_addr_3_2] <= #D 1'b0;
+
+                    `ifndef SYNTHESIS
+                    tracer_buffer[cdb_addr_3_2].reg_data <= #D cdb_data_3_2;
+                    tracer_buffer[cdb_addr_3_2].mem_data <= #D tracer_store_data_2;
+                    `endif
                 end
                 if (cdb_valid_3_1 && (buffer_tag[cdb_addr_3_1] == 3'b011 | buffer_tag[cdb_addr_3_1] == TAG_VALID) ) begin 
                     buffer_data[cdb_addr_3_1] <= #D cdb_data_3_1;
@@ -798,6 +924,11 @@ module reorder_buffer #(
 
                     buffer_correct_pc[cdb_addr_3_1] <= #D '0;
                     buffer_is_branch[cdb_addr_3_1] <= #D 1'b0;
+
+                    `ifndef SYNTHESIS
+                    tracer_buffer[cdb_addr_3_1].reg_data <= #D cdb_data_3_1;
+                    tracer_buffer[cdb_addr_3_1].mem_data <= #D tracer_store_data_1;
+                    `endif
                 end
                 if (cdb_valid_3_0 && (buffer_tag[cdb_addr_3_0] == 3'b011 | buffer_tag[cdb_addr_3_0] == TAG_VALID) ) begin 
                     buffer_data[cdb_addr_3_0] <= #D cdb_data_3_0;
@@ -809,6 +940,11 @@ module reorder_buffer #(
 
                     buffer_correct_pc[cdb_addr_3_0] <= #D '0;
                     buffer_is_branch[cdb_addr_3_0] <= #D 1'b0;
+
+                    `ifndef SYNTHESIS
+                    tracer_buffer[cdb_addr_3_0].reg_data <= #D cdb_data_3_0;
+                    tracer_buffer[cdb_addr_3_0].mem_data <= #D tracer_store_data_0;
+                    `endif
                 end
 
                 if(head_idx_d1 != head_idx) begin // detected commit
@@ -850,6 +986,52 @@ module reorder_buffer #(
         end
     end
 
+
+    //==========================================================================
+    // Tracer Output
+    //==========================================================================
+    `ifndef SYNTHESIS
+    always_comb begin // todo currently we cannot trace the stored data, we need a extra line to get stored data from LSQ
+        o_tracer_0.valid     = commit_valid_0 ? tracer_buffer[head_idx].valid : 1'b0; // todo we don't need tracer buffer valid, we can simply use commit valid
+        o_tracer_0.pc        = commit_valid_0 ? tracer_buffer[head_idx].pc : 32'd0;
+        o_tracer_0.instr     = commit_valid_0 ? tracer_buffer[head_idx].instr : 32'd0;
+        o_tracer_0.reg_addr  = commit_valid_0 ? tracer_buffer[head_idx].reg_addr : 5'd0;
+        o_tracer_0.reg_data  = commit_valid_0 ? tracer_buffer[head_idx].reg_data : 32'd0;
+        o_tracer_0.is_load   = commit_valid_0 ? tracer_buffer[head_idx].is_load : 1'b0;
+        o_tracer_0.is_store  = commit_valid_0 ? tracer_buffer[head_idx].is_store : 1'b0;
+        o_tracer_0.is_float  = commit_valid_0 ? tracer_buffer[head_idx].is_float : 1'b0;
+        o_tracer_0.mem_size  = commit_valid_0 ? tracer_buffer[head_idx].mem_size : 2'd0;
+        o_tracer_0.mem_addr  = commit_valid_0 ? tracer_buffer[head_idx].mem_addr : 32'd0;
+        o_tracer_0.mem_data  = commit_valid_0 ? tracer_buffer[head_idx].mem_data : 32'd0;
+        o_tracer_0.fpu_flags = commit_valid_0 ? tracer_buffer[head_idx].fpu_flags : 32'd0;
+
+        o_tracer_1.valid     = commit_valid_1 ? tracer_buffer[head_plus_1_idx].valid : 1'b0;
+        o_tracer_1.pc        = commit_valid_1 ? tracer_buffer[head_plus_1_idx].pc : 32'd0;
+        o_tracer_1.instr     = commit_valid_1 ? tracer_buffer[head_plus_1_idx].instr : 32'd0;
+        o_tracer_1.reg_addr  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].reg_addr : 5'd0; 
+        o_tracer_1.reg_data  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].reg_data : 32'd0;
+        o_tracer_1.is_load   = commit_valid_1 ? tracer_buffer[head_plus_1_idx].is_load : 1'b0;
+        o_tracer_1.is_store  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].is_store : 1'b0;
+        o_tracer_1.is_float  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].is_float : 1'b0;
+        o_tracer_1.mem_size  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].mem_size : 2'd0;
+        o_tracer_1.mem_addr  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].mem_addr : 32'd0;
+        o_tracer_1.mem_data  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].mem_data : 32'd0;
+        o_tracer_1.fpu_flags = commit_valid_1 ? tracer_buffer[head_plus_1_idx].fpu_flags : 32'd0;
+
+        o_tracer_2.valid     = commit_valid_2 ? tracer_buffer[head_plus_2_idx].valid : 1'b0;
+        o_tracer_2.pc        = commit_valid_2 ? tracer_buffer[head_plus_2_idx].pc : 32'd0;
+        o_tracer_2.instr     = commit_valid_2 ? tracer_buffer[head_plus_2_idx].instr : 32'd0;
+        o_tracer_2.reg_addr  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].reg_addr : 5'd0; 
+        o_tracer_2.reg_data  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].reg_data : 32'd0;
+        o_tracer_2.is_load   = commit_valid_2 ? tracer_buffer[head_plus_2_idx].is_load : 1'b0;
+        o_tracer_2.is_store  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].is_store : 1'b0;
+        o_tracer_2.is_float  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].is_float : 1'b0;
+        o_tracer_2.mem_size  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].mem_size : 2'd0;
+        o_tracer_2.mem_addr  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].mem_addr : 32'd0;
+        o_tracer_2.mem_data  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].mem_data : 32'd0;
+        o_tracer_2.fpu_flags = commit_valid_2 ? tracer_buffer[head_plus_2_idx].fpu_flags : 32'd0;
+    end
+    `endif
     //==========================================================================
     // ASSERTIONS FOR DEBUG
     //==========================================================================

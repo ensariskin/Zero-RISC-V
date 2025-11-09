@@ -20,7 +20,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module pc_ctrl_super #(parameter size = 32)(
+module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
+	(
 	input  logic clk,
 	input  logic reset,
 	input  logic buble,
@@ -74,7 +75,7 @@ module pc_ctrl_super #(parameter size = 32)(
 );
 
 	localparam D = 1; // Delay for simulation purposes
-
+	
    logic [size-1 : 0] pc_current_val;
    logic [size-1 : 0] pc_new_val;
 	logic [size-1 : 0] pc_plus_four_0;
@@ -149,7 +150,7 @@ module pc_ctrl_super #(parameter size = 32)(
 
 	always @(posedge clk or negedge reset) begin
 		if (!reset) begin
-			pc_current_val <= #D 32'h00000000; // Reset PC to a known value, e.g., 0x80000000
+			pc_current_val <= #D RESET_PC; // 32'h00000000; // Reset PC to a known value, e.g., 0x80000000
 		end else if (~buble) begin
 			pc_current_val <= #D pc_new_val;
 		end else if (misprediction) begin
@@ -213,7 +214,7 @@ module pc_ctrl_super #(parameter size = 32)(
 		.data_in({pc_plus_four_4, pc_plus_imm_4}),
 		.data_out(pc_save_4));
 	
-	assign inst_addr_0 = reset ? (misprediction? pc_new_val : buble? pc_current_val : pc_new_val) : 32'h00000000;
+	assign inst_addr_0 = reset ? (misprediction? pc_new_val : buble? pc_current_val : pc_new_val) : RESET_PC;
 	assign inst_addr_1 = parallel_mode ? inst_addr_0 + 32'd4 : inst_addr_0;
 	assign inst_addr_2 = parallel_mode ? inst_addr_0 + 32'd8 : inst_addr_0;
 	assign inst_addr_3 = parallel_mode ? inst_addr_0 + 32'd12 : inst_addr_0;
