@@ -1,12 +1,16 @@
 `timescale 1ns/1ns
 
 module rv32i_decoder #(parameter size = 32)(
+
+    `ifndef SYNTHESIS
+    tracer_interface.sink tracer_if_i,
+    tracer_interface.source tracer_if_o,
+    `endif
+
     input  logic [size-1 : 0] instruction,
     //input  logic buble,                      // bubble signal
 	output logic [25:0] control_word,        // TODO : put branch_sel into contro
-    output logic [2:0] branch_sel,           // branch selection
-    tracer_interface.sink tracer_if_i,
-    tracer_interface.source tracer_if_o
+    output logic [2:0] branch_sel           // branch selection
     );
 
     logic r_type;

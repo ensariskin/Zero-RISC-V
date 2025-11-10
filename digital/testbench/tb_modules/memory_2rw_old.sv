@@ -64,6 +64,8 @@ begin
         port0_ack <= #D 1'b0;
     else if(port0_wb_cyc_i)
         port0_ack <= #D port0_wb_stb_i;
+    else
+        port0_ack <= #D 1'b0;
 end
 assign port0_wb_ack_o = port0_ack;
 assign port0_wb_err_o = 1'b0;
@@ -97,7 +99,12 @@ initial $readmemh("bootloader.mem",mem,7488,8191);
   // Write Operation : When we0 = 0, cs0 = 0
 always @ (posedge clk0)
 begin
-    if ( !cs0 && !we0 )
+    if(port0_wb_rst_i) begin
+        integer j;
+        for (j = 0; j < RAM_DEPTH; j = j + 1) begin
+            mem[j] <= 32'd0;
+        end
+    end else if ( !cs0 && !we0 )
     begin
         if (wmask0[0])
             mem[addr0][7:0] = din0[7:0];
@@ -114,7 +121,9 @@ end
   // Read Operation : When we0 = 1, cs0 = 0
 always @ (posedge clk0)
 begin
-    if (!cs0 && we0)
+    if(port0_wb_rst_i) begin
+        port0_wb_dat_o <= #D 32'd0;
+    end else if (!cs0 && we0)
         port0_wb_dat_o <= #D mem[addr0];
 end
 

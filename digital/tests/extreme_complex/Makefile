@@ -5,7 +5,7 @@ CCFLAGS=-march=rv32i -mabi=ilp32 -T ../linksc.ld -nostartfiles -ffunction-sectio
 build:
 	$(CC32)-gcc extreme_complex_test.c ../crt0.s $(CCFLAGS)
 	$(CC32)-objcopy -O binary -j .init -j .text -j .rodata extreme_complex_test.elf extreme_complex_test.bin
-	../rom_generator extreme_complex_test.bin
+	$(scripts)/rom_generator extreme_complex_test.bin
 
 clean:
 	rm -f extreme_complex_test.elf extreme_complex_test.bin extreme_complex_test.hex

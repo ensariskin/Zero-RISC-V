@@ -187,9 +187,10 @@
                   "content": "Firstly try with Hornert's tracer",
                   "id": 1752416582765,
                   "level": "default",
-                  "done": false,
+                  "done": true,
                   "start": 1752416582765,
-                  "focus": true
+                  "focus": false,
+                  "end": 1756043609846
                 }
               }
             ],
@@ -197,8 +198,10 @@
               "content": "To use the riscdv test, integrate tracer module into your processor.",
               "id": 1752416547831,
               "level": "default",
-              "done": false,
-              "start": 1752416547831
+              "done": true,
+              "start": 1752416547831,
+              "focus": false,
+              "end": 1756043610617
             }
           }
         ],
@@ -206,9 +209,10 @@
           "content": "For now, current design is at some level. We need some test.",
           "id": 1751397142760,
           "level": "warning",
-          "done": false,
+          "done": true,
           "start": 1751397142760,
-          "focus": true
+          "focus": false,
+          "end": 1756043619600
         }
       },
       {
@@ -349,6 +353,6 @@
     "showEndTime": false,
     "simpleMode": false,
     "lang": "en",
-    "version": "1752417339061"
+    "version": "1756043619662"
   }
 }

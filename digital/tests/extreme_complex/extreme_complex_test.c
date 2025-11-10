@@ -107,6 +107,7 @@ int main() {
     for (i = 10; i < 100; i++) {
         results_array[i] = 0;
     }
+    results_array[10] = 1982;   // Distinctive pattern
     
     // Initialize core variables
     result = 0;
@@ -121,14 +122,19 @@ int main() {
     for (i = 0; i < 10; i++) {
         performance_counters[i] = 0;
     }
-    
+    results_array[10] = 125;   // Distinctive pattern
     // TEST 1: Advanced Graph Algorithms - Dijkstra's Algorithm
     // Initialize large adjacency matrix (12x12 graph)
     for (i = 0; i < 12; i++) {
+        results_array[10] = i;   // Distinctive pattern
         for (j = 0; j < 12; j++) {
+            
             adjacency_matrix[i][j] = 0;
             dist_matrix[i][j] = 9999;  // Infinity representation
             parent_matrix[i][j] = -1;
+
+            results_array[11] = j;   // Distinctive pattern
+
         }
         dist_matrix[i][i] = 0;
         visited_nodes[i] = 0;
@@ -163,17 +169,22 @@ int main() {
         int min_vertex = -1;
         
         for (i = 0; i < 12; i++) {
+            
             if (!visited_nodes[i] && dist_matrix[0][i] < min_dist) {
                 min_dist = dist_matrix[0][i];
                 min_vertex = i;
             }
+            results_array[10] = i;     // Shortest path 0->11
+            results_array[11] = min_dist;     // Shortest path 0->11
+            results_array[12] = min_vertex;     // Shortest path 0->11
         }
         
         if (min_vertex == -1) break;
         
         visited_nodes[min_vertex] = 1;
         performance_counters[0]++;
-        
+        results_array[15] = min_vertex;
+        results_array[16] = performance_counters[0];
         // Update distances to neighbors
         for (i = 0; i < 12; i++) {
             if (!visited_nodes[i] && adjacency_matrix[min_vertex][i] > 0) {
@@ -182,8 +193,13 @@ int main() {
                     dist_matrix[0][i] = new_dist;
                     parent_matrix[0][i] = min_vertex;
                     master_accumulator = (master_accumulator + new_dist) % 431;
+                    results_array[14] = results_array[14] + 1;
                 }
+                results_array[13] = results_array[13] + 1;
             }
+            results_array[10] = i;     // Shortest path 0->11
+            results_array[11] = master_accumulator;     // Shortest path 0->11
+            results_array[12] = master_accumulator;     // Shortest path 0->11
         }
     }
     
@@ -215,7 +231,8 @@ int main() {
             
             while (stack_top > 0) {
                 stack_top--;
-                int current = stack_simulation[stack_top];
+                int current;
+                current = stack_simulation[stack_top];
                 
                 if (!visited_nodes[current]) {
                     visited_nodes[current] = 1;

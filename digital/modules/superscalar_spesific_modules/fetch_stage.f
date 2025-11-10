@@ -1,0 +1,8 @@
+# Fetch Stage Files
+fetch_stage/branch_predictor_super.sv
+fetch_stage/jalr_predictor.sv
+fetch_stage/pc_ctrl_super.sv
+fetch_stage/jump_controller_super.sv
+fetch_stage/multi_fetch.sv
+fetch_stage/instruction_buffer_new.sv
+fetch_stage/fetch_buffer_top.sv

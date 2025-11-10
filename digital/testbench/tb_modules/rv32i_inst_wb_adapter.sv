@@ -68,7 +68,7 @@ module rv32i_inst_wb_adapter (
     
     // Wishbone interface - always try to fetch when address changes or data is invalid
     assign wb_cyc_o = 1'b1;
-    assign wb_stb_o = core_addr_i[31];
+    assign wb_stb_o = 1'b1;//core_addr_i[31];
     assign wb_we_o  = 1'b0;  // Read only for instruction fetch
     assign wb_adr_o = {1'b0, core_addr_i[30:0]};
     assign wb_dat_o = 32'h0; // No data output for reads

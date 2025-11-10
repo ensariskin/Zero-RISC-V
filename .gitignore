@@ -74,5 +74,5 @@ digital/sim/run/dvlcom.env
 
 # Specifically ignore riscv-dv directory
 tools/riscv-dv/
-
+dvt_build.log
 *.pyc

@@ -1,0 +1,1241 @@
+{
+  "todotree": {
+    "tree": [
+      {
+        "key": 1735100000001,
+        "children": [
+          {
+            "key": 1735100000002,
+            "children": [],
+            "todo": {
+              "content": "Analyze current rv32i_core.sv top-level architecture",
+              "id": 1735100000002,
+              "level": "default",
+              "done": true,
+              "start": 1735100000002,
+              "focus": false,
+              "date": "1756066021,1756152431",
+              "end": 1756052385479
+            }
+          },
+          {
+            "key": 1735100000003,
+            "children": [],
+            "todo": {
+              "content": "Study execute_stage.sv and current single ALU limitations",
+              "id": 1735100000003,
+              "level": "default",
+              "done": true,
+              "start": 1735100000003,
+              "focus": false,
+              "end": 1756052390685
+            }
+          },
+          {
+            "key": 1735100000004,
+            "children": [],
+            "todo": {
+              "content": "Document Data_Forward.sv forwarding mechanisms",
+              "id": 1735100000004,
+              "level": "default",
+              "done": true,
+              "start": 1735100000004,
+              "focus": false,
+              "end": 1756052391323
+            }
+          },
+          {
+            "key": 1735100000005,
+            "children": [],
+            "todo": {
+              "content": "Analyze hazard_detection_unit.sv for pipeline control",
+              "id": 1735100000005,
+              "level": "default",
+              "done": true,
+              "start": 1735100000005,
+              "focus": false,
+              "end": 1756052392332
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 1: Current Architecture Analysis",
+          "id": 1735100000001,
+          "level": "warning",
+          "done": true,
+          "start": 1735100000001,
+          "focus": false,
+          "date": "1756048172,1756393774",
+          "end": 1757620924322
+        }
+      },
+      {
+        "key": 1735100000006,
+        "children": [
+          {
+            "key": 1735100000007,
+            "children": [],
+            "todo": {
+              "content": "Create digital/modules/fetch_stage_super/ directory structure",
+              "id": 1735100000007,
+              "level": "default",
+              "done": true,
+              "start": 1735100000007,
+              "focus": false,
+              "end": 1756752695359
+            }
+          },
+          {
+            "key": 1735100000008,
+            "children": [],
+            "todo": {
+              "content": "Implement multi_fetch_unit.sv with 2-4 instruction fetch capability",
+              "id": 1735100000008,
+              "level": "default",
+              "done": true,
+              "start": 1735100000008,
+              "focus": false,
+              "end": 1756752697348
+            }
+          },
+          {
+            "key": 1735100000009,
+            "children": [],
+            "todo": {
+              "content": "Design instruction_buffer.sv for fetch-decode decoupling (8-16 entries)",
+              "id": 1735100000009,
+              "level": "default",
+              "done": true,
+              "start": 1735100000009,
+              "focus": false,
+              "end": 1757096279074
+            }
+          },
+          {
+            "key": 1735100000010,
+            "children": [],
+            "todo": {
+              "content": "Create fetch_target_predictor.sv for next-line prediction",
+              "id": 1735100000010,
+              "level": "default",
+              "done": true,
+              "start": 1735100000010,
+              "focus": false,
+              "end": 1756752807586
+            }
+          },
+          {
+            "key": 1735100000011,
+            "children": [],
+            "todo": {
+              "content": "Add instruction_alignment.sv to handle misaligned fetches",
+              "id": 1735100000011,
+              "level": "default",
+              "done": true,
+              "start": 1735100000011,
+              "focus": false,
+              "end": 1756752712716
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 2: Multi-Instruction Fetch Infrastructure",
+          "id": 1735100000006,
+          "level": "warning",
+          "done": true,
+          "start": 1735100000006,
+          "focus": false,
+          "end": 1757620921460
+        }
+      },
+      {
+        "key": 1735100000012,
+        "children": [
+          {
+            "key": 1735100000013,
+            "children": [],
+            "todo": {
+              "content": "Create digital/modules/branch_predictor_super/ directory",
+              "id": 1735100000013,
+              "level": "default",
+              "done": true,
+              "start": 1735100000013,
+              "focus": false,
+              "end": 1756159419189
+            }
+          },
+          {
+            "key": 1735100000014,
+            "children": [],
+            "todo": {
+              "content": "Implement Branch Target Buffer (BTB) with 256-512 entries",
+              "id": 1735100000014,
+              "level": "default",
+              "done": true,
+              "start": 1735100000014,
+              "focus": false,
+              "end": 1756159419702
+            }
+          },
+          {
+            "key": 1735100000015,
+            "children": [],
+            "todo": {
+              "content": "Add 2-level adaptive branch predictor (pattern history table)",
+              "id": 1735100000015,
+              "level": "default",
+              "done": true,
+              "start": 1735100000015,
+              "focus": false,
+              "end": 1756159420276
+            }
+          },
+          {
+            "key": 1735100000016,
+            "children": [],
+            "todo": {
+              "content": "Integrate Return Address Stack (RAS) for call/return prediction",
+              "id": 1735100000016,
+              "level": "default",
+              "done": true,
+              "start": 1735100000016,
+              "focus": false,
+              "end": 1756159420725
+            }
+          },
+          {
+            "key": 1735100000017,
+            "children": [],
+            "todo": {
+              "content": "Add tournament predictor combining multiple predictors",
+              "id": 1735100000017,
+              "level": "default",
+              "done": true,
+              "start": 1735100000017,
+              "focus": false,
+              "end": 1756159421505
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 3: Advanced Branch Prediction System",
+          "id": 1735100000012,
+          "level": "warning",
+          "done": true,
+          "start": 1735100000012,
+          "focus": false,
+          "end": 1756159430747
+        }
+      },
+      {
+        "key": 1735100000018,
+        "children": [
+          {
+            "key": 1735100000019,
+            "children": [],
+            "todo": {
+              "content": "Create digital/modules/decode_stage_super/ directory structure",
+              "id": 1735100000019,
+              "level": "default",
+              "done": true,
+              "start": 1735100000019,
+              "focus": false,
+              "end": 1757354545671
+            }
+          },
+          {
+            "key": 1735100000020,
+            "children": [],
+            "todo": {
+              "content": "Implement multi_decode_unit.sv for 2-4 parallel decode",
+              "id": 1735100000020,
+              "level": "default",
+              "done": true,
+              "start": 1735100000020,
+              "focus": false,
+              "end": 1757356309689
+            }
+          },
+          {
+            "key": 1735100000021,
+            "children": [],
+            "todo": {
+              "content": "Add instruction_queue.sv between fetch and decode",
+              "id": 1735100000021,
+              "level": "default",
+              "done": true,
+              "start": 1735100000021,
+              "focus": false,
+              "end": 1757096304366
+            }
+          },
+          {
+            "key": 1735100000022,
+            "children": [],
+            "todo": {
+              "content": "Create early dependency detection logic",
+              "id": 1735100000022,
+              "level": "default",
+              "done": true,
+              "start": 1735100000022,
+              "focus": false,
+              "end": 1757620944252
+            }
+          },
+          {
+            "key": 1757620954314,
+            "children": [],
+            "todo": {
+              "content": "Assign decode valid signal with RAT and RS busy signals!",
+              "id": 1757620954314,
+              "level": "default",
+              "done": false,
+              "start": 1757620954314
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 4: Multi-Decode Unit Implementation",
+          "id": 1735100000018,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000018,
+          "focus": false,
+          "end": 1757354543233
+        }
+      },
+      {
+        "key": 1735100000023,
+        "children": [
+          {
+            "key": 1735100000024,
+            "children": [],
+            "todo": {
+              "content": "Create digital/modules/register_renaming/ directory structure",
+              "id": 1735100000024,
+              "level": "default",
+              "done": true,
+              "start": 1735100000024,
+              "focus": false,
+              "end": 1757621050093
+            }
+          },
+          {
+            "key": 1735100000025,
+            "children": [],
+            "todo": {
+              "content": "Design physical_register_file.sv with 64-128 registers",
+              "id": 1735100000025,
+              "level": "default",
+              "done": true,
+              "start": 1735100000025,
+              "focus": false,
+              "end": 1757621046423
+            }
+          },
+          {
+            "key": 1735100000026,
+            "children": [],
+            "todo": {
+              "content": "Implement multi-port register file (6R/4W or 8R/4W)",
+              "id": 1735100000026,
+              "level": "default",
+              "done": true,
+              "start": 1735100000026,
+              "focus": false,
+              "end": 1757621015235
+            }
+          },
+          {
+            "key": 1735100000027,
+            "children": [],
+            "todo": {
+              "content": "Create Register Alias Table (RAT) for arch-to-phys mapping",
+              "id": 1735100000027,
+              "level": "default",
+              "done": true,
+              "start": 1735100000027,
+              "focus": false,
+              "end": 1757621029957
+            }
+          },
+          {
+            "key": 1735100000028,
+            "children": [],
+            "todo": {
+              "content": "Add free_register_list.sv for register allocation",
+              "id": 1735100000028,
+              "level": "default",
+              "done": true,
+              "start": 1735100000028,
+              "focus": false,
+              "end": 1757621044969
+            }
+          },
+          {
+            "key": 1735100000029,
+            "children": [],
+            "todo": {
+              "content": "Implement checkpoint_manager.sv for speculation recovery",
+              "id": 1735100000029,
+              "level": "default",
+              "done": false,
+              "start": 1735100000029,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 5: Register Renaming System",
+          "id": 1735100000023,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000023,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000030,
+        "children": [
+          {
+            "key": 1735100000031,
+            "children": [],
+            "todo": {
+              "content": "Create digital/modules/reservation_stations/ directory",
+              "id": 1735100000031,
+              "level": "default",
+              "done": false,
+              "start": 1735100000031,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000032,
+            "children": [],
+            "todo": {
+              "content": "Implement generic reservation_station.sv template",
+              "id": 1735100000032,
+              "level": "default",
+              "done": false,
+              "start": 1735100000032,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000033,
+            "children": [],
+            "todo": {
+              "content": "Create alu_reservation_station.sv (8-16 entries per ALU)",
+              "id": 1735100000033,
+              "level": "default",
+              "done": false,
+              "start": 1735100000033,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000034,
+            "children": [],
+            "todo": {
+              "content": "Add lsu_reservation_station.sv for memory operations",
+              "id": 1735100000034,
+              "level": "default",
+              "done": false,
+              "start": 1735100000034,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000035,
+            "children": [],
+            "todo": {
+              "content": "Implement wakeup_logic.sv for result broadcast",
+              "id": 1735100000035,
+              "level": "default",
+              "done": false,
+              "start": 1735100000035,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000036,
+            "children": [],
+            "todo": {
+              "content": "Create issue_arbiter.sv for execution unit selection",
+              "id": 1735100000036,
+              "level": "default",
+              "done": false,
+              "start": 1735100000036,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 6: Reservation Stations and Dynamic Scheduling",
+          "id": 1735100000030,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000030,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000037,
+        "children": [
+          {
+            "key": 1735100000038,
+            "children": [],
+            "todo": {
+              "content": "Create digital/modules/execution_units/ directory structure",
+              "id": 1735100000038,
+              "level": "default",
+              "done": false,
+              "start": 1735100000038,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000039,
+            "children": [],
+            "todo": {
+              "content": "Implement alu_unit_0.sv - Primary ALU (ADD, SUB, logic ops)",
+              "id": 1735100000039,
+              "level": "default",
+              "done": false,
+              "start": 1735100000039,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000040,
+            "children": [],
+            "todo": {
+              "content": "Create alu_unit_1.sv - Secondary ALU (shifts, comparisons)",
+              "id": 1735100000040,
+              "level": "default",
+              "done": false,
+              "start": 1735100000040,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000041,
+            "children": [],
+            "todo": {
+              "content": "Add load_store_unit.sv for memory operations",
+              "id": 1735100000041,
+              "level": "default",
+              "done": false,
+              "start": 1735100000041,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000042,
+            "children": [],
+            "todo": {
+              "content": "Implement branch_unit.sv for branch resolution",
+              "id": 1735100000042,
+              "level": "default",
+              "done": false,
+              "start": 1735100000042,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000043,
+            "children": [],
+            "todo": {
+              "content": "Create multiplier_unit.sv for integer multiply/divide",
+              "id": 1735100000043,
+              "level": "default",
+              "done": false,
+              "start": 1735100000043,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000044,
+            "children": [],
+            "todo": {
+              "content": "Add result_broadcast_network.sv (Common Data Bus)",
+              "id": 1735100000044,
+              "level": "default",
+              "done": false,
+              "start": 1735100000044,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 7: Multiple Execution Units Implementation",
+          "id": 1735100000037,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000037,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000045,
+        "children": [
+          {
+            "key": 1735100000046,
+            "children": [],
+            "todo": {
+              "content": "Create digital/modules/load_store_queue/ directory",
+              "id": 1735100000046,
+              "level": "default",
+              "done": false,
+              "start": 1735100000046,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000047,
+            "children": [],
+            "todo": {
+              "content": "Implement load_queue.sv with 16-32 entries",
+              "id": 1735100000047,
+              "level": "default",
+              "done": false,
+              "start": 1735100000047,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000048,
+            "children": [],
+            "todo": {
+              "content": "Create store_queue.sv with 16-32 entries",
+              "id": 1735100000048,
+              "level": "default",
+              "done": false,
+              "start": 1735100000048,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000049,
+            "children": [],
+            "todo": {
+              "content": "Add memory_disambiguation.sv for address dependency checking",
+              "id": 1735100000049,
+              "level": "default",
+              "done": false,
+              "start": 1735100000049,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000050,
+            "children": [],
+            "todo": {
+              "content": "Implement store_buffer.sv for store data buffering",
+              "id": 1735100000050,
+              "level": "default",
+              "done": false,
+              "start": 1735100000050,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000051,
+            "children": [],
+            "todo": {
+              "content": "Add store-to-load forwarding logic",
+              "id": 1735100000051,
+              "level": "default",
+              "done": false,
+              "start": 1735100000051,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 8: Load/Store Queue Implementation",
+          "id": 1735100000045,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000045,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000052,
+        "children": [
+          {
+            "key": 1735100000053,
+            "children": [],
+            "todo": {
+              "content": "Create digital/modules/reorder_buffer/ directory structure",
+              "id": 1735100000053,
+              "level": "default",
+              "done": false,
+              "start": 1735100000053,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000054,
+            "children": [],
+            "todo": {
+              "content": "Implement reorder_buffer.sv with 32-64 entries",
+              "id": 1735100000054,
+              "level": "default",
+              "done": false,
+              "start": 1735100000054,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000055,
+            "children": [],
+            "todo": {
+              "content": "Create rob_entry.sv for individual ROB entry management",
+              "id": 1735100000055,
+              "level": "default",
+              "done": false,
+              "start": 1735100000055,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000056,
+            "children": [],
+            "todo": {
+              "content": "Add commit_logic.sv for in-order commit",
+              "id": 1735100000056,
+              "level": "default",
+              "done": false,
+              "start": 1735100000056,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000057,
+            "children": [],
+            "todo": {
+              "content": "Implement exception_handler.sv for precise exceptions",
+              "id": 1735100000057,
+              "level": "default",
+              "done": false,
+              "start": 1735100000057,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000058,
+            "children": [],
+            "todo": {
+              "content": "Create recovery_manager.sv for speculation recovery",
+              "id": 1735100000058,
+              "level": "default",
+              "done": false,
+              "start": 1735100000058,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 9: Reorder Buffer and Commit Logic",
+          "id": 1735100000052,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000052,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000059,
+        "children": [
+          {
+            "key": 1735100000060,
+            "children": [],
+            "todo": {
+              "content": "Modify rv32i_core.sv for superscalar top-level integration",
+              "id": 1735100000060,
+              "level": "default",
+              "done": false,
+              "start": 1735100000060,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000061,
+            "children": [],
+            "todo": {
+              "content": "Integrate all frontend components (fetch, decode, predict)",
+              "id": 1735100000061,
+              "level": "default",
+              "done": false,
+              "start": 1735100000061,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000062,
+            "children": [],
+            "todo": {
+              "content": "Connect register renaming with reservation stations",
+              "id": 1735100000062,
+              "level": "default",
+              "done": false,
+              "start": 1735100000062,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000063,
+            "children": [],
+            "todo": {
+              "content": "Integrate execution units with ROB and LSQ",
+              "id": 1735100000063,
+              "level": "default",
+              "done": false,
+              "start": 1735100000063,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000064,
+            "children": [],
+            "todo": {
+              "content": "Connect commit logic with register file updates",
+              "id": 1735100000064,
+              "level": "default",
+              "done": false,
+              "start": 1735100000064,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000065,
+            "children": [],
+            "todo": {
+              "content": "Test full pipeline with simple instruction sequences",
+              "id": 1735100000065,
+              "level": "default",
+              "done": false,
+              "start": 1735100000065,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 10: Full Pipeline Integration",
+          "id": 1735100000059,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000059,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000066,
+        "children": [
+          {
+            "key": 1735100000067,
+            "children": [],
+            "todo": {
+              "content": "Create comprehensive unit tests for each new module",
+              "id": 1735100000067,
+              "level": "default",
+              "done": false,
+              "start": 1735100000067,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000068,
+            "children": [],
+            "todo": {
+              "content": "Test instruction dispatch and out-of-order execution",
+              "id": 1735100000068,
+              "level": "default",
+              "done": false,
+              "start": 1735100000068,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000069,
+            "children": [],
+            "todo": {
+              "content": "Validate data forwarding with concurrent operations",
+              "id": 1735100000069,
+              "level": "default",
+              "done": false,
+              "start": 1735100000069,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000070,
+            "children": [],
+            "todo": {
+              "content": "Test branch prediction accuracy and recovery",
+              "id": 1735100000070,
+              "level": "default",
+              "done": false,
+              "start": 1735100000070,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000071,
+            "children": [],
+            "todo": {
+              "content": "Validate memory ordering and load/store dependencies",
+              "id": 1735100000071,
+              "level": "default",
+              "done": false,
+              "start": 1735100000071,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000072,
+            "children": [],
+            "todo": {
+              "content": "Run RV32I compliance tests for correctness validation",
+              "id": 1735100000072,
+              "level": "default",
+              "done": false,
+              "start": 1735100000072,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000073,
+            "children": [],
+            "todo": {
+              "content": "Test exception handling and precise exceptions",
+              "id": 1735100000073,
+              "level": "default",
+              "done": false,
+              "start": 1735100000073,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 11: Comprehensive Testing and Validation",
+          "id": 1735100000066,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000066,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000074,
+        "children": [
+          {
+            "key": 1735100000075,
+            "children": [],
+            "todo": {
+              "content": "Create digital/modules/performance_counters/ directory",
+              "id": 1735100000075,
+              "level": "default",
+              "done": false,
+              "start": 1735100000075,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000076,
+            "children": [],
+            "todo": {
+              "content": "Implement performance_counters.sv for hardware monitoring",
+              "id": 1735100000076,
+              "level": "default",
+              "done": false,
+              "start": 1735100000076,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000077,
+            "children": [],
+            "todo": {
+              "content": "Add ipc_monitor.sv for Instructions Per Cycle tracking",
+              "id": 1735100000077,
+              "level": "default",
+              "done": false,
+              "start": 1735100000077,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000078,
+            "children": [],
+            "todo": {
+              "content": "Create branch_monitor.sv for branch prediction metrics",
+              "id": 1735100000078,
+              "level": "default",
+              "done": false,
+              "start": 1735100000078,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000079,
+            "children": [],
+            "todo": {
+              "content": "Add ALU utilization and execution unit efficiency counters",
+              "id": 1735100000079,
+              "level": "default",
+              "done": false,
+              "start": 1735100000079,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000080,
+            "children": [],
+            "todo": {
+              "content": "Generate performance comparison report (in-order vs superscalar)",
+              "id": 1735100000080,
+              "level": "default",
+              "done": false,
+              "start": 1735100000080,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 12: Performance Analysis and Optimization",
+          "id": 1735100000074,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000074,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000081,
+        "children": [
+          {
+            "key": 1735100000082,
+            "children": [],
+            "todo": {
+              "content": "Add dual-port data cache interface support",
+              "id": 1735100000082,
+              "level": "default",
+              "done": false,
+              "start": 1735100000082,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000083,
+            "children": [],
+            "todo": {
+              "content": "Implement memory prefetching mechanisms",
+              "id": 1735100000083,
+              "level": "default",
+              "done": false,
+              "start": 1735100000083,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000084,
+            "children": [],
+            "todo": {
+              "content": "Add store buffer optimization for write combining",
+              "id": 1735100000084,
+              "level": "default",
+              "done": false,
+              "start": 1735100000084,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000085,
+            "children": [],
+            "todo": {
+              "content": "Optimize memory scheduling for better bandwidth utilization",
+              "id": 1735100000085,
+              "level": "default",
+              "done": false,
+              "start": 1735100000085,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 13: Memory System Enhancement",
+          "id": 1735100000081,
+          "level": "default",
+          "done": false,
+          "start": 1735100000081,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000086,
+        "children": [
+          {
+            "key": 1735100000087,
+            "children": [],
+            "todo": {
+              "content": "Backup all original modules before major modifications",
+              "id": 1735100000087,
+              "level": "default",
+              "done": false,
+              "start": 1735100000087,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000088,
+            "children": [],
+            "todo": {
+              "content": "Create git checkpoint branches for each phase",
+              "id": 1735100000088,
+              "level": "default",
+              "done": false,
+              "start": 1735100000088,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000089,
+            "children": [],
+            "todo": {
+              "content": "Document current pipeline behavior and performance baseline",
+              "id": 1735100000089,
+              "level": "default",
+              "done": false,
+              "start": 1735100000089,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000090,
+            "children": [],
+            "todo": {
+              "content": "Set up regression testing framework for each phase",
+              "id": 1735100000090,
+              "level": "default",
+              "done": false,
+              "start": 1735100000090,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Safety and Development Infrastructure",
+          "id": 1735100000086,
+          "level": "default",
+          "done": false,
+          "start": 1735100000086,
+          "focus": false
+        }
+      },
+      {
+        "key": 1735100000091,
+        "children": [
+          {
+            "key": 1735100000092,
+            "children": [],
+            "todo": {
+              "content": "Create comprehensive documentation for superscalar architecture",
+              "id": 1735100000092,
+              "level": "default",
+              "done": false,
+              "start": 1735100000092,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000093,
+            "children": [],
+            "todo": {
+              "content": "Document all new module interfaces and protocols",
+              "id": 1735100000093,
+              "level": "default",
+              "done": false,
+              "start": 1735100000093,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000094,
+            "children": [],
+            "todo": {
+              "content": "Create user guide for superscalar processor features",
+              "id": 1735100000094,
+              "level": "default",
+              "done": false,
+              "start": 1735100000094,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000095,
+            "children": [],
+            "todo": {
+              "content": "Commit final implementation to superscalar-clean branch",
+              "id": 1735100000095,
+              "level": "default",
+              "done": false,
+              "start": 1735100000095,
+              "focus": false
+            }
+          },
+          {
+            "key": 1735100000096,
+            "children": [],
+            "todo": {
+              "content": "Plan next enhancement phases (cache optimization, advanced features)",
+              "id": 1735100000096,
+              "level": "default",
+              "done": false,
+              "start": 1735100000096,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "Phase 14: Documentation and Final Integration",
+          "id": 1735100000091,
+          "level": "warning",
+          "done": false,
+          "start": 1735100000091,
+          "focus": false
+        }
+      }
+    ],
+    "expandKeys": [
+      1735100000001,
+      1735100000006,
+      1735100000012,
+      1735100000018,
+      1735100000020,
+      1735100000002,
+      1735100000013,
+      1735100000081,
+      1735100000086,
+      1735100000023,
+      1735100000030,
+      1735100000037,
+      1735100000045,
+      1735100000052
+    ],
+    "schema": "https://github.com/Saber2pr/vsc-ext-todolist/blob/master/src/api/type.ts#L3",
+    "add_mode": "bottom",
+    "virtual": false,
+    "timelines": [],
+    "showLine": false,
+    "playFontSize": 24,
+    "title": "Complete Superscalar Processor Implementation",
+    "autoSort": false,
+    "showEndTime": false,
+    "simpleMode": false,
+    "lang": "en",
+    "version": "1758060882927"
+  }
+}

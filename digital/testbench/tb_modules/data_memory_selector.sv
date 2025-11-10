@@ -130,12 +130,12 @@ module data_memory_selector (
     
     // Core response multiplexing
     always_comb begin
-        if (addr_in_region0_d1) begin
+        if (addr_in_region0_d1 | addr_in_region0) begin
             core_wb_stall_o = region0_wb_stall_i;
             core_wb_ack_o   = region0_wb_ack_i;
             core_wb_dat_o   = region0_wb_dat_i;
             core_wb_err_o   = region0_wb_err_i;
-        end else if (addr_in_region1_d1) begin
+        end else if (addr_in_region1_d1 | addr_in_region1) begin
             core_wb_stall_o = region1_wb_stall_i;
             core_wb_ack_o   = region1_wb_ack_i;
             core_wb_dat_o   = region1_wb_dat_i;
@@ -143,7 +143,7 @@ module data_memory_selector (
         end else begin
             // Invalid address - generate error response
             core_wb_stall_o = 1'b0;
-            core_wb_ack_o   = core_wb_cyc_i && core_wb_stb_i; // Acknowledge immediately for error
+            core_wb_ack_o   = 0; // Acknowledge immediately for error
             core_wb_dat_o   = 32'hDEADBEEF; // Error data pattern
             core_wb_err_o   = core_wb_cyc_i && core_wb_stb_i; // Signal error for invalid address
         end
@@ -156,6 +156,13 @@ module data_memory_selector (
         $display("Region 1 base address: 0x%08x (Size: %0d bytes) , Region 1 end_address = 0x%08x", REGION1_BASE, REGION1_SIZE, REGION1_END);
     end
     
+    always @(posedge clk) begin
+        if (rst_n && core_wb_cyc_i && core_wb_stb_i && !addr_valid) begin
+            $display("[%t] ERROR: Memory Selector - Invalid address access 0x%08x", $time, core_wb_adr_i);
+            #100ns;
+            $finish;
+        end
+    end
     // Debug information
     `ifdef DEBUG_MEMORY_SELECTOR
     always @(posedge clk) begin
