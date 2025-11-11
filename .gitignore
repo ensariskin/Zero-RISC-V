@@ -76,3 +76,4 @@ digital/sim/run/dvlcom.env
 tools/riscv-dv/
 dvt_build.log
 *.pyc
+digital/sim/run/*

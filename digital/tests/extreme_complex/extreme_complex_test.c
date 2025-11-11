@@ -13,10 +13,10 @@
  * - Cryptographic algorithms (simple hash functions)
  * - Game theory and optimization problems
  */
-
+volatile int results_array[100];
 int main() {
     // RESULTS ARRAY - Primary tracking array for simulation (100 elements)
-    int results_array[100];
+    
     
     // Core computation variables
     int result;
@@ -1054,9 +1054,12 @@ int main() {
     
     // Final padding and end markers
     for (i = 90; i < 99; i++) {
-        results_array[i] = (i * 1111) % 10000;      // Predictable pattern
+        results_array[i] = (results_array[i-1] * results_array[i-2]) % 10000;      // Predictable pattern
     }
     results_array[99] = 55555;                      // ULTIMATE END MARKER
     
+    if(results_array[98] % 5 == 0) {
+        results_array[98] = results_array[98] + 3;  // Final adjustment for verification
+    }
     return 0;
 }

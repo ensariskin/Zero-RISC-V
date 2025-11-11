@@ -22,8 +22,8 @@ module dv_top_superscalar;
     parameter INST_BASE_addR = 32'h80000000;
     
     // Default region base addresses (can be overridden via plusargs)
-    parameter REGION0_BASE_addR_DEFAULT = 32'h80000000; //32'h00000000;  // Default Region 0 start address
-    parameter REGION1_BASE_addR_DEFAULT = 32'h80001000; //32'h7FFEFFF0;  // Default Region 1 start address
+    parameter REGION0_BASE_addR_DEFAULT = 32'h00007000;  // Default Region 0 start address
+    parameter REGION1_BASE_addR_DEFAULT = 32'h7FFEFFF0;  // Default Region 1 start address
     
     // Runtime configurable region base addresses
     logic [31:0] region0_base_addr;
@@ -403,10 +403,10 @@ module dv_top_superscalar;
         .wb_err_i(inst4_wb_err)
     );
 
-        // 3-port instruction memory (64KB = 16K words)
+    // 5-port instruction memory (128*4 KB = 512KB instruction memory)
     memory_5rw #(
         .DATA_WIDTH(32),
-        .ADDR_WIDTH(14), // 16K words = 64KB memory (2^14 = 16384 words)
+        .ADDR_WIDTH(17),
         .NUM_WMASKS(4)
     ) instruction_memory (
         // Port 0 (fetch 0)

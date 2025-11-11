@@ -25,6 +25,18 @@ module superscalar_execute_stage #(
 )(
     input logic clk,
     input logic rst_n,
+
+    output logic update_predictor_0,
+    output logic update_predictor_1,
+    output logic update_predictor_2,
+
+    output logic [DATA_WIDTH-1:0] correct_pc_0,
+    output logic [DATA_WIDTH-1:0] correct_pc_1,
+    output logic [DATA_WIDTH-1:0] correct_pc_2,
+
+    output logic misprediction_0,
+    output logic misprediction_1,
+    output logic misprediction_2,
     
     // Interface to reservation stations
     rs_to_exec_if.functional_unit rs_to_exec_0,
@@ -104,6 +116,10 @@ module superscalar_execute_stage #(
     assign rs_to_exec_0.misprediction = fu0_misprediction;
     assign rs_to_exec_0.is_branch = rs_to_exec_0.branch_sel > 0 & rs_to_exec_0.branch_sel < 6; // if branch_sel is not NOBRANCH(0) or JAL/JALR(6,7)
     assign rs_to_exec_0.correct_pc = fu0_correct_pc;
+
+    assign misprediction_0 = fu0_misprediction;
+    assign correct_pc_0 = fu0_correct_pc;
+    assign update_predictor_0 =  rs_to_exec_0.branch_sel > 0 & rs_to_exec_0.branch_sel < 6; 
     //=======================================================================
     // Functional Unit 1 (FU1)
     //=======================================================================
@@ -128,6 +144,10 @@ module superscalar_execute_stage #(
     assign rs_to_exec_1.misprediction = fu1_misprediction;
     assign rs_to_exec_1.is_branch = rs_to_exec_1.branch_sel > 0 & rs_to_exec_1.branch_sel < 6; // if branch_sel is not NOBRANCH(0) or JAL/JALR(6,7)
     assign rs_to_exec_1.correct_pc = fu1_correct_pc;
+
+    assign misprediction_1 = fu1_misprediction;
+    assign correct_pc_1 = fu1_correct_pc;
+    assign update_predictor_1 =  rs_to_exec_1.branch_sel > 0 & rs_to_exec_1.branch_sel < 6;
     //=======================================================================
     // Functional Unit 2 (FU2)
     //=======================================================================
@@ -152,6 +172,10 @@ module superscalar_execute_stage #(
     assign rs_to_exec_2.misprediction = fu2_misprediction;
     assign rs_to_exec_2.is_branch = rs_to_exec_2.branch_sel > 0 & rs_to_exec_2.branch_sel < 6; // if branch_sel is not NOBRANCH(0) or JAL/JALR(6,7)
     assign rs_to_exec_2.correct_pc = fu2_correct_pc;
+
+    assign misprediction_2 = fu2_misprediction;
+    assign correct_pc_2 = fu2_correct_pc;
+    assign update_predictor_2 =  rs_to_exec_2.branch_sel > 0 & rs_to_exec_2.branch_sel < 6;
     //=======================================================================
     // Legacy Functional Unit Instances
     //=======================================================================
