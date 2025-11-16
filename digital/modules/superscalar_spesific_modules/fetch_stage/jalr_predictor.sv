@@ -157,23 +157,24 @@ module jalr_predictor #(
                 target_table[i] <= #D '0;
             end
         end else begin
+             // Update port 2
+            if (jalr_misprediction_2) begin
+                valid[update_idx_2] <= #D 1'b1;
+                target_table[update_idx_2] <= #D correct_pc_2;
+            end
+
+             // Update port 1
+            if (jalr_misprediction_1) begin
+                valid[update_idx_1] <= #D 1'b1;
+                target_table[update_idx_1] <= #D correct_pc_1;
+            end
+
             // Update port 0
             if (jalr_misprediction_0) begin
                 valid[update_idx_0] <= #D 1'b1;
                 target_table[update_idx_0] <= #D correct_pc_0;
             end
 
-            // Update port 1
-            if (jalr_misprediction_1) begin
-                valid[update_idx_1] <= #D 1'b1;
-                target_table[update_idx_1] <= #D correct_pc_1;
-            end
-
-            // Update port 2
-            if (jalr_misprediction_2) begin
-                valid[update_idx_2] <= #D 1'b1;
-                target_table[update_idx_2] <= #D correct_pc_2;
-            end
         end
     end
 

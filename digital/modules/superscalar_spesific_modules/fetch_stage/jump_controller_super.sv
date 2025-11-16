@@ -55,6 +55,11 @@ module jump_controller_super #(parameter size = 32)(
 	input  logic [size-1 : 0] correct_pc_1,
 	input  logic [size-1 : 0] correct_pc_2,
 
+	input logic jalr_misprediction_0,
+	input logic jalr_prediction_valid_0,
+	input logic [size-1 : 0] jalr_correct_pc_0,
+	input logic [size-1 : 0] jalr_update_prediction_pc_0,
+
 	// decision interface 
    output logic jump_0, // 1 : taken , 0 : not taken
 	output logic jump_1, // 1 : taken , 0 : not taken
@@ -146,9 +151,11 @@ module jump_controller_super #(parameter size = 32)(
 		.update_prediction_pc_0(update_prediction_pc_0),
 		.update_prediction_valid_i_0(update_prediction_valid_i_0),
 		.misprediction_0(misprediction_0),
+
 		.update_prediction_pc_1(update_prediction_pc_1),
 		.update_prediction_valid_i_1(update_prediction_valid_i_1),
 		.misprediction_1(misprediction_1),
+		
 		.update_prediction_pc_2(update_prediction_pc_2),
 		.update_prediction_valid_i_2(update_prediction_valid_i_2),
 		.misprediction_2(misprediction_2)
@@ -181,20 +188,20 @@ module jump_controller_super #(parameter size = 32)(
 		.jalr_prediction_target_o(jalr_prediction_target),
 
 		// Update interface
-		.update_prediction_pc_0(update_prediction_pc_0),
-		.update_prediction_valid_i_0(update_prediction_valid_i_0),
-		.misprediction_0(misprediction_0),
-		.correct_pc_0(correct_pc_0),
+		.update_prediction_pc_0(jalr_update_prediction_pc_0),
+		.update_prediction_valid_i_0(jalr_prediction_valid_0),
+		.misprediction_0(jalr_misprediction_0),
+		.correct_pc_0(jalr_correct_pc_0),
 
-		.update_prediction_pc_1(update_prediction_pc_1),
-		.update_prediction_valid_i_1(update_prediction_valid_i_1),
-		.misprediction_1(misprediction_1),
-		.correct_pc_1(correct_pc_1),
+		.update_prediction_pc_1(0),
+		.update_prediction_valid_i_1(0),
+		.misprediction_1(0),
+		.correct_pc_1(0),
 
-		.update_prediction_pc_2(update_prediction_pc_2),
-		.update_prediction_valid_i_2(update_prediction_valid_i_2),
-		.misprediction_2(misprediction_2),
-		.correct_pc_2(correct_pc_2)
+		.update_prediction_pc_2(0),
+		.update_prediction_valid_i_2(0),
+		.misprediction_2(0),
+		.correct_pc_2(0)
 	);
 	
 endmodule

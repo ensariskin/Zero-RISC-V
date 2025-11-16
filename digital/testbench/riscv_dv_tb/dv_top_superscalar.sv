@@ -22,7 +22,7 @@ module dv_top_superscalar;
     parameter INST_BASE_addR = 32'h80000000;
     
     // Default region base addresses (can be overridden via plusargs)
-    parameter REGION0_BASE_addR_DEFAULT = 32'h00007000;  // Default Region 0 start address
+    parameter REGION0_BASE_addR_DEFAULT = 32'h00000000;  // Default Region 0 start address
     parameter REGION1_BASE_addR_DEFAULT = 32'h7FFEFFF0;  // Default Region 1 start address
     
     // Runtime configurable region base addresses
@@ -691,7 +691,7 @@ module dv_top_superscalar;
     );
     
     // Region 0 data memory (4KB = 1K words)
-    memory_3rw_unaligned #(
+    memory_3rw #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(10),  // 1K words = 4KB memory (2^10 = 1024 words)
         .NUM_WMASKS(4)
@@ -739,7 +739,7 @@ module dv_top_superscalar;
     );
     
     // Region 1 data memory (64KB = 16K words)
-    memory_3rw_unaligned #(
+    memory_3rw #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
@@ -1362,7 +1362,7 @@ module dv_top_superscalar;
     always @(posedge clk) begin
         if (rst_n) begin
             // Count total branches (when update_prediction_valid is high)
-            if (dut.fetch_buffer_unit.update_prediction_valid_i_0) begin
+            if (dut.commit_is_branch_0) begin
                 total_branches++;
                 
                 // Check if this branch was mispredicted

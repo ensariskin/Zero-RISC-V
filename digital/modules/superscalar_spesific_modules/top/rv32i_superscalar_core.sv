@@ -204,6 +204,22 @@ module rv32i_superscalar_core #(
     logic commit_is_branch_0;
     logic [DATA_WIDTH-1:0] upadate_predictor_pc_0;
 
+    logic                  ex0_misprediction_detected;
+    logic [DATA_WIDTH-1:0] ex0_commit_correct_pc;
+    logic                  ex0_commit_is_branch;
+    logic [DATA_WIDTH-1:0] ex0_upadate_predictor_pc;
+
+    logic                  ex1_misprediction_detected;
+    logic [DATA_WIDTH-1:0] ex1_commit_correct_pc;
+    logic                  ex1_commit_is_branch;
+    logic [DATA_WIDTH-1:0] ex1_upadate_predictor_pc;
+
+    logic                  ex2_misprediction_detected;
+    logic [DATA_WIDTH-1:0] ex2_commit_correct_pc;
+    logic                  ex2_commit_is_branch;
+    logic [DATA_WIDTH-1:0] ex2_upadate_predictor_pc;
+
+
     cdb_if #(
         .DATA_WIDTH(DATA_WIDTH),
         .PHYS_REG_ADDR_WIDTH(6)
@@ -234,25 +250,30 @@ module rv32i_superscalar_core #(
         
         // Pipeline control
         .flush(misprediction_detected),
+        .correct_pc(commit_correct_pc_0),
+        .jalr_prediction_valid_0(commit_is_branch_0),
+        .jalr_update_prediction_pc_0(upadate_predictor_pc_0),
         .buble(pipeline_stall),
         
         // Branch prediction interface
         .pc_value_at_prediction_0(bp_pc_0),
-        .update_prediction_valid_i_0(commit_is_branch_0),
-        .update_prediction_pc_0(upadate_predictor_pc_0),
-        .misprediction_0(misprediction_detected),
-        
         .pc_value_at_prediction_1(bp_pc_1),
-        .update_prediction_valid_i_1(bp_update_valid_1),
-        .update_prediction_pc_1(bp_update_pc_1),
-        .misprediction_1(bp_misprediction_1),
-        
         .pc_value_at_prediction_2(bp_pc_2),
-        .update_prediction_valid_i_2(bp_update_valid_2),
-        .update_prediction_pc_2(bp_update_pc_2),
-        .misprediction_2(bp_misprediction_2),
+
+        .update_prediction_valid_i_0(ex0_commit_is_branch),
+        .update_prediction_pc_0(ex0_upadate_predictor_pc),
+        .misprediction_0(ex0_misprediction_detected),
+        .correct_pc_0(ex0_commit_correct_pc),
         
-        .correct_pc(commit_correct_pc_0),
+        .update_prediction_valid_i_1(ex1_commit_is_branch),
+        .update_prediction_pc_1(ex1_upadate_predictor_pc),
+        .misprediction_1(ex1_misprediction_detected),
+        .correct_pc_1(ex1_commit_correct_pc),
+        
+        .update_prediction_valid_i_2(ex2_commit_is_branch),
+        .update_prediction_pc_2(ex2_upadate_predictor_pc),
+        .misprediction_2(ex2_misprediction_detected),
+        .correct_pc_2(ex2_commit_correct_pc),
         
         // Output to decode stages
         .decode_valid_o(decode_valid),
@@ -443,6 +464,22 @@ module rv32i_superscalar_core #(
         .clk(clk),
         .rst_n(~reset),
         
+        .update_predictor_0(ex0_commit_is_branch),
+        .update_predictor_1(ex1_commit_is_branch),
+        .update_predictor_2(ex2_commit_is_branch),
+
+        .misprediction_0(ex0_misprediction_detected),
+        .misprediction_1(ex1_misprediction_detected),
+        .misprediction_2(ex2_misprediction_detected),
+
+        .correct_pc_0(ex0_commit_correct_pc),
+        .correct_pc_1(ex1_commit_correct_pc),
+        .correct_pc_2(ex2_commit_correct_pc),
+
+        .update_pc_0(ex0_upadate_predictor_pc),
+        .update_pc_1(ex1_upadate_predictor_pc),
+        .update_pc_2(ex2_upadate_predictor_pc),
+
         // Interface to reservation stations
         .rs_to_exec_0(dispatch_to_alu_0_if.functional_unit),
         .rs_to_exec_1(dispatch_to_alu_1_if.functional_unit),

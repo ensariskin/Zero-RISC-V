@@ -36,12 +36,16 @@ module fetch_buffer_top #(
     
     // Pipeline control signals
     input  logic flush,
+    input  logic [DATA_WIDTH-1:0]   correct_pc,
+    input logic                     jalr_prediction_valid_0,
+    input logic [DATA_WIDTH-1 : 0]  jalr_update_prediction_pc_0,
     input  logic buble,
     
     input  logic update_prediction_valid_i_0, update_prediction_valid_i_1, update_prediction_valid_i_2,
     input  logic [DATA_WIDTH-1:0] update_prediction_pc_0, update_prediction_pc_1, update_prediction_pc_2,
     input  logic misprediction_0, misprediction_1, misprediction_2,
-    input  logic [DATA_WIDTH-1:0] correct_pc,
+    input  logic [DATA_WIDTH-1:0] correct_pc_0, correct_pc_1, correct_pc_2,
+    
     
     // Output to decode stages
     output logic [2:0] decode_valid_o,          // How many instructions are available for decode
@@ -89,6 +93,9 @@ module fetch_buffer_top #(
 
         // Pipeline control
         .flush(flush),
+        .correct_pc(correct_pc),
+        .jalr_prediction_valid_0(jalr_prediction_valid_0),
+        .jalr_update_prediction_pc_0(jalr_update_prediction_pc_0),
         .buble(buble),
         
         // Branch prediction interface
@@ -97,25 +104,26 @@ module fetch_buffer_top #(
         .update_prediction_valid_i_0(update_prediction_valid_i_0),
         .update_prediction_pc_0(update_prediction_pc_0),
         .misprediction_0(misprediction_0),
+        .correct_pc_0(correct_pc_0),
         
         .pc_value_at_prediction_1(fetch_pc_value_at_prediction_1),
         .branch_prediction_o_1(fetch_branch_pred_1),
         .update_prediction_valid_i_1(update_prediction_valid_i_1),
         .update_prediction_pc_1(update_prediction_pc_1),
         .misprediction_1(misprediction_1),
+        .correct_pc_1(correct_pc_1),
         
         .pc_value_at_prediction_2(fetch_pc_value_at_prediction_2),
         .branch_prediction_o_2(fetch_branch_pred_2),
         .update_prediction_valid_i_2(update_prediction_valid_i_2),
         .update_prediction_pc_2(update_prediction_pc_2),
         .misprediction_2(misprediction_2),
+        .correct_pc_2(correct_pc_2),
 
         .pc_value_at_prediction_3(fetch_pc_value_at_prediction_3),
         .branch_prediction_o_3(fetch_branch_pred_3),
         .pc_value_at_prediction_4(fetch_pc_value_at_prediction_4),
         .branch_prediction_o_4(fetch_branch_pred_4),
-        
-        .correct_pc(correct_pc),
         
         // New buffer interface
         .fetch_valid_o(fetch_valid),

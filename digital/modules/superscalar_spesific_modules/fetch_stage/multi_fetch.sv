@@ -21,22 +21,28 @@ module multi_fetch #(parameter size = 32)(
 
       // Pipeline control signals
       input  logic flush,
+      input  logic [size-1 : 0] correct_pc,
+      input logic               jalr_prediction_valid_0,
+	   input logic [size-1 : 0]  jalr_update_prediction_pc_0,
       input  logic buble,
 
       // TODO : We will need branch prediction signals here
       input  logic update_prediction_valid_i_0,
       input  logic [size-1 : 0] update_prediction_pc_0,
       input  logic misprediction_0,
+      input  logic [size-1 : 0] correct_pc_0,
 
       input  logic update_prediction_valid_i_1,
       input  logic [size-1 : 0] update_prediction_pc_1,
       input  logic misprediction_1,
+      input  logic [size-1 : 0] correct_pc_1,
 
       input  logic update_prediction_valid_i_2,
       input  logic [size-1 : 0] update_prediction_pc_2,
       input  logic misprediction_2,
+      input logic [size-1 : 0] correct_pc_2,
 
-      input  logic [size-1 : 0] correct_pc,
+      
 
       // New interface for instruction buffer integration
       output logic [4:0] fetch_valid_o,        // Which of the 3 instructions are valid
@@ -79,7 +85,7 @@ module multi_fetch #(parameter size = 32)(
 
    // Add misprediction logic (combine all three mispredictions)
    logic misprediction_combined;
-   assign misprediction_combined = misprediction_0 | misprediction_1 | misprediction_2;
+   assign misprediction_combined = flush; //misprediction_0 | misprediction_1 | misprediction_2;
 
    // For now inst addr 1 is inst addr 0 + 4
    // inst addr 2 is inst addr 1 + 4
@@ -193,9 +199,14 @@ module multi_fetch #(parameter size = 32)(
       .misprediction_1(misprediction_1),
       .misprediction_2(misprediction_2),
 
-      .correct_pc_0(correct_pc),
-      .correct_pc_1(correct_pc),
-      .correct_pc_2(correct_pc),
+      .correct_pc_0(correct_pc_0),
+      .correct_pc_1(correct_pc_1),
+      .correct_pc_2(correct_pc_2),
+
+      .jalr_correct_pc_0(correct_pc),
+      .jalr_misprediction_0(flush),
+      .jalr_prediction_valid_0(jalr_prediction_valid_0),
+      .jalr_update_prediction_pc_0(jalr_update_prediction_pc_0),
 
       .jump_0(jump_0),
       .jump_1(jump_1),
