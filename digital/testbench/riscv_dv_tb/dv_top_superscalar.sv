@@ -1362,11 +1362,11 @@ module dv_top_superscalar;
     always @(posedge clk) begin
         if (rst_n) begin
             // Count total branches (when update_prediction_valid is high)
-            if (dut.commit_is_branch_0) begin
+            if (dut.dispatch_stage_unit.rob.commit_is_branch_0) begin
                 total_branches++;
                 
                 // Check if this branch was mispredicted
-                if (dut.fetch_buffer_unit.misprediction_0) begin
+                if (dut.misprediction_detected) begin
                     mispredicted_branches++;
                     total_mispredictions++;
                     // Record ROB occupancy at misprediction
@@ -1374,7 +1374,11 @@ module dv_top_superscalar;
                     //$display("[%t] BRANCH MISPREDICTION: Branch #%0d was mispredicted, ROB count=%0d", 
                     //         $time, total_branches, dut.dispatch_stage_unit.rob.buffer_count);
                 end
-            end else if (dut.misprediction_detected) begin
+            end else  if (dut.dispatch_stage_unit.rob.commit_is_branch_1) begin
+                total_branches++;
+            end else  if (dut.dispatch_stage_unit.rob.commit_is_branch_2) begin
+                total_branches++;
+            end else if (dut.misprediction_detected && !dut.commit_is_branch_0) begin
                 // Misprediction without prediction_valid = JALR
                 jalr_count++;
                 total_mispredictions++;
@@ -1719,5 +1723,41 @@ module dv_top_superscalar;
             $display("=================================================================");
         end
     end
+
+    //==========================================================================
+    // PIPELINE PERFORMANCE ANALYZER V2 INSTANTIATION
+    //==========================================================================
+    
+    pipeline_performance_analyzer_v2 perf_analyzer (
+        .clk(clk),
+        .reset(~rst_n),
+        
+        // RS0 signals
+        .rs0_occupied(dut.dispatch_stage_unit.rs_0.occupied),
+        .rs0_issue_valid(dut.dispatch_to_alu_0_if.issue_valid),
+        .rs0_operand_a_tag(dut.dispatch_stage_unit.rs_0.stored_operand_a_tag),
+        .rs0_operand_b_tag(dut.dispatch_stage_unit.rs_0.stored_operand_b_tag),
+        
+        // RS1 signals
+        .rs1_occupied(dut.dispatch_stage_unit.rs_1.occupied),
+        .rs1_issue_valid(dut.dispatch_to_alu_1_if.issue_valid),
+        .rs1_operand_a_tag(dut.dispatch_stage_unit.rs_1.stored_operand_a_tag),
+        .rs1_operand_b_tag(dut.dispatch_stage_unit.rs_1.stored_operand_b_tag),
+        
+        // RS2 signals
+        .rs2_occupied(dut.dispatch_stage_unit.rs_2.occupied),
+        .rs2_issue_valid(dut.dispatch_to_alu_2_if.issue_valid),
+        .rs2_operand_a_tag(dut.dispatch_stage_unit.rs_2.stored_operand_a_tag),
+        .rs2_operand_b_tag(dut.dispatch_stage_unit.rs_2.stored_operand_b_tag),
+
+        // Misprediction signal
+        .misprediction_detected(dut.misprediction_detected),
+        
+        // Issue stage signals for previous stage bottleneck analysis
+        .decode_valid_i(dut.issue_stage_unit.decode_valid_i),
+        .decode_ready_o(dut.issue_stage_unit.decode_ready_o),
+        .rename_ready(dut.issue_stage_unit.rename_ready),
+        .lsq_alloc_ready(dut.issue_stage_unit.lsq_alloc_ready)
+    );
 
 endmodule

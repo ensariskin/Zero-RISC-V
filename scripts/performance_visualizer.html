@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RV32I Performance Analyzer Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: #252526;
+            border-right: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #4ec9b0;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .nav {
+            flex: 1;
+            padding: 10px 0;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #2a2d2e;
+        }
+
+        .nav-item.active {
+            background: #37373d;
+            border-left-color: #4ec9b0;
+            color: #4ec9b0;
+        }
+
+        .nav-icon {
+            margin-right: 8px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: #252526;
+            border-bottom: 1px solid #3e3e42;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .toolbar select, .toolbar button {
+            background: #3c3c3c;
+            color: #d4d4d4;
+            border: 1px solid #3e3e42;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .toolbar select:hover, .toolbar button:hover {
+            background: #505050;
+        }
+
+        .toolbar button.active {
+            background: #0e639c;
+            border-color: #007acc;
+        }
+
+        .toolbar label {
+            font-size: 13px;
+            color: #9d9d9d;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Tree View (WizTree style) */
+        .tree-header {
+            display: grid;
+            grid-template-columns: 1fr 150px 150px 120px;
+            gap: 10px;
+            padding: 10px 15px;
+            background: #2d2d30;
+            border: 1px solid #3e3e42;
+            font-weight: bold;
+            font-size: 13px;
+            color: #9d9d9d;
+            margin-bottom: 5px;
+        }
+
+        .tree-container {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+        }
+
+        .tree-row {
+            display: grid;
+            grid-template-columns: 1fr 150px 150px 120px;
+            gap: 10px;
+            padding: 8px 15px;
+            border-bottom: 1px solid #3e3e42;
+            cursor: pointer;
+            transition: background 0.1s;
+            font-size: 13px;
+        }
+
+        .tree-row:hover {
+            background: #2a2d2e;
+        }
+
+        .tree-row.level-0 {
+            font-weight: bold;
+            background: #2d2d30;
+        }
+
+        .tree-row.level-1 {
+            padding-left: 30px;
+        }
+
+        .tree-row.level-2 {
+            padding-left: 50px;
+            color: #9d9d9d;
+        }
+
+        .tree-row.level-3 {
+            padding-left: 70px;
+            color: #858585;
+            font-size: 12px;
+        }
+
+        .tree-row.level-4 {
+            padding-left: 90px;
+            color: #757575;
+            font-size: 12px;
+        }
+
+        .tree-row.collapsed {
+            display: none;
+        }
+
+        .tree-header > div:nth-child(2),
+        .tree-header > div:nth-child(3) {
+            text-align: right;
+        }
+
+        .tree-name {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .expand-icon {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #9d9d9d;
+            font-size: 10px;
+        }
+
+        .expand-icon.leaf {
+            visibility: hidden;
+        }
+
+        .bar-container {
+            background: #3e3e42;
+            border-radius: 2px;
+            overflow: hidden;
+            height: 18px;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            padding-left: 5px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .bar-fill.stall { background: #ce9178; }
+        .bar-fill.not-occupied { background: #4ec9b0; }
+        .bar-fill.misprediction { background: #c586c0; }
+        .bar-fill.bottleneck { background: #569cd6; }
+        .bar-fill.decode-not-ready { background: #dcdcaa; }
+        .bar-fill.rob-full { background: #f48771; }
+        .bar-fill.lsq-full { background: #4fc1ff; }
+        .bar-fill.buffer-empty { background: #9cdcfe; }
+        .bar-fill.operands { background: #d7ba7d; }
+
+        .metric-value {
+            text-align: right;
+            font-family: 'Consolas', monospace;
+        }
+
+        /* Charts */
+        .chart-container {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #4ec9b0;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            max-height: 400px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #9d9d9d;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4ec9b0;
+        }
+
+        .stat-unit {
+            font-size: 14px;
+            color: #9d9d9d;
+            margin-left: 5px;
+        }
+
+        /* File Upload */
+        .upload-zone {
+            background: #252526;
+            border: 2px dashed #3e3e42;
+            border-radius: 8px;
+            padding: 60px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-zone:hover {
+            border-color: #4ec9b0;
+            background: #2a2d2e;
+        }
+
+        .upload-zone.dragover {
+            border-color: #4ec9b0;
+            background: #2a2d2e;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #4ec9b0;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: #9d9d9d;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3e3e42;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #505050;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">Zero RISCV Profiler 💻</div>
+            <div class="nav">
+                <div class="nav-item active" data-page="hierarchy">
+                    <span class="nav-icon">📊</span> Hierarchy View
+                </div>
+                <div class="nav-item" data-page="timeline">
+                    <span class="nav-icon">📈</span> Timeline Charts
+                </div>
+                <div class="nav-item" data-page="summary">
+                    <span class="nav-icon">📋</span> Summary
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <label for="cycleSelect">Cycle:</label>
+                <select id="cycleSelect">
+                    <option value="1000">1000</option>
+                </select>
+
+                <label for="rsSelect">RS Unit:</label>
+                <select id="rsSelect">
+                    <option value="all">All</option>
+                    <option value="rs0">RS0</option>
+                    <option value="rs1">RS1</option>
+                    <option value="rs2">RS2</option>
+                </select>
+
+                <button id="percentModeGlobal" class="active">Global %</button>
+                <button id="percentModeRelative">Relative %</button>
+
+                <div style="border-left: 1px solid #3e3e42; height: 24px; margin: 0 10px;"></div>
+
+                <button id="cdbFocusBtn">CDB Focus</button>
+                <button id="collapseAllBtn">Collapse All</button>
+                <button id="expandAllBtn">Expand All</button>
+
+                <div style="flex: 1"></div>
+
+                <button id="uploadBtn">📁 Load Log File</button>
+                <input type="file" id="fileInput" accept=".log">
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- Hierarchy Page -->
+                <div class="page active" id="hierarchyPage">
+                    <div id="uploadZone" class="upload-zone">
+                        <div class="upload-icon">📂</div>
+                        <div class="upload-text">Drop performance_analysis_v2.log here</div>
+                        <div class="upload-hint">or click to browse</div>
+                    </div>
+                    
+                    <div id="treeView" style="display: none;">
+                        <div class="tree-header">
+                            <div>Metric</div>
+                            <div>Cycles</div>
+                            <div>Percentage</div>
+                            <div>Visual</div>
+                        </div>
+                        <div class="tree-container" id="treeContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Timeline Page -->
+                <div class="page" id="timelinePage">
+                    <div class="chart-container">
+                        <div class="chart-title">Stall Sources Over Time</div>
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-grid">
+                        <div class="chart-container">
+                            <div class="chart-title">Misprediction Penalty Trend</div>
+                            <canvas id="mispredictionChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">ROB vs LSQ Full</div>
+                            <canvas id="bottleneckChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-grid">
+                        <div class="chart-container">
+                            <div class="chart-title">Operand Dependencies</div>
+                            <canvas id="operandChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">CDB Waiting Distribution</div>
+                            <canvas id="cdbChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Page -->
+                <div class="page" id="summaryPage">
+                    <div class="stats-grid" id="statsGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let logData = null;
+        let currentCycle = 1000;
+        let currentRS = 'all';
+        let percentMode = 'global'; // 'global' or 'relative'
+        let cdbFocusMode = false; // New: CDB focus mode
+        let expandedNodes = new Set();
+
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                const page = item.dataset.page;
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(page + 'Page').classList.add('active');
+                
+                if (page === 'timeline' && logData) {
+                    renderCharts();
+                } else if (page === 'summary' && logData) {
+                    renderSummary();
+                }
+            });
+        });
+
+        // Percent mode toggle
+        document.getElementById('percentModeGlobal').addEventListener('click', function() {
+            percentMode = 'global';
+            this.classList.add('active');
+            document.getElementById('percentModeRelative').classList.remove('active');
+            if (logData) renderTree();
+        });
+
+        document.getElementById('percentModeRelative').addEventListener('click', function() {
+            percentMode = 'relative';
+            this.classList.add('active');
+            document.getElementById('percentModeGlobal').classList.remove('active');
+            if (logData) renderTree();
+        });
+
+        // CDB Focus mode toggle
+        document.getElementById('cdbFocusBtn').addEventListener('click', function() {
+            cdbFocusMode = !cdbFocusMode;
+            if (cdbFocusMode) {
+                this.classList.add('active');
+            } else {
+                this.classList.remove('active');
+            }
+            if (logData) renderTree();
+        });
+
+        // Collapse All button
+        document.getElementById('collapseAllBtn').addEventListener('click', function() {
+            expandedNodes.clear();
+            if (logData) updateTreeVisibility();
+        });
+
+        // Expand All button
+        document.getElementById('expandAllBtn').addEventListener('click', function() {
+            // Get all nodes with children
+            document.querySelectorAll('.tree-row').forEach(row => {
+                const hasChildren = row.querySelector('.expand-icon:not(.leaf)');
+                if (hasChildren) {
+                    expandedNodes.add(row.dataset.id);
+                }
+            });
+            if (logData) updateTreeVisibility();
+        });
+
+        // Cycle selection
+        document.getElementById('cycleSelect').addEventListener('change', (e) => {
+            currentCycle = parseInt(e.target.value);
+            console.log('Cycle changed to:', currentCycle);
+            if (logData) renderTree();
+        });
+
+        // RS selection
+        document.getElementById('rsSelect').addEventListener('change', (e) => {
+            currentRS = e.target.value;
+            if (logData) {
+                renderTree();
+                if (document.getElementById('timelinePage').classList.contains('active')) {
+                    renderCharts();
+                }
+            }
+        });
+
+        // File upload
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        
+        document.getElementById('uploadBtn').addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                loadFile(e.dataTransfer.files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                loadFile(e.target.files[0]);
+            }
+        });
+
+        // Load and parse log file
+        function loadFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const content = e.target.result;
+                    console.log('File loaded, size:', content.length);
+                    
+                    logData = parseLogFile(content);
+                    console.log('Parsed data:', logData);
+                    
+                    if (!logData.cycles || logData.cycles.length === 0) {
+                        alert('No cycle reports found in log file!');
+                        return;
+                    }
+                    
+                    // Populate cycle selector
+                    const cycleSelect = document.getElementById('cycleSelect');
+                    cycleSelect.innerHTML = '';
+                    const lastCycleValue = logData.cycles[logData.cycles.length - 1];
+                    logData.cycles.forEach(cycle => {
+                        const option = document.createElement('option');
+                        option.value = cycle;
+                        option.textContent = cycle;
+                        if (cycle === lastCycleValue) {
+                            option.selected = true;
+                        }
+                        cycleSelect.appendChild(option);
+                    });
+                    currentCycle = lastCycleValue;
+                    
+                    // Hide upload zone, show tree
+                    uploadZone.style.display = 'none';
+                    document.getElementById('treeView').style.display = 'block';
+                    
+                    renderTree();
+                    
+                    console.log('Rendering complete');
+                } catch (error) {
+                    console.error('Error loading file:', error);
+                    alert('Error parsing log file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Parse log file
+        function parseLogFile(content) {
+            const data = {
+                cycles: [],
+                reports: {}
+            };
+            
+            // Remove BOM if present
+            content = content.replace(/^\uFEFF/, '');
+            
+            const cycleRegex = /CYCLE (\d+) REPORT/g;
+            let match;
+            while ((match = cycleRegex.exec(content)) !== null) {
+                const cycle = parseInt(match[1]);
+                data.cycles.push(cycle);
+                console.log('Found cycle:', cycle);
+                data.reports[cycle] = parseReport(content, match.index, cycle);
+            }
+            
+            console.log('Total cycles found:', data.cycles.length);
+            return data;
+        }
+
+        function parseReport(content, startIndex, cycle) {
+            const report = { rs0: {}, rs1: {}, rs2: {} };
+            
+            // Find next report or end - look for next "CYCLE XXXX REPORT" pattern
+            const nextCycleMatch = /CYCLE \d+ REPORT/g;
+            nextCycleMatch.lastIndex = startIndex + 50; // Start searching after current cycle header
+            const nextMatch = nextCycleMatch.exec(content);
+            const section = content.substring(startIndex, nextMatch ? nextMatch.index : content.length);
+            
+            // Parse each RS
+            ['rs0', 'rs1', 'rs2'].forEach((rs, idx) => {
+                const rsName = `RS${idx}`;
+                const rsPattern = new RegExp(`${rsName}\\s*\\(Pipeline ${idx}\\) Analysis:`, 'i');
+                const rsMatch = section.match(rsPattern);
+                if (!rsMatch) {
+                    console.warn(`RS${idx} not found in cycle ${cycle}`);
+                    return;
+                }
+                
+                const rsIndex = rsMatch.index;
+                // Find next RS or end of section
+                let rsEndIndex = section.length;
+                for (let i = idx + 1; i < 3; i++) {
+                    const nextRsPattern = new RegExp(`RS${i}\\s*\\(Pipeline ${i}\\) Analysis:`, 'i');
+                    const nextMatch = section.substring(rsIndex + 10).match(nextRsPattern);
+                    if (nextMatch) {
+                        rsEndIndex = rsIndex + 10 + nextMatch.index;
+                        break;
+                    }
+                }
+                
+                const rsSection = section.substring(rsIndex, rsEndIndex);
+                
+                // Parse stall
+                const stallMatch = rsSection.match(/RS\d+\s+Stall:\s+(\d+)\s+cycles\s+\(([\d.]+)%\)/);
+                if (stallMatch) {
+                    report[rs].stall = parseInt(stallMatch[1]);
+                    report[rs].stall_pct = parseFloat(stallMatch[2]);
+                }
+                
+                // Parse not occupied
+                const notOccMatch = rsSection.match(/Not Occupied:\s+(\d+)\s+cycles\s+\(([\d.]+)%\)/);
+                if (notOccMatch) {
+                    report[rs].not_occupied = parseInt(notOccMatch[1]);
+                    report[rs].not_occupied_pct = parseFloat(notOccMatch[2]);
+                }
+                
+                // Parse misprediction
+                const mispredMatch = rsSection.match(/Misprediction Penalty:\s+(\d+)\s+\(([\d.]+)%\)/);
+                if (mispredMatch) {
+                    report[rs].misprediction = parseInt(mispredMatch[1]);
+                    report[rs].misprediction_pct = parseFloat(mispredMatch[2]);
+                }
+                
+                // Parse previous stage bottleneck
+                const bottleneckMatch = rsSection.match(/Previous Stage Bottleneck:\s+(\d+)\s+\(([\d.]+)%\)/);
+                if (bottleneckMatch) {
+                    report[rs].prev_stage = parseInt(bottleneckMatch[1]);
+                    report[rs].prev_stage_pct = parseFloat(bottleneckMatch[2]);
+                }
+                
+                // Parse decode not ready
+                const decodeMatch = rsSection.match(/Decode Not Ready:\s+(\d+)\s+\(([\d.]+)%\)/);
+                if (decodeMatch) {
+                    report[rs].decode_not_ready = parseInt(decodeMatch[1]);
+                    report[rs].decode_not_ready_pct = parseFloat(decodeMatch[2]);
+                }
+                
+                // Parse ROB full
+                const robMatch = rsSection.match(/ROB Full:\s+(\d+)\s+\(([\d.]+)%\)/);
+                if (robMatch) {
+                    report[rs].rob_full = parseInt(robMatch[1]);
+                    report[rs].rob_full_pct = parseFloat(robMatch[2]);
+                }
+                
+                // Parse LSQ full
+                const lsqMatch = rsSection.match(/LSQ Full:\s+(\d+)\s+\(([\d.]+)%\)/);
+                if (lsqMatch) {
+                    report[rs].lsq_full = parseInt(lsqMatch[1]);
+                    report[rs].lsq_full_pct = parseFloat(lsqMatch[2]);
+                }
+                
+                // Parse buffer empty
+                const bufferMatch = rsSection.match(/Instruction Buffer Empty:\s+(\d+)\s+\(([\d.]+)%\)/);
+                if (bufferMatch) {
+                    report[rs].buffer_empty = parseInt(bufferMatch[1]);
+                    report[rs].buffer_empty_pct = parseFloat(bufferMatch[2]);
+                }
+                
+                // Parse operands not ready
+                const operandsMatch = rsSection.match(/Operands Not Ready:\s+(\d+)\s+cycles\s+\(([\d.]+)%\)/);
+                if (operandsMatch) {
+                    report[rs].operands_not_ready = parseInt(operandsMatch[1]);
+                    report[rs].operands_not_ready_pct = parseFloat(operandsMatch[2]);
+                }
+                
+                // Parse dependency pattern
+                const bothMatch = rsSection.match(/Both waiting:\s+(\d+)\s+\(([\d.]+)%\)/);
+                if (bothMatch) {
+                    report[rs].dep_both = parseInt(bothMatch[1]);
+                    report[rs].dep_both_pct = parseFloat(bothMatch[2]);
+                }
+                const onlyAMatch = rsSection.match(/Only A waiting:\s+(\d+)\s+\(([\d.]+)%\)/);
+                if (onlyAMatch) {
+                    report[rs].dep_only_a = parseInt(onlyAMatch[1]);
+                    report[rs].dep_only_a_pct = parseFloat(onlyAMatch[2]);
+                }
+                const onlyBMatch = rsSection.match(/Only B waiting:\s+(\d+)\s+\(([\d.]+)%\)/);
+                if (onlyBMatch) {
+                    report[rs].dep_only_b = parseInt(onlyBMatch[1]);
+                    report[rs].dep_only_b_pct = parseFloat(onlyBMatch[2]);
+                }
+                
+                // Parse CDB waiting for operand A
+                const cdbASection = rsSection.match(/Operand A waiting for:[\s\S]*?(?=Operand B waiting for:|$)/);
+                if (cdbASection) {
+                    const text = cdbASection[0];
+                    const cdb0A = text.match(/CDB0:\s+(\d+)\s+\(([\d.\-nan]+)%\)/);
+                    const cdb1A = text.match(/CDB1:\s+(\d+)\s+\(([\d.\-nan]+)%\)/);
+                    const cdb2A = text.match(/CDB2:\s+(\d+)\s+\(([\d.\-nan]+)%\)/);
+                    const cdb3A = text.match(/CDB3:\s+(\d+)\s+\(([\d.\-nan]+)%\)/);
+                    if (cdb0A) { report[rs].cdb0_a = parseInt(cdb0A[1]); report[rs].cdb0_a_pct = parseFloat(cdb0A[2]) || 0; }
+                    if (cdb1A) { report[rs].cdb1_a = parseInt(cdb1A[1]); report[rs].cdb1_a_pct = parseFloat(cdb1A[2]) || 0; }
+                    if (cdb2A) { report[rs].cdb2_a = parseInt(cdb2A[1]); report[rs].cdb2_a_pct = parseFloat(cdb2A[2]) || 0; }
+                    if (cdb3A) { report[rs].cdb3_a = parseInt(cdb3A[1]); report[rs].cdb3_a_pct = parseFloat(cdb3A[2]) || 0; }
+                }
+                
+                // Parse CDB waiting for operand B
+                const cdbBSection = rsSection.match(/Operand B waiting for:[\s\S]*?(?=\n\s*\n|$)/);
+                if (cdbBSection) {
+                    const text = cdbBSection[0];
+                    const cdb0B = text.match(/CDB0:\s+(\d+)\s+\(([\d.\-nan]+)%\)/);
+                    const cdb1B = text.match(/CDB1:\s+(\d+)\s+\(([\d.\-nan]+)%\)/);
+                    const cdb2B = text.match(/CDB2:\s+(\d+)\s+\(([\d.\-nan]+)%\)/);
+                    const cdb3B = text.match(/CDB3:\s+(\d+)\s+\(([\d.\-nan]+)%\)/);
+                    if (cdb0B) { report[rs].cdb0_b = parseInt(cdb0B[1]); report[rs].cdb0_b_pct = parseFloat(cdb0B[2]) || 0; }
+                    if (cdb1B) { report[rs].cdb1_b = parseInt(cdb1B[1]); report[rs].cdb1_b_pct = parseFloat(cdb1B[2]) || 0; }
+                    if (cdb2B) { report[rs].cdb2_b = parseInt(cdb2B[1]); report[rs].cdb2_b_pct = parseFloat(cdb2B[2]) || 0; }
+                    if (cdb3B) { report[rs].cdb3_b = parseInt(cdb3B[1]); report[rs].cdb3_b_pct = parseFloat(cdb3B[2]) || 0; }
+                }
+                
+                console.log(`Parsed RS${idx} for cycle ${cycle}:`, report[rs]);
+            });
+            
+            return report;
+        }
+
+        // Render tree view
+        function renderTree() {
+            const container = document.getElementById('treeContainer');
+            container.innerHTML = '';
+            
+            // Ensure currentCycle is a number for proper lookup
+            const cycleKey = parseInt(currentCycle);
+            const reportData = logData.reports[cycleKey];
+            if (!reportData) {
+                console.error('No report data found for cycle:', cycleKey);
+                return;
+            }
+            
+            const rsUnits = currentRS === 'all' ? ['rs0', 'rs1', 'rs2'] : [currentRS];
+            
+            rsUnits.forEach((rs, idx) => {
+                const data = reportData[rs];
+                if (!data || !data.stall) return;
+                
+                const rsName = `RS${idx} (Pipeline ${idx})`;
+                const nodeId = `${rs}_root`;
+                
+                // Root: RS Stall (always show global % relative to cycle count)
+                addTreeRow(container, {
+                    id: nodeId,
+                    name: `${rsName} Stall`,
+                    value: data.stall,
+                    percent: data.stall_pct,  // Always use global percentage
+                    barClass: 'stall',
+                    level: 0,
+                    hasChildren: true,
+                    totalCycles: currentCycle
+                });
+                
+                // Level 1: Not Occupied
+                if (data.not_occupied !== undefined) {
+                    const notOccId = `${rs}_not_occ`;
+                    addTreeRow(container, {
+                        id: notOccId,
+                        name: 'Not Occupied',
+                        value: data.not_occupied,
+                        percent: percentMode === 'global' ? 
+                            (data.not_occupied / currentCycle * 100) : data.not_occupied_pct,
+                        barClass: 'not-occupied',
+                        level: 1,
+                        parentId: nodeId,
+                        hasChildren: true,
+                        totalCycles: currentCycle
+                    });
+                    
+                    // Level 2: Misprediction Penalty
+                    if (data.misprediction !== undefined) {
+                        addTreeRow(container, {
+                            id: `${rs}_mispred`,
+                            name: 'Misprediction Penalty',
+                            value: data.misprediction,
+                            percent: percentMode === 'global' ? 
+                                (data.misprediction / currentCycle * 100) : data.misprediction_pct,
+                            barClass: 'misprediction',
+                            level: 2,
+                            parentId: notOccId,
+                            hasChildren: false,
+                            totalCycles: currentCycle
+                        });
+                    }
+                    
+                    // Level 2: Previous Stage Bottleneck
+                    if (data.prev_stage !== undefined) {
+                        const prevStageId = `${rs}_prev`;
+                        addTreeRow(container, {
+                            id: prevStageId,
+                            name: 'Previous Stage Bottleneck',
+                            value: data.prev_stage,
+                            percent: percentMode === 'global' ? 
+                                (data.prev_stage / currentCycle * 100) : data.prev_stage_pct,
+                            barClass: 'bottleneck',
+                            level: 2,
+                            parentId: notOccId,
+                            hasChildren: true,
+                            totalCycles: currentCycle
+                        });
+                        
+                        // Level 3: Decode Not Ready
+                        if (data.decode_not_ready !== undefined) {
+                            const decodeId = `${rs}_decode`;
+                            addTreeRow(container, {
+                                id: decodeId,
+                                name: 'Decode Not Ready',
+                                value: data.decode_not_ready,
+                                percent: percentMode === 'global' ? 
+                                    (data.decode_not_ready / currentCycle * 100) : data.decode_not_ready_pct,
+                                barClass: 'decode-not-ready',
+                                level: 3,
+                                parentId: prevStageId,
+                                hasChildren: true,
+                                totalCycles: currentCycle
+                            });
+                            
+                            // Level 4: ROB Full
+                            if (data.rob_full !== undefined) {
+                                addTreeRow(container, {
+                                    id: `${rs}_rob`,
+                                    name: 'ROB Full',
+                                    value: data.rob_full,
+                                    percent: percentMode === 'global' ? 
+                                        (data.rob_full / currentCycle * 100) : data.rob_full_pct,
+                                    barClass: 'rob-full',
+                                    level: 4,
+                                    parentId: decodeId,
+                                    hasChildren: false,
+                                    totalCycles: currentCycle
+                                });
+                            }
+                            
+                            // Level 4: LSQ Full
+                            if (data.lsq_full !== undefined) {
+                                addTreeRow(container, {
+                                    id: `${rs}_lsq`,
+                                    name: 'LSQ Full',
+                                    value: data.lsq_full,
+                                    percent: percentMode === 'global' ? 
+                                        (data.lsq_full / currentCycle * 100) : data.lsq_full_pct,
+                                    barClass: 'lsq-full',
+                                    level: 4,
+                                    parentId: decodeId,
+                                    hasChildren: false,
+                                    totalCycles: currentCycle
+                                });
+                            }
+                        }
+                        
+                        // Level 3: Buffer Empty
+                        if (data.buffer_empty !== undefined) {
+                            addTreeRow(container, {
+                                id: `${rs}_buffer`,
+                                name: 'Instruction Buffer Empty',
+                                value: data.buffer_empty,
+                                percent: percentMode === 'global' ? 
+                                    (data.buffer_empty / currentCycle * 100) : data.buffer_empty_pct,
+                                barClass: 'buffer-empty',
+                                level: 3,
+                                parentId: prevStageId,
+                                hasChildren: false,
+                                totalCycles: currentCycle
+                            });
+                        }
+                    }
+                }
+                
+                // Level 1: Operands Not Ready
+                if (data.operands_not_ready !== undefined) {
+                    const operandsId = `${rs}_operands`;
+                    addTreeRow(container, {
+                        id: operandsId,
+                        name: 'Operands Not Ready',
+                        value: data.operands_not_ready,
+                        percent: percentMode === 'global' ? 
+                            (data.operands_not_ready / currentCycle * 100) : data.operands_not_ready_pct,
+                        barClass: 'operands',
+                        level: 1,
+                        parentId: nodeId,
+                        hasChildren: true,
+                        totalCycles: currentCycle
+                    });
+                    
+                    if (cdbFocusMode) {
+                        // CDB Focus Mode: Show which CDBs this RS is waiting for
+                        // Aggregate CDB waiting from both operand A and B
+                        const cdb0_total = (data.cdb0_a || 0) + (data.cdb0_b || 0);
+                        const cdb1_total = (data.cdb1_a || 0) + (data.cdb1_b || 0);
+                        const cdb2_total = (data.cdb2_a || 0) + (data.cdb2_b || 0);
+                        const cdb3_total = (data.cdb3_a || 0) + (data.cdb3_b || 0);
+                        
+                        if (cdb0_total > 0) {
+                            addTreeRow(container, {
+                                id: `${rs}_cdb0_total`,
+                                name: 'Waiting for CDB0',
+                                value: cdb0_total,
+                                percent: percentMode === 'global' ? 
+                                    (cdb0_total / currentCycle * 100) : (cdb0_total / data.operands_not_ready * 100),
+                                barClass: 'operands',
+                                level: 2,
+                                parentId: operandsId,
+                                hasChildren: false,
+                                totalCycles: currentCycle
+                            });
+                        }
+                        if (cdb1_total > 0) {
+                            addTreeRow(container, {
+                                id: `${rs}_cdb1_total`,
+                                name: 'Waiting for CDB1',
+                                value: cdb1_total,
+                                percent: percentMode === 'global' ? 
+                                    (cdb1_total / currentCycle * 100) : (cdb1_total / data.operands_not_ready * 100),
+                                barClass: 'operands',
+                                level: 2,
+                                parentId: operandsId,
+                                hasChildren: false,
+                                totalCycles: currentCycle
+                            });
+                        }
+                        if (cdb2_total > 0) {
+                            addTreeRow(container, {
+                                id: `${rs}_cdb2_total`,
+                                name: 'Waiting for CDB2',
+                                value: cdb2_total,
+                                percent: percentMode === 'global' ? 
+                                    (cdb2_total / currentCycle * 100) : (cdb2_total / data.operands_not_ready * 100),
+                                barClass: 'operands',
+                                level: 2,
+                                parentId: operandsId,
+                                hasChildren: false,
+                                totalCycles: currentCycle
+                            });
+                        }
+                        if (cdb3_total > 0) {
+                            addTreeRow(container, {
+                                id: `${rs}_cdb3_total`,
+                                name: 'Waiting for CDB3',
+                                value: cdb3_total,
+                                percent: percentMode === 'global' ? 
+                                    (cdb3_total / currentCycle * 100) : (cdb3_total / data.operands_not_ready * 100),
+                                barClass: 'operands',
+                                level: 2,
+                                parentId: operandsId,
+                                hasChildren: false,
+                                totalCycles: currentCycle
+                            });
+                        }
+                    } else {
+                        // Default Mode: Show dependency pattern (Both/Only A/Only B)
+                        if (data.dep_both !== undefined) {
+                            addTreeRow(container, {
+                                id: `${rs}_dep_both`,
+                                name: 'Both Waiting',
+                                value: data.dep_both,
+                                percent: percentMode === 'global' ? 
+                                    (data.dep_both / currentCycle * 100) : data.dep_both_pct,
+                                barClass: 'operands',
+                                level: 2,
+                                parentId: operandsId,
+                                hasChildren: false,
+                                totalCycles: currentCycle
+                            });
+                        }
+                        if (data.dep_only_a !== undefined) {
+                            const depAId = `${rs}_dep_a`;
+                            addTreeRow(container, {
+                                id: depAId,
+                                name: 'Only A Waiting',
+                                value: data.dep_only_a,
+                                percent: percentMode === 'global' ? 
+                                    (data.dep_only_a / currentCycle * 100) : data.dep_only_a_pct,
+                                barClass: 'operands',
+                                level: 2,
+                                parentId: operandsId,
+                                hasChildren: true,
+                                totalCycles: currentCycle
+                            });
+                            
+                            // Level 3: CDB waiting for operand A
+                            if (data.cdb0_a !== undefined && data.cdb0_a > 0) {
+                                addTreeRow(container, {
+                                    id: `${rs}_cdb0_a`,
+                                    name: 'Waiting for CDB0',
+                                    value: data.cdb0_a,
+                                    percent: percentMode === 'global' ? 
+                                        (data.cdb0_a / currentCycle * 100) : data.cdb0_a_pct,
+                                    barClass: 'operands',
+                                    level: 3,
+                                    parentId: depAId,
+                                    hasChildren: false,
+                                    totalCycles: currentCycle
+                                });
+                            }
+                            if (data.cdb1_a !== undefined && data.cdb1_a > 0) {
+                                addTreeRow(container, {
+                                    id: `${rs}_cdb1_a`,
+                                    name: 'Waiting for CDB1',
+                                    value: data.cdb1_a,
+                                    percent: percentMode === 'global' ? 
+                                        (data.cdb1_a / currentCycle * 100) : data.cdb1_a_pct,
+                                    barClass: 'operands',
+                                    level: 3,
+                                    parentId: depAId,
+                                    hasChildren: false,
+                                    totalCycles: currentCycle
+                                });
+                            }
+                            if (data.cdb2_a !== undefined && data.cdb2_a > 0) {
+                                addTreeRow(container, {
+                                    id: `${rs}_cdb2_a`,
+                                    name: 'Waiting for CDB2',
+                                    value: data.cdb2_a,
+                                    percent: percentMode === 'global' ? 
+                                        (data.cdb2_a / currentCycle * 100) : data.cdb2_a_pct,
+                                    barClass: 'operands',
+                                    level: 3,
+                                    parentId: depAId,
+                                    hasChildren: false,
+                                    totalCycles: currentCycle
+                                });
+                            }
+                            if (data.cdb3_a !== undefined && data.cdb3_a > 0) {
+                                addTreeRow(container, {
+                                    id: `${rs}_cdb3_a`,
+                                    name: 'Waiting for CDB3',
+                                    value: data.cdb3_a,
+                                    percent: percentMode === 'global' ? 
+                                        (data.cdb3_a / currentCycle * 100) : data.cdb3_a_pct,
+                                    barClass: 'operands',
+                                    level: 3,
+                                    parentId: depAId,
+                                    hasChildren: false,
+                                    totalCycles: currentCycle
+                                });
+                            }
+                        }
+                        if (data.dep_only_b !== undefined) {
+                            const depBId = `${rs}_dep_b`;
+                            addTreeRow(container, {
+                                id: depBId,
+                                name: 'Only B Waiting',
+                                value: data.dep_only_b,
+                                percent: percentMode === 'global' ? 
+                                    (data.dep_only_b / currentCycle * 100) : data.dep_only_b_pct,
+                                barClass: 'operands',
+                                level: 2,
+                                parentId: operandsId,
+                                hasChildren: true,
+                                totalCycles: currentCycle
+                            });
+                            
+                            // Level 3: CDB waiting for operand B
+                            if (data.cdb0_b !== undefined && data.cdb0_b > 0) {
+                                addTreeRow(container, {
+                                    id: `${rs}_cdb0_b`,
+                                    name: 'Waiting for CDB0',
+                                    value: data.cdb0_b,
+                                    percent: percentMode === 'global' ? 
+                                        (data.cdb0_b / currentCycle * 100) : data.cdb0_b_pct,
+                                    barClass: 'operands',
+                                    level: 3,
+                                    parentId: depBId,
+                                    hasChildren: false,
+                                    totalCycles: currentCycle
+                                });
+                            }
+                            if (data.cdb1_b !== undefined && data.cdb1_b > 0) {
+                                addTreeRow(container, {
+                                    id: `${rs}_cdb1_b`,
+                                    name: 'Waiting for CDB1',
+                                    value: data.cdb1_b,
+                                    percent: percentMode === 'global' ? 
+                                        (data.cdb1_b / currentCycle * 100) : data.cdb1_b_pct,
+                                    barClass: 'operands',
+                                    level: 3,
+                                    parentId: depBId,
+                                    hasChildren: false,
+                                    totalCycles: currentCycle
+                                });
+                            }
+                            if (data.cdb2_b !== undefined && data.cdb2_b > 0) {
+                                addTreeRow(container, {
+                                    id: `${rs}_cdb2_b`,
+                                    name: 'Waiting for CDB2',
+                                    value: data.cdb2_b,
+                                    percent: percentMode === 'global' ? 
+                                        (data.cdb2_b / currentCycle * 100) : data.cdb2_b_pct,
+                                    barClass: 'operands',
+                                    level: 3,
+                                    parentId: depBId,
+                                    hasChildren: false,
+                                    totalCycles: currentCycle
+                                });
+                            }
+                            if (data.cdb3_b !== undefined && data.cdb3_b > 0) {
+                                addTreeRow(container, {
+                                    id: `${rs}_cdb3_b`,
+                                    name: 'Waiting for CDB3',
+                                    value: data.cdb3_b,
+                                    percent: percentMode === 'global' ? 
+                                        (data.cdb3_b / currentCycle * 100) : data.cdb3_b_pct,
+                                    barClass: 'operands',
+                                    level: 3,
+                                    parentId: depBId,
+                                    hasChildren: false,
+                                    totalCycles: currentCycle
+                                });
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Apply initial collapse state
+            updateTreeVisibility();
+        }
+
+        function addTreeRow(container, config) {
+            const row = document.createElement('div');
+            row.className = `tree-row level-${config.level}`;
+            row.dataset.id = config.id;
+            row.dataset.parentId = config.parentId || '';
+            row.dataset.level = config.level;
+            
+            const expandIcon = config.hasChildren ? 
+                (expandedNodes.has(config.id) ? '▼' : '▶') : '';
+            
+            row.innerHTML = `
+                <div class="tree-name">
+                    <span class="expand-icon ${config.hasChildren ? '' : 'leaf'}">${expandIcon}</span>
+                    ${config.name}
+                </div>
+                <div class="metric-value">${config.value.toLocaleString()}</div>
+                <div class="metric-value">${config.percent.toFixed(1)}%</div>
+                <div class="bar-container">
+                    <div class="bar-fill ${config.barClass}" style="width: ${Math.min(config.percent, 100)}%">
+                    </div>
+                </div>
+            `;
+            
+            if (config.hasChildren) {
+                row.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleNode(config.id);
+                });
+            }
+            
+            container.appendChild(row);
+        }
+
+        function toggleNode(nodeId) {
+            if (expandedNodes.has(nodeId)) {
+                expandedNodes.delete(nodeId);
+            } else {
+                expandedNodes.add(nodeId);
+            }
+            updateTreeVisibility();
+        }
+
+        function updateTreeVisibility() {
+            const rows = document.querySelectorAll('.tree-row');
+            rows.forEach(row => {
+                const parentId = row.dataset.parentId;
+                if (!parentId) {
+                    row.classList.remove('collapsed');
+                    return;
+                }
+                
+                // Check if any ancestor is collapsed
+                let isVisible = true;
+                let checkId = parentId;
+                while (checkId) {
+                    if (!expandedNodes.has(checkId)) {
+                        isVisible = false;
+                        break;
+                    }
+                    const parentRow = document.querySelector(`[data-id="${checkId}"]`);
+                    checkId = parentRow ? parentRow.dataset.parentId : null;
+                }
+                
+                if (isVisible) {
+                    row.classList.remove('collapsed');
+                } else {
+                    row.classList.add('collapsed');
+                }
+                
+                // Update expand icon
+                const icon = row.querySelector('.expand-icon');
+                if (icon && !icon.classList.contains('leaf')) {
+                    icon.textContent = expandedNodes.has(row.dataset.id) ? '▼' : '▶';
+                }
+            });
+        }
+
+        // Chart rendering
+        let charts = {};
+
+        function renderCharts() {
+            const cycles = logData.cycles;
+            const rsUnits = currentRS === 'all' ? ['rs0', 'rs1', 'rs2'] : [currentRS];
+            
+            // Timeline chart
+            renderTimelineChart(cycles, rsUnits);
+            
+            // Misprediction chart
+            renderMispredictionChart(cycles, rsUnits);
+            
+            // Bottleneck chart
+            renderBottleneckChart(cycles, rsUnits);
+        }
+
+        function renderTimelineChart(cycles, rsUnits) {
+            const ctx = document.getElementById('timelineChart');
+            
+            if (charts.timeline) {
+                charts.timeline.destroy();
+            }
+            
+            const datasets = [];
+            const colors = {
+                rs0: { not: '#4ec9b0', operands: '#d7ba7d' },
+                rs1: { not: '#569cd6', operands: '#c586c0' },
+                rs2: { not: '#dcdcaa', operands: '#ce9178' }
+            };
+            
+            rsUnits.forEach(rs => {
+                datasets.push({
+                    label: `${rs.toUpperCase()} Not Occupied`,
+                    data: cycles.map(c => logData.reports[c][rs]?.not_occupied || 0),
+                    borderColor: colors[rs].not,
+                    backgroundColor: colors[rs].not + '40',
+                    tension: 0.3
+                });
+                
+                datasets.push({
+                    label: `${rs.toUpperCase()} Operands Not Ready`,
+                    data: cycles.map(c => logData.reports[c][rs]?.operands_not_ready || 0),
+                    borderColor: colors[rs].operands,
+                    backgroundColor: colors[rs].operands + '40',
+                    tension: 0.3
+                });
+            });
+            
+            charts.timeline = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: cycles,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#d4d4d4' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Cycle', color: '#d4d4d4' },
+                            ticks: { color: '#9d9d9d' },
+                            grid: { color: '#3e3e42' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Cycles', color: '#d4d4d4' },
+                            ticks: { color: '#9d9d9d' },
+                            grid: { color: '#3e3e42' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderMispredictionChart(cycles, rsUnits) {
+            const ctx = document.getElementById('mispredictionChart');
+            
+            if (charts.misprediction) {
+                charts.misprediction.destroy();
+            }
+            
+            const datasets = rsUnits.map((rs, idx) => ({
+                label: `${rs.toUpperCase()} Misprediction %`,
+                data: cycles.map(c => {
+                    const report = logData.reports[c][rs];
+                    return report?.misprediction_pct || 0;
+                }),
+                borderColor: ['#c586c0', '#569cd6', '#dcdcaa'][idx],
+                backgroundColor: ['#c586c040', '#569cd640', '#dcdcaa40'][idx],
+                tension: 0.3
+            }));
+            
+            charts.misprediction = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: cycles,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#d4d4d4' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Cycle', color: '#d4d4d4' },
+                            ticks: { color: '#9d9d9d' },
+                            grid: { color: '#3e3e42' }
+                        },
+                        y: {
+                            title: { display: true, text: '% of Not Occupied', color: '#d4d4d4' },
+                            ticks: { color: '#9d9d9d' },
+                            grid: { color: '#3e3e42' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderBottleneckChart(cycles, rsUnits) {
+            const ctx = document.getElementById('bottleneckChart');
+            
+            if (charts.bottleneck) {
+                charts.bottleneck.destroy();
+            }
+            
+            const datasets = [];
+            const colors = ['#f48771', '#4fc1ff'];
+            
+            rsUnits.forEach((rs, idx) => {
+                datasets.push({
+                    label: `${rs.toUpperCase()} ROB Full`,
+                    data: cycles.map(c => logData.reports[c][rs]?.rob_full || 0),
+                    backgroundColor: colors[0],
+                    stack: `stack${idx}`
+                });
+                
+                datasets.push({
+                    label: `${rs.toUpperCase()} LSQ Full`,
+                    data: cycles.map(c => logData.reports[c][rs]?.lsq_full || 0),
+                    backgroundColor: colors[1],
+                    stack: `stack${idx}`
+                });
+            });
+            
+            charts.bottleneck = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: cycles,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#d4d4d4' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Cycle', color: '#d4d4d4' },
+                            ticks: { color: '#9d9d9d' },
+                            grid: { color: '#3e3e42' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Cycles', color: '#d4d4d4' },
+                            ticks: { color: '#9d9d9d' },
+                            grid: { color: '#3e3e42' },
+                            stacked: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderSummary() {
+            const container = document.getElementById('statsGrid');
+            container.innerHTML = '';
+            
+            const lastCycle = logData.cycles[logData.cycles.length - 1];
+            const report = logData.reports[lastCycle];
+            
+            // Calculate aggregate stats
+            let totalStalls = 0;
+            let totalMispred = 0;
+            let totalROB = 0;
+            let totalLSQ = 0;
+            let totalOperands = 0;
+            
+            ['rs0', 'rs1', 'rs2'].forEach(rs => {
+                totalStalls += report[rs]?.stall || 0;
+                totalMispred += report[rs]?.misprediction || 0;
+                totalROB += report[rs]?.rob_full || 0;
+                totalLSQ += report[rs]?.lsq_full || 0;
+                totalOperands += report[rs]?.operands_not_ready || 0;
+            });
+            
+            addStatCard(container, 'Total Stalls', totalStalls, 'cycles');
+            addStatCard(container, 'Stall Rate', (totalStalls / (lastCycle * 3) * 100).toFixed(1), '%');
+            addStatCard(container, 'Operands Not Ready', totalOperands, 'cycles');
+            addStatCard(container, 'Misprediction Penalty', totalMispred, 'cycles');
+            addStatCard(container, 'ROB Full Events', totalROB, 'cycles');
+            addStatCard(container, 'LSQ Full Events', totalLSQ, 'cycles');
+            addStatCard(container, 'Total Cycles', lastCycle, '');
+        }
+
+        function addStatCard(container, label, value, unit) {
+            const card = document.createElement('div');
+            card.className = 'stat-card';
+            card.innerHTML = `
+                <div class="stat-label">${label}</div>
+                <div class="stat-value">${typeof value === 'number' ? value.toLocaleString() : value}<span class="stat-unit">${unit}</span></div>
+            `;
+            container.appendChild(card);
+        }
+    </script>
+</body>
+</html>

@@ -192,12 +192,20 @@ module reorder_buffer #(
     // BUFFER STORAGE
     //==========================================================================
 
-    // Buffer entry structure
-    logic [BUFFER_DEPTH-1:0][DATA_WIDTH-1:0] buffer_data;
-    logic [BUFFER_DEPTH-1:0][TAG_WIDTH-1:0] buffer_tag;
-    logic [BUFFER_DEPTH-1:0][ADDR_WIDTH-1:0] buffer_addr;
-    logic [BUFFER_DEPTH-1:0] buffer_executed;
-    logic [BUFFER_DEPTH-1:0] buffer_exception;
+    // ROB entry structure - packed for better waveform visibility
+    typedef struct packed {
+        logic [DATA_WIDTH-1:0] data;
+        logic [TAG_WIDTH-1:0] tag;
+        logic [ADDR_WIDTH-1:0] addr;
+        logic executed;
+        logic exception;
+        logic [DATA_WIDTH-1:0] correct_pc;
+        logic is_branch;
+        logic is_store;
+    } rob_entry_t;
+
+    // Reorder buffer storage - single array of structs
+    rob_entry_t [BUFFER_DEPTH-1:0] buffer;
 
     `ifndef SYNTHESIS
     // Tracer instances for debugging (non-synthesis)
@@ -214,14 +222,9 @@ module reorder_buffer #(
         logic [31:0] mem_addr;
         logic [31:0] mem_data;
         logic [31:0] fpu_flags;
-    } lsq_simple_entry_t;
-    lsq_simple_entry_t [BUFFER_DEPTH-1:0] tracer_buffer;
+    } tracer_entry_t;
+    tracer_entry_t [BUFFER_DEPTH-1:0] tracer_buffer;
     `endif
-
-    /// branch and jalr related buffers (not efficient but easy to implement)
-    logic [BUFFER_DEPTH-1:0] [DATA_WIDTH-1:0] buffer_correct_pc;
-    logic [BUFFER_DEPTH-1:0] buffer_is_branch;
-    logic [BUFFER_DEPTH-1:0] buffer_is_store;
 
     // Head and tail pointers (extra bit for full/empty detection)
     logic [ADDR_WIDTH:0] head_ptr_reg;
@@ -262,7 +265,7 @@ module reorder_buffer #(
     logic [1:0] num_commits;
     logic [ADDR_WIDTH:0] next_head_ptr;
 
-    assign exception_detected = buffer_exception[head_idx];
+    assign exception_detected = buffer[head_idx].exception;
 
     // Count number of allocation requests
     always_comb begin
@@ -294,53 +297,53 @@ module reorder_buffer #(
 
     // Commit ready signals - in-order commit requirement
     // TODO STORES CAN COUSE BOTTLECK HERE - OPTIMEZE LATER
-    assign commit_valid_0 = buffer_executed[head_idx]; //& !buffer_is_branch[head_idx];
+    assign commit_valid_0 = buffer[head_idx].executed; //& !buffer[head_idx].is_branch;
 
-    assign commit_valid_1 = commit_valid_0 & !buffer_exception[head_idx] & 
-                            buffer_executed[head_plus_1_idx] & !buffer_exception[head_plus_1_idx] ;
+    assign commit_valid_1 = commit_valid_0 & !buffer[head_idx].exception & 
+                            buffer[head_plus_1_idx].executed & !buffer[head_plus_1_idx].exception ;
 
-    assign commit_valid_2 = commit_valid_0 & commit_valid_1  & !buffer_exception[head_plus_1_idx] &
-                            buffer_executed[head_plus_2_idx] & !buffer_exception[head_plus_2_idx] ;
+    assign commit_valid_2 = commit_valid_0 & commit_valid_1  & !buffer[head_plus_1_idx].exception &
+                            buffer[head_plus_2_idx].executed & !buffer[head_plus_2_idx].exception ;
     
 
-    assign lsq_commit_valid_0 = commit_valid_0 & buffer_is_store[head_idx];
-    assign lsq_commit_valid_1 = commit_valid_1 & buffer_is_store[head_plus_1_idx];
-    assign lsq_commit_valid_2 = commit_valid_2 & buffer_is_store[head_plus_2_idx];
+    assign lsq_commit_valid_0 = commit_valid_0 & buffer[head_idx].is_store;
+    assign lsq_commit_valid_1 = commit_valid_1 & buffer[head_plus_1_idx].is_store;
+    assign lsq_commit_valid_2 = commit_valid_2 & buffer[head_plus_2_idx].is_store;
 
     // Commit data outputs
-    assign commit_data_0 = buffer_data[head_idx];
-    assign commit_data_1 = buffer_data[head_plus_1_idx];
-    assign commit_data_2 = buffer_data[head_plus_2_idx];
-    assign commit_addr_0 = buffer_addr[head_idx];
-    assign commit_addr_1 = buffer_addr[head_plus_1_idx];
-    assign commit_addr_2 = buffer_addr[head_plus_2_idx];
+    assign commit_data_0 = buffer[head_idx].data;
+    assign commit_data_1 = buffer[head_plus_1_idx].data;
+    assign commit_data_2 = buffer[head_plus_2_idx].data;
+    assign commit_addr_0 = buffer[head_idx].addr;
+    assign commit_addr_1 = buffer[head_plus_1_idx].addr;
+    assign commit_addr_2 = buffer[head_plus_2_idx].addr;
 
-    assign commit_exception_0 = buffer_exception[head_idx];
-    assign commit_exception_1 = 1'b0; //buffer_exception[head_plus_1_idx];
-    assign commit_exception_2 = 1'b0; //buffer_exception[head_plus_2_idx];
+    assign commit_exception_0 = buffer[head_idx].exception;
+    assign commit_exception_1 = 1'b0; //buffer[head_plus_1_idx].exception;
+    assign commit_exception_2 = 1'b0; //buffer[head_plus_2_idx].exception;
 
-    assign commit_correct_pc_0 = buffer_correct_pc[head_idx];
-    assign commit_correct_pc_1 = '0; //buffer_correct_pc[head_plus_1_idx];
-    assign commit_correct_pc_2 = '0; //buffer_correct_pc[head_plus_2_idx];
+    assign commit_correct_pc_0 = buffer[head_idx].correct_pc;
+    assign commit_correct_pc_1 = '0; //buffer[head_plus_1_idx].correct_pc;
+    assign commit_correct_pc_2 = '0; //buffer[head_plus_2_idx].correct_pc;
 
-    assign commit_is_branch_0 = buffer_is_branch[head_idx] & commit_valid_0;
-    assign commit_is_branch_1 = buffer_is_branch[head_plus_1_idx] & commit_valid_1;
-    assign commit_is_branch_2 = buffer_is_branch[head_plus_2_idx] & commit_valid_2;
+    assign commit_is_branch_0 = buffer[head_idx].is_branch & commit_valid_0;
+    assign commit_is_branch_1 = buffer[head_plus_1_idx].is_branch & commit_valid_1;
+    assign commit_is_branch_2 = buffer[head_plus_2_idx].is_branch & commit_valid_2;
 
-    assign upadate_predictor_pc_0 = buffer_data[head_idx];
-    assign upadate_predictor_pc_1 = buffer_data[head_plus_1_idx];
-    assign upadate_predictor_pc_2 = buffer_data[head_plus_2_idx];
+    assign upadate_predictor_pc_0 = buffer[head_idx].data;
+    assign upadate_predictor_pc_1 = buffer[head_plus_1_idx].data;
+    assign upadate_predictor_pc_2 = buffer[head_plus_2_idx].data;
 
 
     // Store permission outputs
-    assign store_can_issue_0 =  buffer_is_store[head_idx] && buffer_tag[head_idx]==TAG_VALID; //TODO add 2 more store can issue signals for head+1 and head+2 and check brnach status
+    assign store_can_issue_0 =  buffer[head_idx].is_store && buffer[head_idx].tag==TAG_VALID; //TODO add 2 more store can issue signals for head+1 and head+2 and check brnach status
     assign allowed_store_address_0 = {1'b1, head_idx};
 
     // todo check prev instruction is also store and both trying to write to same address
-    assign store_can_issue_1 =  buffer_is_store[head_plus_1_idx] && buffer_tag[head_plus_1_idx]==TAG_VALID && (buffer_is_branch[head_idx] ? buffer_executed[head_idx] & !buffer_exception[head_idx] : 1'b1);
+    assign store_can_issue_1 =  buffer[head_plus_1_idx].is_store && buffer[head_plus_1_idx].tag==TAG_VALID && (buffer[head_idx].is_branch ? buffer[head_idx].executed & !buffer[head_idx].exception : 1'b1);
     assign allowed_store_address_1 = {1'b1, head_plus_1_idx};
 
-    assign store_can_issue_2 =  buffer_is_store[head_plus_2_idx] && buffer_tag[head_plus_2_idx]==TAG_VALID && (buffer_is_branch[head_plus_1_idx] ? buffer_executed[head_plus_1_idx] & !buffer_exception[head_plus_1_idx] : 1'b1) && (buffer_is_branch[head_idx] ? buffer_executed[head_idx] & !buffer_exception[head_idx] : 1'b1);
+    assign store_can_issue_2 =  buffer[head_plus_2_idx].is_store && buffer[head_plus_2_idx].tag==TAG_VALID && (buffer[head_plus_1_idx].is_branch ? buffer[head_plus_1_idx].executed & !buffer[head_plus_1_idx].exception : 1'b1) && (buffer[head_idx].is_branch ? buffer[head_idx].executed & !buffer[head_idx].exception : 1'b1);
     assign allowed_store_address_2 = {1'b1, head_plus_2_idx}; 
 
     // Count number of commits
@@ -479,12 +482,12 @@ module reorder_buffer #(
             read_data_0 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_0 = alloc_tag_0;
         end else begin
-            //read_data_0 = buffer_data[read_addr_0]; send lsq destination address if value expected from LSQ
-            read_tag_0 = buffer_tag[read_addr_0];
+            //read_data_0 = buffer[read_addr_0].data; send lsq destination address if value expected from LSQ
+            read_tag_0 = buffer[read_addr_0].tag;
             if(read_tag_0 == 3'b011) begin
                 read_data_0 = {26'd0, 1'b1, read_addr_0}; // LSQ destination address
             end else begin
-                read_data_0 = buffer_data[read_addr_0];
+                read_data_0 = buffer[read_addr_0].data;
             end
         end
     end
@@ -519,11 +522,11 @@ module reorder_buffer #(
             read_data_1 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_1 = alloc_tag_0;
         end else begin
-            read_tag_1 = buffer_tag[read_addr_1];
+            read_tag_1 = buffer[read_addr_1].tag;
             if(read_tag_1 == 3'b011) begin
                 read_data_1 = {26'd0, 1'b1, read_addr_1}; // LSQ destination address
             end else begin
-                read_data_1 = buffer_data[read_addr_1];
+                read_data_1 = buffer[read_addr_1].data;
             end
         end
     end
@@ -558,11 +561,11 @@ module reorder_buffer #(
             read_data_2 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_2 = alloc_tag_0;
         end else begin
-            read_tag_2 = buffer_tag[read_addr_2];
+            read_tag_2 = buffer[read_addr_2].tag;
             if(read_tag_2 == 3'b011) begin
                 read_data_2 = {26'd0, 1'b1, read_addr_2}; // LSQ destination address
             end else begin
-                read_data_2 = buffer_data[read_addr_2];
+                read_data_2 = buffer[read_addr_2].data;
             end
         end
     end
@@ -597,11 +600,11 @@ module reorder_buffer #(
             read_data_3 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_3 = alloc_tag_0;
         end else begin
-            read_tag_3 = buffer_tag[read_addr_3];
+            read_tag_3 = buffer[read_addr_3].tag;
             if(read_tag_3 == 3'b011) begin
                 read_data_3 = {26'd0, 1'b1, read_addr_3}; // LSQ destination address
             end else begin
-                read_data_3 = buffer_data[read_addr_3];
+                read_data_3 = buffer[read_addr_3].data;
             end
         end
     end
@@ -636,11 +639,11 @@ module reorder_buffer #(
             read_data_4 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_4 = alloc_tag_0;
         end else begin
-            read_tag_4 = buffer_tag[read_addr_4];
+            read_tag_4 = buffer[read_addr_4].tag;
             if(read_tag_4 == 3'b011) begin
                 read_data_4 = {26'd0, 1'b1, read_addr_4}; // LSQ destination address
             end else begin
-                read_data_4 = buffer_data[read_addr_4];
+                read_data_4 = buffer[read_addr_4].data;
             end
         end
     end
@@ -675,11 +678,11 @@ module reorder_buffer #(
             read_data_5 = {26'd0, 1'b1, alloc_idx_0}; // New allocation, data not ready
             read_tag_5 = alloc_tag_0;
         end else begin
-            read_tag_5 = buffer_tag[read_addr_5];
+            read_tag_5 = buffer[read_addr_5].tag;
             if(read_tag_5 == 3'b011) begin
                 read_data_5 = {26'd0, 1'b1, read_addr_5}; // LSQ destination address
             end else begin
-                read_data_5 = buffer_data[read_addr_5];
+                read_data_5 = buffer[read_addr_5].data;
             end
         end
     end
@@ -692,16 +695,7 @@ module reorder_buffer #(
         if (!reset) begin
             // Reset all buffer entries
             for (int i = 0; i < BUFFER_DEPTH; i++) begin
-                buffer_data[i] <= #D '0;
-                buffer_tag[i] <= #D '0;
-                buffer_addr[i] <= #D '0;
-                buffer_executed[i] <= #D 1'b0;
-                buffer_exception[i] <= #D 1'b0;
-
-                buffer_correct_pc[i] <= #D '0;
-                buffer_is_branch[i] <= #D 1'b0;
-                buffer_is_store[i] <= #D 1'b0;
-
+                buffer[i] <= #D '0;
                 tracer_buffer <= #D '0;
             end
 
@@ -717,16 +711,7 @@ module reorder_buffer #(
             if(exception_detected) begin
                 // On exception, flush the buffer
                 for (int i = 0; i < BUFFER_DEPTH; i++) begin
-                    buffer_data[i] <= #D '0;
-                    buffer_tag[i] <= #D '0;
-                    buffer_addr[i] <= #D '0;
-                    buffer_executed[i] <= #D 1'b0;
-                    buffer_exception[i] <= #D 1'b0;
-
-                    buffer_correct_pc[i] <= #D '0;
-                    buffer_is_branch[i] <= #D 1'b0;
-                    buffer_is_store[i] <= #D 1'b0;
-
+                    buffer[i] <= #D '0;
                     tracer_buffer <= #D '0;
                 end
 
@@ -753,15 +738,14 @@ module reorder_buffer #(
                 //==================================================================
                 if (alloc_success) begin
                     if (alloc_enable_0) begin
-                        buffer_data[alloc_idx_0] <= #D '0;
-                        buffer_tag[alloc_idx_0] <= #D alloc_tag_0;
-                        buffer_addr[alloc_idx_0] <= #D alloc_addr_0;
-                        buffer_executed[alloc_idx_0] <= #D 1'b0;
-                        buffer_exception[alloc_idx_0] <= #D 1'b0;
-
-                        buffer_correct_pc[alloc_idx_0] <= #D '0;
-                        buffer_is_branch[alloc_idx_0] <= #D 1'b0; // todo set is_branch at allocation
-                        buffer_is_store[alloc_idx_0] <= #D alloc_is_store_0;
+                        buffer[alloc_idx_0].data <= #D '0;
+                        buffer[alloc_idx_0].tag <= #D alloc_tag_0;
+                        buffer[alloc_idx_0].addr <= #D alloc_addr_0;
+                        buffer[alloc_idx_0].executed <= #D 1'b0;
+                        buffer[alloc_idx_0].exception <= #D 1'b0;
+                        buffer[alloc_idx_0].correct_pc <= #D '0;
+                        buffer[alloc_idx_0].is_branch <= #D 1'b0; // todo set is_branch at allocation
+                        buffer[alloc_idx_0].is_store <= #D alloc_is_store_0;
                         
                         `ifndef SYNTHESIS
                         tracer_buffer[alloc_idx_0].valid     <= #D i_tracer_0.valid;
@@ -781,15 +765,14 @@ module reorder_buffer #(
 
                     end
                     if (alloc_enable_1) begin
-                        buffer_data[alloc_idx_1] <= #D '0;
-                        buffer_tag[alloc_idx_1] <= #D alloc_tag_1;
-                        buffer_addr[alloc_idx_1] <= #D alloc_addr_1;
-                        buffer_executed[alloc_idx_1] <= #D 1'b0;
-                        buffer_exception[alloc_idx_1] <= #D 1'b0;
-
-                        buffer_correct_pc[alloc_idx_1] <= #D '0;
-                        buffer_is_branch[alloc_idx_1] <= #D 1'b0;
-                        buffer_is_store[alloc_idx_1] <= #D alloc_is_store_1;
+                        buffer[alloc_idx_1].data <= #D '0;
+                        buffer[alloc_idx_1].tag <= #D alloc_tag_1;
+                        buffer[alloc_idx_1].addr <= #D alloc_addr_1;
+                        buffer[alloc_idx_1].executed <= #D 1'b0;
+                        buffer[alloc_idx_1].exception <= #D 1'b0;
+                        buffer[alloc_idx_1].correct_pc <= #D '0;
+                        buffer[alloc_idx_1].is_branch <= #D 1'b0;
+                        buffer[alloc_idx_1].is_store <= #D alloc_is_store_1;
 
                         `ifndef SYNTHESIS
                         tracer_buffer[alloc_idx_1].valid     <= #D i_tracer_1.valid;
@@ -807,15 +790,14 @@ module reorder_buffer #(
                         `endif
                     end
                     if (alloc_enable_2) begin
-                        buffer_data[alloc_idx_2] <= #D '0;
-                        buffer_tag[alloc_idx_2] <= #D alloc_tag_2;
-                        buffer_addr[alloc_idx_2] <= #D alloc_addr_2;
-                        buffer_executed[alloc_idx_2] <= #D 1'b0;
-                        buffer_exception[alloc_idx_2] <= #D 1'b0;
-
-                        buffer_correct_pc[alloc_idx_2] <= #D '0;
-                        buffer_is_branch[alloc_idx_2] <= #D 1'b0;
-                        buffer_is_store[alloc_idx_2] <= #D alloc_is_store_2;
+                        buffer[alloc_idx_2].data <= #D '0;
+                        buffer[alloc_idx_2].tag <= #D alloc_tag_2;
+                        buffer[alloc_idx_2].addr <= #D alloc_addr_2;
+                        buffer[alloc_idx_2].executed <= #D 1'b0;
+                        buffer[alloc_idx_2].exception <= #D 1'b0;
+                        buffer[alloc_idx_2].correct_pc <= #D '0;
+                        buffer[alloc_idx_2].is_branch <= #D 1'b0;
+                        buffer[alloc_idx_2].is_store <= #D alloc_is_store_2;
 
                         `ifndef SYNTHESIS
                         tracer_buffer[alloc_idx_2].valid     <= #D i_tracer_2.valid;
@@ -837,17 +819,16 @@ module reorder_buffer #(
                 //==================================================================
                 // CDB UPDATES - Write results from execution units
                 //==================================================================
-                if (cdb_valid_0 && (buffer_tag[cdb_addr_0] == 3'b000 | (buffer_tag[cdb_addr_0] == 3'b011 & buffer_is_store[cdb_addr_0] & cdb_mem_addr_calculation_0))) begin
-                    buffer_data[cdb_addr_0] <= #D cdb_data_0;
-                    buffer_tag[cdb_addr_0] <= #D TAG_VALID;
-                    buffer_executed[cdb_addr_0] <= #D !cdb_mem_addr_calculation_0;
-                    buffer_exception[cdb_addr_0] <= #D cdb_exception_0;
-
-                    buffer_correct_pc[cdb_addr_0] <= #D cdb_correct_pc_0;
-                    buffer_is_branch[cdb_addr_0] <= #D cdb_is_branch_0;
+                if (cdb_valid_0 && (buffer[cdb_addr_0].tag == 3'b000 | (buffer[cdb_addr_0].tag == 3'b011 & buffer[cdb_addr_0].is_store & cdb_mem_addr_calculation_0))) begin
+                    buffer[cdb_addr_0].data <= #D cdb_data_0;
+                    buffer[cdb_addr_0].tag <= #D TAG_VALID;
+                    buffer[cdb_addr_0].executed <= #D !cdb_mem_addr_calculation_0;
+                    buffer[cdb_addr_0].exception <= #D cdb_exception_0;
+                    buffer[cdb_addr_0].correct_pc <= #D cdb_correct_pc_0;
+                    buffer[cdb_addr_0].is_branch <= #D cdb_is_branch_0;
                 end
                 `ifndef SYNTHESIS
-                 if (cdb_valid_0 && (buffer_tag[cdb_addr_0] == 3'b000 | (buffer_tag[cdb_addr_0] == 3'b011 & cdb_mem_addr_calculation_0))) begin
+                 if (cdb_valid_0 && (buffer[cdb_addr_0].tag == 3'b000 | (buffer[cdb_addr_0].tag == 3'b011 & cdb_mem_addr_calculation_0))) begin
                     // Update tracer info on execution completion
                     if(cdb_mem_addr_calculation_0) begin
                         tracer_buffer[cdb_addr_0].mem_addr <= #D cdb_data_0;
@@ -857,18 +838,17 @@ module reorder_buffer #(
                     end
                     `endif
                 end
-                if (cdb_valid_1 && (buffer_tag[cdb_addr_1] == 3'b001 | (buffer_tag[cdb_addr_1] == 3'b011 & buffer_is_store[cdb_addr_1] & cdb_mem_addr_calculation_1))) begin //todo do we need store address anymore?
-                    buffer_data[cdb_addr_1] <= #D cdb_data_1;
-                    buffer_tag[cdb_addr_1] <= #D TAG_VALID;
-                    buffer_executed[cdb_addr_1] <= #D !cdb_mem_addr_calculation_1;
-                    buffer_exception[cdb_addr_1] <= #D cdb_exception_1;
-
-                    buffer_correct_pc[cdb_addr_1] <= #D cdb_correct_pc_1;
-                    buffer_is_branch[cdb_addr_1] <= #D cdb_is_branch_1;
+                if (cdb_valid_1 && (buffer[cdb_addr_1].tag == 3'b001 | (buffer[cdb_addr_1].tag == 3'b011 & buffer[cdb_addr_1].is_store & cdb_mem_addr_calculation_1))) begin //todo do we need store address anymore?
+                    buffer[cdb_addr_1].data <= #D cdb_data_1;
+                    buffer[cdb_addr_1].tag <= #D TAG_VALID;
+                    buffer[cdb_addr_1].executed <= #D !cdb_mem_addr_calculation_1;
+                    buffer[cdb_addr_1].exception <= #D cdb_exception_1;
+                    buffer[cdb_addr_1].correct_pc <= #D cdb_correct_pc_1;
+                    buffer[cdb_addr_1].is_branch <= #D cdb_is_branch_1;
 
                 end
                 `ifndef SYNTHESIS
-                if (cdb_valid_1 && (buffer_tag[cdb_addr_1] == 3'b001 | (buffer_tag[cdb_addr_1] == 3'b011 & cdb_mem_addr_calculation_1))) begin //todo do we need store address anymore?
+                if (cdb_valid_1 && (buffer[cdb_addr_1].tag == 3'b001 | (buffer[cdb_addr_1].tag == 3'b011 & cdb_mem_addr_calculation_1))) begin //todo do we need store address anymore?
                     // Update tracer info on execution completion
                     if(cdb_mem_addr_calculation_1) begin
                         tracer_buffer[cdb_addr_1].mem_addr <= #D cdb_data_1;
@@ -878,19 +858,18 @@ module reorder_buffer #(
                     end
                     `endif
                 end
-                if (cdb_valid_2 && (buffer_tag[cdb_addr_2] == 3'b010 | (buffer_tag[cdb_addr_2] == 3'b011 & buffer_is_store[cdb_addr_2] & cdb_mem_addr_calculation_2))) begin
-                    buffer_data[cdb_addr_2] <= #D cdb_data_2;
-                    buffer_tag[cdb_addr_2] <= #D TAG_VALID;
-                    buffer_executed[cdb_addr_2] <= #D !cdb_mem_addr_calculation_2;
-                    buffer_exception[cdb_addr_2] <= #D cdb_exception_2;
-
-                    buffer_correct_pc[cdb_addr_2] <= #D cdb_correct_pc_2;
-                    buffer_is_branch[cdb_addr_2] <= #D cdb_is_branch_2;
+                if (cdb_valid_2 && (buffer[cdb_addr_2].tag == 3'b010 | (buffer[cdb_addr_2].tag == 3'b011 & buffer[cdb_addr_2].is_store & cdb_mem_addr_calculation_2))) begin
+                    buffer[cdb_addr_2].data <= #D cdb_data_2;
+                    buffer[cdb_addr_2].tag <= #D TAG_VALID;
+                    buffer[cdb_addr_2].executed <= #D !cdb_mem_addr_calculation_2;
+                    buffer[cdb_addr_2].exception <= #D cdb_exception_2;
+                    buffer[cdb_addr_2].correct_pc <= #D cdb_correct_pc_2;
+                    buffer[cdb_addr_2].is_branch <= #D cdb_is_branch_2;
                     
                    
                 end
                 `ifndef SYNTHESIS
-                if (cdb_valid_2 && (buffer_tag[cdb_addr_2] == 3'b010 | (buffer_tag[cdb_addr_2] == 3'b011 & cdb_mem_addr_calculation_2))) begin
+                if (cdb_valid_2 && (buffer[cdb_addr_2].tag == 3'b010 | (buffer[cdb_addr_2].tag == 3'b011 & cdb_mem_addr_calculation_2))) begin
 
                     if(cdb_mem_addr_calculation_2) begin
                         tracer_buffer[cdb_addr_2].mem_addr <= #D cdb_data_2;
@@ -900,46 +879,46 @@ module reorder_buffer #(
                     end
                     `endif
                 end
-                if (cdb_valid_3_2 && (buffer_tag[cdb_addr_3_2] == 3'b011 | buffer_tag[cdb_addr_3_2] == TAG_VALID) ) begin 
-                    buffer_data[cdb_addr_3_2] <= #D cdb_data_3_2;
-                    buffer_tag[cdb_addr_3_2] <= #D TAG_VALID;
-                    buffer_executed[cdb_addr_3_2] <= #D 1'b1;
-                    buffer_exception[cdb_addr_3_2] <= #D cdb_exception_3_2;
-                    buffer_is_store[cdb_addr_3_2] <= #D 1'b1;
+                if (cdb_valid_3_2 && (buffer[cdb_addr_3_2].tag == 3'b011 | buffer[cdb_addr_3_2].tag == TAG_VALID) ) begin 
+                    buffer[cdb_addr_3_2].data <= #D cdb_data_3_2;
+                    buffer[cdb_addr_3_2].tag <= #D TAG_VALID;
+                    buffer[cdb_addr_3_2].executed <= #D 1'b1;
+                    buffer[cdb_addr_3_2].exception <= #D cdb_exception_3_2;
+                    buffer[cdb_addr_3_2].is_store <= #D 1'b1;
 
-                    buffer_correct_pc[cdb_addr_3_2] <= #D '0;
-                    buffer_is_branch[cdb_addr_3_2] <= #D 1'b0;
+                    buffer[cdb_addr_3_2].correct_pc <= #D '0;
+                    buffer[cdb_addr_3_2].is_branch <= #D 1'b0;
 
                     `ifndef SYNTHESIS
                     tracer_buffer[cdb_addr_3_2].reg_data <= #D cdb_data_3_2;
                     tracer_buffer[cdb_addr_3_2].mem_data <= #D tracer_store_data_2;
                     `endif
                 end
-                if (cdb_valid_3_1 && (buffer_tag[cdb_addr_3_1] == 3'b011 | buffer_tag[cdb_addr_3_1] == TAG_VALID) ) begin 
-                    buffer_data[cdb_addr_3_1] <= #D cdb_data_3_1;
-                    buffer_tag[cdb_addr_3_1] <= #D TAG_VALID;
-                    buffer_executed[cdb_addr_3_1] <= #D 1'b1;
-                    buffer_exception[cdb_addr_3_1] <= #D cdb_exception_3_1;
-                    buffer_is_store[cdb_addr_3_1] <= #D 1'b1;
+                if (cdb_valid_3_1 && (buffer[cdb_addr_3_1].tag == 3'b011 | buffer[cdb_addr_3_1].tag == TAG_VALID) ) begin 
+                    buffer[cdb_addr_3_1].data <= #D cdb_data_3_1;
+                    buffer[cdb_addr_3_1].tag <= #D TAG_VALID;
+                    buffer[cdb_addr_3_1].executed <= #D 1'b1;
+                    buffer[cdb_addr_3_1].exception <= #D cdb_exception_3_1;
+                    buffer[cdb_addr_3_1].is_store <= #D 1'b1;
 
-                    buffer_correct_pc[cdb_addr_3_1] <= #D '0;
-                    buffer_is_branch[cdb_addr_3_1] <= #D 1'b0;
+                    buffer[cdb_addr_3_1].correct_pc <= #D '0;
+                    buffer[cdb_addr_3_1].is_branch <= #D 1'b0;
 
                     `ifndef SYNTHESIS
                     tracer_buffer[cdb_addr_3_1].reg_data <= #D cdb_data_3_1;
                     tracer_buffer[cdb_addr_3_1].mem_data <= #D tracer_store_data_1;
                     `endif
                 end
-                if (cdb_valid_3_0 && (buffer_tag[cdb_addr_3_0] == 3'b011 | buffer_tag[cdb_addr_3_0] == TAG_VALID) ) begin 
-                    buffer_data[cdb_addr_3_0] <= #D cdb_data_3_0;
-                    buffer_tag[cdb_addr_3_0] <= #D TAG_VALID;
-                    buffer_executed[cdb_addr_3_0] <= #D 1'b1;
-                    buffer_exception[cdb_addr_3_0] <= #D cdb_exception_3_0;
-                    buffer_is_store[cdb_addr_3_0] <= #D 1'b1;
+                if (cdb_valid_3_0 && (buffer[cdb_addr_3_0].tag == 3'b011 | buffer[cdb_addr_3_0].tag == TAG_VALID) ) begin 
+                    buffer[cdb_addr_3_0].data <= #D cdb_data_3_0;
+                    buffer[cdb_addr_3_0].tag <= #D TAG_VALID;
+                    buffer[cdb_addr_3_0].executed <= #D 1'b1;
+                    buffer[cdb_addr_3_0].exception <= #D cdb_exception_3_0;
+                    buffer[cdb_addr_3_0].is_store <= #D 1'b1;
                     
 
-                    buffer_correct_pc[cdb_addr_3_0] <= #D '0;
-                    buffer_is_branch[cdb_addr_3_0] <= #D 1'b0;
+                    buffer[cdb_addr_3_0].correct_pc <= #D '0;
+                    buffer[cdb_addr_3_0].is_branch <= #D 1'b0;
 
                     `ifndef SYNTHESIS
                     tracer_buffer[cdb_addr_3_0].reg_data <= #D cdb_data_3_0;
@@ -949,35 +928,11 @@ module reorder_buffer #(
 
                 if(head_idx_d1 != head_idx) begin // detected commit
                     // Clear committed entries (head, head+1, head+2)
-                    buffer_data[head_idx_d1] <= #D '0;
-                    buffer_tag[head_idx_d1] <= #D '0;
-                    buffer_addr[head_idx_d1] <= #D '0;
-                    buffer_executed[head_idx_d1] <= #D 1'b0;
-                    buffer_exception[head_idx_d1] <= #D 1'b0;
-
-                    buffer_correct_pc[head_idx_d1] <= #D '0;
-                    buffer_is_branch[head_idx_d1] <= #D 1'b0;
-                    buffer_is_store[head_idx_d1] <= #D 1'b0;
+                    buffer[head_idx_d1] <= #D '0;
                     if(head_plus_1_idx_d1 != head_idx) begin // if only one commit happened, head idx will be same as head+1 idx, so don't clear if they are same
-                        buffer_data[head_plus_1_idx_d1] <= #D '0;
-                        buffer_tag[head_plus_1_idx_d1] <= #D '0;
-                        buffer_addr[head_plus_1_idx_d1] <= #D '0;
-                        buffer_executed[head_plus_1_idx_d1] <= #D 1'b0;
-                        buffer_exception[head_plus_1_idx_d1] <= #D 1'b0;
-
-                        buffer_correct_pc[head_plus_1_idx_d1] <= #D '0;
-                        buffer_is_branch[head_plus_1_idx_d1] <= #D 1'b0;
-                        buffer_is_store[head_plus_1_idx_d1] <= #D 1'b0;
+                        buffer[head_plus_1_idx_d1] <= #D '0;
                         if(head_plus_2_idx_d1 != head_idx) begin
-                            buffer_data[head_plus_2_idx_d1] <= #D '0;
-                            buffer_tag[head_plus_2_idx_d1] <= #D '0;
-                            buffer_addr[head_plus_2_idx_d1] <= #D '0;
-                            buffer_executed[head_plus_2_idx_d1] <= #D 1'b0;
-                            buffer_exception[head_plus_2_idx_d1] <= #D 1'b0;
-
-                            buffer_correct_pc[head_plus_2_idx_d1] <= #D '0;
-                            buffer_is_branch[head_plus_2_idx_d1] <= #D 1'b0;
-                            buffer_is_store[head_plus_2_idx_d1] <= #D 1'b0;
+                            buffer[head_plus_2_idx_d1] <= #D '0;
                         end
                     end
                 end

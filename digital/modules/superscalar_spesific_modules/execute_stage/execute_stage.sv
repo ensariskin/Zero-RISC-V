@@ -121,15 +121,15 @@ module superscalar_execute_stage #(
     assign rs_to_exec_0.is_branch = rs_to_exec_0.branch_sel > 0 & rs_to_exec_0.branch_sel < 6; // if branch_sel is not NOBRANCH(0) or JAL/JALR(6,7)
     assign rs_to_exec_0.correct_pc = fu0_correct_pc;
 
-    assign misprediction_0 = fu0_misprediction;
+    assign misprediction_0 = rs_to_exec_0.issue_valid ? fu0_misprediction : 0;
     assign correct_pc_0 = fu0_correct_pc;
     assign update_pc_0 = rs_to_exec_0.pc_value_at_prediction;
-    assign update_predictor_0 =  rs_to_exec_0.branch_sel > 0 & rs_to_exec_0.branch_sel < 6; 
+    assign update_predictor_0 = rs_to_exec_0.issue_valid ? (rs_to_exec_0.branch_sel > 0 & rs_to_exec_0.branch_sel < 6) : 0; 
     //=======================================================================
     // Functional Unit 1 (FU1)
     //=======================================================================
     
-    assign rs_to_exec_1.issue_ready = 0; //!fu1_busy;
+    assign rs_to_exec_1.issue_ready = !fu1_busy;
     assign fu1_func_sel = rs_to_exec_1.control_signals[10:7];
     assign fu1_data_a = rs_to_exec_1.data_a;
     assign fu1_data_b = rs_to_exec_1.data_b;
@@ -150,16 +150,16 @@ module superscalar_execute_stage #(
     assign rs_to_exec_1.is_branch = rs_to_exec_1.branch_sel > 0 & rs_to_exec_1.branch_sel < 6; // if branch_sel is not NOBRANCH(0) or JAL/JALR(6,7)
     assign rs_to_exec_1.correct_pc = fu1_correct_pc;
 
-    assign misprediction_1 = fu1_misprediction;
+    assign misprediction_1 = rs_to_exec_1.issue_valid ?  fu1_misprediction : 0;
     assign correct_pc_1 = fu1_correct_pc;
     assign update_pc_1 = rs_to_exec_1.pc_value_at_prediction;
-    assign update_predictor_1 =  rs_to_exec_1.branch_sel > 0 & rs_to_exec_1.branch_sel < 6;
+    assign update_predictor_1 = rs_to_exec_1.issue_valid ? (rs_to_exec_1.branch_sel > 0 & rs_to_exec_1.branch_sel < 6) : 0;
 
     //=======================================================================
     // Functional Unit 2 (FU2)
     //=======================================================================
    
-    assign rs_to_exec_2.issue_ready = 0; //!fu2_busy;
+    assign rs_to_exec_2.issue_ready = !fu2_busy;
     assign fu2_func_sel = rs_to_exec_2.control_signals[10:7];
     assign fu2_data_a = rs_to_exec_2.data_a;
     assign fu2_data_b = rs_to_exec_2.data_b;
@@ -180,10 +180,10 @@ module superscalar_execute_stage #(
     assign rs_to_exec_2.is_branch = rs_to_exec_2.branch_sel > 0 & rs_to_exec_2.branch_sel < 6; // if branch_sel is not NOBRANCH(0) or JAL/JALR(6,7)
     assign rs_to_exec_2.correct_pc = fu2_correct_pc;
 
-    assign misprediction_2 = fu2_misprediction;
+    assign misprediction_2 = rs_to_exec_2.issue_valid ? fu2_misprediction : 0;
     assign correct_pc_2 = fu2_correct_pc;
     assign update_pc_2 = rs_to_exec_2.pc_value_at_prediction;
-    assign update_predictor_2 =  rs_to_exec_2.branch_sel > 0 & rs_to_exec_2.branch_sel < 6;
+    assign update_predictor_2 = rs_to_exec_2.issue_valid ? (rs_to_exec_2.branch_sel > 0 & rs_to_exec_2.branch_sel < 6) : 0;
     //=======================================================================
     // Legacy Functional Unit Instances
     //=======================================================================
