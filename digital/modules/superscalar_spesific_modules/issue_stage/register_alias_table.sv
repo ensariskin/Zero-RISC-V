@@ -20,7 +20,8 @@ module register_alias_table #(
     parameter ARCH_REGS = 32,
     parameter PHYS_REGS = 64,
     parameter ARCH_ADDR_WIDTH = $clog2(ARCH_REGS),
-    parameter PHYS_ADDR_WIDTH = $clog2(PHYS_REGS)
+    parameter PHYS_ADDR_WIDTH = $clog2(PHYS_REGS),
+    parameter BRAT_STACK_DEPTH = 16
 )(
     input logic clk,
     input logic reset,
@@ -58,13 +59,39 @@ module register_alias_table #(
     output logic lsq_alloc_0_valid, lsq_alloc_1_valid, lsq_alloc_2_valid,
     input logic lsq_commit_0,
     input logic lsq_commit_1,
-    input logic lsq_commit_2
-    
+    input logic lsq_commit_2,
+
+    // Branch resolution interface (from execute stage)
+    input logic [2:0] branch_resolved,        // Which execute units resolved branches
+    input logic [2:0] branch_mispredicted,    // Which branches were mispredicted
+    input logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_0,  // Physical register of resolved branch 0
+    input logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_1,  // Physical register of resolved branch 1
+    input logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_2   // Physical register of resolved branch 2
 );
-    localparam D = 1; // Delay for non-blocking assignments (for simulation purposes)
+
+    localparam D = 1;
+    localparam STACK_PTR_WIDTH = $clog2(BRAT_STACK_DEPTH);
 
     // Register Alias Table - maps arch reg to current physical reg
     logic [PHYS_ADDR_WIDTH-1:0] rat_table [ARCH_REGS-1:0];
+
+    // BRAT Circular Buffer signals
+    logic [2:0] brat_push_en;
+    logic [PHYS_ADDR_WIDTH-1:0] brat_push_snapshot_0 [ARCH_REGS-1:0];
+    logic [PHYS_ADDR_WIDTH-1:0] brat_push_snapshot_1 [ARCH_REGS-1:0];
+    logic [PHYS_ADDR_WIDTH-1:0] brat_push_snapshot_2 [ARCH_REGS-1:0];
+    logic [PHYS_ADDR_WIDTH-1:0] brat_push_phys_0, brat_push_phys_1, brat_push_phys_2;
+    
+    logic [2:0] brat_pop_en;
+    logic brat_restore_en;
+    logic [1:0] brat_restore_idx;  // Which branch to restore from (0/1/2)
+    logic [PHYS_ADDR_WIDTH-1:0] brat_restore_snapshot [ARCH_REGS-1:0];
+    
+    logic [PHYS_ADDR_WIDTH-1:0] brat_peek_phys_0, brat_peek_phys_1, brat_peek_phys_2;
+    logic brat_peek_valid_0, brat_peek_valid_1, brat_peek_valid_2;
+    
+    logic brat_empty, brat_full;
+    logic [STACK_PTR_WIDTH:0] brat_count;
 
     // Free List - available physical registers
     logic [5:0] free_count;
@@ -85,9 +112,36 @@ module register_alias_table #(
     logic need_alloc_0, need_alloc_1, need_alloc_2;
     logic need_lsq_alloc_0, need_lsq_alloc_1, need_lsq_alloc_2;
 
+    // TODO : calculate set_ptr and set value for rob buffer and lsq buffer
+    logic free_addr_set_en;
+    logic [PHYS_ADDR_WIDTH-1:0] free_addr_set_value;
+
+    always_comb 
+    begin
+        if(branch_mispredicted[0] && branch_resolved[0])
+        begin
+            free_addr_set_en = 1'b1;
+            free_addr_set_value = resolved_phys_reg_0;
+        end
+        else if(branch_mispredicted[1] && branch_resolved[1])
+        begin
+            free_addr_set_en = 1'b1;
+            free_addr_set_value = resolved_phys_reg_1;
+        end
+        else if(branch_mispredicted[2] && branch_resolved[2])
+        begin
+            free_addr_set_en = 1'b1;
+            free_addr_set_value = resolved_phys_reg_2;
+        end
+        else
+        begin
+            free_addr_set_en = 1'b0;
+            free_addr_set_value = '0;
+        end
+    end
     circular_buffer_3port free_address_buffer(
         .clk(clk),
-        .rst_n(reset & !flush),
+        .rst_n(reset),
         .read_en_0(need_alloc_0),
         .read_en_1(need_alloc_1),
         .read_en_2(need_alloc_2),
@@ -102,12 +156,14 @@ module register_alias_table #(
         .write_en_2(commit_valid[2]),
         .buffer_empty(),
         .buffer_full(),
-        .buffer_count(free_count)
+        .buffer_count(free_count),
+        .set_read_ptr_en(free_addr_set_en),
+        .set_read_ptr_value(free_addr_set_value)
     );
     
     circular_buffer_3port #(.BUFFER_DEPTH(32)) lsq_address_buffer(
         .clk(clk),
-        .rst_n(reset & !flush),
+        .rst_n(reset),
         .read_en_0(need_lsq_alloc_0),
         .read_en_1(need_lsq_alloc_1),
         .read_en_2(need_lsq_alloc_2),
@@ -122,7 +178,9 @@ module register_alias_table #(
         .write_en_2(lsq_commit_2),
         .buffer_empty(),
         .buffer_full(),
-        .buffer_count(lsq_free_count)
+        .buffer_count(lsq_free_count),
+        .set_read_ptr_en(1'b0),
+        .set_read_ptr_value('0)
     );
     
     // Count free registers
@@ -147,6 +205,108 @@ module register_alias_table #(
         alloc_tag_0 = need_lsq_alloc_0 ? 3'b011: 3'b000;
         alloc_tag_1 = need_lsq_alloc_1 ? 3'b011: 3'b001;
         alloc_tag_2 = need_lsq_alloc_2 ? 3'b011: 3'b010;
+    end
+
+    logic [PHYS_ADDR_WIDTH-1:0] rat_after_inst0 [ARCH_REGS-1:0];
+    logic [PHYS_ADDR_WIDTH-1:0] rat_after_inst1 [ARCH_REGS-1:0];
+  
+
+    always_comb begin
+        rat_after_inst0 = rat_table;
+        if (need_alloc_0 && allocation_success[0] && rd_arch_0 != 0) begin
+            rat_after_inst0[rd_arch_0] = allocated_phys_reg[0];
+        end
+
+        rat_after_inst1 = rat_after_inst0;
+        if (need_alloc_1 && allocation_success[1] && rd_arch_1 != 0) begin
+            rat_after_inst1[rd_arch_1] = allocated_phys_reg[1];
+        end
+    end
+
+    //==========================================================================
+    // BRAT CIRCULAR BUFFER INSTANCE
+    //==========================================================================
+    
+    brat_circular_buffer #(
+        .BUFFER_DEPTH(BRAT_STACK_DEPTH),
+        .ARCH_REGS(ARCH_REGS),
+        .PHYS_ADDR_WIDTH(PHYS_ADDR_WIDTH)
+    ) brat_buffer (
+        .clk(clk),
+        .rst_n(reset),
+        .push_en_0(brat_push_en[0]),
+        .push_en_1(brat_push_en[1]),
+        .push_en_2(brat_push_en[2]),
+        .push_rat_snapshot_0(brat_push_snapshot_0),
+        .push_rat_snapshot_1(brat_push_snapshot_1),
+        .push_rat_snapshot_2(brat_push_snapshot_2),
+        .push_branch_phys_0(brat_push_phys_0),
+        .push_branch_phys_1(brat_push_phys_1),
+        .push_branch_phys_2(brat_push_phys_2),
+        .pop_en_0(brat_pop_en[0]),
+        .pop_en_1(brat_pop_en[1]),
+        .pop_en_2(brat_pop_en[2]),
+        .restore_en(brat_restore_en),
+        .restore_idx(brat_restore_idx),
+        .restore_rat_snapshot(brat_restore_snapshot),
+        .peek_branch_phys_0(brat_peek_phys_0),
+        .peek_branch_phys_1(brat_peek_phys_1),
+        .peek_branch_phys_2(brat_peek_phys_2),
+        .peek_valid_0(brat_peek_valid_0),
+        .peek_valid_1(brat_peek_valid_1),
+        .peek_valid_2(brat_peek_valid_2),
+        .buffer_empty(brat_empty),
+        .buffer_full(brat_full),
+        .buffer_count(brat_count)
+    );
+
+    //==========================================================================
+    // BRAT PUSH/POP CONTROL LOGIC
+    //==========================================================================
+    
+    // Branch matching: Check if resolved branches match oldest entries in BRAT
+    // Since we enforce in-order resolution, we only check the head (peek_0/1/2)
+    logic match_found_0, match_found_1, match_found_2;
+    
+    always_comb begin
+        // Match resolved branches with BRAT head entries (oldest branches)
+        match_found_0 = branch_resolved[0] && brat_peek_valid_0 && (brat_peek_phys_0 == resolved_phys_reg_0);
+        match_found_1 = branch_resolved[1] && brat_peek_valid_1 && (brat_peek_phys_1 == resolved_phys_reg_1);
+        match_found_2 = branch_resolved[2] && brat_peek_valid_2 && (brat_peek_phys_2 == resolved_phys_reg_2);
+        
+        // Push: Add new branch to BRAT
+        brat_push_en[0] = decode_valid[0] && branch_0 && !brat_full;
+        brat_push_en[1] = decode_valid[1] && branch_1 && !brat_full;
+        brat_push_en[2] = decode_valid[2] && branch_2 && !brat_full;
+        
+        // Push snapshots (computed earlier: rat_table, rat_after_inst0, rat_after_inst1)
+        brat_push_snapshot_0 = rat_table;
+        brat_push_snapshot_1 = rat_after_inst0;
+        brat_push_snapshot_2 = rat_after_inst1;
+        
+        brat_push_phys_0 = allocated_phys_reg[0];
+        brat_push_phys_1 = allocated_phys_reg[1];
+        brat_push_phys_2 = allocated_phys_reg[2];
+        
+        // Pop: Correctly resolved branches (oldest first)
+        brat_pop_en[0] = branch_resolved[0] && !branch_mispredicted[0] && match_found_0;
+        brat_pop_en[1] = branch_resolved[1] && !branch_mispredicted[1] && match_found_1;
+        brat_pop_en[2] = branch_resolved[2] && !branch_mispredicted[2] && match_found_2;
+        
+        // Restore: Misprediction detected - flush entire BRAT and restore RAT
+        // Priority: check oldest first (0 > 1 > 2)
+        brat_restore_en = 1'b0;
+        brat_restore_idx = 2'b00;
+        if (branch_resolved[0] && branch_mispredicted[0] && match_found_0) begin
+            brat_restore_en = 1'b1;
+            brat_restore_idx = 2'b00;  // Restore from oldest
+        end else if (branch_resolved[1] && branch_mispredicted[1] && match_found_1) begin
+            brat_restore_en = 1'b1;
+            brat_restore_idx = 2'b01;  // Restore from second oldest
+        end else if (branch_resolved[2] && branch_mispredicted[2] && match_found_2) begin
+            brat_restore_en = 1'b1;
+            brat_restore_idx = 2'b10;  // Restore from third oldest
+        end
     end
 
     // Allocate physical registers for new destinations - FIXED: No combinational loops
@@ -263,38 +423,47 @@ module register_alias_table #(
                 rat_table[i] <= #D i[PHYS_ADDR_WIDTH-1:0];
             end
         end else begin
-            
-            // Update RAT for new allocations
-            if(commit_valid[0] && commit_addr_0 != 0) begin
-                if(commit_rob_idx_0 == rat_table[commit_addr_0][4:0]) begin // Only free if the mapping matches
-                    rat_table[commit_addr_0] <= #D {1'b0, commit_addr_0};
+            // Misprediction: Restore RAT from BRAT snapshot
+            if (brat_restore_en) begin
+                for (int i = 0; i < ARCH_REGS; i++) begin
+                    rat_table[i] <= #D brat_restore_snapshot[i];
+                end
+            end else begin
+                // Normal operation: Update RAT for commits and new allocations
+                
+                // Commit: Restore architectural register to RF mapping when ROB commits
+                if(commit_valid[0] && commit_addr_0 != 0) begin
+                    if(commit_rob_idx_0 == rat_table[commit_addr_0][4:0]) begin
+                        rat_table[commit_addr_0] <= #D {1'b0, commit_addr_0};
+                    end
+                end
+                if(commit_valid[1] && commit_addr_1 != 0) begin
+                    if(commit_rob_idx_1 == rat_table[commit_addr_1][4:0]) begin
+                        rat_table[commit_addr_1] <= #D {1'b0, commit_addr_1};
+                    end
+                end
+                if(commit_valid[2] && commit_addr_2 != 0) begin
+                    if(commit_rob_idx_2 == rat_table[commit_addr_2][4:0]) begin
+                        rat_table[commit_addr_2] <= #D {1'b0, commit_addr_2};
+                    end
+                end
+
+                // Rename: Update RAT for new allocations
+                if (need_alloc_0 && rd_arch_0 != 0) begin
+                    rat_table[rd_arch_0] <= #D allocated_phys_reg[0];
+                end
+
+                if (need_alloc_1 && rd_arch_1 != 0) begin
+                    rat_table[rd_arch_1] <= #D allocated_phys_reg[1];
+                end
+
+                if (need_alloc_2 && rd_arch_2 != 0) begin
+                    rat_table[rd_arch_2] <= #D allocated_phys_reg[2];
                 end
             end
-            if(commit_valid[1] && commit_addr_1 != 0) begin
-                if(commit_rob_idx_1 == rat_table[commit_addr_1][4:0]) begin // Only free if the mapping matches
-                    rat_table[commit_addr_1] <= #D {1'b0, commit_addr_1};
-                end
-            end
-            if(commit_valid[2] && commit_addr_2 != 0) begin
-                if(commit_rob_idx_2 == rat_table[commit_addr_2][4:0]) begin // Only free if the mapping matches
-                    rat_table[commit_addr_2] <= #D {1'b0, commit_addr_2};
-                end
-            end
 
-            if (need_alloc_0 && rd_arch_0 != 0) begin
-                rat_table[rd_arch_0] <= #D allocated_phys_reg[0];
-            end
-
-            if (need_alloc_1 && rd_arch_1 != 0) begin
-                rat_table[rd_arch_1] <= #D allocated_phys_reg[1];
-            end
-
-            if (need_alloc_2 && rd_arch_2 != 0) begin
-                rat_table[rd_arch_2] <= #D allocated_phys_reg[2];
-            end
-
+            // Global flush: Reset RAT to identity mapping
             if (flush) begin
-                // On flush, reset RAT to initial state
                 for (int i = 0; i < ARCH_REGS; i++) begin
                     rat_table[i] <= #D i[PHYS_ADDR_WIDTH-1:0];
                 end
@@ -320,6 +489,18 @@ module register_alias_table #(
             if (decode_valid[1] && rd_write_enable_1 && rd_arch_1 != 5'h0) needed++;
             if (decode_valid[2] && rd_write_enable_2 && rd_arch_2 != 5'h0) needed++;
             assert(free_count >= needed) else $error("RAT: Not enough free physical registers");
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if (|brat_push_en && brat_full) begin
+            $error("RAT: BRAT buffer overflow!");
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if (brat_restore_en && brat_empty) begin
+            $error("RAT: BRAT buffer underflow!");
         end
     end
 

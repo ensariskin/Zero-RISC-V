@@ -166,11 +166,6 @@ module rv32i_superscalar_core #(
     logic [REG_FILE_ADDR_WIDTH-1:0] wb_rd_0, wb_rd_1, wb_rd_2;
     logic wb_reg_write_0, wb_reg_write_1, wb_reg_write_2;
     
-    // Register File Interface (multi-port for superscalar)
-    logic [DATA_WIDTH-1:0] rf_read_data_0_0, rf_read_data_0_1; // For instruction 0
-    logic [DATA_WIDTH-1:0] rf_read_data_1_0, rf_read_data_1_1; // For instruction 1
-    logic [DATA_WIDTH-1:0] rf_read_data_2_0, rf_read_data_2_1; // For instruction 2
-    
     // CSR Interface
     logic [11:0] csr_addr;
     logic [DATA_WIDTH-1:0] csr_write_data;
@@ -218,6 +213,10 @@ module rv32i_superscalar_core #(
     logic [DATA_WIDTH-1:0] ex2_commit_correct_pc;
     logic                  ex2_commit_is_branch;
     logic [DATA_WIDTH-1:0] ex2_upadate_predictor_pc;
+
+    logic [5:0] phys_reg_branch_0;
+    logic [5:0] phys_reg_branch_1;
+    logic [5:0] phys_reg_branch_2;
 
 
     cdb_if #(
@@ -356,6 +355,16 @@ module rv32i_superscalar_core #(
         .commit_rob_idx_0(commit_rob_idx_0),
         .commit_rob_idx_1(commit_rob_idx_1),
         .commit_rob_idx_2(commit_rob_idx_2),
+
+        .branch_mispredicted({ex2_misprediction_detected, ex1_misprediction_detected, ex0_misprediction_detected}),
+        
+        .branch_resolved({ex2_commit_is_branch | ex2_misprediction_detected , 
+                          ex1_commit_is_branch | ex1_misprediction_detected , 
+                          ex0_commit_is_branch | ex0_misprediction_detected }),
+
+        .resolved_phys_reg_0(phys_reg_branch_0),
+        .resolved_phys_reg_1(phys_reg_branch_1),
+        .resolved_phys_reg_2(phys_reg_branch_2),
         
         `ifndef SYNTHESIS
         .tracer_0(tracer_issue_0),
@@ -480,6 +489,10 @@ module rv32i_superscalar_core #(
         .update_pc_1(ex1_upadate_predictor_pc),
         .update_pc_2(ex2_upadate_predictor_pc),
 
+        .phys_reg_branch_0(phys_reg_branch_0),
+        .phys_reg_branch_1(phys_reg_branch_1),
+        .phys_reg_branch_2(phys_reg_branch_2),
+
         // Interface to reservation stations
         .rs_to_exec_0(dispatch_to_alu_0_if.functional_unit),
         .rs_to_exec_1(dispatch_to_alu_1_if.functional_unit),
@@ -560,22 +573,6 @@ module rv32i_superscalar_core #(
     assign mem_rd = 5'h0;
     assign mem_reg_write = 1'b0;
     
-    //==========================================================================
-    // WRITEBACK STAGE (placeholder)
-    //==========================================================================
-    
-    // For now, simple pass-through
-    // TODO: Implement proper writeback with register file
-    assign wb_valid = execute_valid_out;
-    assign wb_data_0 = execute_result_0;
-    assign wb_data_1 = execute_result_1;
-    assign wb_data_2 = execute_result_2;
-    assign wb_rd_0 = execute_rd_0;
-    assign wb_rd_1 = execute_rd_1;
-    assign wb_rd_2 = execute_rd_2;
-    assign wb_reg_write_0 = execute_reg_write_0;
-    assign wb_reg_write_1 = execute_reg_write_1;
-    assign wb_reg_write_2 = execute_reg_write_2;
     
     //==========================================================================
     // CONTROL AND STATUS

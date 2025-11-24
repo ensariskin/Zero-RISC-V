@@ -52,6 +52,13 @@ module issue_stage #(
 
     input logic lsq_commit_0, lsq_commit_1, lsq_commit_2, 
 
+    // Branch resolution interface (from execute stage)
+    input logic [2:0] branch_resolved,        // Which execute units resolved branches
+    input logic [2:0] branch_mispredicted,    // Which branches were mispredicted
+    input logic [PHYS_REG_ADDR_WIDTH-1:0] resolved_phys_reg_0,  // Physical register of resolved branch 0
+    input logic [PHYS_REG_ADDR_WIDTH-1:0] resolved_phys_reg_1,  // Physical register of resolved branch 1
+    input logic [PHYS_REG_ADDR_WIDTH-1:0] resolved_phys_reg_2,   // Physical register of resolved branch 2
+
     `ifndef SYNTHESIS
     // Debug Tracer Interfaces
     tracer_interface.source tracer_0,
@@ -189,7 +196,14 @@ module issue_stage #(
     ) rat_inst (
         .clk(clk),
         .reset(reset),
-        .flush(flush),
+        .flush(0),
+
+        // Branch recovery interface (connect to 0 or tie-off if not used in this stage)
+        .branch_resolved(branch_resolved),
+        .branch_mispredicted(branch_mispredicted),
+        .resolved_phys_reg_0(resolved_phys_reg_0),
+        .resolved_phys_reg_1(resolved_phys_reg_1),
+        .resolved_phys_reg_2(resolved_phys_reg_2),
         
         // Decode interface - separated signals
         .rs1_arch_0(rs1_arch_0), .rs1_arch_1(rs1_arch_1), .rs1_arch_2(rs1_arch_2),

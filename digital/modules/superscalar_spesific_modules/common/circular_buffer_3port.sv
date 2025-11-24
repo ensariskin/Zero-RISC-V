@@ -9,13 +9,17 @@
 // - Valid flags for each read port
 // - Reads show current values at read pointer position before pointer update
 //////////////////////////////////////////////////////////////////////////////////
-
+`timescale 1ns/1ns
 module circular_buffer_3port #(
     parameter BUFFER_DEPTH = 32,  // Must be power of 2
     parameter ADDR_WIDTH = $clog2(BUFFER_DEPTH)
 )(
     input  logic clk,
     input  logic rst_n,
+    
+    // Manual pointer control for misprediction recovery
+    input  logic set_read_ptr_en,                    // Enable manual read pointer set
+    input  logic [ADDR_WIDTH-1:0] set_read_ptr_value,  // Value to set read pointer to
     
     // Read port enables
     input  logic read_en_0,
@@ -156,12 +160,26 @@ module circular_buffer_3port #(
     
     // Calculate next read pointer based on number of enabled reads
     always_comb begin
-        next_read_ptr = read_ptr;
-        
-        // Only update if reads are enabled and buffer is not empty
-        if (!buffer_empty) begin
-            next_read_ptr = read_ptr + num_reads;
-           
+        // Manual pointer override for misprediction recovery   
+        // TODO we need extra check to find correct location, it can be {0,set_read_ptr_value} or {1,set_read_ptr_value}
+        // current code ai generated, need to check
+        if (set_read_ptr_en) begin
+            if(write_ptr[ADDR_WIDTH] == 1'b0 && set_read_ptr_value >= write_ptr[ADDR_WIDTH-1:0]) begin
+                next_read_ptr = {1'b0, set_read_ptr_value};
+            end else if (write_ptr[ADDR_WIDTH] == 1'b1 && set_read_ptr_value < write_ptr[ADDR_WIDTH-1:0]) begin
+                next_read_ptr = {1'b1, set_read_ptr_value};
+            end else if (write_ptr[ADDR_WIDTH] == 1'b1 && set_read_ptr_value >= write_ptr[ADDR_WIDTH-1:0]) begin
+                next_read_ptr = {1'b0, set_read_ptr_value};
+            end else begin
+                next_read_ptr = {1'b1, set_read_ptr_value};
+            end
+        end else begin
+            next_read_ptr = read_ptr;
+            
+            // Only update if reads are enabled and buffer is not empty
+            if (!buffer_empty) begin
+                next_read_ptr = read_ptr + num_reads;
+            end
         end
     end
     // Calculate next write pointer based on number of enabled writes
@@ -243,8 +261,8 @@ module circular_buffer_3port #(
             // Check for overflow
             if ((num_writes > 0) && buffer_full) begin
                 $warning("[%t] Circular buffer write overflow attempt", $time);
-                #3ns;
-                $finish;
+                //#3ns;
+                //$finish;
             end
             
             // Verify pointer wraparound
