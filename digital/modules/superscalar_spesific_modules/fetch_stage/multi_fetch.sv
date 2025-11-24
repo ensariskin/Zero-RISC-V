@@ -20,27 +20,33 @@ module multi_fetch #(parameter size = 32)(
       input  logic [size-1 : 0] instruction_i_4,
 
       // Pipeline control signals
-      input  logic flush,
-      input  logic [size-1 : 0] correct_pc,
-      input logic               jalr_prediction_valid_0,
-	   input logic [size-1 : 0]  jalr_update_prediction_pc_0,
       input  logic buble,
 
-      // TODO : We will need branch prediction signals here
+      // Eager misprediction handling from execute stage (replaces commit-based flush)
+      input  logic eager_misprediction_0,
+      input  logic eager_misprediction_1,
+      input  logic eager_misprediction_2,
+      input  logic [size-1 : 0] eager_correct_pc_0,
+      input  logic [size-1 : 0] eager_correct_pc_1,
+      input  logic [size-1 : 0] eager_correct_pc_2,
+
+      // Branch predictor update interface (for correct predictions)
       input  logic update_prediction_valid_i_0,
       input  logic [size-1 : 0] update_prediction_pc_0,
-      input  logic misprediction_0,
-      input  logic [size-1 : 0] correct_pc_0,
 
       input  logic update_prediction_valid_i_1,
       input  logic [size-1 : 0] update_prediction_pc_1,
-      input  logic misprediction_1,
-      input  logic [size-1 : 0] correct_pc_1,
 
       input  logic update_prediction_valid_i_2,
       input  logic [size-1 : 0] update_prediction_pc_2,
-      input  logic misprediction_2,
-      input logic [size-1 : 0] correct_pc_2,
+      
+      // JALR predictor update signals (from execute stage)
+      input  logic is_jalr_0,
+      input  logic is_jalr_1,
+      input  logic is_jalr_2,
+      input  logic jalr_misprediction_0,
+      input  logic jalr_misprediction_1,
+      input  logic jalr_misprediction_2,
 
       
 
@@ -83,9 +89,26 @@ module multi_fetch #(parameter size = 32)(
    logic parallel_mode;
    assign parallel_mode = 1'b1; // Always enable 3-instruction parallel mode
 
-   // Add misprediction logic (combine all three mispredictions)
-   logic misprediction_combined;
-   assign misprediction_combined = flush; //misprediction_0 | misprediction_1 | misprediction_2;
+   // Eager misprediction handling: flush on any misprediction from execute stage
+   // Priority: FU0 > FU1 > FU2 (oldest first)
+   logic eager_flush;
+   logic [size-1:0] eager_flush_target_pc;
+   
+   always_comb begin
+      if (eager_misprediction_0) begin
+         eager_flush = 1'b1;
+         eager_flush_target_pc = eager_correct_pc_0;
+      end else if (eager_misprediction_1) begin
+         eager_flush = 1'b1;
+         eager_flush_target_pc = eager_correct_pc_1;
+      end else if (eager_misprediction_2) begin
+         eager_flush = 1'b1;
+         eager_flush_target_pc = eager_correct_pc_2;
+      end else begin
+         eager_flush = 1'b0;
+         eager_flush_target_pc = {size{1'b0}};
+      end
+   end
 
    // For now inst addr 1 is inst addr 0 + 4
    // inst addr 2 is inst addr 1 + 4
@@ -132,7 +155,7 @@ module multi_fetch #(parameter size = 32)(
    logic block_3;  
    
    // Base validity: instruction is valid if not flushed, buffer ready, and in reset
-   assign base_valid = ~flush & fetch_ready_i & reset;
+   assign base_valid = ~eager_flush & fetch_ready_i & reset;
    
    // Branch prediction invalidation logic
    assign block_0 = jump_0 | jalr_0;  // If inst_0 is predicted taken, invalidate inst_1 and inst_2
@@ -195,18 +218,32 @@ module multi_fetch #(parameter size = 32)(
       .update_prediction_valid_i_1(update_prediction_valid_i_1),
       .update_prediction_valid_i_2(update_prediction_valid_i_2),
 
-      .misprediction_0(misprediction_0),
-      .misprediction_1(misprediction_1),
-      .misprediction_2(misprediction_2),
+      // Use eager misprediction signals for predictor update
+      .misprediction_0(eager_misprediction_0),
+      .misprediction_1(eager_misprediction_1),
+      .misprediction_2(eager_misprediction_2),
 
-      .correct_pc_0(correct_pc_0),
-      .correct_pc_1(correct_pc_1),
-      .correct_pc_2(correct_pc_2),
+      .correct_pc_0(eager_correct_pc_0),
+      .correct_pc_1(eager_correct_pc_1),
+      .correct_pc_2(eager_correct_pc_2),
 
-      .jalr_correct_pc_0(correct_pc),
-      .jalr_misprediction_0(flush),
-      .jalr_prediction_valid_0(jalr_prediction_valid_0),
-      .jalr_update_prediction_pc_0(jalr_update_prediction_pc_0),
+      // JALR predictor updates - FU0
+      .jalr_correct_pc_0(eager_correct_pc_0),
+      .jalr_misprediction_0(jalr_misprediction_0),
+      .jalr_prediction_valid_0(is_jalr_0),
+      .jalr_update_prediction_pc_0(update_prediction_pc_0),
+      
+      // JALR predictor updates - FU1
+      .jalr_correct_pc_1(eager_correct_pc_1),
+      .jalr_misprediction_1(jalr_misprediction_1),
+      .jalr_prediction_valid_1(is_jalr_1),
+      .jalr_update_prediction_pc_1(update_prediction_pc_1),
+      
+      // JALR predictor updates - FU2
+      .jalr_correct_pc_2(eager_correct_pc_2),
+      .jalr_misprediction_2(jalr_misprediction_2),
+      .jalr_prediction_valid_2(is_jalr_2),
+      .jalr_update_prediction_pc_2(update_prediction_pc_2),
 
       .jump_0(jump_0),
       .jump_1(jump_1),
@@ -253,8 +290,8 @@ module multi_fetch #(parameter size = 32)(
       .imm_i_3(imm_3),
       .imm_i_4(imm_4),
 
-      .misprediction(misprediction_combined),
-      .correct_pc(correct_pc),
+      .misprediction(eager_flush),
+      .correct_pc(eager_flush_target_pc),
 
       .inst_addr_0(inst_addr_0),
       .inst_addr_1(inst_addr_1),

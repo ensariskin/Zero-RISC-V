@@ -35,16 +35,19 @@ module fetch_buffer_top #(
     input  logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2, instruction_i_3, instruction_i_4,
     
     // Pipeline control signals
-    input  logic flush,
-    input  logic [DATA_WIDTH-1:0]   correct_pc,
-    input logic                     jalr_prediction_valid_0,
-    input logic [DATA_WIDTH-1 : 0]  jalr_update_prediction_pc_0,
     input  logic buble,
     
+    // Eager misprediction handling from execute stage (replaces commit-based flush)
+    input  logic eager_misprediction_0, eager_misprediction_1, eager_misprediction_2,
+    input  logic [DATA_WIDTH-1:0] eager_correct_pc_0, eager_correct_pc_1, eager_correct_pc_2,
+    
+    // Branch predictor update (for correct predictions)
     input  logic update_prediction_valid_i_0, update_prediction_valid_i_1, update_prediction_valid_i_2,
     input  logic [DATA_WIDTH-1:0] update_prediction_pc_0, update_prediction_pc_1, update_prediction_pc_2,
-    input  logic misprediction_0, misprediction_1, misprediction_2,
-    input  logic [DATA_WIDTH-1:0] correct_pc_0, correct_pc_1, correct_pc_2,
+    
+    // JALR predictor update signals (from execute stage)
+    input  logic is_jalr_0, is_jalr_1, is_jalr_2,
+    input  logic jalr_misprediction_0, jalr_misprediction_1, jalr_misprediction_2,
     
     
     // Output to decode stages
@@ -92,33 +95,39 @@ module fetch_buffer_top #(
         .instruction_i_4(instruction_i_4),
 
         // Pipeline control
-        .flush(flush),
-        .correct_pc(correct_pc),
-        .jalr_prediction_valid_0(jalr_prediction_valid_0),
-        .jalr_update_prediction_pc_0(jalr_update_prediction_pc_0),
         .buble(buble),
+        
+        // Eager misprediction handling from execute stage
+        .eager_misprediction_0(eager_misprediction_0),
+        .eager_misprediction_1(eager_misprediction_1),
+        .eager_misprediction_2(eager_misprediction_2),
+        .eager_correct_pc_0(eager_correct_pc_0),
+        .eager_correct_pc_1(eager_correct_pc_1),
+        .eager_correct_pc_2(eager_correct_pc_2),
         
         // Branch prediction interface
         .pc_value_at_prediction_0(fetch_pc_value_at_prediction_0),
         .branch_prediction_o_0(fetch_branch_pred_0),
         .update_prediction_valid_i_0(update_prediction_valid_i_0),
         .update_prediction_pc_0(update_prediction_pc_0),
-        .misprediction_0(misprediction_0),
-        .correct_pc_0(correct_pc_0),
         
         .pc_value_at_prediction_1(fetch_pc_value_at_prediction_1),
         .branch_prediction_o_1(fetch_branch_pred_1),
         .update_prediction_valid_i_1(update_prediction_valid_i_1),
         .update_prediction_pc_1(update_prediction_pc_1),
-        .misprediction_1(misprediction_1),
-        .correct_pc_1(correct_pc_1),
         
         .pc_value_at_prediction_2(fetch_pc_value_at_prediction_2),
         .branch_prediction_o_2(fetch_branch_pred_2),
         .update_prediction_valid_i_2(update_prediction_valid_i_2),
         .update_prediction_pc_2(update_prediction_pc_2),
-        .misprediction_2(misprediction_2),
-        .correct_pc_2(correct_pc_2),
+        
+        // JALR predictor update signals
+        .is_jalr_0(is_jalr_0),
+        .is_jalr_1(is_jalr_1),
+        .is_jalr_2(is_jalr_2),
+        .jalr_misprediction_0(jalr_misprediction_0),
+        .jalr_misprediction_1(jalr_misprediction_1),
+        .jalr_misprediction_2(jalr_misprediction_2),
 
         .pc_value_at_prediction_3(fetch_pc_value_at_prediction_3),
         .branch_prediction_o_3(fetch_branch_pred_3),
@@ -151,6 +160,10 @@ module fetch_buffer_top #(
 
     
 
+    // Generate combined eager flush signal (any misprediction triggers flush)
+    logic eager_flush;
+    assign eager_flush = eager_misprediction_0 | eager_misprediction_1 | eager_misprediction_2;
+    
     // Instruction Buffer
     instruction_buffer_new #(
         .BUFFER_DEPTH(BUFFER_DEPTH),
@@ -158,7 +171,7 @@ module fetch_buffer_top #(
     ) inst_buffer (
         .clk(clk),
         .reset(reset),
-        .flush_i(flush),
+        .flush_i(eager_flush),
         // Input from multi_fetch
         .fetch_valid_i(fetch_valid),
         .fetch_ready_o(fetch_ready),

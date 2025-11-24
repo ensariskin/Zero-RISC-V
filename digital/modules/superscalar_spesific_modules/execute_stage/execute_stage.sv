@@ -42,6 +42,15 @@ module superscalar_execute_stage #(
     output logic [DATA_WIDTH-1:0] update_pc_1,
     output logic [DATA_WIDTH-1:0] update_pc_2,
 
+    // JALR detection and misprediction signals
+    output logic is_jalr_0,
+    output logic is_jalr_1,
+    output logic is_jalr_2,
+    
+    output logic jalr_misprediction_0,
+    output logic jalr_misprediction_1,
+    output logic jalr_misprediction_2,
+
     output logic [5:0] phys_reg_branch_0,
     output logic [5:0] phys_reg_branch_1,
     output logic [5:0] phys_reg_branch_2,
@@ -130,6 +139,10 @@ module superscalar_execute_stage #(
     assign update_pc_0 = rs_to_exec_0.pc_value_at_prediction;
     assign update_predictor_0 = rs_to_exec_0.issue_valid ? (rs_to_exec_0.branch_sel > 0 & rs_to_exec_0.branch_sel < 6) : 0; 
     assign phys_reg_branch_0 = rs_to_exec_0.rd_phys_addr;
+    
+    // JALR detection and misprediction for FU0
+    assign is_jalr_0 = rs_to_exec_0.issue_valid && fu0_jalr;
+    assign jalr_misprediction_0 = is_jalr_0 && fu0_misprediction;
     //=======================================================================
     // Functional Unit 1 (FU1)
     //=======================================================================
@@ -160,6 +173,10 @@ module superscalar_execute_stage #(
     assign update_pc_1 = rs_to_exec_1.pc_value_at_prediction;
     assign update_predictor_1 = rs_to_exec_1.issue_valid ? (rs_to_exec_1.branch_sel > 0 & rs_to_exec_1.branch_sel < 6) : 0;
     assign phys_reg_branch_1 = rs_to_exec_1.rd_phys_addr;
+    
+    // JALR detection and misprediction for FU1
+    assign is_jalr_1 = rs_to_exec_1.issue_valid && fu1_jalr;
+    assign jalr_misprediction_1 = is_jalr_1 && fu1_misprediction;
     //=======================================================================
     // Functional Unit 2 (FU2)
     //=======================================================================
@@ -190,6 +207,10 @@ module superscalar_execute_stage #(
     assign update_pc_2 = rs_to_exec_2.pc_value_at_prediction;
     assign update_predictor_2 = rs_to_exec_2.issue_valid ? (rs_to_exec_2.branch_sel > 0 & rs_to_exec_2.branch_sel < 6) : 0;
     assign phys_reg_branch_2 = rs_to_exec_2.rd_phys_addr;
+    
+    // JALR detection and misprediction for FU2
+    assign is_jalr_2 = rs_to_exec_2.issue_valid && fu2_jalr;
+    assign jalr_misprediction_2 = is_jalr_2 && fu2_misprediction;
     //=======================================================================
     // Legacy Functional Unit Instances
     //=======================================================================

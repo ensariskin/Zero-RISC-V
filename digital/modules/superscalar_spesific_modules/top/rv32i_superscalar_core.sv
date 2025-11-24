@@ -218,6 +218,14 @@ module rv32i_superscalar_core #(
     logic [5:0] phys_reg_branch_1;
     logic [5:0] phys_reg_branch_2;
 
+    // JALR detection and misprediction signals from execute stage
+    logic ex0_is_jalr;
+    logic ex1_is_jalr;
+    logic ex2_is_jalr;
+    logic ex0_jalr_misprediction;
+    logic ex1_jalr_misprediction;
+    logic ex2_jalr_misprediction;
+
 
     cdb_if #(
         .DATA_WIDTH(DATA_WIDTH),
@@ -248,11 +256,15 @@ module rv32i_superscalar_core #(
         .instruction_i_4(instruction_i_4),
         
         // Pipeline control
-        .flush(misprediction_detected),
-        .correct_pc(commit_correct_pc_0),
-        .jalr_prediction_valid_0(commit_is_branch_0),
-        .jalr_update_prediction_pc_0(upadate_predictor_pc_0),
         .buble(pipeline_stall),
+        
+        // Eager misprediction handling from execute stage (replaces commit-based flush)
+        .eager_misprediction_0(ex0_misprediction_detected),
+        .eager_misprediction_1(ex1_misprediction_detected),
+        .eager_misprediction_2(ex2_misprediction_detected),
+        .eager_correct_pc_0(ex0_commit_correct_pc),
+        .eager_correct_pc_1(ex1_commit_correct_pc),
+        .eager_correct_pc_2(ex2_commit_correct_pc),
         
         // Branch prediction interface
         .pc_value_at_prediction_0(bp_pc_0),
@@ -261,18 +273,20 @@ module rv32i_superscalar_core #(
 
         .update_prediction_valid_i_0(ex0_commit_is_branch),
         .update_prediction_pc_0(ex0_upadate_predictor_pc),
-        .misprediction_0(ex0_misprediction_detected),
-        .correct_pc_0(ex0_commit_correct_pc),
         
         .update_prediction_valid_i_1(ex1_commit_is_branch),
         .update_prediction_pc_1(ex1_upadate_predictor_pc),
-        .misprediction_1(ex1_misprediction_detected),
-        .correct_pc_1(ex1_commit_correct_pc),
         
         .update_prediction_valid_i_2(ex2_commit_is_branch),
         .update_prediction_pc_2(ex2_upadate_predictor_pc),
-        .misprediction_2(ex2_misprediction_detected),
-        .correct_pc_2(ex2_commit_correct_pc),
+        
+        // JALR predictor update signals
+        .is_jalr_0(ex0_is_jalr),
+        .is_jalr_1(ex1_is_jalr),
+        .is_jalr_2(ex2_is_jalr),
+        .jalr_misprediction_0(ex0_jalr_misprediction),
+        .jalr_misprediction_1(ex1_jalr_misprediction),
+        .jalr_misprediction_2(ex2_jalr_misprediction),
         
         // Output to decode stages
         .decode_valid_o(decode_valid),
@@ -314,6 +328,10 @@ module rv32i_superscalar_core #(
     tracer_interface tracer_issue_2 ();
     `endif
     
+    // Generate eager flush signal from execute stage mispredictions
+    logic eager_flush;
+    assign eager_flush = ex0_misprediction_detected | ex1_misprediction_detected | ex2_misprediction_detected;
+    
     issue_stage #(
         .DATA_WIDTH(DATA_WIDTH),
         .ARCH_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH),
@@ -322,8 +340,8 @@ module rv32i_superscalar_core #(
         .clk(clk),
         .reset(reset),
         
-        // Pipeline control
-        .flush(misprediction_detected),
+        // Pipeline control - use eager flush from execute stage
+        .flush(eager_flush),
         .bubble(pipeline_stall),
         
         // Input from fetch/buffer stage
@@ -357,7 +375,7 @@ module rv32i_superscalar_core #(
         .commit_rob_idx_2(commit_rob_idx_2),
 
         .branch_mispredicted({ex2_misprediction_detected, ex1_misprediction_detected, ex0_misprediction_detected}),
-        
+
         .branch_resolved({ex2_commit_is_branch | ex2_misprediction_detected , 
                           ex1_commit_is_branch | ex1_misprediction_detected , 
                           ex0_commit_is_branch | ex0_misprediction_detected }),
@@ -488,6 +506,15 @@ module rv32i_superscalar_core #(
         .update_pc_0(ex0_upadate_predictor_pc),
         .update_pc_1(ex1_upadate_predictor_pc),
         .update_pc_2(ex2_upadate_predictor_pc),
+
+        // JALR detection and misprediction outputs
+        .is_jalr_0(ex0_is_jalr),
+        .is_jalr_1(ex1_is_jalr),
+        .is_jalr_2(ex2_is_jalr),
+        
+        .jalr_misprediction_0(ex0_jalr_misprediction),
+        .jalr_misprediction_1(ex1_jalr_misprediction),
+        .jalr_misprediction_2(ex2_jalr_misprediction),
 
         .phys_reg_branch_0(phys_reg_branch_0),
         .phys_reg_branch_1(phys_reg_branch_1),
