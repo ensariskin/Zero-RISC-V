@@ -218,6 +218,18 @@ module rv32i_superscalar_core #(
     logic [5:0] phys_reg_branch_1;
     logic [5:0] phys_reg_branch_2;
 
+    //==========================================================================
+    // BRAT v2 In-Order Branch Resolution Outputs (from issue_stage)
+    //==========================================================================
+    logic [2:0] brat_branch_resolved;       // In-order resolved branches
+    logic [2:0] brat_branch_mispredicted;   // In-order misprediction flags
+    logic [5:0] brat_resolved_phys_0;       // ROB ID of oldest resolved
+    logic [5:0] brat_resolved_phys_1;       // ROB ID of 2nd oldest resolved
+    logic [5:0] brat_resolved_phys_2;       // ROB ID of 3rd oldest resolved
+    logic [DATA_WIDTH-1:0] brat_correct_pc_0;  // Correct PC for oldest
+    logic [DATA_WIDTH-1:0] brat_correct_pc_1;  // Correct PC for 2nd oldest
+    logic [DATA_WIDTH-1:0] brat_correct_pc_2;  // Correct PC for 3rd oldest
+
     // JALR detection and misprediction signals from execute stage
     logic ex0_is_jalr;
     logic ex1_is_jalr;
@@ -258,13 +270,14 @@ module rv32i_superscalar_core #(
         // Pipeline control
         .buble(pipeline_stall),
         
-        // Eager misprediction handling from execute stage (replaces commit-based flush)
-        .eager_misprediction_0(ex0_misprediction_detected),
-        .eager_misprediction_1(ex1_misprediction_detected),
-        .eager_misprediction_2(ex2_misprediction_detected),
-        .eager_correct_pc_0(ex0_commit_correct_pc),
-        .eager_correct_pc_1(ex1_commit_correct_pc),
-        .eager_correct_pc_2(ex2_commit_correct_pc),
+        // Eager misprediction handling from BRAT (in-order branch resolution)
+        // BRAT provides in-order misprediction signals - use oldest first
+        .eager_misprediction_0(brat_branch_resolved[0] & brat_branch_mispredicted[0]),
+        .eager_misprediction_1(brat_branch_resolved[1] & brat_branch_mispredicted[1]),
+        .eager_misprediction_2(brat_branch_resolved[2] & brat_branch_mispredicted[2]),
+        .eager_correct_pc_0(brat_correct_pc_0),
+        .eager_correct_pc_1(brat_correct_pc_1),
+        .eager_correct_pc_2(brat_correct_pc_2),
         
         // Branch prediction interface
         .pc_value_at_prediction_0(bp_pc_0),
@@ -328,9 +341,15 @@ module rv32i_superscalar_core #(
     tracer_interface tracer_issue_2 ();
     `endif
     
-    // Generate eager flush signal from execute stage mispredictions
+    // Generate eager flush signal from BRAT in-order misprediction outputs
     logic eager_flush;
-    assign eager_flush = ex0_misprediction_detected | ex1_misprediction_detected | ex2_misprediction_detected;
+    assign eager_flush = (brat_branch_resolved[0] & brat_branch_mispredicted[0]) | 
+                         (brat_branch_resolved[1] & brat_branch_mispredicted[1]) | 
+                         (brat_branch_resolved[2] & brat_branch_mispredicted[2]);
+    
+    // Eager misprediction flush signals from dispatch (LSQ) to issue (RAT circular buffer)
+    logic        lsq_flush_valid;
+    logic [4:0]  first_invalid_lsq_idx;
     
     issue_stage #(
         .DATA_WIDTH(DATA_WIDTH),
@@ -374,15 +393,31 @@ module rv32i_superscalar_core #(
         .commit_rob_idx_1(commit_rob_idx_1),
         .commit_rob_idx_2(commit_rob_idx_2),
 
-        .branch_mispredicted({ex2_misprediction_detected, ex1_misprediction_detected, ex0_misprediction_detected}),
-
-        .branch_resolved({ex2_commit_is_branch | ex2_misprediction_detected , 
-                          ex1_commit_is_branch | ex1_misprediction_detected , 
-                          ex0_commit_is_branch | ex0_misprediction_detected }),
-
-        .resolved_phys_reg_0(phys_reg_branch_0),
-        .resolved_phys_reg_1(phys_reg_branch_1),
-        .resolved_phys_reg_2(phys_reg_branch_2),
+        //==========================================================================
+        // Execute stage inputs to BRAT v2 (raw branch results)
+        //==========================================================================
+        .exec_branch_valid_i({ex2_commit_is_branch | ex2_is_jalr, 
+                              ex1_commit_is_branch | ex1_is_jalr, 
+                              ex0_commit_is_branch | ex0_is_jalr}),
+        .exec_mispredicted_i({ex2_misprediction_detected, ex1_misprediction_detected, ex0_misprediction_detected}),
+        .exec_rob_id_0_i(phys_reg_branch_0),
+        .exec_rob_id_1_i(phys_reg_branch_1),
+        .exec_rob_id_2_i(phys_reg_branch_2),
+        .exec_correct_pc_0_i(ex0_commit_correct_pc),
+        .exec_correct_pc_1_i(ex1_commit_correct_pc),
+        .exec_correct_pc_2_i(ex2_commit_correct_pc),
+        
+        //==========================================================================
+        // BRAT v2 In-Order Branch Resolution Outputs (to other modules)
+        //==========================================================================
+        .branch_resolved_o(brat_branch_resolved),
+        .branch_mispredicted_o(brat_branch_mispredicted),
+        .resolved_phys_reg_0_o(brat_resolved_phys_0),
+        .resolved_phys_reg_1_o(brat_resolved_phys_1),
+        .resolved_phys_reg_2_o(brat_resolved_phys_2),
+        .correct_pc_0_o(brat_correct_pc_0),
+        .correct_pc_1_o(brat_correct_pc_1),
+        .correct_pc_2_o(brat_correct_pc_2),
         
         `ifndef SYNTHESIS
         .tracer_0(tracer_issue_0),
@@ -397,7 +432,11 @@ module rv32i_superscalar_core #(
 
         .lsq_commit_0(lsq_commit_valid_0),
         .lsq_commit_1(lsq_commit_valid_1),
-        .lsq_commit_2(lsq_commit_valid_2)
+        .lsq_commit_2(lsq_commit_valid_2),
+        
+        // Eager misprediction flush interface (from dispatch/LSQ)
+        .lsq_flush_valid_i(lsq_flush_valid),
+        .first_invalid_lsq_idx_i(first_invalid_lsq_idx)
 
     );
     
@@ -416,6 +455,13 @@ module rv32i_superscalar_core #(
     ) dispatch_stage_unit (
         .clk(clk),
         .reset(reset),
+        
+        // BRAT in-order branch resolution inputs (for RS/LSQ eager flush)
+        .brat_branch_resolved_i(brat_branch_resolved),
+        .brat_branch_mispredicted_i(brat_branch_mispredicted),
+        .brat_resolved_phys_0_i(brat_resolved_phys_0),
+        .brat_resolved_phys_1_i(brat_resolved_phys_1),
+        .brat_resolved_phys_2_i(brat_resolved_phys_2),
         
         // Input from Issue Stage
         .issue_to_dispatch_0(issue_to_dispatch_0_if.dispatch),
@@ -478,7 +524,11 @@ module rv32i_superscalar_core #(
         .misprediction_detected(misprediction_detected),
         .commit_correct_pc_0(commit_correct_pc_0),
         .commit_is_branch_0(commit_is_branch_0),
-        .upadate_predictor_pc_0(upadate_predictor_pc_0)
+        .upadate_predictor_pc_0(upadate_predictor_pc_0),
+        
+        // Eager misprediction flush outputs (for issue stage LSQ circular buffer)
+        .lsq_flush_valid_o(lsq_flush_valid),
+        .first_invalid_lsq_idx_o(first_invalid_lsq_idx)
     );
     
     //==========================================================================

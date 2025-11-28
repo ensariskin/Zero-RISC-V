@@ -116,6 +116,16 @@ module lsq_simple_top
       output logic [DATA_WIDTH-1:0]           tracer_1_store_data,
       output logic [DATA_WIDTH-1:0]           tracer_2_store_data,
       `endif
+      
+      //==========================================================================
+      // EAGER MISPREDICTION INTERFACE (from ROB)
+      //==========================================================================
+      input  logic                            eager_misprediction_i,
+      input  logic [5:0]                      mispredicted_distance_i,  // ROB distance of mispredicted entry
+      input  logic [4:0]                      rob_head_ptr_i,           // Current ROB head for distance calc
+      output logic [LSQ_ADDR_WIDTH-1:0]       first_invalid_lsq_idx_o,  // For issue stage circular buffer tail update
+      output logic                            lsq_flush_valid_o,        // Indicates flush happened
+      
       // Status outputs
       output logic [LSQ_ADDR_WIDTH:0]         lsq_count_o,
       output logic                            lsq_full_o,
@@ -148,7 +158,7 @@ module lsq_simple_top
    typedef struct packed {
       logic                       valid;
       logic                       is_store;
-      logic [PHYS_REG_WIDTH-1:0]  phys_reg;       // For loads only
+      logic [PHYS_REG_WIDTH-1:0]  phys_reg;       
 
       // Address
       logic                       addr_valid;
@@ -198,7 +208,7 @@ module lsq_simple_top
    assign lsq_count_o = count;
    assign lsq_full_o  = (count == LSQ_DEPTH);
    assign lsq_empty_o = (count == 0);
-   assign alloc_ready_o = (count <= (LSQ_DEPTH - 3));  // Need space for 3
+   assign alloc_ready_o = (count <= (LSQ_DEPTH - 3)) && !eager_misprediction_i;  // Block alloc during misprediction
 
    // Calculate count
    always_comb begin
@@ -209,6 +219,50 @@ module lsq_simple_top
    assign distance_1 = (tail_plus_3 - head_ptr_1) <  (tail_ptr +3 - head_ptr_1) ?  (tail_plus_3 - head_ptr_1) : (tail_ptr +3 - head_ptr_1);
    assign distance_2 = (tail_plus_3 - head_ptr_2) < (tail_ptr +3 - head_ptr_2) ? (tail_plus_3 - head_ptr_2) : (tail_ptr +3 - head_ptr_2);
 
+   //==========================================================================
+   // EAGER MISPREDICTION FLUSH LOGIC
+   //==========================================================================
+   
+   // Calculate current ROB distance for each LSQ entry (combinational)
+   // Distance = how far the entry's ROB index is from current ROB head
+   logic [5:0] entry_rob_distance [LSQ_DEPTH-1:0];
+   logic [LSQ_DEPTH-1:0] entry_should_flush;  // Packed array for casez
+   
+   // Generate distance calculation for each entry
+   genvar gi;
+   generate
+      for (gi = 0; gi < LSQ_DEPTH; gi++) begin : gen_distance_calc
+         // phys_reg contains ROB index (lower 5 bits)
+         wire [4:0] entry_rob_idx = lsq_buffer[gi].phys_reg[4:0];
+         
+         // Calculate distance from ROB head (circular buffer aware)
+         assign entry_rob_distance[gi] = (entry_rob_idx >= rob_head_ptr_i) ?
+                                          (entry_rob_idx - rob_head_ptr_i) :
+                                          (32 - rob_head_ptr_i + entry_rob_idx);
+         
+         // Entry should be flushed if: valid AND distance > mispredicted_distance
+         assign entry_should_flush[gi] = lsq_buffer[gi].valid && 
+                                          (entry_rob_distance[gi] > mispredicted_distance_i);
+      end
+   endgenerate
+   
+   // Priority encoder to find first (smallest index) entry that should be flushed
+   // This will be the new tail_ptr for LSQ
+   logic [LSQ_ADDR_WIDTH-1:0] first_flush_idx;
+   logic                      any_flush;
+   
+   // Instantiate parametric priority encoder
+   priority_encoder #(
+      .WIDTH(LSQ_DEPTH)
+   ) flush_priority_enc (
+      .in_vector(entry_should_flush),
+      .first_idx(first_flush_idx),
+      .valid(any_flush)
+   );
+   
+   // Output signals for issue stage
+   assign first_invalid_lsq_idx_o = first_flush_idx;
+   assign lsq_flush_valid_o = eager_misprediction_i && any_flush;
 
    //==========================================================================
    // Forwarding Logic
@@ -616,6 +670,7 @@ module lsq_simple_top
             lsq_buffer[alloc_2_ptr].sign_extend <= #D alloc_sign_extend_2_i;
             lsq_buffer[alloc_2_ptr].mem_issued  <= #D 1'b0;
             lsq_buffer[alloc_2_ptr].mem_complete <= #D 1'b0;
+
             lsq_buffer[alloc_2_ptr].addr_valid <= #D 1'b0;
             lsq_buffer[alloc_2_ptr].address    <= #D '0;
             lsq_buffer[alloc_2_ptr].addr_tag   <= #D alloc_addr_tag_2_i;
@@ -636,8 +691,25 @@ module lsq_simple_top
                lsq_buffer[alloc_2_ptr].data_tag   <= #D TAG_READY;
             end
          end
-         // Update tail pointer
-         tail_ptr <= #D new_tail;
+         
+         // Update tail pointer - with eager misprediction handling
+         if (eager_misprediction_i && any_flush) begin
+            // On misprediction, truncate tail to first invalid entry
+            tail_ptr <= #D {1'b0, first_flush_idx};
+         end else begin
+            tail_ptr <= #D new_tail;
+         end
+         
+         //==================================================================
+         // EAGER MISPREDICTION FLUSH - Invalidate speculative entries
+         //==================================================================
+         if (eager_misprediction_i) begin
+            for (int i = 0; i < LSQ_DEPTH; i++) begin
+               if (entry_should_flush[i]) begin
+                  lsq_buffer[i].valid <= #D 1'b0;
+               end
+            end
+         end
 
          if (mem_0_req_valid_o && mem_0_req_ready_i) begin
             lsq_buffer[head_idx].mem_issued <= #D 1'b1;
@@ -818,12 +890,9 @@ module lsq_simple_top
       end
    end
 
-
    //==========================================================================
    // MEMORY REQUEST LOGIC (Head Side - FIFO)
    //==========================================================================
-
-   
 
    logic head_ready;
    always_comb begin
@@ -880,7 +949,6 @@ module lsq_simple_top
          end
       end
    end
-
 
    logic head_ready_2;
    always_comb begin

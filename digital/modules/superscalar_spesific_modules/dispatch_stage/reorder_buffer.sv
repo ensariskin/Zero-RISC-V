@@ -22,168 +22,176 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module reorder_buffer #(
-    parameter DATA_WIDTH = 32,
-    parameter TAG_WIDTH = 3,
-    parameter BUFFER_DEPTH = 32, // Must be power of 2
-    parameter ADDR_WIDTH = $clog2(BUFFER_DEPTH)
-)(
-    input  logic clk,
-    input  logic reset,
+        parameter DATA_WIDTH = 32,
+        parameter TAG_WIDTH = 3,
+        parameter BUFFER_DEPTH = 32, // Must be power of 2
+        parameter ADDR_WIDTH = $clog2(BUFFER_DEPTH)
+    )(
+        input  logic clk,
+        input  logic reset,
 
-    //==========================================================================
-    // ALLOCATION INTERFACE (from Register Alias Table)
-    //==========================================================================
-    input  logic alloc_enable_0,
-    input  logic alloc_enable_1,
-    input  logic alloc_enable_2,
-    input  logic [TAG_WIDTH-1:0] alloc_tag_0,  // Producer tag for allocation
-    input  logic [TAG_WIDTH-1:0] alloc_tag_1,
-    input  logic [TAG_WIDTH-1:0] alloc_tag_2,
-    input logic [ADDR_WIDTH-1:0] alloc_addr_0,  // Allocated ROB index
-    input logic [ADDR_WIDTH-1:0] alloc_addr_1,
-    input logic [ADDR_WIDTH-1:0] alloc_addr_2,
-    input logic alloc_is_store_0,
-    input logic alloc_is_store_1,
-    input logic alloc_is_store_2,
-    output logic alloc_success,  // All requested allocations succeeded
+        //==========================================================================
+        // ALLOCATION INTERFACE (from Register Alias Table)
+        //==========================================================================
+        input  logic alloc_enable_0,
+        input  logic alloc_enable_1,
+        input  logic alloc_enable_2,
+        input  logic [TAG_WIDTH-1:0] alloc_tag_0,  // Producer tag for allocation
+        input  logic [TAG_WIDTH-1:0] alloc_tag_1,
+        input  logic [TAG_WIDTH-1:0] alloc_tag_2,
+        input logic [ADDR_WIDTH-1:0] alloc_addr_0,  // Allocated ROB index
+        input logic [ADDR_WIDTH-1:0] alloc_addr_1,
+        input logic [ADDR_WIDTH-1:0] alloc_addr_2,
+        input logic alloc_is_store_0,
+        input logic alloc_is_store_1,
+        input logic alloc_is_store_2,
+        output logic alloc_success,  // All requested allocations succeeded
 
-    //==========================================================================
-    // CDB INTERFACE (from execution units)
-    //==========================================================================
-    input  logic cdb_valid_0,
-    input  logic cdb_valid_1,
-    input  logic cdb_valid_2,
-    input  logic cdb_valid_3_0,
-    input  logic cdb_valid_3_1,
-    input  logic cdb_valid_3_2,
+        //==========================================================================
+        // CDB INTERFACE (from execution units)
+        //==========================================================================
+        input  logic cdb_valid_0,
+        input  logic cdb_valid_1,
+        input  logic cdb_valid_2,
+        input  logic cdb_valid_3_0,
+        input  logic cdb_valid_3_1,
+        input  logic cdb_valid_3_2,
 
-    input  logic [ADDR_WIDTH-1:0] cdb_addr_0,
-    input  logic [ADDR_WIDTH-1:0] cdb_addr_1,
-    input  logic [ADDR_WIDTH-1:0] cdb_addr_2,
-    input  logic [ADDR_WIDTH-1:0] cdb_addr_3_0,
-    input  logic [ADDR_WIDTH-1:0] cdb_addr_3_1,
-    input  logic [ADDR_WIDTH-1:0] cdb_addr_3_2,
+        input  logic [ADDR_WIDTH-1:0] cdb_addr_0,
+        input  logic [ADDR_WIDTH-1:0] cdb_addr_1,
+        input  logic [ADDR_WIDTH-1:0] cdb_addr_2,
+        input  logic [ADDR_WIDTH-1:0] cdb_addr_3_0,
+        input  logic [ADDR_WIDTH-1:0] cdb_addr_3_1,
+        input  logic [ADDR_WIDTH-1:0] cdb_addr_3_2,
 
-    input  logic [DATA_WIDTH-1:0] cdb_data_0,
-    input  logic [DATA_WIDTH-1:0] cdb_data_1,
-    input  logic [DATA_WIDTH-1:0] cdb_data_2,
-    input  logic [DATA_WIDTH-1:0] cdb_data_3_0,
-    input  logic [DATA_WIDTH-1:0] cdb_data_3_1,
-    input  logic [DATA_WIDTH-1:0] cdb_data_3_2,
+        input  logic [DATA_WIDTH-1:0] cdb_data_0,
+        input  logic [DATA_WIDTH-1:0] cdb_data_1,
+        input  logic [DATA_WIDTH-1:0] cdb_data_2,
+        input  logic [DATA_WIDTH-1:0] cdb_data_3_0,
+        input  logic [DATA_WIDTH-1:0] cdb_data_3_1,
+        input  logic [DATA_WIDTH-1:0] cdb_data_3_2,
 
-    input  logic cdb_exception_0,  // Misprediction/exception flag
-    input  logic cdb_exception_1,
-    input  logic cdb_exception_2,
-    input  logic cdb_exception_3_0,
-    input  logic cdb_exception_3_1,
-    input  logic cdb_exception_3_2,
+        input  logic cdb_exception_0,  // Misprediction/exception flag
+        input  logic cdb_exception_1,
+        input  logic cdb_exception_2,
+        input  logic cdb_exception_3_0,
+        input  logic cdb_exception_3_1,
+        input  logic cdb_exception_3_2,
 
-    input  logic [DATA_WIDTH-1:0] cdb_correct_pc_0, // Correct PC for branch/jalr
-    input  logic [DATA_WIDTH-1:0] cdb_correct_pc_1,
-    input  logic [DATA_WIDTH-1:0] cdb_correct_pc_2,
+        input  logic [DATA_WIDTH-1:0] cdb_correct_pc_0, // Correct PC for branch/jalr
+        input  logic [DATA_WIDTH-1:0] cdb_correct_pc_1,
+        input  logic [DATA_WIDTH-1:0] cdb_correct_pc_2,
 
-    input  logic cdb_is_branch_0, // Is the instruction a branch
-    input  logic cdb_is_branch_1,
-    input  logic cdb_is_branch_2,
+        input  logic cdb_is_branch_0, // Is the instruction a branch
+        input  logic cdb_is_branch_1,
+        input  logic cdb_is_branch_2,
 
-    input  logic cdb_mem_addr_calculation_0,
-    input  logic cdb_mem_addr_calculation_1,
-    input  logic cdb_mem_addr_calculation_2,
+        input  logic cdb_mem_addr_calculation_0,
+        input  logic cdb_mem_addr_calculation_1,
+        input  logic cdb_mem_addr_calculation_2,
 
     //==========================================================================
     // Tracer Interface (for debugging, non-synthesis)
     //==========================================================================
     `ifndef SYNTHESIS
-    tracer_interface.sink i_tracer_0,
-    tracer_interface.sink i_tracer_1,
-    tracer_interface.sink i_tracer_2,
+        tracer_interface.sink i_tracer_0,
+        tracer_interface.sink i_tracer_1,
+        tracer_interface.sink i_tracer_2,
 
-    tracer_interface.source o_tracer_0,
-    tracer_interface.source o_tracer_1,
-    tracer_interface.source o_tracer_2,
+        tracer_interface.source o_tracer_0,
+        tracer_interface.source o_tracer_1,
+        tracer_interface.source o_tracer_2,
 
-    input logic [DATA_WIDTH-1:0] tracer_store_data_0,
-    input logic [DATA_WIDTH-1:0] tracer_store_data_1,
-    input logic [DATA_WIDTH-1:0] tracer_store_data_2,
+        input logic [DATA_WIDTH-1:0] tracer_store_data_0,
+        input logic [DATA_WIDTH-1:0] tracer_store_data_1,
+        input logic [DATA_WIDTH-1:0] tracer_store_data_2,
     `endif
-    //==========================================================================
-    // READ INTERFACE (for reservation stations)
-    //==========================================================================
-    input  logic [ADDR_WIDTH-1:0] read_addr_0,
-    input  logic [ADDR_WIDTH-1:0] read_addr_1,
-    input  logic [ADDR_WIDTH-1:0] read_addr_2,
-    input  logic [ADDR_WIDTH-1:0] read_addr_3,
-    input  logic [ADDR_WIDTH-1:0] read_addr_4,
-    input  logic [ADDR_WIDTH-1:0] read_addr_5,
-    output logic [DATA_WIDTH-1:0] read_data_0,
-    output logic [DATA_WIDTH-1:0] read_data_1,
-    output logic [DATA_WIDTH-1:0] read_data_2,
-    output logic [DATA_WIDTH-1:0] read_data_3,
-    output logic [DATA_WIDTH-1:0] read_data_4,
-    output logic [DATA_WIDTH-1:0] read_data_5,
-    output logic [TAG_WIDTH-1:0] read_tag_0,
-    output logic [TAG_WIDTH-1:0] read_tag_1,
-    output logic [TAG_WIDTH-1:0] read_tag_2,
-    output logic [TAG_WIDTH-1:0] read_tag_3,
-    output logic [TAG_WIDTH-1:0] read_tag_4,
-    output logic [TAG_WIDTH-1:0] read_tag_5,
+        //==========================================================================
+        // READ INTERFACE (for reservation stations)
+        //==========================================================================
+        input  logic [ADDR_WIDTH-1:0] read_addr_0,
+        input  logic [ADDR_WIDTH-1:0] read_addr_1,
+        input  logic [ADDR_WIDTH-1:0] read_addr_2,
+        input  logic [ADDR_WIDTH-1:0] read_addr_3,
+        input  logic [ADDR_WIDTH-1:0] read_addr_4,
+        input  logic [ADDR_WIDTH-1:0] read_addr_5,
+        output logic [DATA_WIDTH-1:0] read_data_0,
+        output logic [DATA_WIDTH-1:0] read_data_1,
+        output logic [DATA_WIDTH-1:0] read_data_2,
+        output logic [DATA_WIDTH-1:0] read_data_3,
+        output logic [DATA_WIDTH-1:0] read_data_4,
+        output logic [DATA_WIDTH-1:0] read_data_5,
+        output logic [TAG_WIDTH-1:0] read_tag_0,
+        output logic [TAG_WIDTH-1:0] read_tag_1,
+        output logic [TAG_WIDTH-1:0] read_tag_2,
+        output logic [TAG_WIDTH-1:0] read_tag_3,
+        output logic [TAG_WIDTH-1:0] read_tag_4,
+        output logic [TAG_WIDTH-1:0] read_tag_5,
 
-    //==========================================================================
-    // COMMIT INTERFACE (in-order commits)
-    //==========================================================================
-    output logic commit_valid_0,  // Head is ready to commit
-    output logic commit_valid_1,  // Head+1 is ready to commit
-    output logic commit_valid_2,  // Head+2 is ready to commit
-    output logic [DATA_WIDTH-1:0] commit_data_0,
-    output logic [DATA_WIDTH-1:0] commit_data_1,
-    output logic [DATA_WIDTH-1:0] commit_data_2,
-    output logic [ADDR_WIDTH-1:0] commit_addr_0,
-    output logic [ADDR_WIDTH-1:0] commit_addr_1,
-    output logic [ADDR_WIDTH-1:0] commit_addr_2,
-    
-    output logic commit_exception_0,
-    output logic commit_exception_1,
-    output logic commit_exception_2,
+        //==========================================================================
+        // COMMIT INTERFACE (in-order commits)
+        //==========================================================================
+        output logic commit_valid_0,  // Head is ready to commit
+        output logic commit_valid_1,  // Head+1 is ready to commit
+        output logic commit_valid_2,  // Head+2 is ready to commit
+        output logic [DATA_WIDTH-1:0] commit_data_0,
+        output logic [DATA_WIDTH-1:0] commit_data_1,
+        output logic [DATA_WIDTH-1:0] commit_data_2,
+        output logic [ADDR_WIDTH-1:0] commit_addr_0,
+        output logic [ADDR_WIDTH-1:0] commit_addr_1,
+        output logic [ADDR_WIDTH-1:0] commit_addr_2,
 
-    output logic [DATA_WIDTH-1:0] commit_correct_pc_0,
-    output logic [DATA_WIDTH-1:0] commit_correct_pc_1,
-    output logic [DATA_WIDTH-1:0] commit_correct_pc_2,
+        // TODO remove these, not needed anymore
+        output logic commit_exception_0,
+        output logic commit_exception_1,
+        output logic commit_exception_2,
 
-    output logic commit_is_branch_0,
-    output logic commit_is_branch_1,
-    output logic commit_is_branch_2,
+        output logic [DATA_WIDTH-1:0] commit_correct_pc_0,
+        output logic [DATA_WIDTH-1:0] commit_correct_pc_1,
+        output logic [DATA_WIDTH-1:0] commit_correct_pc_2,
 
-    output logic [DATA_WIDTH-1:0] upadate_predictor_pc_0, // For branch predictor update
-    output logic [DATA_WIDTH-1:0] upadate_predictor_pc_1,
-    output logic [DATA_WIDTH-1:0] upadate_predictor_pc_2,
+        output logic commit_is_branch_0,
+        output logic commit_is_branch_1,
+        output logic commit_is_branch_2,
 
-    
-    //==========================================================================
-    // STORE PERMISSION OUTPUTS
-    //==========================================================================
-    output logic store_can_issue_0,
-    output logic [ADDR_WIDTH:0] allowed_store_address_0,
+        output logic [DATA_WIDTH-1:0] upadate_predictor_pc_0, // For branch predictor update
+        output logic [DATA_WIDTH-1:0] upadate_predictor_pc_1,
+        output logic [DATA_WIDTH-1:0] upadate_predictor_pc_2,
 
-    output logic store_can_issue_1,
-    output logic [ADDR_WIDTH:0] allowed_store_address_1,
 
-    output logic store_can_issue_2,
-    output logic [ADDR_WIDTH:0] allowed_store_address_2,
-    //==========================================================================
-    // LSQ RAT COMMITS
-    //==========================================================================
-    output logic lsq_commit_valid_0,  // Head is ready to commit
-    output logic lsq_commit_valid_1,  // Head+1 is ready to commit
-    output logic lsq_commit_valid_2,  // Head+2 is ready to commit
-    //==========================================================================
-    // STATUS OUTPUTS
-    //==========================================================================
-    output logic buffer_empty,
-    output logic buffer_full,
-    output logic [ADDR_WIDTH:0] buffer_count,  // Number of valid entries
-    output logic [ADDR_WIDTH-1:0] head_ptr,
-    output logic [ADDR_WIDTH-1:0] tail_ptr
-);
+        //==========================================================================
+        // STORE PERMISSION OUTPUTS
+        //==========================================================================
+        output logic store_can_issue_0,
+        output logic [ADDR_WIDTH:0] allowed_store_address_0,
+
+        output logic store_can_issue_1,
+        output logic [ADDR_WIDTH:0] allowed_store_address_1,
+
+        output logic store_can_issue_2,
+        output logic [ADDR_WIDTH:0] allowed_store_address_2,
+        //==========================================================================
+        // LSQ RAT COMMITS
+        //==========================================================================
+        output logic lsq_commit_valid_0,  // Head is ready to commit
+        output logic lsq_commit_valid_1,  // Head+1 is ready to commit
+        output logic lsq_commit_valid_2,  // Head+2 is ready to commit
+        //==========================================================================
+        // STATUS OUTPUTS
+        //==========================================================================
+        output logic buffer_empty,
+        output logic buffer_full,
+        output logic [ADDR_WIDTH:0] buffer_count,  // Number of valid entries
+        output logic [ADDR_WIDTH-1:0] head_ptr,
+        output logic [ADDR_WIDTH-1:0] tail_ptr,
+        
+        //==========================================================================
+        // EAGER MISPREDICTION OUTPUTS (for LSQ flush)
+        //==========================================================================
+        output logic eager_misprediction_o,
+        output logic [ADDR_WIDTH:0] mispredicted_distance_o,
+        output logic [ADDR_WIDTH-1:0] rob_head_ptr_o
+    );
 
     localparam D = 1;  // Delay for simulation
     localparam TAG_VALID = 3'b111;  // Tag indicating data is valid and ready
@@ -215,8 +223,8 @@ module reorder_buffer #(
         logic [31:0] instr;
         logic [4:0] reg_addr;
         logic [31:0] reg_data;
-        logic is_load; 
-        logic is_store; 
+        logic is_load;
+        logic is_store;
         logic is_float;
         logic [1:0] mem_size;
         logic [31:0] mem_addr;
@@ -230,11 +238,103 @@ module reorder_buffer #(
     logic [ADDR_WIDTH:0] head_ptr_reg;
     logic [ADDR_WIDTH:0] tail_ptr_reg;
 
-    logic exception_detected;
+    //==========================================================================
+    // EAGER MISPREDICTION DETECTION (from CDB)
+    //==========================================================================
+    logic misprediction_from_fu0, misprediction_from_fu1, misprediction_from_fu2;
+    logic eager_misprediction;
+    logic [ADDR_WIDTH:0] dist_0, dist_1, dist_2;
+    logic [ADDR_WIDTH-1:0] oldest_mispredicted_idx;
+
+    // Detect misprediction from each FU (exclude memory address calculations)
+    assign misprediction_from_fu0 = cdb_valid_0 && cdb_exception_0 && !cdb_mem_addr_calculation_0;
+    assign misprediction_from_fu1 = cdb_valid_1 && cdb_exception_1 && !cdb_mem_addr_calculation_1;
+    assign misprediction_from_fu2 = cdb_valid_2 && cdb_exception_2 && !cdb_mem_addr_calculation_2;
+
+    // Combined eager misprediction signal
+    assign eager_misprediction = misprediction_from_fu0 | misprediction_from_fu1 | misprediction_from_fu2;
+
+    // Distance calculation for each mispredicted ROB entry (circular buffer aware)
+    // Distance = how far from head (smaller = older = should be prioritized)
+    assign dist_0 = (cdb_addr_0 >= head_ptr_reg[ADDR_WIDTH-1:0]) ?
+        (cdb_addr_0 - head_ptr_reg[ADDR_WIDTH-1:0]) :
+        (BUFFER_DEPTH - head_ptr_reg[ADDR_WIDTH-1:0] + cdb_addr_0);
+    assign dist_1 = (cdb_addr_1 >= head_ptr_reg[ADDR_WIDTH-1:0]) ?
+        (cdb_addr_1 - head_ptr_reg[ADDR_WIDTH-1:0]) :
+        (BUFFER_DEPTH - head_ptr_reg[ADDR_WIDTH-1:0] + cdb_addr_1);
+    assign dist_2 = (cdb_addr_2 >= head_ptr_reg[ADDR_WIDTH-1:0]) ?
+        (cdb_addr_2 - head_ptr_reg[ADDR_WIDTH-1:0]) :
+        (BUFFER_DEPTH - head_ptr_reg[ADDR_WIDTH-1:0] + cdb_addr_2);
+
+    // Find oldest (closest to head) mispredicted entry using priority encoder
+    always_comb begin
+        oldest_mispredicted_idx = '0; // Default
+
+        if (eager_misprediction) begin
+            // Start with first active misprediction as default
+            if (misprediction_from_fu0)
+                oldest_mispredicted_idx = cdb_addr_0;
+            else if (misprediction_from_fu1)
+                oldest_mispredicted_idx = cdb_addr_1;
+            else if (misprediction_from_fu2)
+                oldest_mispredicted_idx = cdb_addr_2;
+
+            // Compare and select oldest (minimum distance from head)
+            if (misprediction_from_fu0 && misprediction_from_fu1) begin
+                if (dist_0 <= dist_1)
+                    oldest_mispredicted_idx = cdb_addr_0;
+                else
+                    oldest_mispredicted_idx = cdb_addr_1;
+            end
+
+            if (misprediction_from_fu0 && misprediction_from_fu2) begin
+                if (dist_0 <= dist_2)
+                    oldest_mispredicted_idx = cdb_addr_0;
+                else
+                    oldest_mispredicted_idx = cdb_addr_2;
+            end
+
+            if (misprediction_from_fu1 && misprediction_from_fu2) begin
+                if (dist_1 <= dist_2)
+                    oldest_mispredicted_idx = cdb_addr_1;
+                else
+                    oldest_mispredicted_idx = cdb_addr_2;
+            end
+
+            // All three mispredicted - find minimum
+            if (misprediction_from_fu0 && misprediction_from_fu1 && misprediction_from_fu2) begin
+                if (dist_0 <= dist_1 && dist_0 <= dist_2)
+                    oldest_mispredicted_idx = cdb_addr_0;
+                else if (dist_1 <= dist_0 && dist_1 <= dist_2)
+                    oldest_mispredicted_idx = cdb_addr_1;
+                else
+                    oldest_mispredicted_idx = cdb_addr_2;
+            end
+        end
+    end
 
     // Assign outputs
     assign head_ptr = head_ptr_reg[ADDR_WIDTH-1:0];
     assign tail_ptr = tail_ptr_reg[ADDR_WIDTH-1:0];
+    
+    // Eager misprediction outputs for LSQ flush
+    assign eager_misprediction_o = eager_misprediction;
+    assign rob_head_ptr_o = head_ptr_reg[ADDR_WIDTH-1:0];
+    
+    // Calculate mispredicted distance - select based on which FU mispredicted
+    logic [ADDR_WIDTH:0] mispredicted_dist;
+    always_comb begin
+        mispredicted_dist = '0;
+        if (eager_misprediction) begin
+            if (oldest_mispredicted_idx == cdb_addr_0 && misprediction_from_fu0)
+                mispredicted_dist = dist_0;
+            else if (oldest_mispredicted_idx == cdb_addr_1 && misprediction_from_fu1)
+                mispredicted_dist = dist_1;
+            else if (oldest_mispredicted_idx == cdb_addr_2 && misprediction_from_fu2)
+                mispredicted_dist = dist_2;
+        end
+    end
+    assign mispredicted_distance_o = mispredicted_dist;
 
     //==========================================================================
     // BUFFER STATUS
@@ -265,29 +365,29 @@ module reorder_buffer #(
     logic [1:0] num_commits;
     logic [ADDR_WIDTH:0] next_head_ptr;
 
-    assign exception_detected = buffer[head_idx].exception;
-
     // Count number of allocation requests
     always_comb begin
         num_alloc_requests = alloc_enable_0 + alloc_enable_1 + alloc_enable_2;
     end
 
-    // Check if allocation can succeed
-    assign alloc_success = (entries_free >= num_alloc_requests); //todo unnecessary?
+    // Check if allocation can succeed (block during eager misprediction)
+    assign alloc_success = (entries_free >= num_alloc_requests) && !eager_misprediction;
 
     // Assign allocation addresses (current tail position)
     assign alloc_idx_0 = tail_ptr_reg[ADDR_WIDTH-1:0];
     assign alloc_idx_1 = (tail_ptr_reg[ADDR_WIDTH-1:0] + alloc_enable_0) % BUFFER_DEPTH;
     assign alloc_idx_2 = (tail_ptr_reg[ADDR_WIDTH-1:0] + alloc_enable_0 + alloc_enable_1) % BUFFER_DEPTH;
 
-    // Calculate next tail pointer
+    // Calculate next tail pointer with eager misprediction handling
     always_comb begin
         next_tail_ptr = tail_ptr_reg;
-        if (alloc_success && !buffer_full) begin
+
+        if (eager_misprediction) begin
+            // Truncate tail to oldest_mispredicted_idx + 1 (keep the mispredicted entry)
+            // This uses the lower bits for the actual index, preserving wrap semantics
+            next_tail_ptr = {tail_ptr_reg[ADDR_WIDTH], oldest_mispredicted_idx} + 1'b1;
+        end else if (alloc_success && !buffer_full) begin
             next_tail_ptr = tail_ptr_reg + num_alloc_requests;
-        end
-        if(exception_detected) begin
-            next_tail_ptr = 0; // Flush on exception
         end
     end
 
@@ -296,15 +396,18 @@ module reorder_buffer #(
     assign head_plus_2_idx = (head_ptr_reg[ADDR_WIDTH-1:0] + 2'b10) % BUFFER_DEPTH;
 
     // Commit ready signals - in-order commit requirement
-    // TODO STORES CAN COUSE BOTTLECK HERE - OPTIMEZE LATER
-    assign commit_valid_0 = buffer[head_idx].executed; //& !buffer[head_idx].is_branch;
+    // Added tail boundary checks to prevent committing orphan entries after tail truncation
+    // entries_used >= N ensures head+N-1 is within valid range
+    assign commit_valid_0 = buffer[head_idx].executed && (entries_used >= 1);
 
-    assign commit_valid_1 = commit_valid_0 & !buffer[head_idx].exception & 
-                            buffer[head_plus_1_idx].executed & !buffer[head_plus_1_idx].exception ;
+    assign commit_valid_1 = commit_valid_0 & !buffer[head_idx].exception &
+        buffer[head_plus_1_idx].executed & !buffer[head_plus_1_idx].exception &
+        (entries_used >= 2);
 
-    assign commit_valid_2 = commit_valid_0 & commit_valid_1  & !buffer[head_plus_1_idx].exception &
-                            buffer[head_plus_2_idx].executed & !buffer[head_plus_2_idx].exception ;
-    
+    assign commit_valid_2 = commit_valid_0 & commit_valid_1 & !buffer[head_plus_1_idx].exception &
+        buffer[head_plus_2_idx].executed & !buffer[head_plus_2_idx].exception &
+        (entries_used >= 3);
+
 
     assign lsq_commit_valid_0 = commit_valid_0 & buffer[head_idx].is_store;
     assign lsq_commit_valid_1 = commit_valid_1 & buffer[head_plus_1_idx].is_store;
@@ -344,20 +447,16 @@ module reorder_buffer #(
     assign allowed_store_address_1 = {1'b1, head_plus_1_idx};
 
     assign store_can_issue_2 =  buffer[head_plus_2_idx].is_store && buffer[head_plus_2_idx].tag==TAG_VALID && (buffer[head_plus_1_idx].is_branch ? buffer[head_plus_1_idx].executed & !buffer[head_plus_1_idx].exception : 1'b1) && (buffer[head_idx].is_branch ? buffer[head_idx].executed & !buffer[head_idx].exception : 1'b1);
-    assign allowed_store_address_2 = {1'b1, head_plus_2_idx}; 
+    assign allowed_store_address_2 = {1'b1, head_plus_2_idx};
 
     // Count number of commits
     always_comb begin
         num_commits = commit_valid_0 + commit_valid_1 + commit_valid_2;
     end
 
-    // Calculate next head pointer
+    // Calculate next head pointer (commits advance head)
     always_comb begin
-        next_head_ptr = head_ptr_reg + num_commits; // default
-
-        if(exception_detected) begin
-            next_head_ptr = 0; // Flush on exception
-        end
+        next_head_ptr = head_ptr_reg + num_commits;
     end
 
     //==========================================================================
@@ -413,7 +512,7 @@ module reorder_buffer #(
     assign read_5_match_cdb_3_0 = cdb_valid_3_0 && (cdb_addr_3_0 == read_addr_5);
     assign read_5_match_cdb_3_1 = cdb_valid_3_1 && (cdb_addr_3_1 == read_addr_5);
     assign read_5_match_cdb_3_2 = cdb_valid_3_2 && (cdb_addr_3_2 == read_addr_5);
-    
+
     //==========================================================================
     // Forwarding from allocation to read ports
     //==========================================================================
@@ -708,236 +807,221 @@ module reorder_buffer #(
             head_plus_2_idx_d1 <= #D 5'd2;
 
         end else begin
-            if(exception_detected) begin
-                // On exception, flush the buffer
-                for (int i = 0; i < BUFFER_DEPTH; i++) begin
-                    buffer[i] <= #D '0;
-                    tracer_buffer <= #D '0;
-                end
+            // Normal operation - eager misprediction handled via tail truncation in next_tail_ptr
+            // Update head pointer (commits)
+            head_ptr_reg <= #D next_head_ptr;
+            // Update tail pointer (allocations)
+            tail_ptr_reg <= #D next_tail_ptr;
 
-                // Reset pointers
-                head_ptr_reg <= #D '0;
-                tail_ptr_reg <= #D '0;
+            // Update delayed head indices
+            head_idx_d1 <= #D head_idx;
+            head_plus_1_idx_d1 <= #D head_plus_1_idx;
+            head_plus_2_idx_d1 <= #D head_plus_2_idx;
 
-                head_idx_d1 <= #D 5'd0;
-                head_plus_1_idx_d1 <= #D 5'd1;
-                head_plus_2_idx_d1 <= #D 5'd2;
-            end else begin
-                // Update head pointer (commits)
-                head_ptr_reg <= #D next_head_ptr;
-                // Update tail pointer (allocations)
-                tail_ptr_reg <= #D next_tail_ptr;
-
-                // Update delayed head indices
-                head_idx_d1 <= #D head_idx;
-                head_plus_1_idx_d1 <= #D head_plus_1_idx;
-                head_plus_2_idx_d1 <= #D head_plus_2_idx;
-
-                //==================================================================
-                // ALLOCATION - Initialize new entries
-                //==================================================================
-                if (alloc_success) begin
-                    if (alloc_enable_0) begin
-                        buffer[alloc_idx_0].data <= #D '0;
-                        buffer[alloc_idx_0].tag <= #D alloc_tag_0;
-                        buffer[alloc_idx_0].addr <= #D alloc_addr_0;
-                        buffer[alloc_idx_0].executed <= #D 1'b0;
-                        buffer[alloc_idx_0].exception <= #D 1'b0;
-                        buffer[alloc_idx_0].correct_pc <= #D '0;
-                        buffer[alloc_idx_0].is_branch <= #D 1'b0; // todo set is_branch at allocation
-                        buffer[alloc_idx_0].is_store <= #D alloc_is_store_0;
-                        
-                        `ifndef SYNTHESIS
-                        tracer_buffer[alloc_idx_0].valid     <= #D i_tracer_0.valid;
-                        tracer_buffer[alloc_idx_0].pc        <= #D i_tracer_0.pc;
-                        tracer_buffer[alloc_idx_0].instr     <= #D i_tracer_0.instr;
-                        tracer_buffer[alloc_idx_0].reg_addr  <= #D i_tracer_0.reg_addr;
-                        tracer_buffer[alloc_idx_0].reg_data  <= #D i_tracer_0.reg_data;
-                        tracer_buffer[alloc_idx_0].is_load   <= #D i_tracer_0.is_load;
-                        tracer_buffer[alloc_idx_0].is_store  <= #D i_tracer_0.is_store;
-                        tracer_buffer[alloc_idx_0].is_float  <= #D i_tracer_0.is_float;
-                        tracer_buffer[alloc_idx_0].mem_size  <= #D i_tracer_0.mem_size;
-                        tracer_buffer[alloc_idx_0].mem_addr  <= #D i_tracer_0.mem_addr;
-                        tracer_buffer[alloc_idx_0].mem_data  <= #D i_tracer_0.mem_data;
-                        tracer_buffer[alloc_idx_0].fpu_flags <= #D i_tracer_0.fpu_flags;
-                        `endif
-                    
-
-                    end
-                    if (alloc_enable_1) begin
-                        buffer[alloc_idx_1].data <= #D '0;
-                        buffer[alloc_idx_1].tag <= #D alloc_tag_1;
-                        buffer[alloc_idx_1].addr <= #D alloc_addr_1;
-                        buffer[alloc_idx_1].executed <= #D 1'b0;
-                        buffer[alloc_idx_1].exception <= #D 1'b0;
-                        buffer[alloc_idx_1].correct_pc <= #D '0;
-                        buffer[alloc_idx_1].is_branch <= #D 1'b0;
-                        buffer[alloc_idx_1].is_store <= #D alloc_is_store_1;
+            //==================================================================
+            // ALLOCATION - Initialize new entries
+            //==================================================================
+            if (alloc_success) begin
+                if (alloc_enable_0) begin
+                    buffer[alloc_idx_0].data <= #D '0;
+                    buffer[alloc_idx_0].tag <= #D alloc_tag_0;
+                    buffer[alloc_idx_0].addr <= #D alloc_addr_0;
+                    buffer[alloc_idx_0].executed <= #D 1'b0;
+                    buffer[alloc_idx_0].exception <= #D 1'b0;
+                    buffer[alloc_idx_0].correct_pc <= #D '0;
+                    buffer[alloc_idx_0].is_branch <= #D 1'b0; // todo set is_branch at allocation
+                    buffer[alloc_idx_0].is_store <= #D alloc_is_store_0;
 
                         `ifndef SYNTHESIS
-                        tracer_buffer[alloc_idx_1].valid     <= #D i_tracer_1.valid;
-                        tracer_buffer[alloc_idx_1].pc        <= #D i_tracer_1.pc;
-                        tracer_buffer[alloc_idx_1].instr     <= #D i_tracer_1.instr;
-                        tracer_buffer[alloc_idx_1].reg_addr  <= #D i_tracer_1.reg_addr;
-                        tracer_buffer[alloc_idx_1].reg_data  <= #D i_tracer_1.reg_data;
-                        tracer_buffer[alloc_idx_1].is_load   <= #D i_tracer_1.is_load;
-                        tracer_buffer[alloc_idx_1].is_store  <= #D i_tracer_1.is_store;
-                        tracer_buffer[alloc_idx_1].is_float  <= #D i_tracer_1.is_float;
-                        tracer_buffer[alloc_idx_1].mem_size  <= #D i_tracer_1.mem_size;
-                        tracer_buffer[alloc_idx_1].mem_addr  <= #D i_tracer_1.mem_addr;
-                        tracer_buffer[alloc_idx_1].mem_data  <= #D i_tracer_1.mem_data;
-                        tracer_buffer[alloc_idx_1].fpu_flags <= #D i_tracer_1.fpu_flags;
+                    tracer_buffer[alloc_idx_0].valid     <= #D i_tracer_0.valid;
+                    tracer_buffer[alloc_idx_0].pc        <= #D i_tracer_0.pc;
+                    tracer_buffer[alloc_idx_0].instr     <= #D i_tracer_0.instr;
+                    tracer_buffer[alloc_idx_0].reg_addr  <= #D i_tracer_0.reg_addr;
+                    tracer_buffer[alloc_idx_0].reg_data  <= #D i_tracer_0.reg_data;
+                    tracer_buffer[alloc_idx_0].is_load   <= #D i_tracer_0.is_load;
+                    tracer_buffer[alloc_idx_0].is_store  <= #D i_tracer_0.is_store;
+                    tracer_buffer[alloc_idx_0].is_float  <= #D i_tracer_0.is_float;
+                    tracer_buffer[alloc_idx_0].mem_size  <= #D i_tracer_0.mem_size;
+                    tracer_buffer[alloc_idx_0].mem_addr  <= #D i_tracer_0.mem_addr;
+                    tracer_buffer[alloc_idx_0].mem_data  <= #D i_tracer_0.mem_data;
+                    tracer_buffer[alloc_idx_0].fpu_flags <= #D i_tracer_0.fpu_flags;
                         `endif
-                    end
-                    if (alloc_enable_2) begin
-                        buffer[alloc_idx_2].data <= #D '0;
-                        buffer[alloc_idx_2].tag <= #D alloc_tag_2;
-                        buffer[alloc_idx_2].addr <= #D alloc_addr_2;
-                        buffer[alloc_idx_2].executed <= #D 1'b0;
-                        buffer[alloc_idx_2].exception <= #D 1'b0;
-                        buffer[alloc_idx_2].correct_pc <= #D '0;
-                        buffer[alloc_idx_2].is_branch <= #D 1'b0;
-                        buffer[alloc_idx_2].is_store <= #D alloc_is_store_2;
+
+
+                end
+                if (alloc_enable_1) begin
+                    buffer[alloc_idx_1].data <= #D '0;
+                    buffer[alloc_idx_1].tag <= #D alloc_tag_1;
+                    buffer[alloc_idx_1].addr <= #D alloc_addr_1;
+                    buffer[alloc_idx_1].executed <= #D 1'b0;
+                    buffer[alloc_idx_1].exception <= #D 1'b0;
+                    buffer[alloc_idx_1].correct_pc <= #D '0;
+                    buffer[alloc_idx_1].is_branch <= #D 1'b0;
+                    buffer[alloc_idx_1].is_store <= #D alloc_is_store_1;
 
                         `ifndef SYNTHESIS
-                        tracer_buffer[alloc_idx_2].valid     <= #D i_tracer_2.valid;
-                        tracer_buffer[alloc_idx_2].pc        <= #D i_tracer_2.pc;
-                        tracer_buffer[alloc_idx_2].instr     <= #D i_tracer_2.instr;
-                        tracer_buffer[alloc_idx_2].reg_addr  <= #D i_tracer_2.reg_addr;
-                        tracer_buffer[alloc_idx_2].reg_data  <= #D i_tracer_2.reg_data;
-                        tracer_buffer[alloc_idx_2].is_load   <= #D i_tracer_2.is_load;
-                        tracer_buffer[alloc_idx_2].is_store  <= #D i_tracer_2.is_store;
-                        tracer_buffer[alloc_idx_2].is_float  <= #D i_tracer_2.is_float;
-                        tracer_buffer[alloc_idx_2].mem_size  <= #D i_tracer_2.mem_size;
-                        tracer_buffer[alloc_idx_2].mem_addr  <= #D i_tracer_2.mem_addr;
-                        tracer_buffer[alloc_idx_2].mem_data  <= #D i_tracer_2.mem_data;
-                        tracer_buffer[alloc_idx_2].fpu_flags <= #D i_tracer_2.fpu_flags;
+                    tracer_buffer[alloc_idx_1].valid     <= #D i_tracer_1.valid;
+                    tracer_buffer[alloc_idx_1].pc        <= #D i_tracer_1.pc;
+                    tracer_buffer[alloc_idx_1].instr     <= #D i_tracer_1.instr;
+                    tracer_buffer[alloc_idx_1].reg_addr  <= #D i_tracer_1.reg_addr;
+                    tracer_buffer[alloc_idx_1].reg_data  <= #D i_tracer_1.reg_data;
+                    tracer_buffer[alloc_idx_1].is_load   <= #D i_tracer_1.is_load;
+                    tracer_buffer[alloc_idx_1].is_store  <= #D i_tracer_1.is_store;
+                    tracer_buffer[alloc_idx_1].is_float  <= #D i_tracer_1.is_float;
+                    tracer_buffer[alloc_idx_1].mem_size  <= #D i_tracer_1.mem_size;
+                    tracer_buffer[alloc_idx_1].mem_addr  <= #D i_tracer_1.mem_addr;
+                    tracer_buffer[alloc_idx_1].mem_data  <= #D i_tracer_1.mem_data;
+                    tracer_buffer[alloc_idx_1].fpu_flags <= #D i_tracer_1.fpu_flags;
                         `endif
-                    end
                 end
+                if (alloc_enable_2) begin
+                    buffer[alloc_idx_2].data <= #D '0;
+                    buffer[alloc_idx_2].tag <= #D alloc_tag_2;
+                    buffer[alloc_idx_2].addr <= #D alloc_addr_2;
+                    buffer[alloc_idx_2].executed <= #D 1'b0;
+                    buffer[alloc_idx_2].exception <= #D 1'b0;
+                    buffer[alloc_idx_2].correct_pc <= #D '0;
+                    buffer[alloc_idx_2].is_branch <= #D 1'b0;
+                    buffer[alloc_idx_2].is_store <= #D alloc_is_store_2;
 
-                //==================================================================
-                // CDB UPDATES - Write results from execution units
-                //==================================================================
-                if (cdb_valid_0 && (buffer[cdb_addr_0].tag == 3'b000 | (buffer[cdb_addr_0].tag == 3'b011 & buffer[cdb_addr_0].is_store & cdb_mem_addr_calculation_0))) begin
-                    buffer[cdb_addr_0].data <= #D cdb_data_0;
-                    buffer[cdb_addr_0].tag <= #D TAG_VALID;
-                    buffer[cdb_addr_0].executed <= #D !cdb_mem_addr_calculation_0;
-                    buffer[cdb_addr_0].exception <= #D cdb_exception_0;
-                    buffer[cdb_addr_0].correct_pc <= #D cdb_correct_pc_0;
-                    buffer[cdb_addr_0].is_branch <= #D cdb_is_branch_0;
+                        `ifndef SYNTHESIS
+                    tracer_buffer[alloc_idx_2].valid     <= #D i_tracer_2.valid;
+                    tracer_buffer[alloc_idx_2].pc        <= #D i_tracer_2.pc;
+                    tracer_buffer[alloc_idx_2].instr     <= #D i_tracer_2.instr;
+                    tracer_buffer[alloc_idx_2].reg_addr  <= #D i_tracer_2.reg_addr;
+                    tracer_buffer[alloc_idx_2].reg_data  <= #D i_tracer_2.reg_data;
+                    tracer_buffer[alloc_idx_2].is_load   <= #D i_tracer_2.is_load;
+                    tracer_buffer[alloc_idx_2].is_store  <= #D i_tracer_2.is_store;
+                    tracer_buffer[alloc_idx_2].is_float  <= #D i_tracer_2.is_float;
+                    tracer_buffer[alloc_idx_2].mem_size  <= #D i_tracer_2.mem_size;
+                    tracer_buffer[alloc_idx_2].mem_addr  <= #D i_tracer_2.mem_addr;
+                    tracer_buffer[alloc_idx_2].mem_data  <= #D i_tracer_2.mem_data;
+                    tracer_buffer[alloc_idx_2].fpu_flags <= #D i_tracer_2.fpu_flags;
+                        `endif
                 end
+            end
+
+            //==================================================================
+            // CDB UPDATES - Write results from execution units
+            //==================================================================
+            if (cdb_valid_0 && (buffer[cdb_addr_0].tag == 3'b000 | (buffer[cdb_addr_0].tag == 3'b011 & buffer[cdb_addr_0].is_store & cdb_mem_addr_calculation_0))) begin
+                buffer[cdb_addr_0].data <= #D cdb_data_0;
+                buffer[cdb_addr_0].tag <= #D TAG_VALID;
+                buffer[cdb_addr_0].executed <= #D !cdb_mem_addr_calculation_0;
+                buffer[cdb_addr_0].exception <= #D cdb_exception_0;
+                buffer[cdb_addr_0].correct_pc <= #D cdb_correct_pc_0;
+                buffer[cdb_addr_0].is_branch <= #D cdb_is_branch_0;
+            end
                 `ifndef SYNTHESIS
-                 if (cdb_valid_0 && (buffer[cdb_addr_0].tag == 3'b000 | (buffer[cdb_addr_0].tag == 3'b011 & cdb_mem_addr_calculation_0))) begin
-                    // Update tracer info on execution completion
-                    if(cdb_mem_addr_calculation_0) begin
-                        tracer_buffer[cdb_addr_0].mem_addr <= #D cdb_data_0;
-                    end
-                    else begin
-                        tracer_buffer[cdb_addr_0].reg_data <= #D cdb_data_0;
-                    end
+            if (cdb_valid_0 && (buffer[cdb_addr_0].tag == 3'b000 | (buffer[cdb_addr_0].tag == 3'b011 & cdb_mem_addr_calculation_0))) begin
+                // Update tracer info on execution completion
+                if(cdb_mem_addr_calculation_0) begin
+                    tracer_buffer[cdb_addr_0].mem_addr <= #D cdb_data_0;
+                end
+                else begin
+                    tracer_buffer[cdb_addr_0].reg_data <= #D cdb_data_0;
+                end
                     `endif
-                end
-                if (cdb_valid_1 && (buffer[cdb_addr_1].tag == 3'b001 | (buffer[cdb_addr_1].tag == 3'b011 & buffer[cdb_addr_1].is_store & cdb_mem_addr_calculation_1))) begin //todo do we need store address anymore?
-                    buffer[cdb_addr_1].data <= #D cdb_data_1;
-                    buffer[cdb_addr_1].tag <= #D TAG_VALID;
-                    buffer[cdb_addr_1].executed <= #D !cdb_mem_addr_calculation_1;
-                    buffer[cdb_addr_1].exception <= #D cdb_exception_1;
-                    buffer[cdb_addr_1].correct_pc <= #D cdb_correct_pc_1;
-                    buffer[cdb_addr_1].is_branch <= #D cdb_is_branch_1;
-
-                end
-                `ifndef SYNTHESIS
-                if (cdb_valid_1 && (buffer[cdb_addr_1].tag == 3'b001 | (buffer[cdb_addr_1].tag == 3'b011 & cdb_mem_addr_calculation_1))) begin //todo do we need store address anymore?
-                    // Update tracer info on execution completion
-                    if(cdb_mem_addr_calculation_1) begin
-                        tracer_buffer[cdb_addr_1].mem_addr <= #D cdb_data_1;
-                    end
-                    else begin
-                        tracer_buffer[cdb_addr_1].reg_data <= #D cdb_data_1;
-                    end
-                    `endif
-                end
-                if (cdb_valid_2 && (buffer[cdb_addr_2].tag == 3'b010 | (buffer[cdb_addr_2].tag == 3'b011 & buffer[cdb_addr_2].is_store & cdb_mem_addr_calculation_2))) begin
-                    buffer[cdb_addr_2].data <= #D cdb_data_2;
-                    buffer[cdb_addr_2].tag <= #D TAG_VALID;
-                    buffer[cdb_addr_2].executed <= #D !cdb_mem_addr_calculation_2;
-                    buffer[cdb_addr_2].exception <= #D cdb_exception_2;
-                    buffer[cdb_addr_2].correct_pc <= #D cdb_correct_pc_2;
-                    buffer[cdb_addr_2].is_branch <= #D cdb_is_branch_2;
-                    
-                   
-                end
-                `ifndef SYNTHESIS
-                if (cdb_valid_2 && (buffer[cdb_addr_2].tag == 3'b010 | (buffer[cdb_addr_2].tag == 3'b011 & cdb_mem_addr_calculation_2))) begin
-
-                    if(cdb_mem_addr_calculation_2) begin
-                        tracer_buffer[cdb_addr_2].mem_addr <= #D cdb_data_2;
-                    end
-                    else begin
-                        tracer_buffer[cdb_addr_2].reg_data <= #D cdb_data_2;
-                    end
-                    `endif
-                end
-                if (cdb_valid_3_2 && (buffer[cdb_addr_3_2].tag == 3'b011 | buffer[cdb_addr_3_2].tag == TAG_VALID) ) begin 
-                    buffer[cdb_addr_3_2].data <= #D cdb_data_3_2;
-                    buffer[cdb_addr_3_2].tag <= #D TAG_VALID;
-                    buffer[cdb_addr_3_2].executed <= #D 1'b1;
-                    buffer[cdb_addr_3_2].exception <= #D cdb_exception_3_2;
-                    buffer[cdb_addr_3_2].is_store <= #D 1'b1;
-
-                    buffer[cdb_addr_3_2].correct_pc <= #D '0;
-                    buffer[cdb_addr_3_2].is_branch <= #D 1'b0;
-
-                    `ifndef SYNTHESIS
-                    tracer_buffer[cdb_addr_3_2].reg_data <= #D cdb_data_3_2;
-                    tracer_buffer[cdb_addr_3_2].mem_data <= #D tracer_store_data_2;
-                    `endif
-                end
-                if (cdb_valid_3_1 && (buffer[cdb_addr_3_1].tag == 3'b011 | buffer[cdb_addr_3_1].tag == TAG_VALID) ) begin 
-                    buffer[cdb_addr_3_1].data <= #D cdb_data_3_1;
-                    buffer[cdb_addr_3_1].tag <= #D TAG_VALID;
-                    buffer[cdb_addr_3_1].executed <= #D 1'b1;
-                    buffer[cdb_addr_3_1].exception <= #D cdb_exception_3_1;
-                    buffer[cdb_addr_3_1].is_store <= #D 1'b1;
-
-                    buffer[cdb_addr_3_1].correct_pc <= #D '0;
-                    buffer[cdb_addr_3_1].is_branch <= #D 1'b0;
-
-                    `ifndef SYNTHESIS
-                    tracer_buffer[cdb_addr_3_1].reg_data <= #D cdb_data_3_1;
-                    tracer_buffer[cdb_addr_3_1].mem_data <= #D tracer_store_data_1;
-                    `endif
-                end
-                if (cdb_valid_3_0 && (buffer[cdb_addr_3_0].tag == 3'b011 | buffer[cdb_addr_3_0].tag == TAG_VALID) ) begin 
-                    buffer[cdb_addr_3_0].data <= #D cdb_data_3_0;
-                    buffer[cdb_addr_3_0].tag <= #D TAG_VALID;
-                    buffer[cdb_addr_3_0].executed <= #D 1'b1;
-                    buffer[cdb_addr_3_0].exception <= #D cdb_exception_3_0;
-                    buffer[cdb_addr_3_0].is_store <= #D 1'b1;
-                    
-
-                    buffer[cdb_addr_3_0].correct_pc <= #D '0;
-                    buffer[cdb_addr_3_0].is_branch <= #D 1'b0;
-
-                    `ifndef SYNTHESIS
-                    tracer_buffer[cdb_addr_3_0].reg_data <= #D cdb_data_3_0;
-                    tracer_buffer[cdb_addr_3_0].mem_data <= #D tracer_store_data_0;
-                    `endif
-                end
-
-                if(head_idx_d1 != head_idx) begin // detected commit
-                    // Clear committed entries (head, head+1, head+2)
-                    buffer[head_idx_d1] <= #D '0;
-                    if(head_plus_1_idx_d1 != head_idx) begin // if only one commit happened, head idx will be same as head+1 idx, so don't clear if they are same
-                        buffer[head_plus_1_idx_d1] <= #D '0;
-                        if(head_plus_2_idx_d1 != head_idx) begin
-                            buffer[head_plus_2_idx_d1] <= #D '0;
-                        end
-                    end
-                end
+            end
+            if (cdb_valid_1 && (buffer[cdb_addr_1].tag == 3'b001 | (buffer[cdb_addr_1].tag == 3'b011 & buffer[cdb_addr_1].is_store & cdb_mem_addr_calculation_1))) begin //todo do we need store address anymore?
+                buffer[cdb_addr_1].data <= #D cdb_data_1;
+                buffer[cdb_addr_1].tag <= #D TAG_VALID;
+                buffer[cdb_addr_1].executed <= #D !cdb_mem_addr_calculation_1;
+                buffer[cdb_addr_1].exception <= #D cdb_exception_1;
+                buffer[cdb_addr_1].correct_pc <= #D cdb_correct_pc_1;
+                buffer[cdb_addr_1].is_branch <= #D cdb_is_branch_1;
 
             end
+                `ifndef SYNTHESIS
+            if (cdb_valid_1 && (buffer[cdb_addr_1].tag == 3'b001 | (buffer[cdb_addr_1].tag == 3'b011 & cdb_mem_addr_calculation_1))) begin //todo do we need store address anymore?
+                // Update tracer info on execution completion
+                if(cdb_mem_addr_calculation_1) begin
+                    tracer_buffer[cdb_addr_1].mem_addr <= #D cdb_data_1;
+                end
+                else begin
+                    tracer_buffer[cdb_addr_1].reg_data <= #D cdb_data_1;
+                end
+                    `endif
+            end
+            if (cdb_valid_2 && (buffer[cdb_addr_2].tag == 3'b010 | (buffer[cdb_addr_2].tag == 3'b011 & buffer[cdb_addr_2].is_store & cdb_mem_addr_calculation_2))) begin
+                buffer[cdb_addr_2].data <= #D cdb_data_2;
+                buffer[cdb_addr_2].tag <= #D TAG_VALID;
+                buffer[cdb_addr_2].executed <= #D !cdb_mem_addr_calculation_2;
+                buffer[cdb_addr_2].exception <= #D cdb_exception_2;
+                buffer[cdb_addr_2].correct_pc <= #D cdb_correct_pc_2;
+                buffer[cdb_addr_2].is_branch <= #D cdb_is_branch_2;
+
+
+            end
+                `ifndef SYNTHESIS
+            if (cdb_valid_2 && (buffer[cdb_addr_2].tag == 3'b010 | (buffer[cdb_addr_2].tag == 3'b011 & cdb_mem_addr_calculation_2))) begin
+
+                if(cdb_mem_addr_calculation_2) begin
+                    tracer_buffer[cdb_addr_2].mem_addr <= #D cdb_data_2;
+                end
+                else begin
+                    tracer_buffer[cdb_addr_2].reg_data <= #D cdb_data_2;
+                end
+                    `endif
+            end
+            if (cdb_valid_3_2 && (buffer[cdb_addr_3_2].tag == 3'b011 | buffer[cdb_addr_3_2].tag == TAG_VALID) ) begin
+                buffer[cdb_addr_3_2].data <= #D cdb_data_3_2;
+                buffer[cdb_addr_3_2].tag <= #D TAG_VALID;
+                buffer[cdb_addr_3_2].executed <= #D 1'b1;
+                buffer[cdb_addr_3_2].exception <= #D cdb_exception_3_2;
+                buffer[cdb_addr_3_2].is_store <= #D 1'b1;
+
+                buffer[cdb_addr_3_2].correct_pc <= #D '0;
+                buffer[cdb_addr_3_2].is_branch <= #D 1'b0;
+
+                    `ifndef SYNTHESIS
+                tracer_buffer[cdb_addr_3_2].reg_data <= #D cdb_data_3_2;
+                tracer_buffer[cdb_addr_3_2].mem_data <= #D tracer_store_data_2;
+                    `endif
+            end
+            if (cdb_valid_3_1 && (buffer[cdb_addr_3_1].tag == 3'b011 | buffer[cdb_addr_3_1].tag == TAG_VALID) ) begin
+                buffer[cdb_addr_3_1].data <= #D cdb_data_3_1;
+                buffer[cdb_addr_3_1].tag <= #D TAG_VALID;
+                buffer[cdb_addr_3_1].executed <= #D 1'b1;
+                buffer[cdb_addr_3_1].exception <= #D cdb_exception_3_1;
+                buffer[cdb_addr_3_1].is_store <= #D 1'b1;
+
+                buffer[cdb_addr_3_1].correct_pc <= #D '0;
+                buffer[cdb_addr_3_1].is_branch <= #D 1'b0;
+
+                    `ifndef SYNTHESIS
+                tracer_buffer[cdb_addr_3_1].reg_data <= #D cdb_data_3_1;
+                tracer_buffer[cdb_addr_3_1].mem_data <= #D tracer_store_data_1;
+                    `endif
+            end
+            if (cdb_valid_3_0 && (buffer[cdb_addr_3_0].tag == 3'b011 | buffer[cdb_addr_3_0].tag == TAG_VALID) ) begin
+                buffer[cdb_addr_3_0].data <= #D cdb_data_3_0;
+                buffer[cdb_addr_3_0].tag <= #D TAG_VALID;
+                buffer[cdb_addr_3_0].executed <= #D 1'b1;
+                buffer[cdb_addr_3_0].exception <= #D cdb_exception_3_0;
+                buffer[cdb_addr_3_0].is_store <= #D 1'b1;
+
+
+                buffer[cdb_addr_3_0].correct_pc <= #D '0;
+                buffer[cdb_addr_3_0].is_branch <= #D 1'b0;
+
+                    `ifndef SYNTHESIS
+                tracer_buffer[cdb_addr_3_0].reg_data <= #D cdb_data_3_0;
+                tracer_buffer[cdb_addr_3_0].mem_data <= #D tracer_store_data_0;
+                    `endif
+            end
+
+            if(head_idx_d1 != head_idx) begin // detected commit
+                // Clear committed entries (head, head+1, head+2)
+                buffer[head_idx_d1] <= #D '0;
+                if(head_plus_1_idx_d1 != head_idx) begin // if only one commit happened, head idx will be same as head+1 idx, so don't clear if they are same
+                    buffer[head_plus_1_idx_d1] <= #D '0;
+                    if(head_plus_2_idx_d1 != head_idx) begin
+                        buffer[head_plus_2_idx_d1] <= #D '0;
+                    end
+                end
+            end
+
         end
     end
 
@@ -963,7 +1047,7 @@ module reorder_buffer #(
         o_tracer_1.valid     = commit_valid_1 ? tracer_buffer[head_plus_1_idx].valid : 1'b0;
         o_tracer_1.pc        = commit_valid_1 ? tracer_buffer[head_plus_1_idx].pc : 32'd0;
         o_tracer_1.instr     = commit_valid_1 ? tracer_buffer[head_plus_1_idx].instr : 32'd0;
-        o_tracer_1.reg_addr  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].reg_addr : 5'd0; 
+        o_tracer_1.reg_addr  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].reg_addr : 5'd0;
         o_tracer_1.reg_data  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].reg_data : 32'd0;
         o_tracer_1.is_load   = commit_valid_1 ? tracer_buffer[head_plus_1_idx].is_load : 1'b0;
         o_tracer_1.is_store  = commit_valid_1 ? tracer_buffer[head_plus_1_idx].is_store : 1'b0;
@@ -976,7 +1060,7 @@ module reorder_buffer #(
         o_tracer_2.valid     = commit_valid_2 ? tracer_buffer[head_plus_2_idx].valid : 1'b0;
         o_tracer_2.pc        = commit_valid_2 ? tracer_buffer[head_plus_2_idx].pc : 32'd0;
         o_tracer_2.instr     = commit_valid_2 ? tracer_buffer[head_plus_2_idx].instr : 32'd0;
-        o_tracer_2.reg_addr  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].reg_addr : 5'd0; 
+        o_tracer_2.reg_addr  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].reg_addr : 5'd0;
         o_tracer_2.reg_data  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].reg_data : 32'd0;
         o_tracer_2.is_load   = commit_valid_2 ? tracer_buffer[head_plus_2_idx].is_load : 1'b0;
         o_tracer_2.is_store  = commit_valid_2 ? tracer_buffer[head_plus_2_idx].is_store : 1'b0;

@@ -51,13 +51,34 @@ module issue_stage #(
     input logic [4:0] commit_rob_idx_2,
 
     input logic lsq_commit_0, lsq_commit_1, lsq_commit_2, 
+    
+    // Eager misprediction flush interface (from LSQ for circular buffer update)
+    input logic lsq_flush_valid_i,                      // LSQ flush is needed
+    input logic [4:0] first_invalid_lsq_idx_i,          // First invalid LSQ index (new tail)
 
-    // Branch resolution interface (from execute stage)
-    input logic [2:0] branch_resolved,        // Which execute units resolved branches
-    input logic [2:0] branch_mispredicted,    // Which branches were mispredicted
-    input logic [PHYS_REG_ADDR_WIDTH-1:0] resolved_phys_reg_0,  // Physical register of resolved branch 0
-    input logic [PHYS_REG_ADDR_WIDTH-1:0] resolved_phys_reg_1,  // Physical register of resolved branch 1
-    input logic [PHYS_REG_ADDR_WIDTH-1:0] resolved_phys_reg_2,   // Physical register of resolved branch 2
+    //==========================================================================
+    // Execute stage inputs (raw branch results - go into BRAT inside RAT)
+    //==========================================================================
+    input logic [2:0] exec_branch_valid_i,              // Branch executed on FU 0/1/2
+    input logic [2:0] exec_mispredicted_i,              // Misprediction flag from FU 0/1/2
+    input logic [PHYS_REG_ADDR_WIDTH-1:0] exec_rob_id_0_i,  // ROB ID (phys_reg) of branch on FU0
+    input logic [PHYS_REG_ADDR_WIDTH-1:0] exec_rob_id_1_i,  // ROB ID (phys_reg) of branch on FU1
+    input logic [PHYS_REG_ADDR_WIDTH-1:0] exec_rob_id_2_i,  // ROB ID (phys_reg) of branch on FU2
+    input logic [DATA_WIDTH-1:0] exec_correct_pc_0_i,   // Correct PC from FU0
+    input logic [DATA_WIDTH-1:0] exec_correct_pc_1_i,   // Correct PC from FU1
+    input logic [DATA_WIDTH-1:0] exec_correct_pc_2_i,   // Correct PC from FU2
+    
+    //==========================================================================
+    // Branch resolution outputs (in-order, from BRAT - go to other modules)
+    //==========================================================================
+    output logic [2:0] branch_resolved_o,               // In-order resolved branches
+    output logic [2:0] branch_mispredicted_o,           // In-order misprediction flags
+    output logic [PHYS_REG_ADDR_WIDTH-1:0] resolved_phys_reg_0_o,  // ROB ID of oldest resolved
+    output logic [PHYS_REG_ADDR_WIDTH-1:0] resolved_phys_reg_1_o,  // ROB ID of 2nd oldest resolved
+    output logic [PHYS_REG_ADDR_WIDTH-1:0] resolved_phys_reg_2_o,  // ROB ID of 3rd oldest resolved
+    output logic [DATA_WIDTH-1:0] correct_pc_0_o,       // Correct PC for oldest
+    output logic [DATA_WIDTH-1:0] correct_pc_1_o,       // Correct PC for 2nd oldest
+    output logic [DATA_WIDTH-1:0] correct_pc_2_o,       // Correct PC for 3rd oldest
 
     `ifndef SYNTHESIS
     // Debug Tracer Interfaces
@@ -181,11 +202,11 @@ module issue_stage #(
     assign load_store_1 = control_signal_internal_1[4] || (control_signal_internal_1[3] & ~control_signal_internal_1[6]);
     assign load_store_2 = control_signal_internal_2[4] || (control_signal_internal_2[3] & ~control_signal_internal_2[6]);
     
-    assign branch_0 = branch_sel_internal_0 != 3'b000;
-    assign branch_1 = branch_sel_internal_1 != 3'b000;
-    assign branch_2 = branch_sel_internal_2 != 3'b000;
+    assign branch_0 = branch_sel_internal_0 != 3'b000 & branch_sel_internal_0 != 3'b110;
+    assign branch_1 = branch_sel_internal_1 != 3'b000 & branch_sel_internal_1 != 3'b110;
+    assign branch_2 = branch_sel_internal_2 != 3'b000 & branch_sel_internal_2 != 3'b110;
     //==========================================================================
-    // REGISTER ALIAS TABLE (RAT) - RENAME LOGIC
+    // REGISTER ALIAS TABLE v2 (RAT) - RENAME LOGIC with BRAT v2
     //==========================================================================
     
     register_alias_table #(
@@ -196,14 +217,27 @@ module issue_stage #(
     ) rat_inst (
         .clk(clk),
         .reset(reset),
-        .flush(0),
+        .flush(1'b0),
 
-        // Branch recovery interface (connect to 0 or tie-off if not used in this stage)
-        .branch_resolved(branch_resolved),
-        .branch_mispredicted(branch_mispredicted),
-        .resolved_phys_reg_0(resolved_phys_reg_0),
-        .resolved_phys_reg_1(resolved_phys_reg_1),
-        .resolved_phys_reg_2(resolved_phys_reg_2),
+        // Execute stage inputs (raw branch results - go into BRAT)
+        .exec_branch_valid_i(exec_branch_valid_i),
+        .exec_mispredicted_i(exec_mispredicted_i),
+        .exec_rob_id_0_i(exec_rob_id_0_i),
+        .exec_rob_id_1_i(exec_rob_id_1_i),
+        .exec_rob_id_2_i(exec_rob_id_2_i),
+        .exec_correct_pc_0_i(exec_correct_pc_0_i),
+        .exec_correct_pc_1_i(exec_correct_pc_1_i),
+        .exec_correct_pc_2_i(exec_correct_pc_2_i),
+        
+        // Branch resolution outputs (in-order, from BRAT)
+        .branch_resolved_o(branch_resolved_o),
+        .branch_mispredicted_o(branch_mispredicted_o),
+        .resolved_phys_reg_0_o(resolved_phys_reg_0_o),
+        .resolved_phys_reg_1_o(resolved_phys_reg_1_o),
+        .resolved_phys_reg_2_o(resolved_phys_reg_2_o),
+        .correct_pc_0_o(correct_pc_0_o),
+        .correct_pc_1_o(correct_pc_1_o),
+        .correct_pc_2_o(correct_pc_2_o),
         
         // Decode interface - separated signals
         .rs1_arch_0(rs1_arch_0), .rs1_arch_1(rs1_arch_1), .rs1_arch_2(rs1_arch_2),
@@ -240,7 +274,11 @@ module issue_stage #(
         .lsq_alloc_ready(lsq_alloc_ready),
         .lsq_commit_0(lsq_commit_0),
         .lsq_commit_1(lsq_commit_1),
-        .lsq_commit_2(lsq_commit_2)
+        .lsq_commit_2(lsq_commit_2),
+        
+        // Eager misprediction flush interface (for LSQ circular buffer)
+        .lsq_flush_valid_i(lsq_flush_valid_i),
+        .first_invalid_lsq_idx_i(first_invalid_lsq_idx_i)
     );
     
     //==========================================================================

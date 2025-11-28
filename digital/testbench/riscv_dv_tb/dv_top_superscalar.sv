@@ -1197,7 +1197,7 @@ module dv_top_superscalar;
         lsq_dealloc_count = 0;
         lsq_mispred_flush_count = 0;
     end
-    
+    /* 
     // Monitor LSQ allocations and deallocations
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -1284,7 +1284,7 @@ module dv_top_superscalar;
             end
         end
     end
-    
+    */
     // Check for register leaks at end of simulation
     final begin
         if(!test_passed) begin

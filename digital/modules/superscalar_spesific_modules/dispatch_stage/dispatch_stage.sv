@@ -94,7 +94,20 @@ module dispatch_stage #(
     output logic commit_is_branch_0,
     output logic [DATA_WIDTH-1:0] commit_correct_pc_0,
     output logic [DATA_WIDTH-1:0] upadate_predictor_pc_0,
-    output logic misprediction_detected
+    output logic misprediction_detected,
+    
+    // Eager misprediction flush outputs (for issue stage LSQ circular buffer)
+    output logic        lsq_flush_valid_o,
+    output logic [4:0]  first_invalid_lsq_idx_o,
+    
+    //==========================================================================
+    // BRAT v2 In-Order Branch Resolution Inputs (from issue_stage)
+    //==========================================================================
+    input logic [2:0] brat_branch_resolved_i,           // In-order resolved branches
+    input logic [2:0] brat_branch_mispredicted_i,       // In-order misprediction flags
+    input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_0_i,  // ROB ID of oldest resolved
+    input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_1_i,  // ROB ID of 2nd oldest resolved
+    input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_2_i   // ROB ID of 3rd oldest resolved
 );
 
     //==========================================================================
@@ -142,6 +155,42 @@ module dispatch_stage #(
     logic store_can_issue_0, store_can_issue_1, store_can_issue_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] allowed_store_address_0, allowed_store_address_1, allowed_store_address_2;
     //logic commit_exception_0, commit_exception_1, commit_exception_2;
+
+    // Eager misprediction signals from ROB to LSQ
+    logic        rob_eager_misprediction;
+    logic [5:0]  rob_mispredicted_distance;
+    logic [4:0]  rob_head_ptr;
+    
+    //==========================================================================
+    // BRAT-based Eager Misprediction Signals (for RS and LSQ)
+    //==========================================================================
+    // Use BRAT's in-order outputs for misprediction handling
+    // Priority: oldest mispredicted branch first (index 0)
+    logic        brat_eager_misprediction;
+    logic [5:0]  brat_mispredicted_phys_reg;
+    
+    always_comb begin
+        if (brat_branch_resolved_i[0] && brat_branch_mispredicted_i[0]) begin
+            brat_eager_misprediction = 1'b1;
+            brat_mispredicted_phys_reg = brat_resolved_phys_0_i;
+        end else if (brat_branch_resolved_i[1] && brat_branch_mispredicted_i[1]) begin
+            brat_eager_misprediction = 1'b1;
+            brat_mispredicted_phys_reg = brat_resolved_phys_1_i;
+        end else if (brat_branch_resolved_i[2] && brat_branch_mispredicted_i[2]) begin
+            brat_eager_misprediction = 1'b1;
+            brat_mispredicted_phys_reg = brat_resolved_phys_2_i;
+        end else begin
+            brat_eager_misprediction = 1'b0;
+            brat_mispredicted_phys_reg = 6'b0;
+        end
+    end
+    
+    // Calculate distance from mispredicted branch to ROB head
+    // This is needed by RS and LSQ for selective flush
+    logic [5:0] brat_mispredicted_distance;
+    assign brat_mispredicted_distance = brat_mispredicted_phys_reg[4:0] > rob_head_ptr ? 
+                                       (brat_mispredicted_phys_reg[4:0] - rob_head_ptr) :
+                                       (32 + brat_mispredicted_phys_reg[4:0] - rob_head_ptr);
 
     `ifndef SYNTHESIS
     logic [DATA_WIDTH-1:0] tracer_store_data_0, tracer_store_data_1, tracer_store_data_2;
@@ -278,7 +327,12 @@ module dispatch_stage #(
         .upadate_predictor_pc_0(upadate_predictor_pc_0),
         .upadate_predictor_pc_1(),
         .upadate_predictor_pc_2(),
-        .head_ptr(rob_head_idx)
+        .head_ptr(rob_head_idx),
+        
+        // Eager misprediction outputs (for LSQ flush)
+        .eager_misprediction_o(rob_eager_misprediction),
+        .mispredicted_distance_o(rob_mispredicted_distance),
+        .rob_head_ptr_o(rob_head_ptr)
     );
 
     multi_port_register_file #(
@@ -399,7 +453,12 @@ module dispatch_stage #(
         .ALU_TAG(3'b000)  // ALU0 tag
     ) rs_0 (
         .clk(clk),
-        .reset(reset & !misprediction_detected), // todo don't use mispredicted signal for async reset
+        .reset(reset),
+        
+        // Eager misprediction flush interface (from BRAT in-order resolution)
+        .eager_misprediction_i(brat_eager_misprediction),
+        .mispredicted_distance_i(brat_mispredicted_distance),
+        .rob_head_ptr_i(rob_head_ptr),
 
         // Interface to issue stage
         .decode_if(internal_rs_if_0),
@@ -421,7 +480,12 @@ module dispatch_stage #(
         .ALU_TAG(3'b001)  // ALU1 tag
     ) rs_1 (
         .clk(clk),
-        .reset(reset & !misprediction_detected),
+        .reset(reset),
+        
+        // Eager misprediction flush interface (from BRAT in-order resolution)
+        .eager_misprediction_i(brat_eager_misprediction),
+        .mispredicted_distance_i(brat_mispredicted_distance),
+        .rob_head_ptr_i(rob_head_ptr),
 
         // Interface to issue stage
         .decode_if(internal_rs_if_1),
@@ -443,7 +507,12 @@ module dispatch_stage #(
         .ALU_TAG(3'b010)  // ALU2 tag
     ) rs_2 (
         .clk(clk),
-        .reset(reset & !misprediction_detected),
+        .reset(reset),
+        
+        // Eager misprediction flush interface (from BRAT in-order resolution)
+        .eager_misprediction_i(brat_eager_misprediction),
+        .mispredicted_distance_i(brat_mispredicted_distance),
+        .rob_head_ptr_i(rob_head_ptr),
 
         // Interface to issue stage
         .decode_if(internal_rs_if_2),
@@ -459,7 +528,13 @@ module dispatch_stage #(
     lsq_simple_top lsq (
       // Clock and reset
       .clk(clk),
-      .rst_n(reset & !misprediction_detected),
+      .rst_n(reset ),
+      
+      // Eager misprediction inputs (from BRAT in-order resolution)
+      .eager_misprediction_i(brat_eager_misprediction),
+      .mispredicted_distance_i(brat_mispredicted_distance),
+      .rob_head_ptr_i(rob_head_ptr),
+      
       .store_can_issue_0(store_can_issue_0), 
       .allowed_store_address_0(allowed_store_address_0),
       .store_can_issue_1(store_can_issue_1), 
@@ -534,11 +609,14 @@ module dispatch_stage #(
       .tracer_2_store_data(tracer_store_data_2),
       `endif
       
-    
       // Status outputs
       .lsq_count_o(),
       .lsq_full_o(),
-      .lsq_empty_o()
+      .lsq_empty_o(),
+      
+      // Eager misprediction flush outputs (connect to dispatch outputs for issue stage)
+      .first_invalid_lsq_idx_o(first_invalid_lsq_idx_o),
+      .lsq_flush_valid_o(lsq_flush_valid_o)
     );
     
     logic [1:0] active_rs_number;

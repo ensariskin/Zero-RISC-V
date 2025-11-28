@@ -30,6 +30,11 @@ module reservation_station #(
     // Clock and Reset
     input logic clk,
     input logic reset,
+    
+    // Eager misprediction flush interface
+    input logic        eager_misprediction_i,
+    input logic [5:0]  mispredicted_distance_i,
+    input logic [4:0]  rob_head_ptr_i,
 
     // Interface from Decode/Dispatch Stage
     decode_to_rs_if.reservation_station decode_if,
@@ -66,6 +71,28 @@ module reservation_station #(
     // Operand B storage and tracking
     logic [DATA_WIDTH-1:0] stored_operand_b_data;
     logic [2:0] stored_operand_b_tag;
+
+    //==========================================================================
+    // EAGER MISPREDICTION FLUSH LOGIC
+    //==========================================================================
+    
+    // Calculate distance of stored instruction from ROB head
+    wire [4:0] stored_rob_idx = stored_rd_phys_addr[4:0];
+    logic [5:0] stored_rob_distance;
+    logic should_flush_rs;
+    
+    always_comb begin
+        // Calculate circular buffer distance
+        if (stored_rob_idx >= rob_head_ptr_i) begin
+            stored_rob_distance = stored_rob_idx - rob_head_ptr_i;
+        end else begin
+            stored_rob_distance = 32 - rob_head_ptr_i + stored_rob_idx;
+        end
+        
+        // RS should be flushed if: occupied AND distance > mispredicted_distance
+        should_flush_rs = occupied && eager_misprediction_i && 
+                          (stored_rob_distance > mispredicted_distance_i);
+    end
 
     //==========================================================================
     // COMBINATIONAL LOGIC FOR OPERAND SELECTION
@@ -243,22 +270,22 @@ module reservation_station #(
 
                 // Update operand B from CDB if still waiting
                 if (stored_operand_b_tag != TAG_READY) begin
-                    if (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 2'b00) begin
+                    if (cdb_if_port.cdb_valid_0 && stored_operand_b_tag == 3'b000) begin
                         stored_operand_b_data <= #D cdb_if_port.cdb_data_0;
                         stored_operand_b_tag <= #D TAG_READY;
-                    end else if (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 2'b01) begin
+                    end else if (cdb_if_port.cdb_valid_1 && stored_operand_b_tag == 3'b001) begin
                         stored_operand_b_data <= #D cdb_if_port.cdb_data_1;
                         stored_operand_b_tag <= #D TAG_READY;
-                    end else if (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 2'b10) begin
+                    end else if (cdb_if_port.cdb_valid_2 && stored_operand_b_tag == 3'b010) begin
                         stored_operand_b_data <= #D cdb_if_port.cdb_data_2;
                         stored_operand_b_tag <= #D TAG_READY;
-                    end else if (cdb_if_port.cdb_valid_3_2 && stored_operand_b_tag == 2'b11 && stored_operand_b_data == cdb_if_port.cdb_dest_reg_3_2) begin
+                    end else if (cdb_if_port.cdb_valid_3_2 && stored_operand_b_tag == 3'b011 && stored_operand_b_data == cdb_if_port.cdb_dest_reg_3_2) begin
                         stored_operand_b_data <= #D cdb_if_port.cdb_data_3_2;
                         stored_operand_b_tag <= #D TAG_READY;
-                    end else if (cdb_if_port.cdb_valid_3_1 && stored_operand_b_tag == 2'b11 && stored_operand_b_data == cdb_if_port.cdb_dest_reg_3_1) begin
+                    end else if (cdb_if_port.cdb_valid_3_1 && stored_operand_b_tag == 3'b011 && stored_operand_b_data == cdb_if_port.cdb_dest_reg_3_1) begin
                         stored_operand_b_data <= #D cdb_if_port.cdb_data_3_1;
                         stored_operand_b_tag <= #D TAG_READY;
-                    end else if (cdb_if_port.cdb_valid_3_0 && stored_operand_b_tag == 2'b11 && stored_operand_b_data == cdb_if_port.cdb_dest_reg_3_0) begin
+                    end else if (cdb_if_port.cdb_valid_3_0 && stored_operand_b_tag == 3'b011 && stored_operand_b_data == cdb_if_port.cdb_dest_reg_3_0) begin
                         stored_operand_b_data <= #D cdb_if_port.cdb_data_3_0;
                         stored_operand_b_tag <= #D TAG_READY;
                     end
@@ -267,6 +294,13 @@ module reservation_station #(
 
             // Clear occupied when instruction is issued from storage
             if (occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready) begin
+                occupied <= #D 1'b0;
+                stored_operand_a_tag <= #D 0;
+                stored_operand_b_tag <= #D 0;
+            end
+            
+            // EAGER MISPREDICTION FLUSH: Clear RS if stored instruction is speculative
+            if (should_flush_rs) begin
                 occupied <= #D 1'b0;
                 stored_operand_a_tag <= #D 0;
                 stored_operand_b_tag <= #D 0;
