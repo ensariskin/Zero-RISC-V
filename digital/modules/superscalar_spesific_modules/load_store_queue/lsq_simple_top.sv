@@ -201,6 +201,15 @@ module lsq_simple_top
    logic [LSQ_ADDR_WIDTH-1:0] head_idx;
    logic [LSQ_ADDR_WIDTH-1:0] head_idx_1;
    logic [LSQ_ADDR_WIDTH-1:0] head_idx_2;
+
+   logic actual_alloc_0, actual_alloc_1, actual_alloc_2;
+   logic [LSQ_ADDR_WIDTH:0] new_tail;
+   logic [1:0] num_allocs;
+
+   logic deallocate_head;
+   logic deallocate_head_1;
+   logic deallocate_head_2;
+
    assign head_idx   = head_ptr[LSQ_ADDR_WIDTH-1:0];
    assign head_idx_1 = head_ptr_1[LSQ_ADDR_WIDTH-1:0];
    assign head_idx_2 = head_ptr_2[LSQ_ADDR_WIDTH-1:0];
@@ -248,22 +257,98 @@ module lsq_simple_top
    
    // Priority encoder to find first (smallest index) entry that should be flushed
    // This will be the new tail_ptr for LSQ
+   logic [2*LSQ_DEPTH-1:0] entry_should_flush_shifted_tmp;
+   logic [LSQ_DEPTH-1:0] entry_should_flush_shifted;
+   logic [LSQ_ADDR_WIDTH-1:0] oldest_head_idx;
    logic [LSQ_ADDR_WIDTH-1:0] first_flush_idx;
+   logic [LSQ_ADDR_WIDTH-1:0] first_flush_idx_corrected;
    logic                      any_flush;
+   logic [LSQ_ADDR_WIDTH-1:0] shamt;
+
+   logic modify_head_0, modify_head_1, modify_head_2;
+   logic [LSQ_ADDR_WIDTH:0] head_0_modified_val, head_1_modified_val, head_2_modified_val;
    
+   always_comb begin
+      // Shift the flush vector based on current tail_ptr to handle circular buffer
+      if(entry_rob_distance[head_idx] < entry_rob_distance[head_idx_1]) begin
+         if(entry_rob_distance[head_idx] < entry_rob_distance[head_idx_2]) begin
+            oldest_head_idx = head_idx;
+         end else begin
+            oldest_head_idx = head_idx_2;
+         end
+      end else begin
+         if(entry_rob_distance[head_idx_1] < entry_rob_distance[head_idx_2]) begin
+            oldest_head_idx = head_idx_1;
+         end else begin
+            oldest_head_idx = head_idx_2;
+         end
+      end
+      shamt = LSQ_DEPTH - oldest_head_idx;
+      entry_should_flush_shifted_tmp = ({entry_should_flush, entry_should_flush} << (shamt));
+      entry_should_flush_shifted = entry_should_flush_shifted_tmp[2*LSQ_DEPTH-1:LSQ_DEPTH];
+   end
    // Instantiate parametric priority encoder
    priority_encoder #(
       .WIDTH(LSQ_DEPTH)
    ) flush_priority_enc (
-      .in_vector(entry_should_flush),
+      .in_vector(entry_should_flush_shifted),
       .first_idx(first_flush_idx),
       .valid(any_flush)
    );
    
    // Output signals for issue stage
-   assign first_invalid_lsq_idx_o = first_flush_idx;
+   assign first_flush_idx_corrected = first_flush_idx + oldest_head_idx;
+   assign first_invalid_lsq_idx_o = first_flush_idx_corrected;
    assign lsq_flush_valid_o = eager_misprediction_i && any_flush;
 
+   always_comb begin
+      modify_head_0 = 0;
+      modify_head_1 = 0;
+      modify_head_2 = 0;
+
+      head_0_modified_val = '0;
+      head_1_modified_val = '0;
+      head_2_modified_val = '0;
+
+      if(lsq_flush_valid_o) begin
+         if(new_tail[LSQ_ADDR_WIDTH] == head_ptr[LSQ_ADDR_WIDTH]) begin
+            if(new_tail[LSQ_ADDR_WIDTH-1:0] <= head_idx) begin
+               modify_head_0 = 1;
+               head_0_modified_val = new_tail;
+            end
+         end else begin
+            if(new_tail[LSQ_ADDR_WIDTH-1:0] > head_idx) begin
+               modify_head_0 = 1;
+               head_0_modified_val = new_tail;
+            end
+         end
+
+         if(new_tail[LSQ_ADDR_WIDTH] == head_ptr_1[LSQ_ADDR_WIDTH]) begin
+            if(new_tail[LSQ_ADDR_WIDTH-1:0] <= head_idx_1) begin
+               modify_head_1 = 1;
+               head_1_modified_val = new_tail + modify_head_0;
+            end
+         end else begin
+            if(new_tail[LSQ_ADDR_WIDTH-1:0] > head_idx_1) begin
+               modify_head_1 = 1;
+               head_1_modified_val = new_tail + modify_head_0;
+            end
+         end
+
+         if(new_tail[LSQ_ADDR_WIDTH] == head_ptr_2[LSQ_ADDR_WIDTH]) begin
+            if(new_tail[LSQ_ADDR_WIDTH-1:0] <= head_idx_2) begin
+               modify_head_2 = 1;
+               head_2_modified_val = new_tail + modify_head_0 + modify_head_1;
+            end
+         end else begin
+            if(new_tail[LSQ_ADDR_WIDTH-1:0] > head_idx_2) begin
+               modify_head_2 = 1;
+               head_2_modified_val = new_tail + modify_head_0 + modify_head_1;
+            end
+         end
+      end
+      
+   end
    //==========================================================================
    // Forwarding Logic
    //==========================================================================
@@ -545,13 +630,7 @@ module lsq_simple_top
    // ALLOCATION LOGIC (Tail Side)
    //==========================================================================
 
-   logic actual_alloc_0, actual_alloc_1, actual_alloc_2;
-   logic [LSQ_ADDR_WIDTH:0] new_tail;
-   logic [1:0] num_allocs;
-
-   logic deallocate_head;
-   logic deallocate_head_1;
-   logic deallocate_head_2;
+ 
 
    
    assign deallocate_head = !lsq_empty_o & lsq_buffer[head_idx].valid && lsq_buffer[head_idx].mem_issued && 
@@ -576,7 +655,16 @@ module lsq_simple_top
       end
 
       num_allocs = {1'b0, actual_alloc_0} + {1'b0, actual_alloc_1} + {1'b0, actual_alloc_2};
-      new_tail = tail_ptr + num_allocs;
+      if(lsq_flush_valid_o) begin
+         if (first_flush_idx_corrected < new_tail[LSQ_ADDR_WIDTH-1:0]) begin
+            new_tail = {new_tail[LSQ_ADDR_WIDTH], first_flush_idx_corrected};
+         end else begin
+            new_tail = {~new_tail[LSQ_ADDR_WIDTH], first_flush_idx_corrected};
+         end
+      end
+      else begin
+         new_tail = tail_ptr + num_allocs;
+      end
       alloc_0_ptr = tail_ptr[LSQ_ADDR_WIDTH-1:0];
       alloc_1_ptr = tail_ptr + actual_alloc_0;
       alloc_2_ptr = tail_ptr + actual_alloc_0 + actual_alloc_1;
@@ -692,13 +780,7 @@ module lsq_simple_top
             end
          end
          
-         // Update tail pointer - with eager misprediction handling
-         if (eager_misprediction_i && any_flush) begin
-            // On misprediction, truncate tail to first invalid entry
-            tail_ptr <= #D {1'b0, first_flush_idx};
-         end else begin
             tail_ptr <= #D new_tail;
-         end
          
          //==================================================================
          // EAGER MISPREDICTION FLUSH - Invalidate speculative entries
@@ -788,8 +870,9 @@ module lsq_simple_top
                end
             end
          end
-
+         
          if (deallocate_head  | fwd_head_0) begin
+            
             if(distance_0 < distance_1) begin
                if(distance_0 < distance_2) begin
                   head_ptr <= #D head_ptr + 1;
@@ -806,6 +889,7 @@ module lsq_simple_top
                   head_ptr <= #D head_ptr_2 + 1;
                end
             end
+            
             lsq_buffer[head_idx].valid <= #D 1'b0;
             lsq_buffer[head_idx].addr_tag <= #D 3'd0;
             lsq_buffer[head_idx].addr_valid <= #D 1'b0;
@@ -884,6 +968,18 @@ module lsq_simple_top
             lsq_buffer[head_idx_2].phys_reg <= #D '0;
             lsq_buffer[head_idx_2].sign_extend <= #D 1'b0;
             lsq_buffer[head_idx_2].size <= #D mem_size_t'(0);
+         end
+
+         if(lsq_flush_valid_o) begin
+            if(modify_head_0) begin
+               head_ptr <= #D head_0_modified_val;
+            end
+            if(modify_head_1) begin
+               head_ptr_1 <= #D head_1_modified_val;
+            end
+            if(modify_head_2) begin
+               head_ptr_2 <= #D head_2_modified_val;
+            end
          end
 
             

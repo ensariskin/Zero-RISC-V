@@ -140,6 +140,9 @@ module issue_stage #(
     logic [2:0] alloc_tag_reg_0, alloc_tag_reg_1, alloc_tag_reg_2;
     logic lsq_alloc_0_valid_reg, lsq_alloc_1_valid_reg, lsq_alloc_2_valid_reg;
 
+    logic internal_flush;
+    assign internal_flush = |branch_mispredicted_o;
+
     //==========================================================================
     // DECODER UNITS (3 independent decoders)
     //==========================================================================
@@ -340,7 +343,7 @@ module issue_stage #(
             lsq_alloc_1_valid_reg <= #D 1'b0;
             lsq_alloc_2_valid_reg <= #D 1'b0;
         end else begin
-            if (flush | bubble) begin
+            if (flush | bubble | internal_flush) begin
                 // Insert NOPs on flush for all channels
                 decode_valid_reg <= #D 3'b000;
                 pc_reg_0 <= #D {DATA_WIDTH{1'b0}};
@@ -456,7 +459,7 @@ module issue_stage #(
     //==========================================================================
     
     // Issue to Dispatch Channel 0
-    assign issue_to_dispatch_0.dispatch_valid = decode_valid_reg[0];
+    assign issue_to_dispatch_0.dispatch_valid = !internal_flush & decode_valid_reg[0];
     assign issue_to_dispatch_0.control_signals = control_signal_reg_0[10:0]; // Remove register addresses, use bits [10:0]
     assign issue_to_dispatch_0.pc = pc_reg_0;
     assign issue_to_dispatch_0.operand_a_phys_addr = rs1_phys_reg_0; // Use registered physical address
@@ -470,7 +473,7 @@ module issue_stage #(
     assign issue_to_dispatch_0.alloc_tag = alloc_tag_reg_0;
     assign issue_to_dispatch_0.lsq_alloc_valid = lsq_alloc_0_valid_reg;
     // Issue to Dispatch Channel 1
-    assign issue_to_dispatch_1.dispatch_valid = decode_valid_reg[1];
+    assign issue_to_dispatch_1.dispatch_valid = !internal_flush & decode_valid_reg[1];
     assign issue_to_dispatch_1.control_signals = control_signal_reg_1[10:0]; // Remove register addresses, use bits [10:0]
     assign issue_to_dispatch_1.pc = pc_reg_1;
     assign issue_to_dispatch_1.operand_a_phys_addr = rs1_phys_reg_1; // Use registered physical address
@@ -484,7 +487,7 @@ module issue_stage #(
     assign issue_to_dispatch_1.alloc_tag = alloc_tag_reg_1;
     assign issue_to_dispatch_1.lsq_alloc_valid = lsq_alloc_1_valid_reg;
     // Issue to Dispatch Channel 2
-    assign issue_to_dispatch_2.dispatch_valid = decode_valid_reg[2];
+    assign issue_to_dispatch_2.dispatch_valid = !internal_flush & decode_valid_reg[2];
     assign issue_to_dispatch_2.control_signals = control_signal_reg_2[10:0]; // Remove register addresses, use bits [10:0]
     assign issue_to_dispatch_2.pc = pc_reg_2;
     assign issue_to_dispatch_2.operand_a_phys_addr = rs1_phys_reg_2; // Use registered physical address
@@ -530,7 +533,7 @@ module issue_stage #(
                 tracer_0.mem_data  <= #D 32'b0; // No memory data
                 tracer_0.fpu_flags <= #D 32'b0; // No FPU flags
         end else begin  
-            if(flush | !issue_to_dispatch_0.dispatch_ready && decode_valid_i[0]) begin
+            if(flush| internal_flush | !issue_to_dispatch_0.dispatch_ready && decode_valid_i[0]) begin
                 // Reset tracer interface on flush or bubble
                 tracer_0.valid     <= #D 0;
                 //tracer_if_o.pc        <= #D 0;
@@ -582,7 +585,7 @@ module issue_stage #(
                 tracer_1.mem_data  <= #D 32'b0; // No memory data
                 tracer_1.fpu_flags <= #D 32'b0; // No FPU flags
         end else begin  
-            if(flush | !issue_to_dispatch_1.dispatch_ready && decode_valid_i[1]) begin
+            if(flush | internal_flush | !issue_to_dispatch_1.dispatch_ready && decode_valid_i[1]) begin
                 // Reset tracer interface on flush or bubble
                 tracer_1.valid     <= #D 0;
                 //tracer_if_o.pc        <= #D 0;
@@ -634,7 +637,7 @@ module issue_stage #(
                 tracer_2.mem_data  <= #D 32'b0; // No memory data
                 tracer_2.fpu_flags <= #D 32'b0; // No FPU flags
         end else begin  
-            if(flush | !issue_to_dispatch_2.dispatch_ready && decode_valid_i[2]) begin
+            if(flush | internal_flush| !issue_to_dispatch_2.dispatch_ready && decode_valid_i[2]) begin
                 // Reset tracer interface on flush or bubble
                 tracer_2.valid     <= #D 0;
                 //tracer_if_o.pc        <= #D 0;

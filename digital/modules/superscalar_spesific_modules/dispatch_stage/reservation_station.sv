@@ -325,7 +325,7 @@ module reservation_station #(
             exec_if.branch_sel <= #D '0;
             exec_if.branch_prediction <= #D 1'b0;
         end else begin
-            if (should_issue) begin
+            if (should_issue & !should_flush_rs) begin
                 // Register outputs when ready to issue
                 exec_if.issue_valid <= #D 1'b1;
                 exec_if.data_a <= #D final_operand_a_data;

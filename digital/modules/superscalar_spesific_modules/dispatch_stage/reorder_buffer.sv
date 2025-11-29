@@ -190,7 +190,7 @@ module reorder_buffer #(
         //==========================================================================
         output logic eager_misprediction_o,
         output logic [ADDR_WIDTH:0] mispredicted_distance_o,
-        output logic [ADDR_WIDTH-1:0] rob_head_ptr_o
+        output logic [ADDR_WIDTH:0] rob_head_ptr_o
     );
 
     localparam D = 1;  // Delay for simulation
@@ -319,7 +319,7 @@ module reorder_buffer #(
     
     // Eager misprediction outputs for LSQ flush
     assign eager_misprediction_o = eager_misprediction;
-    assign rob_head_ptr_o = head_ptr_reg[ADDR_WIDTH-1:0];
+    assign rob_head_ptr_o = head_ptr_reg;
     
     // Calculate mispredicted distance - select based on which FU mispredicted
     logic [ADDR_WIDTH:0] mispredicted_dist;
@@ -385,7 +385,10 @@ module reorder_buffer #(
         if (eager_misprediction) begin
             // Truncate tail to oldest_mispredicted_idx + 1 (keep the mispredicted entry)
             // This uses the lower bits for the actual index, preserving wrap semantics
-            next_tail_ptr = {tail_ptr_reg[ADDR_WIDTH], oldest_mispredicted_idx} + 1'b1;
+            if(oldest_mispredicted_idx < tail_ptr_reg[ADDR_WIDTH-1:0])
+                next_tail_ptr = {tail_ptr_reg[ADDR_WIDTH], oldest_mispredicted_idx} + 1'b1;
+            else
+                next_tail_ptr = {~tail_ptr_reg[ADDR_WIDTH], oldest_mispredicted_idx} + 1'b1;
         end else if (alloc_success && !buffer_full) begin
             next_tail_ptr = tail_ptr_reg + num_alloc_requests;
         end
@@ -1080,7 +1083,7 @@ module reorder_buffer #(
         if (reset) begin
             // Check for allocation overflow
             if (num_alloc_requests > 0 && !alloc_success) begin
-                $warning("[%t] ROB allocation failed - buffer full or insufficient space", $time);
+                $warning("[%t] ROB allocation failed - buffer full or insufficient space - or flush happened", $time);
             end
 
             // Check pointer wraparound

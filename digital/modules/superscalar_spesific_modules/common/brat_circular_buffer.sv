@@ -12,6 +12,7 @@
 //     - Circular FIFO with head/tail pointers
 //     - 3-way parallel push operations (from decode)
 //     - 3-way parallel execute result write (from execute stage)
+//     - 3-way parallel commit updates (keeps snapshots in sync with RF)
 //     - Combinational bypass for same-cycle resolution
 //     - In-order branch resolution outputs (oldest-first)
 //     - Peek interface for oldest 3 entries
@@ -39,6 +40,20 @@ module brat_circular_buffer #(
     input logic [PHYS_ADDR_WIDTH-1:0] push_branch_phys_0,  // ROB ID (rd_phys[4:0])
     input logic [PHYS_ADDR_WIDTH-1:0] push_branch_phys_1,
     input logic [PHYS_ADDR_WIDTH-1:0] push_branch_phys_2,
+    
+    //==========================================================================
+    // Commit interface (3-way parallel) - from ROB commit
+    // Updates ALL snapshots to reflect committed values (ROB -> RF transition)
+    //==========================================================================
+    input logic commit_valid_0,
+    input logic commit_valid_1,
+    input logic commit_valid_2,
+    input logic [4:0] commit_arch_addr_0,  // Architectural register being committed
+    input logic [4:0] commit_arch_addr_1,
+    input logic [4:0] commit_arch_addr_2,
+    input logic [4:0] commit_rob_idx_0,    // ROB index that was holding the value
+    input logic [4:0] commit_rob_idx_1,
+    input logic [4:0] commit_rob_idx_2,
     
     //==========================================================================
     // Execute result write interface (3-way parallel) - from execute stage
@@ -100,6 +115,7 @@ module brat_circular_buffer #(
 
     localparam PTR_WIDTH = $clog2(BUFFER_DEPTH) + 1; // Extra bit for full/empty detection
     localparam IDX_WIDTH = $clog2(BUFFER_DEPTH);
+    localparam D = 1;
     
     //==========================================================================
     // Storage - Extended entry structure
@@ -398,45 +414,76 @@ module brat_circular_buffer #(
     
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            head_ptr <= '0;
-            tail_ptr <= '0;
-            resolved_mem <= '0;
-            mispredicted_mem <= '0;
+            head_ptr <= #D '0;
+            tail_ptr <= #D '0;
+            resolved_mem <= #D '0;
+            mispredicted_mem <= #D '0;
             
             // Clear buffer memory
             for (int i = 0; i < BUFFER_DEPTH; i++) begin
-                buffer_phys[i] <= '0;
-                correct_pc_mem[i] <= '0;
+                buffer_phys[i] <= #D '0;
+                correct_pc_mem[i] <= #D '0;
                 for (int j = 0; j < ARCH_REGS; j++) begin
-                    rat_snapshot_mem[i][j] <= '0;
+                    rat_snapshot_mem[i][j] <= #D '0;
                 end
             end
         end else begin
             // Update pointers
-            head_ptr <= next_head_ptr;
-            tail_ptr <= next_tail_ptr;
+            head_ptr <= #D next_head_ptr;
+            tail_ptr <= #D next_tail_ptr;
             
             // Clear resolved/mispredicted on flush
             if (do_restore || restore_en) begin
-                resolved_mem <= '0;
-                mispredicted_mem <= '0;
+                resolved_mem <= #D '0;
+                mispredicted_mem <= #D '0;
             end else begin
                 //==============================================================
                 // Execute result write - set resolved flags
                 //==============================================================
                 for (int i = 0; i < BUFFER_DEPTH; i++) begin
                     if (exec_0_match[i]) begin
-                        resolved_mem[i] <= 1'b1;
-                        mispredicted_mem[i] <= exec_mispredicted_0;
-                        correct_pc_mem[i] <= exec_correct_pc_0;
+                        resolved_mem[i] <= #D 1'b1;
+                        mispredicted_mem[i] <= #D exec_mispredicted_0;
+                        correct_pc_mem[i] <= #D exec_correct_pc_0;
                     end else if (exec_1_match[i]) begin
-                        resolved_mem[i] <= 1'b1;
-                        mispredicted_mem[i] <= exec_mispredicted_1;
-                        correct_pc_mem[i] <= exec_correct_pc_1;
+                        resolved_mem[i] <= #D 1'b1;
+                        mispredicted_mem[i] <= #D exec_mispredicted_1;
+                        correct_pc_mem[i] <= #D exec_correct_pc_1;
                     end else if (exec_2_match[i]) begin
-                        resolved_mem[i] <= 1'b1;
-                        mispredicted_mem[i] <= exec_mispredicted_2;
-                        correct_pc_mem[i] <= exec_correct_pc_2;
+                        resolved_mem[i] <= #D 1'b1;
+                        mispredicted_mem[i] <= #D exec_mispredicted_2;
+                        correct_pc_mem[i] <= #D exec_correct_pc_2;
+                    end
+                end
+                
+                //==============================================================
+                // Commit updates - Update ALL snapshots to reflect RF transition
+                // When a value commits from ROB to RF, all BRAT snapshots that
+                // still point to that ROB entry must be updated to point to RF
+                //==============================================================
+                for (int i = 0; i < BUFFER_DEPTH; i++) begin
+                    // Commit 0: If snapshot[arch_addr] == {1'b1, rob_idx}, change to {1'b0, arch_addr}
+                    if (commit_valid_0 && commit_arch_addr_0 != 0) begin
+                        if (rat_snapshot_mem[i][commit_arch_addr_0][4:0] == commit_rob_idx_0 &&
+                            rat_snapshot_mem[i][commit_arch_addr_0][5] == 1'b1) begin
+                            rat_snapshot_mem[i][commit_arch_addr_0] <= #D {1'b0, commit_arch_addr_0};
+                        end
+                    end
+                    
+                    // Commit 1
+                    if (commit_valid_1 && commit_arch_addr_1 != 0) begin
+                        if (rat_snapshot_mem[i][commit_arch_addr_1][4:0] == commit_rob_idx_1 &&
+                            rat_snapshot_mem[i][commit_arch_addr_1][5] == 1'b1) begin
+                            rat_snapshot_mem[i][commit_arch_addr_1] <= #D {1'b0, commit_arch_addr_1};
+                        end
+                    end
+                    
+                    // Commit 2
+                    if (commit_valid_2 && commit_arch_addr_2 != 0) begin
+                        if (rat_snapshot_mem[i][commit_arch_addr_2][4:0] == commit_rob_idx_2 &&
+                            rat_snapshot_mem[i][commit_arch_addr_2][5] == 1'b1) begin
+                            rat_snapshot_mem[i][commit_arch_addr_2] <= #D {1'b0, commit_arch_addr_2};
+                        end
                     end
                 end
             end
@@ -445,27 +492,27 @@ module brat_circular_buffer #(
             // Push operations - store new branches at tail position
             //==============================================================
             if (push_en_0 && !buffer_full && !do_restore && !restore_en) begin
-                buffer_phys[push_ptr_0[IDX_WIDTH-1:0]] <= push_branch_phys_0;
-                rat_snapshot_mem[push_ptr_0[IDX_WIDTH-1:0]] <= push_rat_snapshot_0;
-                resolved_mem[push_ptr_0[IDX_WIDTH-1:0]] <= 1'b0;
-                mispredicted_mem[push_ptr_0[IDX_WIDTH-1:0]] <= 1'b0;
-                correct_pc_mem[push_ptr_0[IDX_WIDTH-1:0]] <= '0;
+                buffer_phys[push_ptr_0[IDX_WIDTH-1:0]] <= #D push_branch_phys_0;
+                rat_snapshot_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D push_rat_snapshot_0;
+                resolved_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D 1'b0;
+                mispredicted_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D 1'b0;
+                correct_pc_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D '0;
             end
             
             if (push_en_1 && !buffer_full && !do_restore && !restore_en) begin
-                buffer_phys[push_ptr_1[IDX_WIDTH-1:0]] <= push_branch_phys_1;
-                rat_snapshot_mem[push_ptr_1[IDX_WIDTH-1:0]] <= push_rat_snapshot_1;
-                resolved_mem[push_ptr_1[IDX_WIDTH-1:0]] <= 1'b0;
-                mispredicted_mem[push_ptr_1[IDX_WIDTH-1:0]] <= 1'b0;
-                correct_pc_mem[push_ptr_1[IDX_WIDTH-1:0]] <= '0;
+                buffer_phys[push_ptr_1[IDX_WIDTH-1:0]] <= #D push_branch_phys_1;
+                rat_snapshot_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D push_rat_snapshot_1;
+                resolved_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D 1'b0;
+                mispredicted_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D 1'b0;
+                correct_pc_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D '0;
             end
             
             if (push_en_2 && !buffer_full && !do_restore && !restore_en) begin
-                buffer_phys[push_ptr_2[IDX_WIDTH-1:0]] <= push_branch_phys_2;
-                rat_snapshot_mem[push_ptr_2[IDX_WIDTH-1:0]] <= push_rat_snapshot_2;
-                resolved_mem[push_ptr_2[IDX_WIDTH-1:0]] <= 1'b0;
-                mispredicted_mem[push_ptr_2[IDX_WIDTH-1:0]] <= 1'b0;
-                correct_pc_mem[push_ptr_2[IDX_WIDTH-1:0]] <= '0;
+                buffer_phys[push_ptr_2[IDX_WIDTH-1:0]] <= #D push_branch_phys_2;
+                rat_snapshot_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D push_rat_snapshot_2;
+                resolved_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D 1'b0;
+                mispredicted_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D 1'b0;
+                correct_pc_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D '0;
             end
         end
     end

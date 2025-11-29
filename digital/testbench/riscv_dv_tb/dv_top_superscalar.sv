@@ -406,7 +406,7 @@ module dv_top_superscalar;
     // 5-port instruction memory (128*4 KB = 512KB instruction memory)
     memory_5rw #(
         .DATA_WIDTH(32),
-        .ADDR_WIDTH(17),
+        .ADDR_WIDTH(12),
         .NUM_WMASKS(4)
     ) instruction_memory (
         // Port 0 (fetch 0)

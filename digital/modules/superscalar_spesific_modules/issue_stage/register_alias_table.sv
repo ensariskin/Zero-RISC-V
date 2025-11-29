@@ -141,6 +141,8 @@ module register_alias_table #(
     // Allocation requirement signals
     logic need_alloc_0, need_alloc_1, need_alloc_2;
     logic need_lsq_alloc_0, need_lsq_alloc_1, need_lsq_alloc_2;
+    
+    logic brat_restore_en;
 
     //==========================================================================
     // Connect BRAT outputs to module outputs
@@ -165,13 +167,13 @@ module register_alias_table #(
         // Priority: oldest mispredicted branch first
         if (brat_resolved_0 && brat_mispredicted_0) begin
             free_addr_set_en = 1'b1;
-            free_addr_set_value = brat_resolved_phys_0;
+            free_addr_set_value = brat_resolved_phys_0+1;
         end else if (brat_resolved_1 && brat_mispredicted_1) begin
             free_addr_set_en = 1'b1;
-            free_addr_set_value = brat_resolved_phys_1;
+            free_addr_set_value = brat_resolved_phys_1+1;
         end else if (brat_resolved_2 && brat_mispredicted_2) begin
             free_addr_set_en = 1'b1;
-            free_addr_set_value = brat_resolved_phys_2;
+            free_addr_set_value = brat_resolved_phys_2+1;
         end else begin
             free_addr_set_en = 1'b0;
             free_addr_set_value = '0;
@@ -234,13 +236,13 @@ module register_alias_table #(
 
     // Pre-compute allocation requirements (separate combinational logic)
     always_comb begin
-        need_alloc_0 = decode_valid[0];
-        need_alloc_1 = decode_valid[1]; 
-        need_alloc_2 = decode_valid[2]; 
+        need_alloc_0 = decode_valid[0] && !brat_restore_en;
+        need_alloc_1 = decode_valid[1] && !brat_restore_en;
+        need_alloc_2 = decode_valid[2] && !brat_restore_en;
         
-        need_lsq_alloc_0 = decode_valid[0] && load_store_0;
-        need_lsq_alloc_1 = decode_valid[1] && load_store_1;
-        need_lsq_alloc_2 = decode_valid[2] && load_store_2;
+        need_lsq_alloc_0 = decode_valid[0] && load_store_0 && !brat_restore_en;
+        need_lsq_alloc_1 = decode_valid[1] && load_store_1 && !brat_restore_en;
+        need_lsq_alloc_2 = decode_valid[2] && load_store_2 && !brat_restore_en;
 
         alloc_tag_0 = need_lsq_alloc_0 ? 3'b011: 3'b000;
         alloc_tag_1 = need_lsq_alloc_1 ? 3'b011: 3'b001;
@@ -302,7 +304,7 @@ module register_alias_table #(
     //==========================================================================
     
     // Restore enable from BRAT misprediction detection
-    logic brat_restore_en;
+ 
     assign brat_restore_en = (brat_resolved_0 && brat_mispredicted_0) ||
                              (brat_resolved_1 && brat_mispredicted_1) ||
                              (brat_resolved_2 && brat_mispredicted_2);
@@ -337,6 +339,17 @@ module register_alias_table #(
         .push_branch_phys_0(brat_push_phys_0),
         .push_branch_phys_1(brat_push_phys_1),
         .push_branch_phys_2(brat_push_phys_2),
+        
+        // Commit interface - keep snapshots in sync with RF
+        .commit_valid_0(commit_valid[0]),
+        .commit_valid_1(commit_valid[1]),
+        .commit_valid_2(commit_valid[2]),
+        .commit_arch_addr_0(commit_addr_0),
+        .commit_arch_addr_1(commit_addr_1),
+        .commit_arch_addr_2(commit_addr_2),
+        .commit_rob_idx_0(commit_rob_idx_0),
+        .commit_rob_idx_1(commit_rob_idx_1),
+        .commit_rob_idx_2(commit_rob_idx_2),
         
         // Execute result write interface (from execute stage)
         .exec_valid_0(exec_branch_valid_i[0]),
@@ -525,7 +538,14 @@ module register_alias_table #(
             // Misprediction: Restore RAT from BRAT snapshot
             if (brat_restore_en) begin
                 for (int i = 0; i < ARCH_REGS; i++) begin
-                    rat_table[i] <= #D brat_restore_snapshot[i];
+                    if(commit_valid[0] && commit_addr_0 == i && commit_rob_idx_0 == brat_restore_snapshot[i][4:0]) begin
+                        rat_table[i] <= #D {1'b0, commit_addr_0};
+                    end else if(commit_valid[1] && commit_addr_1 == i && commit_rob_idx_1 == brat_restore_snapshot[i][4:0]) begin
+                        rat_table[i] <= #D {1'b0, commit_addr_1};
+                    end else if(commit_valid[2] && commit_addr_2 == i && commit_rob_idx_2 == brat_restore_snapshot[i][4:0]) begin
+                        rat_table[i] <= #D {1'b0, commit_addr_2};
+                    end else
+                        rat_table[i] <= #D brat_restore_snapshot[i];
                 end
             end else begin
                 // Normal operation: Update RAT for commits and new allocations

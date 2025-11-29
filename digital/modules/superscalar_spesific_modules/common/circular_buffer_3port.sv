@@ -163,15 +163,12 @@ module circular_buffer_3port #(
         // Manual pointer override for misprediction recovery   
         // TODO we need extra check to find correct location, it can be {0,set_read_ptr_value} or {1,set_read_ptr_value}
         // current code ai generated, need to check
+        // TODO
         if (set_read_ptr_en) begin
-            if(write_ptr[ADDR_WIDTH] == 1'b0 && set_read_ptr_value >= write_ptr[ADDR_WIDTH-1:0]) begin
-                next_read_ptr = {1'b0, set_read_ptr_value};
-            end else if (write_ptr[ADDR_WIDTH] == 1'b1 && set_read_ptr_value < write_ptr[ADDR_WIDTH-1:0]) begin
-                next_read_ptr = {1'b1, set_read_ptr_value};
-            end else if (write_ptr[ADDR_WIDTH] == 1'b1 && set_read_ptr_value >= write_ptr[ADDR_WIDTH-1:0]) begin
-                next_read_ptr = {1'b0, set_read_ptr_value};
+            if(set_read_ptr_value < read_ptr[ADDR_WIDTH-1:0]) begin
+                next_read_ptr = {read_ptr[ADDR_WIDTH], set_read_ptr_value};
             end else begin
-                next_read_ptr = {1'b1, set_read_ptr_value};
+                next_read_ptr = {~read_ptr[ADDR_WIDTH], set_read_ptr_value};
             end
         end else begin
             next_read_ptr = read_ptr;
