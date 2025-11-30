@@ -95,11 +95,10 @@ module jalr_predictor #(
     //==========================================================================
     // JALR MISPREDICTION DETECTION
     //==========================================================================
-    // JALR misprediction: misprediction=1 AND update_prediction_valid=0
-    // (update_prediction_valid=1 means branch, =0 means JALR)
-    assign jalr_misprediction_0 = misprediction_0 && !update_prediction_valid_i_0;
-    assign jalr_misprediction_1 = misprediction_1 && !update_prediction_valid_i_1;
-    assign jalr_misprediction_2 = misprediction_2 && !update_prediction_valid_i_2;
+    // JALR misprediction
+    assign jalr_misprediction_0 = misprediction_0 && update_prediction_valid_i_0;
+    assign jalr_misprediction_1 = misprediction_1 && update_prediction_valid_i_1;
+    assign jalr_misprediction_2 = misprediction_2 && update_prediction_valid_i_2;
 
     //==========================================================================
     // PREDICTION TABLE LOOKUP

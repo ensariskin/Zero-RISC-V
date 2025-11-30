@@ -165,7 +165,9 @@ module circular_buffer_3port #(
         // current code ai generated, need to check
         // TODO
         if (set_read_ptr_en) begin
-            if(set_read_ptr_value < read_ptr[ADDR_WIDTH-1:0]) begin
+            if(set_read_ptr_value == read_ptr[ADDR_WIDTH-1:0]) begin
+                next_read_ptr = read_ptr;
+            end else if(set_read_ptr_value < read_ptr[ADDR_WIDTH-1:0]) begin
                 next_read_ptr = {read_ptr[ADDR_WIDTH], set_read_ptr_value};
             end else begin
                 next_read_ptr = {~read_ptr[ADDR_WIDTH], set_read_ptr_value};

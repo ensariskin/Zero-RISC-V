@@ -157,8 +157,6 @@ module dispatch_stage #(
     //logic commit_exception_0, commit_exception_1, commit_exception_2;
 
     // Eager misprediction signals from ROB to LSQ
-    logic        rob_eager_misprediction;
-    logic [5:0]  rob_mispredicted_distance;
     logic [4:0]  rob_head_ptr;
     
     //==========================================================================
@@ -330,8 +328,8 @@ module dispatch_stage #(
         .head_ptr(rob_head_idx),
         
         // Eager misprediction outputs (for LSQ flush)
-        .eager_misprediction_o(rob_eager_misprediction),
-        .mispredicted_distance_o(rob_mispredicted_distance),
+        .branch_misprediction_i(brat_eager_misprediction),
+        .branch_mispredicted_rob_idx_i(brat_mispredicted_phys_reg[4:0]),
         .rob_head_ptr_o(rob_head_ptr)
     );
 

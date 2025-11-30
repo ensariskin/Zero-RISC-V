@@ -67,6 +67,9 @@ module issue_stage #(
     input logic [DATA_WIDTH-1:0] exec_correct_pc_0_i,   // Correct PC from FU0
     input logic [DATA_WIDTH-1:0] exec_correct_pc_1_i,   // Correct PC from FU1
     input logic [DATA_WIDTH-1:0] exec_correct_pc_2_i,   // Correct PC from FU2
+    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_0_i,  // PC at prediction time
+    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_1_i,
+    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_2_i,
     
     //==========================================================================
     // Branch resolution outputs (in-order, from BRAT - go to other modules)
@@ -79,6 +82,12 @@ module issue_stage #(
     output logic [DATA_WIDTH-1:0] correct_pc_0_o,       // Correct PC for oldest
     output logic [DATA_WIDTH-1:0] correct_pc_1_o,       // Correct PC for 2nd oldest
     output logic [DATA_WIDTH-1:0] correct_pc_2_o,       // Correct PC for 3rd oldest
+    output logic is_jalr_0_o,                           // Is oldest resolved a JALR?
+    output logic is_jalr_1_o,                           // Is 2nd oldest a JALR?
+    output logic is_jalr_2_o,                           // Is 3rd oldest a JALR?
+    output logic [DATA_WIDTH-1:0] pc_at_prediction_0_o, // PC at prediction for oldest
+    output logic [DATA_WIDTH-1:0] pc_at_prediction_1_o, // PC at prediction for 2nd oldest
+    output logic [DATA_WIDTH-1:0] pc_at_prediction_2_o, // PC at prediction for 3rd oldest
 
     `ifndef SYNTHESIS
     // Debug Tracer Interfaces
@@ -231,6 +240,10 @@ module issue_stage #(
         .exec_correct_pc_0_i(exec_correct_pc_0_i),
         .exec_correct_pc_1_i(exec_correct_pc_1_i),
         .exec_correct_pc_2_i(exec_correct_pc_2_i),
+        .exec_pc_at_prediction_0_i(exec_pc_at_prediction_0_i),
+        .exec_pc_at_prediction_1_i(exec_pc_at_prediction_1_i),
+        .exec_pc_at_prediction_2_i(exec_pc_at_prediction_2_i),
+        
         
         // Branch resolution outputs (in-order, from BRAT)
         .branch_resolved_o(branch_resolved_o),
@@ -241,6 +254,17 @@ module issue_stage #(
         .correct_pc_0_o(correct_pc_0_o),
         .correct_pc_1_o(correct_pc_1_o),
         .correct_pc_2_o(correct_pc_2_o),
+        .is_jalr_0_o(is_jalr_0_o),
+        .is_jalr_1_o(is_jalr_1_o),
+        .is_jalr_2_o(is_jalr_2_o),
+        .pc_at_prediction_0_o(pc_at_prediction_0_o),
+        .pc_at_prediction_1_o(pc_at_prediction_1_o),
+        .pc_at_prediction_2_o(pc_at_prediction_2_o),
+        
+        // Push inputs for is_jalr and pc_at_prediction (from decode)
+        .push_is_jalr_0_i(branch_sel_internal_0 == 3'b111),  // JALR has branch_sel = 110
+        .push_is_jalr_1_i(branch_sel_internal_1 == 3'b111),
+        .push_is_jalr_2_i(branch_sel_internal_2 == 3'b111),
         
         // Decode interface - separated signals
         .rs1_arch_0(rs1_arch_0), .rs1_arch_1(rs1_arch_1), .rs1_arch_2(rs1_arch_2),

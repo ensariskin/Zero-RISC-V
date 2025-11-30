@@ -82,6 +82,9 @@ module register_alias_table #(
     input logic [DATA_WIDTH-1:0] exec_correct_pc_0_i,   // Correct PC from FU0
     input logic [DATA_WIDTH-1:0] exec_correct_pc_1_i,   // Correct PC from FU1
     input logic [DATA_WIDTH-1:0] exec_correct_pc_2_i,   // Correct PC from FU2
+    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_0_i,
+    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_1_i,
+    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_2_i,
     
     //==========================================================================
     // Branch resolution outputs (in-order, from BRAT - go to other modules)
@@ -93,7 +96,19 @@ module register_alias_table #(
     output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_2_o,  // ROB ID of 3rd oldest resolved
     output logic [DATA_WIDTH-1:0] correct_pc_0_o,       // Correct PC for oldest
     output logic [DATA_WIDTH-1:0] correct_pc_1_o,       // Correct PC for 2nd oldest
-    output logic [DATA_WIDTH-1:0] correct_pc_2_o        // Correct PC for 3rd oldest
+    output logic [DATA_WIDTH-1:0] correct_pc_2_o,       // Correct PC for 3rd oldest
+    output logic is_jalr_0_o,                           // Is oldest resolved a JALR?
+    output logic is_jalr_1_o,                           // Is 2nd oldest a JALR?
+    output logic is_jalr_2_o,                           // Is 3rd oldest a JALR?
+    output logic [DATA_WIDTH-1:0] pc_at_prediction_0_o, // PC at prediction for oldest
+    output logic [DATA_WIDTH-1:0] pc_at_prediction_1_o, // PC at prediction for 2nd oldest
+    output logic [DATA_WIDTH-1:0] pc_at_prediction_2_o, // PC at prediction for 3rd oldest
+    
+    // Push inputs for is_jalr and pc_at_prediction (from issue_stage)
+    input logic push_is_jalr_0_i,
+    input logic push_is_jalr_1_i,
+    input logic push_is_jalr_2_i
+   
 );
 
     localparam D = 1;
@@ -117,6 +132,8 @@ module register_alias_table #(
     logic brat_mispredicted_0, brat_mispredicted_1, brat_mispredicted_2;
     logic [DATA_WIDTH-1:0] brat_correct_pc_0, brat_correct_pc_1, brat_correct_pc_2;
     logic [PHYS_ADDR_WIDTH-1:0] brat_resolved_phys_0, brat_resolved_phys_1, brat_resolved_phys_2;
+    logic brat_is_jalr_0, brat_is_jalr_1, brat_is_jalr_2;
+    logic [DATA_WIDTH-1:0] brat_pc_at_prediction_0, brat_pc_at_prediction_1, brat_pc_at_prediction_2;
     
     // Restore interface
     logic [PHYS_ADDR_WIDTH-1:0] brat_restore_snapshot [ARCH_REGS-1:0];
@@ -155,6 +172,12 @@ module register_alias_table #(
     assign correct_pc_0_o = brat_correct_pc_0;
     assign correct_pc_1_o = brat_correct_pc_1;
     assign correct_pc_2_o = brat_correct_pc_2;
+    assign is_jalr_0_o = brat_is_jalr_0;
+    assign is_jalr_1_o = brat_is_jalr_1;
+    assign is_jalr_2_o = brat_is_jalr_2;
+    assign pc_at_prediction_0_o = brat_pc_at_prediction_0;
+    assign pc_at_prediction_1_o = brat_pc_at_prediction_1;
+    assign pc_at_prediction_2_o = brat_pc_at_prediction_2;
 
     //==========================================================================
     // Free address buffer set logic - now uses BRAT outputs (in-order!)
@@ -339,6 +362,9 @@ module register_alias_table #(
         .push_branch_phys_0(brat_push_phys_0),
         .push_branch_phys_1(brat_push_phys_1),
         .push_branch_phys_2(brat_push_phys_2),
+        .push_is_jalr_0(push_is_jalr_0_i),
+        .push_is_jalr_1(push_is_jalr_1_i),
+        .push_is_jalr_2(push_is_jalr_2_i),
         
         // Commit interface - keep snapshots in sync with RF
         .commit_valid_0(commit_valid[0]),
@@ -364,7 +390,9 @@ module register_alias_table #(
         .exec_correct_pc_0(exec_correct_pc_0_i),
         .exec_correct_pc_1(exec_correct_pc_1_i),
         .exec_correct_pc_2(exec_correct_pc_2_i),
-        
+        .exec_pc_at_prediction_0(exec_pc_at_prediction_0_i),
+        .exec_pc_at_prediction_1(exec_pc_at_prediction_1_i),
+        .exec_pc_at_prediction_2(exec_pc_at_prediction_2_i),
         // Branch resolution outputs (in-order)
         .branch_resolved_o_0(brat_resolved_0),
         .branch_resolved_o_1(brat_resolved_1),
@@ -378,6 +406,12 @@ module register_alias_table #(
         .resolved_phys_reg_o_0(brat_resolved_phys_0),
         .resolved_phys_reg_o_1(brat_resolved_phys_1),
         .resolved_phys_reg_o_2(brat_resolved_phys_2),
+        .is_jalr_o_0(brat_is_jalr_0),
+        .is_jalr_o_1(brat_is_jalr_1),
+        .is_jalr_o_2(brat_is_jalr_2),
+        .pc_at_prediction_o_0(brat_pc_at_prediction_0),
+        .pc_at_prediction_o_1(brat_pc_at_prediction_1),
+        .pc_at_prediction_o_2(brat_pc_at_prediction_2),
         
         // Restore interface
         .restore_en(1'b0),  // Internal restore handled by BRAT

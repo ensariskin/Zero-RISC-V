@@ -37,17 +37,23 @@ module fetch_buffer_top #(
     // Pipeline control signals
     input  logic buble,
     
-    // Eager misprediction handling from execute stage (replaces commit-based flush)
-    input  logic eager_misprediction_0, eager_misprediction_1, eager_misprediction_2,
-    input  logic [DATA_WIDTH-1:0] eager_correct_pc_0, eager_correct_pc_1, eager_correct_pc_2,
+    //==========================================================================
+    // BRAT Interface (Simplified - all branch/JALR info comes from BRAT in-order)
+    //==========================================================================
+    // 1. Misprediction signals (for PC redirect - eager flush)
+    input  logic misprediction_i_0, misprediction_i_1, misprediction_i_2,
     
-    // Branch predictor update (for correct predictions)
-    input  logic update_prediction_valid_i_0, update_prediction_valid_i_1, update_prediction_valid_i_2,
-    input  logic [DATA_WIDTH-1:0] update_prediction_pc_0, update_prediction_pc_1, update_prediction_pc_2,
+    // 2. Update valid signals (for predictor update - resolved OR mispredicted)
+    input  logic update_valid_i_0, update_valid_i_1, update_valid_i_2,
     
-    // JALR predictor update signals (from execute stage)
-    input  logic is_jalr_0, is_jalr_1, is_jalr_2,
-    input  logic jalr_misprediction_0, jalr_misprediction_1, jalr_misprediction_2,
+    // 3. Is JALR flags (0=branch, 1=JALR - determines which predictor to update)
+    input  logic is_jalr_i_0, is_jalr_i_1, is_jalr_i_2,
+    
+    // 4. PC at prediction (for predictor table lookup during update)
+    input  logic [DATA_WIDTH-1:0] pc_at_prediction_i_0, pc_at_prediction_i_1, pc_at_prediction_i_2,
+    
+    // 5. Correct PC (for misprediction redirect and predictor update)
+    input  logic [DATA_WIDTH-1:0] correct_pc_i_0, correct_pc_i_1, correct_pc_i_2,
     
     
     // Output to decode stages
@@ -97,38 +103,41 @@ module fetch_buffer_top #(
         // Pipeline control
         .buble(buble),
         
-        // Eager misprediction handling from execute stage
-        .eager_misprediction_0(eager_misprediction_0),
-        .eager_misprediction_1(eager_misprediction_1),
-        .eager_misprediction_2(eager_misprediction_2),
-        .eager_correct_pc_0(eager_correct_pc_0),
-        .eager_correct_pc_1(eager_correct_pc_1),
-        .eager_correct_pc_2(eager_correct_pc_2),
+        //==========================================================================
+        // BRAT Interface (Simplified)
+        //==========================================================================
+        // 1. Misprediction signals
+        .misprediction_i_0(misprediction_i_0),
+        .misprediction_i_1(misprediction_i_1),
+        .misprediction_i_2(misprediction_i_2),
         
-        // Branch prediction interface
+        // 2. Update valid signals
+        .update_valid_i_0(update_valid_i_0),
+        .update_valid_i_1(update_valid_i_1),
+        .update_valid_i_2(update_valid_i_2),
+        
+        // 3. Is JALR flags
+        .is_jalr_i_0(is_jalr_i_0),
+        .is_jalr_i_1(is_jalr_i_1),
+        .is_jalr_i_2(is_jalr_i_2),
+        
+        // 4. PC at prediction
+        .pc_at_prediction_i_0(pc_at_prediction_i_0),
+        .pc_at_prediction_i_1(pc_at_prediction_i_1),
+        .pc_at_prediction_i_2(pc_at_prediction_i_2),
+        
+        // 5. Correct PC
+        .correct_pc_i_0(correct_pc_i_0),
+        .correct_pc_i_1(correct_pc_i_1),
+        .correct_pc_i_2(correct_pc_i_2),
+        
+        // Legacy outputs (fetch-stage predictions)
         .pc_value_at_prediction_0(fetch_pc_value_at_prediction_0),
         .branch_prediction_o_0(fetch_branch_pred_0),
-        .update_prediction_valid_i_0(update_prediction_valid_i_0),
-        .update_prediction_pc_0(update_prediction_pc_0),
-        
         .pc_value_at_prediction_1(fetch_pc_value_at_prediction_1),
         .branch_prediction_o_1(fetch_branch_pred_1),
-        .update_prediction_valid_i_1(update_prediction_valid_i_1),
-        .update_prediction_pc_1(update_prediction_pc_1),
-        
         .pc_value_at_prediction_2(fetch_pc_value_at_prediction_2),
         .branch_prediction_o_2(fetch_branch_pred_2),
-        .update_prediction_valid_i_2(update_prediction_valid_i_2),
-        .update_prediction_pc_2(update_prediction_pc_2),
-        
-        // JALR predictor update signals
-        .is_jalr_0(is_jalr_0),
-        .is_jalr_1(is_jalr_1),
-        .is_jalr_2(is_jalr_2),
-        .jalr_misprediction_0(jalr_misprediction_0),
-        .jalr_misprediction_1(jalr_misprediction_1),
-        .jalr_misprediction_2(jalr_misprediction_2),
-
         .pc_value_at_prediction_3(fetch_pc_value_at_prediction_3),
         .branch_prediction_o_3(fetch_branch_pred_3),
         .pc_value_at_prediction_4(fetch_pc_value_at_prediction_4),
@@ -162,7 +171,7 @@ module fetch_buffer_top #(
 
     // Generate combined eager flush signal (any misprediction triggers flush)
     logic eager_flush;
-    assign eager_flush = eager_misprediction_0 | eager_misprediction_1 | eager_misprediction_2;
+    assign eager_flush = misprediction_i_0 | misprediction_i_1 | misprediction_i_2;
     
     // Instruction Buffer
     instruction_buffer_new #(

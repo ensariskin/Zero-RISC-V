@@ -40,7 +40,10 @@ module brat_circular_buffer #(
     input logic [PHYS_ADDR_WIDTH-1:0] push_branch_phys_0,  // ROB ID (rd_phys[4:0])
     input logic [PHYS_ADDR_WIDTH-1:0] push_branch_phys_1,
     input logic [PHYS_ADDR_WIDTH-1:0] push_branch_phys_2,
-    
+    input logic push_is_jalr_0,  // 0=branch, 1=JALR
+    input logic push_is_jalr_1,
+    input logic push_is_jalr_2,
+
     //==========================================================================
     // Commit interface (3-way parallel) - from ROB commit
     // Updates ALL snapshots to reflect committed values (ROB -> RF transition)
@@ -70,6 +73,10 @@ module brat_circular_buffer #(
     input logic [DATA_WIDTH-1:0] exec_correct_pc_0,
     input logic [DATA_WIDTH-1:0] exec_correct_pc_1,
     input logic [DATA_WIDTH-1:0] exec_correct_pc_2,
+    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_0,  // PC at prediction time
+    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_1,
+    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_2,
+    
     
     //==========================================================================
     // Branch resolution outputs (in-order, oldest-first)
@@ -87,6 +94,12 @@ module brat_circular_buffer #(
     output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_o_0,  // ROB ID of resolved branch
     output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_o_1,
     output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_o_2,
+    output logic is_jalr_o_0,             // Is resolved branch a JALR?
+    output logic is_jalr_o_1,
+    output logic is_jalr_o_2,
+    output logic [DATA_WIDTH-1:0] pc_at_prediction_o_0,  // PC at prediction time
+    output logic [DATA_WIDTH-1:0] pc_at_prediction_o_1,
+    output logic [DATA_WIDTH-1:0] pc_at_prediction_o_2,
     
     //==========================================================================
     // Restore interface - indexed snapshot retrieval + buffer flush
@@ -129,6 +142,10 @@ module brat_circular_buffer #(
     logic [BUFFER_DEPTH-1:0] resolved_mem;
     logic [BUFFER_DEPTH-1:0] mispredicted_mem;
     logic [DATA_WIDTH-1:0] correct_pc_mem [BUFFER_DEPTH-1:0];
+    // Is JALR flag storage
+    logic [BUFFER_DEPTH-1:0] is_jalr_mem;
+    // PC at prediction time storage
+    logic [DATA_WIDTH-1:0] pc_at_prediction_mem [BUFFER_DEPTH-1:0];
     
     //==========================================================================
     // Pointers
@@ -238,6 +255,7 @@ module brat_circular_buffer #(
     logic eff_resolved_0, eff_resolved_1, eff_resolved_2;
     logic eff_mispredicted_0, eff_mispredicted_1, eff_mispredicted_2;
     logic [DATA_WIDTH-1:0] eff_correct_pc_0, eff_correct_pc_1, eff_correct_pc_2;
+    logic [DATA_WIDTH-1:0] eff_pc_at_prediction_0, eff_pc_at_prediction_1, eff_pc_at_prediction_2;
     
     always_comb begin
         // Peek 0 (oldest): check stored OR any exec match
@@ -248,15 +266,19 @@ module brat_circular_buffer #(
         if (exec_0_match_peek_0) begin
             eff_mispredicted_0 = exec_mispredicted_0;
             eff_correct_pc_0 = exec_correct_pc_0;
+            eff_pc_at_prediction_0 = exec_pc_at_prediction_0;
         end else if (exec_1_match_peek_0) begin
             eff_mispredicted_0 = exec_mispredicted_1;
             eff_correct_pc_0 = exec_correct_pc_1;
+            eff_pc_at_prediction_0 = exec_pc_at_prediction_1;
         end else if (exec_2_match_peek_0) begin
             eff_mispredicted_0 = exec_mispredicted_2;
             eff_correct_pc_0 = exec_correct_pc_2;
+            eff_pc_at_prediction_0 = exec_pc_at_prediction_2;
         end else begin
             eff_mispredicted_0 = mispredicted_mem[peek_idx_0];
             eff_correct_pc_0 = correct_pc_mem[peek_idx_0];
+            eff_pc_at_prediction_0 = pc_at_prediction_mem[peek_idx_0];
         end
         
         // Peek 1 (2nd oldest)
@@ -266,15 +288,19 @@ module brat_circular_buffer #(
         if (exec_0_match_peek_1) begin
             eff_mispredicted_1 = exec_mispredicted_0;
             eff_correct_pc_1 = exec_correct_pc_0;
+            eff_pc_at_prediction_1 = exec_pc_at_prediction_0;
         end else if (exec_1_match_peek_1) begin
             eff_mispredicted_1 = exec_mispredicted_1;
             eff_correct_pc_1 = exec_correct_pc_1;
+            eff_pc_at_prediction_1 = exec_pc_at_prediction_1;
         end else if (exec_2_match_peek_1) begin
             eff_mispredicted_1 = exec_mispredicted_2;
             eff_correct_pc_1 = exec_correct_pc_2;
+            eff_pc_at_prediction_1 = exec_pc_at_prediction_2;   
         end else begin
             eff_mispredicted_1 = mispredicted_mem[peek_idx_1];
             eff_correct_pc_1 = correct_pc_mem[peek_idx_1];
+            eff_pc_at_prediction_1 = pc_at_prediction_mem[peek_idx_1];
         end
         
         // Peek 2 (3rd oldest)
@@ -284,15 +310,19 @@ module brat_circular_buffer #(
         if (exec_0_match_peek_2) begin
             eff_mispredicted_2 = exec_mispredicted_0;
             eff_correct_pc_2 = exec_correct_pc_0;
+            eff_pc_at_prediction_2 = exec_pc_at_prediction_0;
         end else if (exec_1_match_peek_2) begin
             eff_mispredicted_2 = exec_mispredicted_1;
             eff_correct_pc_2 = exec_correct_pc_1;
+            eff_pc_at_prediction_2 = exec_pc_at_prediction_1;
         end else if (exec_2_match_peek_2) begin
             eff_mispredicted_2 = exec_mispredicted_2;
             eff_correct_pc_2 = exec_correct_pc_2;
+            eff_pc_at_prediction_2 = exec_pc_at_prediction_2;
         end else begin
             eff_mispredicted_2 = mispredicted_mem[peek_idx_2];
             eff_correct_pc_2 = correct_pc_mem[peek_idx_2];
+            eff_pc_at_prediction_2 = pc_at_prediction_mem[peek_idx_2];
         end
     end
     
@@ -315,6 +345,12 @@ module brat_circular_buffer #(
         resolved_phys_reg_o_0 = '0;
         resolved_phys_reg_o_1 = '0;
         resolved_phys_reg_o_2 = '0;
+        is_jalr_o_0 = 1'b0;
+        is_jalr_o_1 = 1'b0;
+        is_jalr_o_2 = 1'b0;
+        pc_at_prediction_o_0 = '0;
+        pc_at_prediction_o_1 = '0;
+        pc_at_prediction_o_2 = '0;
         
         // Oldest (peek_0) - always check if valid and resolved
         if (peek_valid_0 && eff_resolved_0) begin
@@ -322,6 +358,8 @@ module brat_circular_buffer #(
             branch_mispredicted_o_0 = eff_mispredicted_0;
             correct_pc_o_0 = eff_correct_pc_0;
             resolved_phys_reg_o_0 = peek_branch_phys_0;
+            is_jalr_o_0 = is_jalr_mem[peek_idx_0];
+            pc_at_prediction_o_0 = eff_pc_at_prediction_0;
             
             // If oldest is mispredicted, don't output younger branches
             // They will be flushed anyway
@@ -332,6 +370,8 @@ module brat_circular_buffer #(
                     branch_mispredicted_o_1 = eff_mispredicted_1;
                     correct_pc_o_1 = eff_correct_pc_1;
                     resolved_phys_reg_o_1 = peek_branch_phys_1;
+                    is_jalr_o_1 = is_jalr_mem[peek_idx_1];
+                    pc_at_prediction_o_1 = eff_pc_at_prediction_1;
                     
                     // 3rd oldest (peek_2) - only if 1st and 2nd are resolved and NOT mispredicted
                     if (!eff_mispredicted_1 && peek_valid_2 && eff_resolved_2) begin
@@ -339,6 +379,8 @@ module brat_circular_buffer #(
                         branch_mispredicted_o_2 = eff_mispredicted_2;
                         correct_pc_o_2 = eff_correct_pc_2;
                         resolved_phys_reg_o_2 = peek_branch_phys_2;
+                        is_jalr_o_2 = is_jalr_mem[peek_idx_2];
+                        pc_at_prediction_o_2 = eff_pc_at_prediction_2;
                     end
                 end
             end
@@ -418,11 +460,13 @@ module brat_circular_buffer #(
             tail_ptr <= #D '0;
             resolved_mem <= #D '0;
             mispredicted_mem <= #D '0;
+            is_jalr_mem <= #D '0;
             
             // Clear buffer memory
             for (int i = 0; i < BUFFER_DEPTH; i++) begin
                 buffer_phys[i] <= #D '0;
                 correct_pc_mem[i] <= #D '0;
+                pc_at_prediction_mem[i] <= #D '0;
                 for (int j = 0; j < ARCH_REGS; j++) begin
                     rat_snapshot_mem[i][j] <= #D '0;
                 end
@@ -445,14 +489,17 @@ module brat_circular_buffer #(
                         resolved_mem[i] <= #D 1'b1;
                         mispredicted_mem[i] <= #D exec_mispredicted_0;
                         correct_pc_mem[i] <= #D exec_correct_pc_0;
+                        pc_at_prediction_mem[i] <= #D exec_pc_at_prediction_0;
                     end else if (exec_1_match[i]) begin
                         resolved_mem[i] <= #D 1'b1;
                         mispredicted_mem[i] <= #D exec_mispredicted_1;
                         correct_pc_mem[i] <= #D exec_correct_pc_1;
+                        pc_at_prediction_mem[i] <= #D exec_pc_at_prediction_1;
                     end else if (exec_2_match[i]) begin
                         resolved_mem[i] <= #D 1'b1;
                         mispredicted_mem[i] <= #D exec_mispredicted_2;
                         correct_pc_mem[i] <= #D exec_correct_pc_2;
+                        pc_at_prediction_mem[i] <= #D exec_pc_at_prediction_2;
                     end
                 end
                 
@@ -497,6 +544,8 @@ module brat_circular_buffer #(
                 resolved_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D 1'b0;
                 mispredicted_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D 1'b0;
                 correct_pc_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D '0;
+                is_jalr_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D push_is_jalr_0;
+                pc_at_prediction_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D '0;
             end
             
             if (push_en_1 && !buffer_full && !do_restore && !restore_en) begin
@@ -505,6 +554,8 @@ module brat_circular_buffer #(
                 resolved_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D 1'b0;
                 mispredicted_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D 1'b0;
                 correct_pc_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D '0;
+                is_jalr_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D push_is_jalr_1;
+                pc_at_prediction_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D '0;
             end
             
             if (push_en_2 && !buffer_full && !do_restore && !restore_en) begin
@@ -513,6 +564,8 @@ module brat_circular_buffer #(
                 resolved_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D 1'b0;
                 mispredicted_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D 1'b0;
                 correct_pc_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D '0;
+                is_jalr_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D push_is_jalr_2;
+                pc_at_prediction_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D '0;
             end
         end
     end

@@ -229,6 +229,10 @@ module rv32i_superscalar_core #(
     logic [DATA_WIDTH-1:0] brat_correct_pc_0;  // Correct PC for oldest
     logic [DATA_WIDTH-1:0] brat_correct_pc_1;  // Correct PC for 2nd oldest
     logic [DATA_WIDTH-1:0] brat_correct_pc_2;  // Correct PC for 3rd oldest
+    logic brat_is_jalr_0, brat_is_jalr_1, brat_is_jalr_2;  // Is resolved branch a JALR?
+    logic [DATA_WIDTH-1:0] brat_pc_at_prediction_0;  // PC at prediction for oldest
+    logic [DATA_WIDTH-1:0] brat_pc_at_prediction_1;  // PC at prediction for 2nd oldest
+    logic [DATA_WIDTH-1:0] brat_pc_at_prediction_2;  // PC at prediction for 3rd oldest
 
     // JALR detection and misprediction signals from execute stage
     logic ex0_is_jalr;
@@ -270,36 +274,36 @@ module rv32i_superscalar_core #(
         // Pipeline control
         .buble(pipeline_stall),
         
-        // Eager misprediction handling from BRAT (in-order branch resolution)
-        // BRAT provides in-order misprediction signals - use oldest first
-        .eager_misprediction_0(brat_branch_resolved[0] & brat_branch_mispredicted[0]),
-        .eager_misprediction_1(brat_branch_resolved[1] & brat_branch_mispredicted[1]),
-        .eager_misprediction_2(brat_branch_resolved[2] & brat_branch_mispredicted[2]),
-        .eager_correct_pc_0(brat_correct_pc_0),
-        .eager_correct_pc_1(brat_correct_pc_1),
-        .eager_correct_pc_2(brat_correct_pc_2),
+        //======================================================================
+        // BRAT-based In-Order Branch Resolution (Simplified Interface)
+        // All prediction updates now come from BRAT for in-order processing
+        //======================================================================
         
-        // Branch prediction interface
+        // Port 0 (oldest resolved branch from BRAT)
+        .misprediction_i_0(brat_branch_resolved[0] & brat_branch_mispredicted[0]),
+        .update_valid_i_0(brat_branch_resolved[0]),
+        .is_jalr_i_0(brat_is_jalr_0),
+        .pc_at_prediction_i_0(brat_pc_at_prediction_0),
+        .correct_pc_i_0(brat_correct_pc_0),
+        
+        // Port 1 (2nd oldest resolved branch from BRAT)
+        .misprediction_i_1(brat_branch_resolved[1] & brat_branch_mispredicted[1]),
+        .update_valid_i_1(brat_branch_resolved[1]),
+        .is_jalr_i_1(brat_is_jalr_1),
+        .pc_at_prediction_i_1(brat_pc_at_prediction_1),
+        .correct_pc_i_1(brat_correct_pc_1),
+        
+        // Port 2 (3rd oldest resolved branch from BRAT)
+        .misprediction_i_2(brat_branch_resolved[2] & brat_branch_mispredicted[2]),
+        .update_valid_i_2(brat_branch_resolved[2]),
+        .is_jalr_i_2(brat_is_jalr_2),
+        .pc_at_prediction_i_2(brat_pc_at_prediction_2),
+        .correct_pc_i_2(brat_correct_pc_2),
+        
+        // PC at prediction time (output from fetch for issue stage to capture)
         .pc_value_at_prediction_0(bp_pc_0),
         .pc_value_at_prediction_1(bp_pc_1),
         .pc_value_at_prediction_2(bp_pc_2),
-
-        .update_prediction_valid_i_0(ex0_commit_is_branch),
-        .update_prediction_pc_0(ex0_upadate_predictor_pc),
-        
-        .update_prediction_valid_i_1(ex1_commit_is_branch),
-        .update_prediction_pc_1(ex1_upadate_predictor_pc),
-        
-        .update_prediction_valid_i_2(ex2_commit_is_branch),
-        .update_prediction_pc_2(ex2_upadate_predictor_pc),
-        
-        // JALR predictor update signals
-        .is_jalr_0(ex0_is_jalr),
-        .is_jalr_1(ex1_is_jalr),
-        .is_jalr_2(ex2_is_jalr),
-        .jalr_misprediction_0(ex0_jalr_misprediction),
-        .jalr_misprediction_1(ex1_jalr_misprediction),
-        .jalr_misprediction_2(ex2_jalr_misprediction),
         
         // Output to decode stages
         .decode_valid_o(decode_valid),
@@ -406,6 +410,9 @@ module rv32i_superscalar_core #(
         .exec_correct_pc_0_i(ex0_commit_correct_pc),
         .exec_correct_pc_1_i(ex1_commit_correct_pc),
         .exec_correct_pc_2_i(ex2_commit_correct_pc),
+        .exec_pc_at_prediction_0_i(ex0_upadate_predictor_pc),
+        .exec_pc_at_prediction_1_i(ex1_upadate_predictor_pc),
+        .exec_pc_at_prediction_2_i(ex2_upadate_predictor_pc),
         
         //==========================================================================
         // BRAT v2 In-Order Branch Resolution Outputs (to other modules)
@@ -418,6 +425,12 @@ module rv32i_superscalar_core #(
         .correct_pc_0_o(brat_correct_pc_0),
         .correct_pc_1_o(brat_correct_pc_1),
         .correct_pc_2_o(brat_correct_pc_2),
+        .is_jalr_0_o(brat_is_jalr_0),
+        .is_jalr_1_o(brat_is_jalr_1),
+        .is_jalr_2_o(brat_is_jalr_2),
+        .pc_at_prediction_0_o(brat_pc_at_prediction_0),
+        .pc_at_prediction_1_o(brat_pc_at_prediction_1),
+        .pc_at_prediction_2_o(brat_pc_at_prediction_2),
         
         `ifndef SYNTHESIS
         .tracer_0(tracer_issue_0),

@@ -56,21 +56,15 @@ module jump_controller_super #(parameter size = 32)(
 	input  logic [size-1 : 0] correct_pc_2,
 
 	// JALR predictor update signals for FU0
-	input logic jalr_misprediction_0,
-	input logic jalr_prediction_valid_0,
-	input logic [size-1 : 0] jalr_correct_pc_0,
+	input logic jalr_update_valid_0,
 	input logic [size-1 : 0] jalr_update_prediction_pc_0,
 
 	// JALR predictor update signals for FU1
-	input logic jalr_misprediction_1,
-	input logic jalr_prediction_valid_1,
-	input logic [size-1 : 0] jalr_correct_pc_1,
+	input logic jalr_update_valid_1,
 	input logic [size-1 : 0] jalr_update_prediction_pc_1,
 
 	// JALR predictor update signals for FU2
-	input logic jalr_misprediction_2,
-	input logic jalr_prediction_valid_2,
-	input logic [size-1 : 0] jalr_correct_pc_2,
+	input logic jalr_update_valid_2,
 	input logic [size-1 : 0] jalr_update_prediction_pc_2,
 
 	// decision interface 
@@ -202,21 +196,21 @@ module jump_controller_super #(parameter size = 32)(
 
 		// Update interface - FU0
 		.update_prediction_pc_0(jalr_update_prediction_pc_0),
-		.update_prediction_valid_i_0(jalr_prediction_valid_0),
-		.misprediction_0(jalr_misprediction_0),
-		.correct_pc_0(jalr_correct_pc_0),
+		.update_prediction_valid_i_0(jalr_update_valid_0),
+		.misprediction_0(misprediction_0),
+		.correct_pc_0(correct_pc_0),
 
 		// Update interface - FU1
 		.update_prediction_pc_1(jalr_update_prediction_pc_1),
-		.update_prediction_valid_i_1(jalr_prediction_valid_1),
-		.misprediction_1(jalr_misprediction_1),
-		.correct_pc_1(jalr_correct_pc_1),
+		.update_prediction_valid_i_1(jalr_update_valid_1),
+		.misprediction_1(misprediction_1),
+		.correct_pc_1(correct_pc_1),
 
 		// Update interface - FU2
 		.update_prediction_pc_2(jalr_update_prediction_pc_2),
-		.update_prediction_valid_i_2(jalr_prediction_valid_2),
-		.misprediction_2(jalr_misprediction_2),
-		.correct_pc_2(jalr_correct_pc_2)
+		.update_prediction_valid_i_2(jalr_update_valid_2),
+		.misprediction_2(misprediction_2),
+		.correct_pc_2(correct_pc_2)
 	);
 	
 endmodule

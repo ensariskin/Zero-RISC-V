@@ -354,9 +354,10 @@
               "content": "Add eager_flush_enable input to fetch_buffer_top",
               "id": 1732400000051,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1732400000051,
-              "focus": false
+              "focus": false,
+              "end": 1764106946777
             }
           },
           {
@@ -366,9 +367,10 @@
               "content": "Add BRAT restore triggered flush input (separate from commit-based flush)",
               "id": 1732400000052,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1732400000052,
-              "focus": false
+              "focus": false,
+              "end": 1764106946272
             }
           },
           {
@@ -378,9 +380,10 @@
               "content": "Flush instruction buffer on BRAT restore (clear all entries)",
               "id": 1732400000053,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1732400000053,
-              "focus": false
+              "focus": false,
+              "end": 1764106945969
             }
           },
           {
@@ -390,9 +393,10 @@
               "content": "Update PC to correct_pc from mispredicted branch resolution",
               "id": 1732400000054,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1732400000054,
-              "focus": false
+              "focus": false,
+              "end": 1764106945613
             }
           },
           {
@@ -402,9 +406,10 @@
               "content": "Test fetch restart latency after eager flush",
               "id": 1732400000055,
               "level": "default",
-              "done": false,
+              "done": true,
               "start": 1732400000055,
-              "focus": false
+              "focus": false,
+              "end": 1764106945223
             }
           }
         ],
@@ -412,9 +417,10 @@
           "content": "FETCH STAGE: Eager Flush on BRAT Restore (fetch_buffer_top.sv)",
           "id": 1732400000050,
           "level": "warning",
-          "done": false,
+          "done": true,
           "start": 1732400000050,
-          "focus": false
+          "focus": false,
+          "end": 1764106941859
         }
       },
       {
@@ -765,6 +771,6 @@
     "showEndTime": false,
     "simpleMode": false,
     "lang": "en",
-    "version": "1764015592468"
+    "version": "1764106946868"
   }
 }

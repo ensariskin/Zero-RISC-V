@@ -186,11 +186,11 @@ module reorder_buffer #(
         output logic [ADDR_WIDTH-1:0] tail_ptr,
         
         //==========================================================================
-        // EAGER MISPREDICTION OUTPUTS (for LSQ flush)
+        // EAGER MISPREDICTION 
         //==========================================================================
-        output logic eager_misprediction_o,
-        output logic [ADDR_WIDTH:0] mispredicted_distance_o,
-        output logic [ADDR_WIDTH:0] rob_head_ptr_o
+        input  logic branch_misprediction_i,
+        input  logic [ADDR_WIDTH-1:0] branch_mispredicted_rob_idx_i,
+        output logic [ADDR_WIDTH-1:0] rob_head_ptr_o
     );
 
     localparam D = 1;  // Delay for simulation
@@ -238,104 +238,15 @@ module reorder_buffer #(
     logic [ADDR_WIDTH:0] head_ptr_reg;
     logic [ADDR_WIDTH:0] tail_ptr_reg;
 
-    //==========================================================================
-    // EAGER MISPREDICTION DETECTION (from CDB)
-    //==========================================================================
-    logic misprediction_from_fu0, misprediction_from_fu1, misprediction_from_fu2;
-    logic eager_misprediction;
-    logic [ADDR_WIDTH:0] dist_0, dist_1, dist_2;
-    logic [ADDR_WIDTH-1:0] oldest_mispredicted_idx;
-
-    // Detect misprediction from each FU (exclude memory address calculations)
-    assign misprediction_from_fu0 = cdb_valid_0 && cdb_exception_0 && !cdb_mem_addr_calculation_0;
-    assign misprediction_from_fu1 = cdb_valid_1 && cdb_exception_1 && !cdb_mem_addr_calculation_1;
-    assign misprediction_from_fu2 = cdb_valid_2 && cdb_exception_2 && !cdb_mem_addr_calculation_2;
-
-    // Combined eager misprediction signal
-    assign eager_misprediction = misprediction_from_fu0 | misprediction_from_fu1 | misprediction_from_fu2;
-
-    // Distance calculation for each mispredicted ROB entry (circular buffer aware)
-    // Distance = how far from head (smaller = older = should be prioritized)
-    assign dist_0 = (cdb_addr_0 >= head_ptr_reg[ADDR_WIDTH-1:0]) ?
-        (cdb_addr_0 - head_ptr_reg[ADDR_WIDTH-1:0]) :
-        (BUFFER_DEPTH - head_ptr_reg[ADDR_WIDTH-1:0] + cdb_addr_0);
-    assign dist_1 = (cdb_addr_1 >= head_ptr_reg[ADDR_WIDTH-1:0]) ?
-        (cdb_addr_1 - head_ptr_reg[ADDR_WIDTH-1:0]) :
-        (BUFFER_DEPTH - head_ptr_reg[ADDR_WIDTH-1:0] + cdb_addr_1);
-    assign dist_2 = (cdb_addr_2 >= head_ptr_reg[ADDR_WIDTH-1:0]) ?
-        (cdb_addr_2 - head_ptr_reg[ADDR_WIDTH-1:0]) :
-        (BUFFER_DEPTH - head_ptr_reg[ADDR_WIDTH-1:0] + cdb_addr_2);
-
-    // Find oldest (closest to head) mispredicted entry using priority encoder
-    always_comb begin
-        oldest_mispredicted_idx = '0; // Default
-
-        if (eager_misprediction) begin
-            // Start with first active misprediction as default
-            if (misprediction_from_fu0)
-                oldest_mispredicted_idx = cdb_addr_0;
-            else if (misprediction_from_fu1)
-                oldest_mispredicted_idx = cdb_addr_1;
-            else if (misprediction_from_fu2)
-                oldest_mispredicted_idx = cdb_addr_2;
-
-            // Compare and select oldest (minimum distance from head)
-            if (misprediction_from_fu0 && misprediction_from_fu1) begin
-                if (dist_0 <= dist_1)
-                    oldest_mispredicted_idx = cdb_addr_0;
-                else
-                    oldest_mispredicted_idx = cdb_addr_1;
-            end
-
-            if (misprediction_from_fu0 && misprediction_from_fu2) begin
-                if (dist_0 <= dist_2)
-                    oldest_mispredicted_idx = cdb_addr_0;
-                else
-                    oldest_mispredicted_idx = cdb_addr_2;
-            end
-
-            if (misprediction_from_fu1 && misprediction_from_fu2) begin
-                if (dist_1 <= dist_2)
-                    oldest_mispredicted_idx = cdb_addr_1;
-                else
-                    oldest_mispredicted_idx = cdb_addr_2;
-            end
-
-            // All three mispredicted - find minimum
-            if (misprediction_from_fu0 && misprediction_from_fu1 && misprediction_from_fu2) begin
-                if (dist_0 <= dist_1 && dist_0 <= dist_2)
-                    oldest_mispredicted_idx = cdb_addr_0;
-                else if (dist_1 <= dist_0 && dist_1 <= dist_2)
-                    oldest_mispredicted_idx = cdb_addr_1;
-                else
-                    oldest_mispredicted_idx = cdb_addr_2;
-            end
-        end
-    end
 
     // Assign outputs
     assign head_ptr = head_ptr_reg[ADDR_WIDTH-1:0];
     assign tail_ptr = tail_ptr_reg[ADDR_WIDTH-1:0];
     
     // Eager misprediction outputs for LSQ flush
-    assign eager_misprediction_o = eager_misprediction;
     assign rob_head_ptr_o = head_ptr_reg;
     
     // Calculate mispredicted distance - select based on which FU mispredicted
-    logic [ADDR_WIDTH:0] mispredicted_dist;
-    always_comb begin
-        mispredicted_dist = '0;
-        if (eager_misprediction) begin
-            if (oldest_mispredicted_idx == cdb_addr_0 && misprediction_from_fu0)
-                mispredicted_dist = dist_0;
-            else if (oldest_mispredicted_idx == cdb_addr_1 && misprediction_from_fu1)
-                mispredicted_dist = dist_1;
-            else if (oldest_mispredicted_idx == cdb_addr_2 && misprediction_from_fu2)
-                mispredicted_dist = dist_2;
-        end
-    end
-    assign mispredicted_distance_o = mispredicted_dist;
-
     //==========================================================================
     // BUFFER STATUS
     //==========================================================================
@@ -371,7 +282,7 @@ module reorder_buffer #(
     end
 
     // Check if allocation can succeed (block during eager misprediction)
-    assign alloc_success = (entries_free >= num_alloc_requests) && !eager_misprediction;
+    assign alloc_success = (entries_free >= num_alloc_requests) && !branch_misprediction_i;
 
     // Assign allocation addresses (current tail position)
     assign alloc_idx_0 = tail_ptr_reg[ADDR_WIDTH-1:0];
@@ -382,13 +293,11 @@ module reorder_buffer #(
     always_comb begin
         next_tail_ptr = tail_ptr_reg;
 
-        if (eager_misprediction) begin
-            // Truncate tail to oldest_mispredicted_idx + 1 (keep the mispredicted entry)
-            // This uses the lower bits for the actual index, preserving wrap semantics
-            if(oldest_mispredicted_idx < tail_ptr_reg[ADDR_WIDTH-1:0])
-                next_tail_ptr = {tail_ptr_reg[ADDR_WIDTH], oldest_mispredicted_idx} + 1'b1;
+        if (branch_misprediction_i) begin
+            if(branch_mispredicted_rob_idx_i < tail_ptr_reg[ADDR_WIDTH-1:0])
+                next_tail_ptr = {tail_ptr_reg[ADDR_WIDTH], branch_mispredicted_rob_idx_i} + 1'b1;
             else
-                next_tail_ptr = {~tail_ptr_reg[ADDR_WIDTH], oldest_mispredicted_idx} + 1'b1;
+                next_tail_ptr = {~tail_ptr_reg[ADDR_WIDTH], branch_mispredicted_rob_idx_i} + 1'b1;
         end else if (alloc_success && !buffer_full) begin
             next_tail_ptr = tail_ptr_reg + num_alloc_requests;
         end
@@ -424,7 +333,7 @@ module reorder_buffer #(
     assign commit_addr_1 = buffer[head_plus_1_idx].addr;
     assign commit_addr_2 = buffer[head_plus_2_idx].addr;
 
-    assign commit_exception_0 = buffer[head_idx].exception;
+    assign commit_exception_0 = buffer[head_idx].exception & commit_valid_0;
     assign commit_exception_1 = 1'b0; //buffer[head_plus_1_idx].exception;
     assign commit_exception_2 = 1'b0; //buffer[head_plus_2_idx].exception;
 
@@ -1033,7 +942,7 @@ module reorder_buffer #(
     // Tracer Output
     //==========================================================================
     `ifndef SYNTHESIS
-    always_comb begin // todo currently we cannot trace the stored data, we need a extra line to get stored data from LSQ
+    always_comb begin 
         o_tracer_0.valid     = commit_valid_0 ? tracer_buffer[head_idx].valid : 1'b0; // todo we don't need tracer buffer valid, we can simply use commit valid
         o_tracer_0.pc        = commit_valid_0 ? tracer_buffer[head_idx].pc : 32'd0;
         o_tracer_0.instr     = commit_valid_0 ? tracer_buffer[head_idx].instr : 32'd0;

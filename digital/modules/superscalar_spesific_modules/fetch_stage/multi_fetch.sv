@@ -22,33 +22,33 @@ module multi_fetch #(parameter size = 32)(
       // Pipeline control signals
       input  logic buble,
 
-      // Eager misprediction handling from execute stage (replaces commit-based flush)
-      input  logic eager_misprediction_0,
-      input  logic eager_misprediction_1,
-      input  logic eager_misprediction_2,
-      input  logic [size-1 : 0] eager_correct_pc_0,
-      input  logic [size-1 : 0] eager_correct_pc_1,
-      input  logic [size-1 : 0] eager_correct_pc_2,
-
-      // Branch predictor update interface (for correct predictions)
-      input  logic update_prediction_valid_i_0,
-      input  logic [size-1 : 0] update_prediction_pc_0,
-
-      input  logic update_prediction_valid_i_1,
-      input  logic [size-1 : 0] update_prediction_pc_1,
-
-      input  logic update_prediction_valid_i_2,
-      input  logic [size-1 : 0] update_prediction_pc_2,
+      //==========================================================================
+      // BRAT Interface (Simplified - all branch/JALR info comes from BRAT in-order)
+      //==========================================================================
+      // 1. Misprediction signals (for PC redirect - eager flush)
+      input  logic misprediction_i_0,
+      input  logic misprediction_i_1,
+      input  logic misprediction_i_2,
       
-      // JALR predictor update signals (from execute stage)
-      input  logic is_jalr_0,
-      input  logic is_jalr_1,
-      input  logic is_jalr_2,
-      input  logic jalr_misprediction_0,
-      input  logic jalr_misprediction_1,
-      input  logic jalr_misprediction_2,
-
+      // 2. Update valid signals (for predictor update - resolved OR mispredicted)
+      input  logic update_valid_i_0,
+      input  logic update_valid_i_1,
+      input  logic update_valid_i_2,
       
+      // 3. Is JALR flags (0=branch, 1=JALR - determines which predictor to update)
+      input  logic is_jalr_i_0,
+      input  logic is_jalr_i_1,
+      input  logic is_jalr_i_2,
+      
+      // 4. PC at prediction (for predictor table lookup during update)
+      input  logic [size-1 : 0] pc_at_prediction_i_0,
+      input  logic [size-1 : 0] pc_at_prediction_i_1,
+      input  logic [size-1 : 0] pc_at_prediction_i_2,
+      
+      // 5. Correct PC (for misprediction redirect and predictor update)
+      input  logic [size-1 : 0] correct_pc_i_0,
+      input  logic [size-1 : 0] correct_pc_i_1,
+      input  logic [size-1 : 0] correct_pc_i_2,
 
       // New interface for instruction buffer integration
       output logic [4:0] fetch_valid_o,        // Which of the 3 instructions are valid
@@ -89,26 +89,44 @@ module multi_fetch #(parameter size = 32)(
    logic parallel_mode;
    assign parallel_mode = 1'b1; // Always enable 3-instruction parallel mode
 
-   // Eager misprediction handling: flush on any misprediction from execute stage
-   // Priority: FU0 > FU1 > FU2 (oldest first)
+   //==========================================================================
+   // Misprediction handling: flush on any misprediction from BRAT (in-order)
+   // Priority: slot 0 > slot 1 > slot 2 (oldest first from BRAT)
+   //==========================================================================
    logic eager_flush;
    logic [size-1:0] eager_flush_target_pc;
    
    always_comb begin
-      if (eager_misprediction_0) begin
+      if (misprediction_i_0) begin
          eager_flush = 1'b1;
-         eager_flush_target_pc = eager_correct_pc_0;
-      end else if (eager_misprediction_1) begin
+         eager_flush_target_pc = correct_pc_i_0;
+      end else if (misprediction_i_1) begin
          eager_flush = 1'b1;
-         eager_flush_target_pc = eager_correct_pc_1;
-      end else if (eager_misprediction_2) begin
+         eager_flush_target_pc = correct_pc_i_1;
+      end else if (misprediction_i_2) begin
          eager_flush = 1'b1;
-         eager_flush_target_pc = eager_correct_pc_2;
+         eager_flush_target_pc = correct_pc_i_2;
       end else begin
          eager_flush = 1'b0;
          eager_flush_target_pc = {size{1'b0}};
       end
    end
+   
+   //==========================================================================
+   // Predictor update signal derivation from BRAT interface
+   // Branch predictor: update when update_valid & !is_jalr
+   // JALR predictor: update when update_valid & is_jalr
+   //==========================================================================
+   logic branch_update_valid_0, branch_update_valid_1, branch_update_valid_2;
+   logic jalr_update_valid_0, jalr_update_valid_1, jalr_update_valid_2;
+   
+   assign branch_update_valid_0 = update_valid_i_0 & ~is_jalr_i_0;
+   assign branch_update_valid_1 = update_valid_i_1 & ~is_jalr_i_1;
+   assign branch_update_valid_2 = update_valid_i_2 & ~is_jalr_i_2;
+   
+   assign jalr_update_valid_0 = update_valid_i_0 & is_jalr_i_0;
+   assign jalr_update_valid_1 = update_valid_i_1 & is_jalr_i_1 & !misprediction_i_0;
+   assign jalr_update_valid_2 = update_valid_i_2 & is_jalr_i_2 & !misprediction_i_0 & !misprediction_i_1;
 
    // For now inst addr 1 is inst addr 0 + 4
    // inst addr 2 is inst addr 1 + 4
@@ -210,40 +228,37 @@ module multi_fetch #(parameter size = 32)(
       .instruction_3(instruction_i_3),
       .instruction_4(instruction_i_4),
 
-      .update_prediction_pc_0(update_prediction_pc_0),
-      .update_prediction_pc_1(update_prediction_pc_1),
-      .update_prediction_pc_2(update_prediction_pc_2),
+      //==========================================================================
+      // Branch predictor update (from BRAT - when update_valid & !is_jalr)
+      //==========================================================================
+      .update_prediction_pc_0(pc_at_prediction_i_0),
+      .update_prediction_pc_1(pc_at_prediction_i_1),
+      .update_prediction_pc_2(pc_at_prediction_i_2),
 
-      .update_prediction_valid_i_0(update_prediction_valid_i_0),
-      .update_prediction_valid_i_1(update_prediction_valid_i_1),
-      .update_prediction_valid_i_2(update_prediction_valid_i_2),
+      .update_prediction_valid_i_0(branch_update_valid_0),
+      .update_prediction_valid_i_1(branch_update_valid_1),
+      .update_prediction_valid_i_2(branch_update_valid_2),
 
-      // Use eager misprediction signals for predictor update
-      .misprediction_0(eager_misprediction_0),
-      .misprediction_1(eager_misprediction_1),
-      .misprediction_2(eager_misprediction_2),
+      // Misprediction signals for branch predictor
+      .misprediction_0(misprediction_i_0),
+      .misprediction_1(misprediction_i_1),
+      .misprediction_2(misprediction_i_2),
 
-      .correct_pc_0(eager_correct_pc_0),
-      .correct_pc_1(eager_correct_pc_1),
-      .correct_pc_2(eager_correct_pc_2),
+      .correct_pc_0(correct_pc_i_0),
+      .correct_pc_1(correct_pc_i_1),
+      .correct_pc_2(correct_pc_i_2),
 
-      // JALR predictor updates - FU0
-      .jalr_correct_pc_0(eager_correct_pc_0),
-      .jalr_misprediction_0(jalr_misprediction_0),
-      .jalr_prediction_valid_0(is_jalr_0),
-      .jalr_update_prediction_pc_0(update_prediction_pc_0),
+      //==========================================================================
+      // JALR predictor update (from BRAT - when update_valid & is_jalr)
+      //=========================================================================
+      .jalr_update_valid_0(jalr_update_valid_0),
+      .jalr_update_prediction_pc_0(pc_at_prediction_i_0),
       
-      // JALR predictor updates - FU1
-      .jalr_correct_pc_1(eager_correct_pc_1),
-      .jalr_misprediction_1(jalr_misprediction_1),
-      .jalr_prediction_valid_1(is_jalr_1),
-      .jalr_update_prediction_pc_1(update_prediction_pc_1),
+      .jalr_update_valid_1(jalr_update_valid_1),
+      .jalr_update_prediction_pc_1(pc_at_prediction_i_1),
       
-      // JALR predictor updates - FU2
-      .jalr_correct_pc_2(eager_correct_pc_2),
-      .jalr_misprediction_2(jalr_misprediction_2),
-      .jalr_prediction_valid_2(is_jalr_2),
-      .jalr_update_prediction_pc_2(update_prediction_pc_2),
+      .jalr_update_valid_2(jalr_update_valid_2),
+      .jalr_update_prediction_pc_2(pc_at_prediction_i_2),
 
       .jump_0(jump_0),
       .jump_1(jump_1),
