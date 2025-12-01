@@ -320,8 +320,42 @@ module issue_stage #(
     //==========================================================================
     
     // Ready signal indicates RAT can allocate physical registers and dispatch stage can accept
-    assign decode_ready_o =(lsq_alloc_ready == 3'b111)? ( {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready} & rename_ready) : 3'b000;
-  
+    logic [1:0] valid_rob_entry;
+    logic [1:0] valid_lsq_entry;
+    logic [1:0] max_available_entries;
+    logic [1:0] dispatch_request;
+
+    assign valid_rob_entry = rename_ready[0] + rename_ready[1] + rename_ready[2];
+    assign valid_lsq_entry = lsq_alloc_ready[0] + lsq_alloc_ready[1] + lsq_alloc_ready[2];
+    assign dispatch_request = issue_to_dispatch_0.dispatch_ready + issue_to_dispatch_1.dispatch_ready + issue_to_dispatch_2.dispatch_ready;
+    assign max_available_entries = (valid_rob_entry < valid_lsq_entry) ? valid_rob_entry : valid_lsq_entry;
+
+    // giving priority to pipe 0, then pipe 1, then pipe 2
+    always_comb begin
+        decode_ready_o = 3'b000;
+        if(max_available_entries >= dispatch_request) begin
+            decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready};
+        end else begin
+            case (max_available_entries)
+                2'b00: decode_ready_o = 3'b000;
+                2'b01: begin
+                    if(issue_to_dispatch_0.dispatch_ready)
+                        decode_ready_o = 3'b001;
+                    else if(issue_to_dispatch_1.dispatch_ready)
+                        decode_ready_o = 3'b010;
+                    else if(issue_to_dispatch_2.dispatch_ready)
+                        decode_ready_o = 3'b100;
+                    else
+                        decode_ready_o = 3'b000;
+                end
+                2'b10: begin
+                    decode_ready_o = 3'b011;
+                end
+                default: decode_ready_o = 3'b000;
+            endcase
+        end
+    end
+   
     //==========================================================================
     // ISSUE STAGE PIPELINE REGISTERS (CONTROL AND ADDRESSES ONLY)
     //==========================================================================

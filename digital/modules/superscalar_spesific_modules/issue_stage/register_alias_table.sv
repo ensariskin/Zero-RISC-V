@@ -206,6 +206,7 @@ module register_alias_table #(
     circular_buffer_3port free_address_buffer(
         .clk(clk),
         .rst_n(reset),
+        .redo_last_alloc(|branch_mispredicted_o),
         .read_en_0(need_alloc_0),
         .read_en_1(need_alloc_1),
         .read_en_2(need_alloc_2),
@@ -228,6 +229,7 @@ module register_alias_table #(
     circular_buffer_3port #(.BUFFER_DEPTH(32)) lsq_address_buffer(
         .clk(clk),
         .rst_n(reset),
+        .redo_last_alloc(|branch_mispredicted_o),
         .read_en_0(need_lsq_alloc_0),
         .read_en_1(need_lsq_alloc_1),
         .read_en_2(need_lsq_alloc_2),

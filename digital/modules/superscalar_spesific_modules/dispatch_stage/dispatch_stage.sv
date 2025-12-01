@@ -186,7 +186,7 @@ module dispatch_stage #(
     // Calculate distance from mispredicted branch to ROB head
     // This is needed by RS and LSQ for selective flush
     logic [5:0] brat_mispredicted_distance;
-    assign brat_mispredicted_distance = brat_mispredicted_phys_reg[4:0] > rob_head_ptr ? 
+    assign brat_mispredicted_distance = brat_mispredicted_phys_reg[4:0] >= rob_head_ptr ? 
                                        (brat_mispredicted_phys_reg[4:0] - rob_head_ptr) :
                                        (32 + brat_mispredicted_phys_reg[4:0] - rob_head_ptr);
 

@@ -20,6 +20,8 @@ module circular_buffer_3port #(
     // Manual pointer control for misprediction recovery
     input  logic set_read_ptr_en,                    // Enable manual read pointer set
     input  logic [ADDR_WIDTH-1:0] set_read_ptr_value,  // Value to set read pointer to
+
+    input  logic redo_last_alloc,
     
     // Read port enables
     input  logic read_en_0,
@@ -112,6 +114,8 @@ module circular_buffer_3port #(
     logic valid_0;
     logic valid_1;
     logic valid_2;
+
+    logic [1:0] last_alloc;
     
     // Read port 0: Current read pointer position
     always_comb begin
@@ -172,6 +176,8 @@ module circular_buffer_3port #(
             end else begin
                 next_read_ptr = {~read_ptr[ADDR_WIDTH], set_read_ptr_value};
             end
+        end else if(redo_last_alloc) begin
+            next_read_ptr = read_ptr - last_alloc;
         end else begin
             next_read_ptr = read_ptr;
             
@@ -199,11 +205,13 @@ module circular_buffer_3port #(
         if (!rst_n) begin
             read_ptr <= #D '0;
             write_ptr <= #D {1'b1, {ADDR_WIDTH{1'b0}}}; 
+            last_alloc <= #D 2'b0;
         end else begin
             // Update read pointer
             read_ptr <= #D next_read_ptr;
             // Update write pointer
             write_ptr <= #D next_write_ptr;
+            last_alloc <= #D num_reads;
         end
     end
     

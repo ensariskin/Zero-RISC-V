@@ -1349,19 +1349,23 @@ module dv_top_superscalar;
     // BRANCH PREDICTION & JALR STATISTICS
     //==========================================================================
     // Tracks branch prediction accuracy and JALR ratio
-   
+    integer brat_branches;
     initial begin
         total_branches = 0;
         mispredicted_branches = 0;
         jalr_count = 0;
         total_rob_entries_on_mispred = 0;
         total_mispredictions = 0;
+        brat_branches = 0;
     end
     
     // Monitor branch predictions and mispredictions
     always @(posedge clk) begin
         if (rst_n) begin
             // Count total branches (when update_prediction_valid is high)
+            if(dv_top_superscalar.dut.dispatch_stage_unit.brat_eager_misprediction) begin
+                brat_branches++;
+            end
             if (dut.dispatch_stage_unit.rob.commit_is_branch_0) begin
                 total_branches++;
                 
@@ -1401,6 +1405,8 @@ module dv_top_superscalar;
         $display("Mispredicted branches:    %0d", mispredicted_branches);
         $display("JALR instructions:        %0d", jalr_count);
         $display("Total mispredictions:     %0d", total_mispredictions);
+        
+         $display("BRAT predicted branches:   %0d", brat_branches);
         
         if (total_branches > 0) begin
             prediction_accuracy = 100.0 * (1.0 - (real'(mispredicted_branches) / real'(total_branches)));
@@ -1663,6 +1669,54 @@ module dv_top_superscalar;
     endgroup
     */
 
+
+    //==========================================================================
+    // CDB SILENCE DETECTION (Pipeline Stall / Deadlock Detection)
+    //==========================================================================
+    
+    parameter CDB_SILENCE_THRESHOLD = 10;  // Number of cycles to wait before declaring deadlock
+    integer cdb_silence_counter;
+    logic cdb_any_valid;
+    logic cdb_silence_detected;
+    
+    // Combine all CDB valid signals
+    assign cdb_any_valid = dut.cdb_interface.cdb_valid_0 |
+                           dut.cdb_interface.cdb_valid_1 |
+                           dut.cdb_interface.cdb_valid_2 |
+                           dut.cdb_interface.cdb_valid_3_0 |
+                           dut.cdb_interface.cdb_valid_3_1 |
+                           dut.cdb_interface.cdb_valid_3_2;
+    
+    // CDB silence counter logic
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            cdb_silence_counter <= 0;
+            cdb_silence_detected <= 1'b0;
+        end else begin
+            if (cdb_any_valid) begin
+                // Reset counter when any CDB is valid
+                cdb_silence_counter <= 0;
+            end else begin
+                // Increment counter when all CDBs are silent
+                cdb_silence_counter <= cdb_silence_counter + 1;
+            end
+            
+            // Detect silence threshold exceeded
+            if (cdb_silence_counter >= CDB_SILENCE_THRESHOLD && !cdb_silence_detected) begin
+                cdb_silence_detected <= 1'b1;
+                $display("[%t] WARNING: CDB silence detected for %0d cycles!", $time, CDB_SILENCE_THRESHOLD);
+                $display("  CDB_0: %b, CDB_1: %b, CDB_2: %b", 
+                         dut.cdb_interface.cdb_valid_0,
+                         dut.cdb_interface.cdb_valid_1,
+                         dut.cdb_interface.cdb_valid_2);
+                $display("  CDB_3_0: %b, CDB_3_1: %b, CDB_3_2: %b",
+                         dut.cdb_interface.cdb_valid_3_0,
+                         dut.cdb_interface.cdb_valid_3_1,
+                         dut.cdb_interface.cdb_valid_3_2);
+                $display("  Possible pipeline stall or deadlock detected!");
+            end
+        end
+    end
 
     //==========================================================================
     // TEST COMPLETION DETECTION

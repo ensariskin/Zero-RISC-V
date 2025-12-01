@@ -1,324 +1,318 @@
-# RV32I 3-Way Superscalar Processor Design Hierarchy
+# RV32I 3-Way Superscalar Processor - Design Hierarchy
 
 ## Overview
-This document describes the complete design hierarchy of the 3-way superscalar RV32I processor with out-of-order execution capabilities using the Tomasulo algorithm.
+
+This document describes the complete design hierarchy of the 3-way superscalar RV32I processor with out-of-order execution capabilities using the Tomasulo algorithm. The processor features speculative execution with BRAT (Branch Resolution Alias Table) for efficient misprediction recovery.
+
+**Key Specifications:**
+- **ISA**: RISC-V RV32I Base Integer Instruction Set
+- **Issue Width**: 3 instructions per cycle
+- **Fetch Width**: 5 instructions per cycle
+- **Execution**: Out-of-order with Tomasulo algorithm
+- **Commit**: In-order through Reorder Buffer
 
 ---
 
-## Top-Level Module: `rv32i_superscalar_core`
+## Top-Level Module Hierarchy
 
 ```
 rv32i_superscalar_core
 │
 ├── fetch_buffer_unit (fetch_buffer_top)
 │   ├── fetch_unit (multi_fetch)
-│   │   └── Fetches up to 5 instructions per cycle
+│   │   ├── early_stage_immediate_decoder × 5
+│   │   ├── jump_controller_super
+│   │   │   ├── branch_predictor (2-bit saturating counter)
+│   │   │   └── jalr_predictor (BTB for indirect jumps)
+│   │   └── pc_ctrl_super (5-way parallel PC management)
 │   │
 │   └── instruction_buffer (instruction_buffer_new)
-│       └── 16-entry FIFO buffer for fetch/decode decoupling
+│       └── 16-entry FIFO buffer with 5-in/3-out ports
 │
 ├── issue_stage_unit (issue_stage)
-│   ├── decoder_0 (rv32i_decoder)
-│   │   └── Decodes instruction stream 0
-│   │
-│   ├── decoder_1 (rv32i_decoder)
-│   │   └── Decodes instruction stream 1
-│   │
-│   ├── decoder_2 (rv32i_decoder)
-│   │   └── Decodes instruction stream 2
+│   ├── decoder_0, decoder_1, decoder_2 (rv32i_decoder)
+│   │   └── Full RV32I instruction decode with control word generation
 │   │
 │   └── rat (register_alias_table)
-│       ├── 32-entry architectural to 64-entry physical register mapping
-│       ├── Free list management (circular buffer)
-│       └── 3-way allocation and commit per cycle
+│       ├── RAT Mapping Table (32 arch → 64 phys)
+│       ├── free_address_buffer (circular_buffer_3port)
+│       ├── lsq_address_buffer (circular_buffer_3port)
+│       └── brat_buffer (brat_circular_buffer) ★ NEW
+│           ├── 16-entry branch resolution queue
+│           ├── RAT snapshot storage per branch
+│           └── In-order branch resolution with combinational bypass
 │
 ├── dispatch_stage_unit (dispatch_stage)
 │   ├── rob (reorder_buffer)
 │   │   ├── 32-entry circular buffer
-│   │   ├── In-order commit (up to 3 per cycle)
-│   │   ├── Out-of-order completion tracking
-│   │   ├── Exception/misprediction detection
-│   │   └── 6 read ports for operand fetch
+│   │   ├── 6 read ports + 6 write ports (CDB)
+│   │   ├── 3-way parallel commit with exception handling
+│   │   └── Eager misprediction tail truncation
 │   │
 │   ├── physical_reg_file (multi_port_register_file)
-│   │   ├── 32 architectural registers (5-bit address)
-│   │   ├── 6 read ports (2 per reservation station)
-│   │   └── 3 write ports (commit from ROB)
+│   │   ├── 32 architectural registers
+│   │   ├── 6 read ports (2 per RS)
+│   │   └── 3 write ports (commit)
 │   │
-│   ├── rs_0 (reservation_station)
-│   │   ├── Single-entry station for ALU0
-│   │   ├── Tag-based dependency tracking (3-bit tags)
-│   │   ├── CDB monitoring for operand wake-up
-│   │   └── Direct bypass when operands ready
-│   │
-│   ├── rs_1 (reservation_station)
-│   │   ├── Single-entry station for ALU1
+│   ├── rs_0, rs_1, rs_2 (reservation_station)
+│   │   ├── Single-entry station per FU
 │   │   ├── Tag-based dependency tracking
-│   │   ├── CDB monitoring for operand wake-up
-│   │   └── Direct bypass when operands ready
-│   │
-│   ├── rs_2 (reservation_station)
-│   │   ├── Single-entry station for ALU2
-│   │   ├── Tag-based dependency tracking
-│   │   ├── CDB monitoring for operand wake-up
-│   │   └── Direct bypass when operands ready
+│   │   ├── CDB snooping for operand wake-up
+│   │   └── BRAT-based eager flush support
 │   │
 │   ├── lsq (lsq_simple_top)
-│   │   ├── Load-Store Queue for memory ordering
-│   │   ├── 3-way allocation per cycle
-│   │   ├── Address calculation tracking
-│   │   ├── Store buffering
-│   │   └── Memory dependency checking
+│   │   ├── 32-entry Load-Store Queue
+│   │   ├── 3-way allocation/deallocation
+│   │   ├── Store-to-load forwarding
+│   │   ├── 3 independent memory ports
+│   │   └── BRAT-based eager flush support
 │   │
 │   └── cdb_interface (cdb_if)
-│       ├── Common Data Bus with 4 broadcast channels:
-│       │   ├── CDB0: Results from ALU0
-│       │   ├── CDB1: Results from ALU1
-│       │   ├── CDB2: Results from ALU2
-│       │   └── CDB3: Results from LSQ (memory operations)
-│       │
-│       └── Broadcasts to all reservation stations simultaneously
+│       └── 6-channel Common Data Bus (3 ALU + 3 LSQ)
 │
 └── execute_stage_unit (superscalar_execute_stage)
-    ├── fu_0 (execute)
-    │   ├── Full RV32I ALU (ADD, SUB, SLT, SLTU, etc.)
-    │   ├── Shifter (SLL, SRL, SRA)
-    │   ├── Logic operations (AND, OR, XOR)
-    │   └── Branch/Jump computation
+    ├── fu0_alu_shifter, fu1_alu_shifter, fu2_alu_shifter
+    │   └── Full RV32I ALU with single-cycle latency
     │
-    ├── fu_1 (execute)
-    │   ├── Full RV32I ALU
-    │   ├── Shifter
-    │   ├── Logic operations
-    │   └── Branch/Jump computation
-    │
-    └── fu_2 (execute)
-        ├── Full RV32I ALU
-        ├── Shifter
-        ├── Logic operations
-        └── Branch/Jump computation
+    └── fu0_branch_controller, fu1_branch_controller, fu2_branch_controller
+        └── Branch resolution and misprediction detection
 ```
 
 ---
 
 ## Pipeline Stages
 
-### 1. Fetch Stage (`fetch_buffer_top`)
-**Components:**
-- `multi_fetch`: Parallel instruction fetcher (up to 5 instructions/cycle)
-- `instruction_buffer_new`: 16-entry FIFO buffer
+### Stage 1: Fetch (`fetch_buffer_top`)
 
-**Features:**
-- Branch prediction integration
-- Misprediction recovery (flush and redirect)
-- Variable fetch width (1-5 instructions)
-- Decouples fetch from decode
+The fetch stage is responsible for instruction fetching with branch prediction support.
 
-**Interfaces:**
-- **Input**: 5 instruction memory ports
-- **Output**: Up to 3 instructions per cycle to issue stage
-- **Control**: Flush signal, correct PC for misprediction recovery
+**Module: `multi_fetch`**
 
----
+| Port Category | Signals | Description |
+|---------------|---------|-------------|
+| Memory Interface | `inst_addr_0..4`, `instruction_i_0..4` | 5-port instruction memory |
+| BRAT Interface | `misprediction_i_0..2` | In-order misprediction signals |
+| | `update_valid_i_0..2` | Predictor update enables |
+| | `is_jalr_i_0..2` | JALR vs branch distinction |
+| | `pc_at_prediction_i_0..2` | PC for predictor table lookup |
+| | `correct_pc_i_0..2` | Target PC for redirect/update |
+| Outputs | `fetch_valid_o[4:0]` | Valid instruction bitmap |
+| | `pc_o_0..4` | PC values for buffer |
+| | `branch_prediction_o_0..4` | Branch prediction results |
 
-### 2. Issue Stage (`issue_stage`)
-**Components:**
-- 3 parallel `rv32i_decoder` units
-- `register_alias_table` (RAT)
+**Key Features:**
+- **5-Wide Fetch**: Fetches up to 5 sequential instructions per cycle
+- **Branch Prediction**: 2-bit saturating counter predictor + JALR BTB
+- **Early Termination**: Stops at predicted-taken branches
+- **BRAT Integration**: Receives in-order branch results for predictor updates
 
-**Features:**
-- 3-way instruction decode
-- Register renaming (32 arch → 64 phys registers)
-- Free list management
-- Structural hazard detection (ROB/LSQ full)
+**Module: `instruction_buffer_new`**
 
-**Interfaces:**
-- **Input**: 3 instruction streams from fetch buffer
-- **Output**: 3 renamed instruction streams to dispatch
-- **Control**: ROB full, LSQ full, decode_ready backpressure
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| BUFFER_DEPTH | 16 | FIFO depth |
+| Input Width | 5 | Up to 5 instructions/cycle from fetch |
+| Output Width | 3 | Up to 3 instructions/cycle to decode |
 
-**RAT Details:**
-- **Allocation**: Up to 3 physical registers per cycle
-- **Commit**: Up to 3 registers freed per cycle
-- **Free List**: Circular buffer with head/tail pointers
-- **Mapping Table**: 32 entries (arch reg → phys reg + valid bit)
+**Key Features:**
+- **Decoupling Buffer**: Separates fetch rate from decode rate
+- **Flush Support**: Clear on misprediction via `eager_flush` signal
+- **Backpressure**: `fetch_ready_o` stops fetch when full
 
 ---
 
-### 3. Dispatch Stage (`dispatch_stage`)
-**Components:**
-- `reorder_buffer` (ROB)
-- `multi_port_register_file`
-- 3 × `reservation_station` (RS0, RS1, RS2)
-- `lsq_simple_top` (Load-Store Queue)
-- `cdb_if` (Common Data Bus)
+### Stage 2: Issue (`issue_stage`)
 
-**Features:**
-- Out-of-order dispatch to reservation stations
-- Operand fetching from ROB or register file
-- Tag-based dependency resolution
-- In-order commit through ROB
+The issue stage handles instruction decode and register renaming.
 
-**ROB Details:**
-- **Depth**: 32 entries
-- **Allocation**: Up to 3 entries per cycle
-- **Commit**: Up to 3 entries per cycle (in-order from head)
-- **Read Ports**: 6 (for 3 instructions × 2 operands)
-- **Write Ports**: 6 (from CDB channels)
+**Module: `rv32i_decoder`**
 
-**Reservation Station Details:**
-- **Depth**: 1 entry per station (simplified Tomasulo)
-- **Operand Ready**: Immediate dispatch if both operands available
-- **Operand Wait**: Monitor CDB for pending operands
-- **Tags**: 3-bit producer tags (000=ALU0, 001=ALU1, 010=ALU2, 011=LSQ, 111=Ready)
+Decodes RV32I instructions into control words:
 
-**LSQ Details:**
-- **Allocation**: Up to 3 memory operations per cycle
-- **Address Calculation**: Tracked via CDB
-- **Store Forwarding**: Load-store dependency checking
-- **Memory Ports**: 3 independent data memory interfaces
+```
+Control Word [25:0]:
+├── [25:21] rd_arch     - Destination register
+├── [20:16] rs2_arch    - Source register 2
+├── [15:11] rs1_arch    - Source register 1
+├── [10:7]  func_sel    - ALU function select
+├── [6]     we          - Register write enable
+├── [5]     save_pc     - Save PC+4 (JAL/JALR)
+├── [4]     is_load     - Load operation
+├── [3]     use_imm     - Use immediate for operand B
+├── [2]     sign_ext    - Sign extend memory data
+└── [1:0]   mem_size    - Memory access size (B/H/W)
 
-**CDB Details:**
-- **Channels**: 4 broadcast buses
-  - CDB0: ALU0 results
-  - CDB1: ALU1 results
-  - CDB2: ALU2 results
-  - CDB3: LSQ results (load data)
-- **Broadcast**: Simultaneous to all RSs, ROB, and RAT
-- **Data**: Result value + destination register + valid bit
+Branch Select [2:0]:
+├── 000: No branch
+├── 001: BEQ
+├── 010: BNE
+├── 011: BLT
+├── 100: BGE
+├── 101: BLTU
+├── 110: BGEU
+└── 111: JALR
+```
+
+**Module: `register_alias_table`**
+
+The RAT implements Tomasulo register renaming with BRAT for speculative execution support.
+
+| Feature | Implementation |
+|---------|----------------|
+| Mapping Table | 32 entries × 6-bit (arch → phys) |
+| Physical Registers | 64 total (32 RF + 32 ROB) |
+| Free List | `circular_buffer_3port` for 3-way alloc/dealloc |
+| BRAT | `brat_circular_buffer` with 16 entries |
+
+**RAT Renaming Flow:**
+1. Lookup rs1/rs2 in RAT → get current physical mapping
+2. Allocate new physical register from free list for rd
+3. Update RAT: arch_reg[rd] → new_phys_reg
+4. If branch: push RAT snapshot to BRAT
+5. On misprediction: restore RAT from BRAT snapshot
+
+**BRAT v2 Features:**
+- **In-Order Resolution**: Outputs oldest-first resolved branches
+- **Combinational Bypass**: Same-cycle execute→output for low latency
+- **Snapshot Storage**: Full RAT state per speculative branch
+- **Auto-Recovery**: Restores RAT on misprediction detection
 
 ---
 
-### 4. Execute Stage (`superscalar_execute_stage`)
-**Components:**
-- 3 × `execute` units (FU0, FU1, FU2)
+### Stage 3: Dispatch (`dispatch_stage`)
 
-**Features:**
-- Single-cycle execution for most operations
-- Branch resolution and misprediction detection
-- Result broadcast via CDB
+The dispatch stage allocates ROB/LSQ entries and manages operand availability.
 
-**Functional Unit Capabilities:**
-- Arithmetic: ADD, SUB, SLT, SLTU
-- Logic: AND, OR, XOR
-- Shift: SLL, SRL, SRA
-- Branch: BEQ, BNE, BLT, BGE, BLTU, BGEU
-- Jump: JAL, JALR
-- Memory Address Calculation: LOAD/STORE effective address
+**Module: `reorder_buffer`**
 
-**Branch Handling:**
-- **Prediction Check**: Compare actual vs. predicted outcome
-- **Misprediction Signal**: Sent to ROB for exception marking
-- **PC Correction**: Calculated correct PC sent to fetch stage
-- **Recovery**: ROB waits for head, then flushes entire pipeline
+```
+ROB Entry Structure:
+├── data[31:0]        - Result data
+├── tag[2:0]          - Producer tag (111=ready)
+├── addr[4:0]         - Architectural destination
+├── executed          - Completion flag
+├── exception         - Misprediction flag
+├── correct_pc[31:0]  - Corrected PC for branch
+├── is_branch         - Branch instruction flag
+└── is_store          - Store instruction flag
+```
+
+| Interface | Ports | Description |
+|-----------|-------|-------------|
+| Allocation | `alloc_enable_0..2` | 3-way parallel allocation |
+| CDB Write | `cdb_valid_0..2`, `cdb_data_0..2` | 6 CDB write ports |
+| Read | `read_addr_0..5`, `read_data_0..5` | 6 read ports for RS |
+| Commit | `commit_valid_0..2`, `commit_data_0..2` | 3-way in-order commit |
+| Eager Flush | `branch_misprediction_i` | Tail truncation on BRAT signal |
+
+**Module: `reservation_station`**
+
+Single-entry Tomasulo station with tag-based wake-up:
+
+| Signal | Width | Description |
+|--------|-------|-------------|
+| `operand_a_data` | 32 | Operand A value |
+| `operand_a_tag` | 3 | Producer tag (111=ready) |
+| `operand_b_data` | 32 | Operand B value |
+| `operand_b_tag` | 3 | Producer tag (111=ready) |
+| `rd_phys_addr` | 6 | Destination physical reg |
+| `control_signals` | 11 | Execution control |
+
+**Tag Encoding:**
+```
+000: Waiting for ALU0
+001: Waiting for ALU1
+010: Waiting for ALU2
+011: Waiting for LSQ
+111: Operand ready
+```
+
+**Module: `lsq_simple_top`**
+
+Load-Store Queue with memory ordering:
+
+| Feature | Implementation |
+|---------|----------------|
+| Queue Depth | 32 entries |
+| Allocation | 3-way parallel |
+| Memory Ports | 3 independent |
+| Store Forwarding | CAM-based address match |
+| Eager Flush | BRAT-distance based invalidation |
+
+---
+
+### Stage 4: Execute (`superscalar_execute_stage`)
+
+Three parallel functional units with branch resolution:
+
+**Module: `function_unit_alu_shifter`**
+
+| Operation | `func_sel` | Description |
+|-----------|------------|-------------|
+| ADD | 0000 | Addition |
+| SUB | 0001 | Subtraction |
+| SLT | 0010 | Set less than (signed) |
+| SLTU | 0011 | Set less than (unsigned) |
+| AND | 0100 | Bitwise AND |
+| OR | 0101 | Bitwise OR |
+| XOR | 0110 | Bitwise XOR |
+| SLL | 0111 | Shift left logical |
+| SRL | 1000 | Shift right logical |
+| SRA | 1001 | Shift right arithmetic |
+
+**Branch Resolution:**
+```
+Execute Stage Outputs → BRAT:
+├── exec_branch_valid_i[2:0]   - Branch executed flags
+├── exec_mispredicted_i[2:0]   - Misprediction flags
+├── exec_rob_id_0/1/2_i        - ROB IDs of branches
+├── exec_correct_pc_0/1/2_i    - Corrected PC values
+└── exec_pc_at_prediction_0/1/2_i - PCs for predictor update
+
+BRAT Outputs → All Modules:
+├── branch_resolved_o[2:0]     - In-order resolved signals
+├── branch_mispredicted_o[2:0] - In-order misprediction
+├── correct_pc_0/1/2_o         - Corrected PC values
+├── is_jalr_0/1/2_o            - JALR vs branch type
+└── pc_at_prediction_0/1/2_o   - For predictor table update
+```
 
 ---
 
 ## Data Flow
 
-### Instruction Flow (Normal Execution)
+### Normal Execution Pipeline
+
 ```
-1. FETCH (fetch_buffer_top)
-   │
-   ├─→ multi_fetch: Fetch 5 instructions from memory
-   │
-   └─→ instruction_buffer: Store in 16-entry FIFO
-       │
-       └─→ Output 3 instructions per cycle
-           │
-           ▼
-2. ISSUE (issue_stage)
-   │
-   ├─→ rv32i_decoder × 3: Decode instructions
-   │
-   └─→ register_alias_table: Rename registers
-       │   ├─→ Allocate physical registers
-       │   ├─→ Update mapping table
-       │   └─→ Check ROB/LSQ availability
-       │
-       └─→ Output renamed instructions
-           │
-           ▼
-3. DISPATCH (dispatch_stage)
-   │
-   ├─→ reorder_buffer: Allocate ROB entries
-   │   └─→ Store instruction metadata
-   │
-   ├─→ Operand Fetch:
-   │   ├─→ Check ROB for pending results
-   │   └─→ Read register file for ready values
-   │
-   └─→ reservation_station × 3: Dispatch if ready
-       │   ├─→ If operands ready: Issue to execute
-       │   └─→ If operands pending: Wait for CDB
-       │
-       └─→ lsq: Allocate LSQ entry for loads/stores
-           │
-           ▼
-4. EXECUTE (superscalar_execute_stage)
-   │
-   ├─→ execute × 3: Perform operation
-   │   ├─→ ALU computation
-   │   ├─→ Branch resolution
-   │   └─→ Memory address calculation
-   │
-   └─→ CDB Broadcast:
-       │   ├─→ To reservation_stations (wake-up waiting ops)
-       │   ├─→ To reorder_buffer (mark complete)
-       │   └─→ To lsq (address/data forwarding)
-       │
-       ▼
-5. COMMIT (reorder_buffer)
-   │
-   ├─→ In-order commit from ROB head
-   │   ├─→ Check for exceptions/mispredictions
-   │   └─→ Up to 3 instructions per cycle
-   │
-   ├─→ Update architectural state:
-   │   ├─→ Write register file (3 ports)
-   │   ├─→ Free old physical registers (RAT)
-   │   └─→ Commit memory operations (LSQ)
-   │
-   └─→ If misprediction: FLUSH pipeline
+┌─────────┐    ┌─────────┐    ┌──────────┐    ┌─────────┐    ┌────────┐
+│  FETCH  │───►│  ISSUE  │───►│ DISPATCH │───►│ EXECUTE │───►│ COMMIT │
+│ (5-way) │    │ (3-way) │    │  (3-way) │    │ (3-way) │    │(3-way) │
+└─────────┘    └─────────┘    └──────────┘    └─────────┘    └────────┘
+     │              │              │               │              │
+     │              │              │               │              │
+   I-Mem          RAT+           ROB+            CDB            RF+
+   (5-port)       BRAT           RF+RS           Broadcast      RAT
+                                 LSQ                            Update
 ```
 
-### Misprediction Recovery Flow
+### Misprediction Recovery (BRAT v2)
+
 ```
-1. Branch Resolution (execute stage)
-   │
-   └─→ Detect misprediction
-       │
-       ▼
-2. ROB Exception Marking
-   │
-   ├─→ CDB broadcasts exception flag
-   │
-   └─→ ROB marks entry as exception
-       │
-       ▼
-3. Wait for ROB Head
-   │
-   └─→ Allow older instructions to commit
-       │
-       ▼
-4. Exception Detection at Head
-   │
-   ├─→ Signal misprediction_detected
-   │
-   └─→ Provide correct_pc
-       │
-       ▼
-5. Pipeline Flush
-   │
-   ├─→ Clear instruction buffer
-   ├─→ Clear reservation stations
-   ├─→ Clear ROB entries after head
-   └─→ Reset RAT to committed state
-       │
-       ▼
-6. Fetch Restart
-   │
-   └─→ Begin fetching from correct_pc
+1. Execute Stage → BRAT
+   └─► Branch resolves, misprediction detected
+   
+2. BRAT → In-Order Output
+   └─► Oldest mispredicted branch emitted first
+   
+3. BRAT → All Modules (same cycle)
+   ├─► RAT: Restore snapshot
+   ├─► ROB: Truncate tail
+   ├─► RS: Flush younger entries
+   ├─► LSQ: Flush younger entries
+   └─► Fetch: Redirect PC
+
+4. BRAT → Fetch
+   └─► Update predictor tables
 ```
 
 ---
@@ -327,56 +321,72 @@ rv32i_superscalar_core
 
 | Component | Parameter | Value |
 |-----------|-----------|-------|
-| **Fetch Stage** | Instructions/cycle (max) | 5 |
-| | Instruction Buffer Depth | 16 |
-| **Issue Stage** | Decode Width | 3 |
-| | Architectural Registers | 32 |
-| | Physical Registers | 64 |
-| **Dispatch Stage** | ROB Depth | 32 |
-| | LSQ Depth | Variable |
-| | Reservation Stations | 3 × 1-entry |
-| | CDB Channels | 4 |
-| **Execute Stage** | Functional Units | 3 |
-| | Execution Latency | 1 cycle |
-| **Memory** | Data Memory Ports | 3 |
-| | Instruction Memory Ports | 5 |
+| **Fetch** | Fetch Width | 5 instructions/cycle |
+| | Instruction Buffer | 16 entries |
+| | Branch Predictor | 2-bit saturating, 256 entries |
+| | JALR Predictor | 64-entry BTB |
+| **Issue** | Decode Width | 3 instructions/cycle |
+| | Arch Registers | 32 (x0-x31) |
+| | Phys Registers | 64 (32 RF + 32 ROB) |
+| | BRAT Depth | 16 entries |
+| **Dispatch** | ROB Depth | 32 entries |
+| | ROB Read Ports | 6 |
+| | LSQ Depth | 32 entries |
+| | RS Count | 3 (1 per FU) |
+| | CDB Channels | 6 (3 ALU + 3 LSQ) |
+| **Execute** | Functional Units | 3 ALU/Shifters |
+| | Latency | 1 cycle |
+| **Memory** | I-Mem Ports | 5 |
+| | D-Mem Ports | 3 |
 
 ---
-
 
 ## File Organization
 
 ```
 digital/modules/superscalar_spesific_modules/
-│
 ├── top/
-│   └── rv32i_superscalar_core.sv          # Top-level integration
+│   └── rv32i_superscalar_core.sv       # Top-level integration
 │
 ├── fetch_stage/
-│   ├── fetch_buffer_top.sv                # Fetch + buffer wrapper
-│   ├── multi_fetch.sv                     # Parallel fetch unit
-│   └── instruction_buffer_new.sv          # FIFO buffer
+│   ├── fetch_buffer_top.sv             # Fetch + buffer wrapper
+│   ├── multi_fetch.sv                  # 5-wide parallel fetch
+│   ├── instruction_buffer_new.sv       # 16-entry FIFO
+│   ├── jump_controller_super.sv        # Branch prediction
+│   ├── pc_ctrl_super.sv                # 5-way PC management
+│   ├── branch_predictor.sv             # 2-bit predictor
+│   └── jalr_predictor.sv               # JALR BTB
 │
 ├── issue_stage/
-│   ├── issue_stage.sv                     # Issue wrapper
-│   ├── rv32i_decoder.sv                   # Instruction decoder
-│   └── register_alias_table.sv            # RAT for renaming
+│   ├── issue_stage.sv                  # Issue wrapper + decoders
+│   ├── rv32i_decoder.sv                # RV32I instruction decoder
+│   └── register_alias_table.sv         # RAT + BRAT integration
 │
 ├── dispatch_stage/
-│   ├── dispatch_stage.sv                  # Dispatch wrapper
-│   ├── reorder_buffer.sv                  # ROB implementation
-│   ├── reservation_station.sv             # Single-entry RS
-│   ├── multi_port_register_file.sv        # Physical register file
-│   └── lsq_simple_top.sv                  # Load-Store Queue
+│   ├── dispatch_stage.sv               # Dispatch wrapper
+│   ├── reorder_buffer.sv               # 32-entry ROB
+│   ├── reservation_station.sv          # Single-entry RS
+│   ├── multi_port_register_file.sv     # 6R/3W register file
+│   └── lsq_simple_top.sv               # Load-Store Queue
 │
 ├── execute_stage/
-│   ├── execute_stage.sv                   # Execute wrapper
-│   └── execute.sv                         # Functional unit (ALU)
+│   └── execute_stage.sv                # 3× ALU + branch control
 │
-└── common/
-    ├── cdb_if.sv                          # CDB interface definition
-    ├── rs_to_exec_if.sv                   # RS-to-Execute interface
-    └── issue_to_dispatch_if.sv            # Issue-to-Dispatch interface
+├── load_store_queue/
+│   ├── lsq_simple_top.sv               # LSQ top module
+│   └── lsq_package.sv                  # LSQ types/params
+│
+├── common/
+│   ├── brat_circular_buffer.sv         # BRAT v2 implementation
+│   ├── circular_buffer_3port.sv        # Free list / LSQ alloc
+│   ├── priority_encoder.sv             # Multi-bit priority encoder
+│   └── early_stage_immediate_decoder.sv # Early immediate decode
+│
+└── interfaces/
+    ├── cdb_if.sv                       # CDB interface
+    ├── rs_to_exec_if.sv                # RS-to-Execute interface
+    ├── issue_to_dispatch_if.sv         # Issue-to-Dispatch interface
+    └── decode_to_rs_if.sv              # Decode-to-RS interface
 ```
 
 ---
@@ -385,7 +395,8 @@ digital/modules/superscalar_spesific_modules/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | 2025-11-23 | AI Assistant | Initial design hierarchy documentation |
+| 1.0 | 2025-11-23 | - | Initial documentation |
+| 2.0 | 2025-12-01 | - | BRAT v2 integration, updated interfaces |
 
 ---
 
