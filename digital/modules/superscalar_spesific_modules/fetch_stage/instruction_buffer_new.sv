@@ -85,13 +85,15 @@ module instruction_buffer_new #(
     logic [2:0] num_to_read;
     logic [$clog2(BUFFER_DEPTH):0] space_available;
     logic [2:0] instructions_available;
-    
+    logic use_fwd_0, use_fwd_1, use_fwd_2;
     // Calculate available space (conservative)
     assign space_available = BUFFER_DEPTH - count; //(BUFFER_DEPTH > count) ? (BUFFER_DEPTH - count[2:0]) : 3'd0;
     
     // Calculate available instructions to read
-    assign instructions_available = (count >= 3) ? 3'd3 : count[2:0];
-    
+    assign instructions_available = ((count+num_to_write) >= 3) ? 3'd3 : count[2:0];
+    assign use_fwd_0 = (count == 0) & (num_to_write >= 1) & read_en_0;
+    assign use_fwd_1 = (count <= read_en_0) & (num_to_write >= (1 + use_fwd_0)) & read_en_1;
+    assign use_fwd_2 = (count <= read_en_0 + read_en_1) & (num_to_write >= (1 + use_fwd_0 + use_fwd_1)) & read_en_2;
     // Status outputs
     assign buffer_empty_o = (count == 0);
     assign buffer_full_o = (count >= (BUFFER_DEPTH - 3)); // Conservative: leave space for 3 instructions
@@ -125,7 +127,7 @@ module instruction_buffer_new #(
     
     // Calculate how many instructions to read this cycle
     always_comb begin
-        if (buffer_empty_o || flush_i) begin
+        if (flush_i) begin
             num_to_read = 3'd0;
         end else begin
             // Count ready decode stages
@@ -154,9 +156,9 @@ module instruction_buffer_new #(
     assign read_en_1 = decode_ready_i[1];
     assign read_en_2 = decode_ready_i[2];
 
-    assign decode_valid_o[0] = read_en_0 && (count >= 1);
-    assign decode_valid_o[1] = read_en_1 && (count >= 1 + decode_ready_i[0]);
-    assign decode_valid_o[2] = read_en_2 && (count >= 1 + decode_ready_i[0] + decode_ready_i[1]);
+    assign decode_valid_o[0] = read_en_0 && (instructions_available >= 1);
+    assign decode_valid_o[1] = read_en_1 && (instructions_available >= (1 + decode_ready_i[0]));
+    assign decode_valid_o[2] = read_en_2 && (instructions_available >= (1 + decode_ready_i[0] + decode_ready_i[1]));
     
     // Sequential logic
     always_ff @(posedge clk or negedge reset) begin
@@ -258,27 +260,75 @@ module instruction_buffer_new #(
         
         // Output valid instructions
         if (decode_valid_o[0]) begin
-            instruction_o_0 = instruction_mem[head_ptr];
-            pc_o_0 = pc_mem[head_ptr];
-            imm_o_0 = imm_mem[head_ptr];
-            branch_prediction_o_0 = branch_prediction_mem[head_ptr];
-            pc_value_at_prediction_o_0 = pc_at_prediction_mem[head_ptr];
+            if(use_fwd_0) begin
+                instruction_o_0 = instruction_i_0;
+                pc_o_0 = pc_i_0;
+                imm_o_0 = imm_i_0;
+                branch_prediction_o_0 = branch_prediction_i_0;
+                pc_value_at_prediction_o_0 = pc_at_prediction_i_0;
+            end else begin
+                instruction_o_0 = instruction_mem[head_ptr];
+                pc_o_0 = pc_mem[head_ptr];
+                imm_o_0 = imm_mem[head_ptr];
+                branch_prediction_o_0 = branch_prediction_mem[head_ptr];
+                pc_value_at_prediction_o_0 = pc_at_prediction_mem[head_ptr];
+            end
         end
         
         if (decode_valid_o[1]) begin
-            instruction_o_1 = instruction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
-            pc_o_1 = pc_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
-            imm_o_1 = imm_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
-            branch_prediction_o_1 = branch_prediction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
-            pc_value_at_prediction_o_1 = pc_at_prediction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
+            if(use_fwd_1) begin
+                if(use_fwd_0) begin
+                    instruction_o_1 = instruction_i_1;
+                    pc_o_1 = pc_i_1;
+                    imm_o_1 = imm_i_1;
+                    branch_prediction_o_1 = branch_prediction_i_1;
+                    pc_value_at_prediction_o_1 = pc_at_prediction_i_1;
+                end else begin
+                    instruction_o_1 = instruction_i_0;
+                    pc_o_1 = pc_i_0;
+                    imm_o_1 = imm_i_0;
+                    branch_prediction_o_1 = branch_prediction_i_0;
+                    pc_value_at_prediction_o_1 = pc_at_prediction_i_0;
+                end
+            end else begin
+                instruction_o_1 = instruction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
+                pc_o_1 = pc_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
+                imm_o_1 = imm_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
+                branch_prediction_o_1 = branch_prediction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
+                pc_value_at_prediction_o_1 = pc_at_prediction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
+            end
         end
         
         if (decode_valid_o[2]) begin
-            instruction_o_2 = instruction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
-            pc_o_2 = pc_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
-            imm_o_2 = imm_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
-            branch_prediction_o_2 = branch_prediction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
-            pc_value_at_prediction_o_2 = pc_at_prediction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
+            if(use_fwd_2) begin
+                if(use_fwd_1) begin
+                    if(use_fwd_0) begin
+                        instruction_o_2 = instruction_i_2;
+                        pc_o_2 = pc_i_2;
+                        imm_o_2 = imm_i_2;
+                        branch_prediction_o_2 = branch_prediction_i_2;
+                        pc_value_at_prediction_o_2 = pc_at_prediction_i_2;
+                    end else begin
+                        instruction_o_2 = instruction_i_1;
+                        pc_o_2 = pc_i_1;
+                        imm_o_2 = imm_i_1;
+                        branch_prediction_o_2 = branch_prediction_i_1;
+                        pc_value_at_prediction_o_2 = pc_at_prediction_i_1;
+                    end
+                end else begin
+                    instruction_o_2 = instruction_i_0;
+                    pc_o_2 = pc_i_0;
+                    imm_o_2 = imm_i_0;
+                    branch_prediction_o_2 = branch_prediction_i_0;
+                    pc_value_at_prediction_o_2 = pc_at_prediction_i_0;
+                end
+            end else begin
+                instruction_o_2 = instruction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
+                pc_o_2 = pc_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
+                imm_o_2 = imm_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
+                branch_prediction_o_2 = branch_prediction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
+                pc_value_at_prediction_o_2 = pc_at_prediction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
+            end
         end
     end
 

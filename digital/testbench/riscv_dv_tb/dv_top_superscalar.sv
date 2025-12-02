@@ -1805,7 +1805,7 @@ module dv_top_superscalar;
         .rs2_operand_b_tag(dut.dispatch_stage_unit.rs_2.stored_operand_b_tag),
 
         // Misprediction signal
-        .misprediction_detected(dut.misprediction_detected),
+        .misprediction_detected(dut.dispatch_stage_unit.brat_eager_misprediction),
         
         // Issue stage signals for previous stage bottleneck analysis
         .decode_valid_i(dut.issue_stage_unit.decode_valid_i),
