@@ -52,7 +52,7 @@ module multi_port_register_file #(
             for (int i = 0; i < NUM_REGISTERS; i++) begin
                 register_data[i] <= #D '0;
             end
-            register_data[2] <= #D 32'h7FFFFFF0;
+            //register_data[2] <= #D 32'h7FFE_FFF0;
         end else begin
             // Handle commits from ROB (sets data and marks as valid)
             // No conflicts since ROB guarantees different addresses

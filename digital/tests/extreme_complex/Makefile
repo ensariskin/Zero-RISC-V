@@ -1,6 +1,6 @@
 CC32=riscv32-unknown-elf
 CC64=riscv64-unknown-elf
-CCFLAGS=-march=rv32i -mabi=ilp32 -T ../linksc.ld -O2 -funroll-loops -freorder-blocks -fomit-frame-pointer  -nostartfiles -ffunction-sections -fdata-sections -Wl,--gc-sections -o extreme_complex_test.elf
+CCFLAGS=-march=rv32i -mabi=ilp32 -T ../linksc.ld -O2 -funroll-loops -freorder-blocks -fomit-frame-pointer -nostartfiles -ffunction-sections -fdata-sections -Wl,--gc-sections -o extreme_complex_test.elf
 	
 build:
 	$(CC32)-gcc extreme_complex_test.c ../crt0.s $(CCFLAGS)

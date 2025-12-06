@@ -316,11 +316,19 @@ module instruction_buffer_new #(
                         pc_value_at_prediction_o_2 = pc_at_prediction_i_1;
                     end
                 end else begin
-                    instruction_o_2 = instruction_i_0;
-                    pc_o_2 = pc_i_0;
-                    imm_o_2 = imm_i_0;
-                    branch_prediction_o_2 = branch_prediction_i_0;
-                    pc_value_at_prediction_o_2 = pc_at_prediction_i_0;
+                    if(use_fwd_0) begin
+                        instruction_o_2 = instruction_i_1;
+                        pc_o_2 = pc_i_1;
+                        imm_o_2 = imm_i_1;
+                        branch_prediction_o_2 = branch_prediction_i_1;
+                        pc_value_at_prediction_o_2 = pc_at_prediction_i_1;
+                    end else begin
+                        instruction_o_2 = instruction_i_0;
+                        pc_o_2 = pc_i_0;
+                        imm_o_2 = imm_i_0;
+                        branch_prediction_o_2 = branch_prediction_i_0;
+                        pc_value_at_prediction_o_2 = pc_at_prediction_i_0;
+                    end
                 end
             end else begin
                 instruction_o_2 = instruction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];

@@ -22,8 +22,8 @@ module dv_top_superscalar;
     parameter INST_BASE_addR = 32'h80000000;
     
     // Default region base addresses (can be overridden via plusargs)
-    parameter REGION0_BASE_addR_DEFAULT = 32'h00000000;  // Default Region 0 start address
-    parameter REGION1_BASE_addR_DEFAULT = 32'h7FFEFFF0;  // Default Region 1 start address
+    parameter REGION0_BASE_addR_DEFAULT = 32'h80010000;  // Default Region 0 start address (data/stack)
+    parameter REGION1_BASE_addR_DEFAULT = 32'h80011000;  // Default Region 1 start address
     
     // Runtime configurable region base addresses
     logic [31:0] region0_base_addr;
@@ -403,10 +403,10 @@ module dv_top_superscalar;
         .wb_err_i(inst4_wb_err)
     );
 
-    // 5-port instruction memory (128*4 KB = 512KB instruction memory)
+    // 5-port instruction memory (64KB = 16K words)
     memory_5rw #(
         .DATA_WIDTH(32),
-        .ADDR_WIDTH(12),
+        .ADDR_WIDTH(16),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
     ) instruction_memory (
         // Port 0 (fetch 0)
@@ -690,10 +690,10 @@ module dv_top_superscalar;
         .REGION1_BASE(region1_base_addr)
     );
     
-    // Region 0 data memory (4KB = 1K words)
-    memory_3rw #(
+    // Region 0 data memory (64KB = 16K words)
+    memory_3rw_unaligned #(
         .DATA_WIDTH(32),
-        .ADDR_WIDTH(10),  // 1K words = 4KB memory (2^10 = 1024 words)
+        .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
     ) region0_data_memory (
         .port0_wb_cyc_i  (region0_0_wb_cyc),
@@ -739,7 +739,7 @@ module dv_top_superscalar;
     );
     
     // Region 1 data memory (64KB = 16K words)
-    memory_3rw #(
+    memory_3rw_unaligned #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)

@@ -77,3 +77,4 @@ tools/riscv-dv/
 dvt_build.log
 *.pyc
 digital/sim/run/*
+.github/copilot-instructions.md

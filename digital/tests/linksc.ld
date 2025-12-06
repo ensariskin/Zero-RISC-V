@@ -8,8 +8,8 @@ OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv",
 OUTPUT_ARCH(riscv)
 MEMORY
 {
-    ROM(RX)   : ORIGIN = 0x00000000, LENGTH = 0x00007000
-    RAM(WAIL) : ORIGIN = 0x00007000, LENGTH = 0x00000FFC
+    ROM(RX)   : ORIGIN = 0x80000000, LENGTH = 0x00010000  /* 64KB instruction memory */
+    RAM(WAIL) : ORIGIN = 0x80010000, LENGTH = 0x00010000  /* 64KB data memory for stack */
 }
 
 ENTRY(_start)

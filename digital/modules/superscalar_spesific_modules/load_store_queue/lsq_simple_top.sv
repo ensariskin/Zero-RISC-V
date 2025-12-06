@@ -642,6 +642,14 @@ module lsq_simple_top
    assign deallocate_head_2 = !lsq_empty_o && lsq_buffer[head_idx_2].valid && lsq_buffer[head_idx_2].mem_issued && 
                               (mem_2_resp_valid_i | lsq_buffer[head_idx_2].mem_complete);
 
+   logic effective_dealloc_0;
+   logic effective_dealloc_1;
+   logic effective_dealloc_2;
+
+   assign effective_dealloc_0 = (deallocate_head | fwd_head_0) && !(lsq_flush_valid_o && modify_head_0);
+   assign effective_dealloc_1 = (deallocate_head_1 | fwd_head_1) && !(lsq_flush_valid_o && modify_head_1);
+   assign effective_dealloc_2 = (deallocate_head_2 | fwd_head_2) && !(lsq_flush_valid_o && modify_head_2);
+
    always_comb begin
       actual_alloc_0 = 1'b0;
       actual_alloc_1 = 1'b0;
@@ -656,10 +664,10 @@ module lsq_simple_top
 
       num_allocs = {1'b0, actual_alloc_0} + {1'b0, actual_alloc_1} + {1'b0, actual_alloc_2};
       if(lsq_flush_valid_o) begin
-         if (first_flush_idx_corrected < new_tail[LSQ_ADDR_WIDTH-1:0]) begin
-            new_tail = {new_tail[LSQ_ADDR_WIDTH], first_flush_idx_corrected};
+         if (first_flush_idx_corrected <= tail_ptr[LSQ_ADDR_WIDTH-1:0]) begin
+            new_tail = {tail_ptr[LSQ_ADDR_WIDTH], first_flush_idx_corrected};
          end else begin
-            new_tail = {~new_tail[LSQ_ADDR_WIDTH], first_flush_idx_corrected};
+            new_tail = {~tail_ptr[LSQ_ADDR_WIDTH], first_flush_idx_corrected};
          end
       end
       else begin
@@ -871,7 +879,9 @@ module lsq_simple_top
             end
          end
          
-         if (deallocate_head  | fwd_head_0) begin
+         if(lsq_flush_valid_o & modify_head_0) begin
+               head_ptr <= #D head_0_modified_val;
+         end else if (effective_dealloc_0) begin
             
             if(distance_0 < distance_1) begin
                if(distance_0 < distance_2) begin
@@ -906,21 +916,23 @@ module lsq_simple_top
            
          end
 
-         if(deallocate_head_1 | fwd_head_1) begin
+         if(lsq_flush_valid_o & modify_head_1) begin
+               head_ptr_1 <= #D head_1_modified_val;
+         end else if(effective_dealloc_1) begin
              if(distance_0 < distance_1) begin
                if(distance_0 < distance_2) begin
-                  head_ptr_1 <= #D head_ptr + 1 + (deallocate_head | fwd_head_0);
+                  head_ptr_1 <= #D head_ptr + 1 + (effective_dealloc_0);
                end
                else begin
-                  head_ptr_1 <= #D head_ptr_2 + 1 + (deallocate_head | fwd_head_0);
+                  head_ptr_1 <= #D head_ptr_2 + 1 + (effective_dealloc_0);
                end
             end
             else begin
                if(distance_1 < distance_2) begin
-                  head_ptr_1 <= #D head_ptr_1 + 1 + (deallocate_head | fwd_head_0);
+                  head_ptr_1 <= #D head_ptr_1 + 1 + (effective_dealloc_0);
                end
                else begin
-                  head_ptr_1 <= #D head_ptr_2 + 1 + (deallocate_head | fwd_head_0);
+                  head_ptr_1 <= #D head_ptr_2 + 1 + (effective_dealloc_0);
                end
             end
             lsq_buffer[head_idx_1].valid <= #D 1'b0;
@@ -938,21 +950,23 @@ module lsq_simple_top
             lsq_buffer[head_idx_1].size <= #D mem_size_t'(0);
          end
 
-         if(deallocate_head_2 | fwd_head_2) begin
+         if(lsq_flush_valid_o & modify_head_2) begin
+               head_ptr_2 <= #D head_2_modified_val;
+         end else if(effective_dealloc_2) begin
             if(distance_0 < distance_1) begin
                if(distance_0 < distance_2) begin
-                  head_ptr_2 <= #D head_ptr + 1 + (deallocate_head | fwd_head_0) + (deallocate_head_1 | fwd_head_1);
+                  head_ptr_2 <= #D head_ptr + 1 + (effective_dealloc_0) + (effective_dealloc_1);
                end
                else begin
-                  head_ptr_2 <= #D head_ptr_2 + 1 + (deallocate_head | fwd_head_0) + (deallocate_head_1 | fwd_head_1);
+                  head_ptr_2 <= #D head_ptr_2 + 1 + (effective_dealloc_0) + (effective_dealloc_1);
                end
             end
             else begin
                if(distance_1 < distance_2) begin
-                  head_ptr_2 <= #D head_ptr_1 + 1 + (deallocate_head | fwd_head_0) + (deallocate_head_1 | fwd_head_1);
+                  head_ptr_2 <= #D head_ptr_1 + 1 + (effective_dealloc_0) + (effective_dealloc_1);
                end
                else begin
-                  head_ptr_2 <= #D head_ptr_2 + 1 + (deallocate_head | fwd_head_0) + (deallocate_head_1 | fwd_head_1);
+                  head_ptr_2 <= #D head_ptr_2 + 1 + (effective_dealloc_0) + (effective_dealloc_1);
                end
             end
             lsq_buffer[head_idx_2].valid <= #D 1'b0;
@@ -968,18 +982,6 @@ module lsq_simple_top
             lsq_buffer[head_idx_2].phys_reg <= #D '0;
             lsq_buffer[head_idx_2].sign_extend <= #D 1'b0;
             lsq_buffer[head_idx_2].size <= #D mem_size_t'(0);
-         end
-
-         if(lsq_flush_valid_o) begin
-            if(modify_head_0) begin
-               head_ptr <= #D head_0_modified_val;
-            end
-            if(modify_head_1) begin
-               head_ptr_1 <= #D head_1_modified_val;
-            end
-            if(modify_head_2) begin
-               head_ptr_2 <= #D head_2_modified_val;
-            end
          end
 
             
@@ -1005,7 +1007,7 @@ module lsq_simple_top
                //we need a permission for store from ROB because store operation at LSQ should not be issued before branch prediction is resolved // todo check them with rd, it is more reliable
                if((store_can_issue_0 && (lsq_buffer[head_idx].phys_reg == allowed_store_address_0)) ||
                   (store_can_issue_1 && (lsq_buffer[head_idx].phys_reg == allowed_store_address_1)) ||
-                  (store_can_issue_2 && (lsq_buffer[head_idx].phys_reg == allowed_store_address_2))
+                  (store_can_issue_2 && (lsq_buffer[head_idx].phys_reg == allowed_store_address_2)) && !modify_head_0
                ) begin 
                   head_ready = lsq_buffer[head_idx].data_valid;
                end else begin
@@ -1033,7 +1035,7 @@ module lsq_simple_top
                //we need a permission for store from ROB because store operation at LSQ should not be issued before branch prediction is resolved
                if((store_can_issue_0 && (lsq_buffer[head_idx_1].phys_reg == allowed_store_address_0)) ||
                   (store_can_issue_1 && (lsq_buffer[head_idx_1].phys_reg == allowed_store_address_1)) ||
-                  (store_can_issue_2 && (lsq_buffer[head_idx_1].phys_reg == allowed_store_address_2))
+                  (store_can_issue_2 && (lsq_buffer[head_idx_1].phys_reg == allowed_store_address_2)) && !modify_head_1
                ) begin //todo add 2 more store enable signals
                   head_ready_1 = lsq_buffer[head_idx_1].data_valid;
                end else begin
@@ -1061,7 +1063,7 @@ module lsq_simple_top
                //we need a permission for store from ROB because store operation at LSQ should not be issued before branch prediction is resolved
                if((store_can_issue_0 && (lsq_buffer[head_idx_2].phys_reg == allowed_store_address_0)) ||
                   (store_can_issue_1 && (lsq_buffer[head_idx_2].phys_reg == allowed_store_address_1)) ||
-                  (store_can_issue_2 && (lsq_buffer[head_idx_2].phys_reg == allowed_store_address_2))
+                  (store_can_issue_2 && (lsq_buffer[head_idx_2].phys_reg == allowed_store_address_2)) && !modify_head_2
                ) begin
                   head_ready_2 = lsq_buffer[head_idx_2].data_valid;
                end else begin

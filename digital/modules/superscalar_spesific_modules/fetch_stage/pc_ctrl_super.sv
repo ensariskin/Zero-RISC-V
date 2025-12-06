@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h00000000)
+module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 	(
 	input  logic clk,
 	input  logic reset,
