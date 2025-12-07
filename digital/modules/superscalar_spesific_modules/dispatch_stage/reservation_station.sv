@@ -107,8 +107,8 @@ module reservation_station #(
     logic b_valid;
     logic all_valid;
     
-    assign a_valid = (operand_a_valid_from_stored | operand_a_valid_from_decode);
-    assign b_valid = (operand_b_valid_from_stored | operand_b_valid_from_decode);
+    assign a_valid = occupied ? operand_a_valid_from_stored : operand_a_valid_from_decode; //(operand_a_valid_from_stored | operand_a_valid_from_decode);
+    assign b_valid = occupied ? operand_b_valid_from_stored : operand_b_valid_from_decode; //(operand_b_valid_from_stored | operand_b_valid_from_decode);
     assign all_valid = a_valid & b_valid;
     always_comb begin
         // Check if operands are valid from decode interface (only TAG_READY, no CDB monitoring)
