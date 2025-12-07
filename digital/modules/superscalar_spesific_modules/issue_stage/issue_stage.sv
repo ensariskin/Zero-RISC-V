@@ -26,10 +26,6 @@ module issue_stage #(
     input logic clk,
     input logic reset,
     
-    // Pipeline Control
-    input logic flush,
-    input logic bubble,
-    
     // Input from Fetch/Buffer Stage
     input logic [2:0] decode_valid_i,
     input logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2,
@@ -118,7 +114,7 @@ module issue_stage #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] rs2_phys_0, rs2_phys_1, rs2_phys_2;
     logic [PHYS_REG_ADDR_WIDTH-1:0] rd_phys_0, rd_phys_1, rd_phys_2;
     logic [2:0] alloc_tag_0, alloc_tag_1, alloc_tag_2;
-    logic [PHYS_REG_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2; /// TODO : add recovery logic
+    logic [PHYS_REG_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2; 
     logic [2:0] rename_valid_internal;
     logic [2:0] rename_ready;
     
@@ -401,7 +397,7 @@ module issue_stage #(
             lsq_alloc_1_valid_reg <= #D 1'b0;
             lsq_alloc_2_valid_reg <= #D 1'b0;
         end else begin
-            if (flush | bubble | internal_flush) begin
+            if (internal_flush) begin
                 // Insert NOPs on flush for all channels
                 decode_valid_reg <= #D 3'b000;
                 pc_reg_0 <= #D {DATA_WIDTH{1'b0}};
@@ -591,7 +587,7 @@ module issue_stage #(
                 tracer_0.mem_data  <= #D 32'b0; // No memory data
                 tracer_0.fpu_flags <= #D 32'b0; // No FPU flags
         end else begin  
-            if(flush| internal_flush | !issue_to_dispatch_0.dispatch_ready && decode_valid_i[0]) begin
+            if(internal_flush | !issue_to_dispatch_0.dispatch_ready && decode_valid_i[0]) begin
                 // Reset tracer interface on flush or bubble
                 tracer_0.valid     <= #D 0;
                 //tracer_if_o.pc        <= #D 0;
@@ -643,7 +639,7 @@ module issue_stage #(
                 tracer_1.mem_data  <= #D 32'b0; // No memory data
                 tracer_1.fpu_flags <= #D 32'b0; // No FPU flags
         end else begin  
-            if(flush | internal_flush | !issue_to_dispatch_1.dispatch_ready && decode_valid_i[1]) begin
+            if(internal_flush | !issue_to_dispatch_1.dispatch_ready && decode_valid_i[1]) begin
                 // Reset tracer interface on flush or bubble
                 tracer_1.valid     <= #D 0;
                 //tracer_if_o.pc        <= #D 0;
@@ -695,7 +691,7 @@ module issue_stage #(
                 tracer_2.mem_data  <= #D 32'b0; // No memory data
                 tracer_2.fpu_flags <= #D 32'b0; // No FPU flags
         end else begin  
-            if(flush | internal_flush| !issue_to_dispatch_2.dispatch_ready && decode_valid_i[2]) begin
+            if(internal_flush| !issue_to_dispatch_2.dispatch_ready && decode_valid_i[2]) begin
                 // Reset tracer interface on flush or bubble
                 tracer_2.valid     <= #D 0;
                 //tracer_if_o.pc        <= #D 0;

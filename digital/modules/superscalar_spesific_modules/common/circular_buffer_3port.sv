@@ -245,16 +245,14 @@ module circular_buffer_3port #(
     //==========================================================================
     logic [9:0] total_reads;
     logic [9:0] total_writes;
-    logic [9:0] diff;
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             total_reads  <= #D '0;
             total_writes <= #D '0;
-            diff         <= #D '0;
         end else begin
             total_reads  <= #D total_reads  + num_reads;
             total_writes <= #D total_writes + num_writes;
-            diff         <= #D total_reads - total_writes;
         end
     end
     // synthesis translate_off

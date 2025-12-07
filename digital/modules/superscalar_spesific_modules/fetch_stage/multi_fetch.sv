@@ -121,8 +121,8 @@ module multi_fetch #(parameter size = 32)(
    logic jalr_update_valid_0, jalr_update_valid_1, jalr_update_valid_2;
    
    assign branch_update_valid_0 = update_valid_i_0 & ~is_jalr_i_0;
-   assign branch_update_valid_1 = update_valid_i_1 & ~is_jalr_i_1;
-   assign branch_update_valid_2 = update_valid_i_2 & ~is_jalr_i_2;
+   assign branch_update_valid_1 = update_valid_i_1 & ~is_jalr_i_1 & !misprediction_i_0;
+   assign branch_update_valid_2 = update_valid_i_2 & ~is_jalr_i_2 & !misprediction_i_0 & !misprediction_i_1;
    
    assign jalr_update_valid_0 = update_valid_i_0 & is_jalr_i_0;
    assign jalr_update_valid_1 = update_valid_i_1 & is_jalr_i_1 & !misprediction_i_0;

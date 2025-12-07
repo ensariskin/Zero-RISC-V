@@ -87,14 +87,18 @@ module dispatch_stage #(
     output logic [4:0] commit_rob_idx_1,
     output logic [4:0] commit_rob_idx_2,
 
+    output logic commit_is_branch_0,
+    output logic misprediction_detected_0,
+
+    output logic commit_is_branch_1,
+    output logic misprediction_detected_1,
+
+    output logic commit_is_branch_2,
+    output logic misprediction_detected_2,
+
     output logic lsq_commit_valid_0,
     output logic lsq_commit_valid_1,
     output logic lsq_commit_valid_2,
-
-    output logic commit_is_branch_0,
-    output logic [DATA_WIDTH-1:0] commit_correct_pc_0,
-    output logic [DATA_WIDTH-1:0] upadate_predictor_pc_0,
-    output logic misprediction_detected,
     
     // Eager misprediction flush outputs (for issue stage LSQ circular buffer)
     output logic        lsq_flush_valid_o,
@@ -197,7 +201,7 @@ module dispatch_stage #(
     assign commit_rob_idx_0 = rob_head_idx;
     assign commit_rob_idx_1 = rob_head_idx + 1;
     assign commit_rob_idx_2 = rob_head_idx + 2;
-
+    assign commit_valid = {commit_valid_2, commit_valid_1, commit_valid_0};
     //==========================================================================
     //Reorder Buffer
     //==========================================================================
@@ -247,9 +251,6 @@ module dispatch_stage #(
         .cdb_exception_3_1(0),
         .cdb_exception_3_0(0),    
         
-        .cdb_correct_pc_0(cdb_interface.cdb_correct_pc_0),
-        .cdb_correct_pc_1(cdb_interface.cdb_correct_pc_1),
-        .cdb_correct_pc_2(cdb_interface.cdb_correct_pc_2),
         .cdb_is_branch_0(cdb_interface.cdb_is_branch_0),
         .cdb_is_branch_1(cdb_interface.cdb_is_branch_1),
         .cdb_is_branch_2(cdb_interface.cdb_is_branch_2),
@@ -299,12 +300,9 @@ module dispatch_stage #(
         .commit_addr_0(commit_addr_0),
         .commit_addr_1(commit_addr_1),
         .commit_addr_2(commit_addr_2),
-        .commit_exception_0(misprediction_detected),
+        .commit_exception_0(misprediction_detected_0),
         .commit_exception_1(),
         .commit_exception_2(),
-        .commit_correct_pc_0(commit_correct_pc_0),
-        .commit_correct_pc_1(),
-        .commit_correct_pc_2(),
         .commit_is_branch_0(commit_is_branch_0),
         .commit_is_branch_1(),
         .commit_is_branch_2(),
@@ -322,9 +320,6 @@ module dispatch_stage #(
         .store_can_issue_2(store_can_issue_2),
         .allowed_store_address_2(allowed_store_address_2),
 
-        .upadate_predictor_pc_0(upadate_predictor_pc_0),
-        .upadate_predictor_pc_1(),
-        .upadate_predictor_pc_2(),
         .head_ptr(rob_head_idx),
         
         // Eager misprediction outputs (for LSQ flush)
@@ -622,7 +617,7 @@ module dispatch_stage #(
                               cdb_interface.cdb_valid_1 +
                               cdb_interface.cdb_valid_2;
 
-    assign commit_valid = {commit_valid_2, commit_valid_1, commit_valid_0};
+    
 
 
     //==========================================================================

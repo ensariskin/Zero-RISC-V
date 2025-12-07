@@ -223,7 +223,7 @@ module register_alias_table #(
         .buffer_full(),
         .buffer_count(free_count),
         .set_read_ptr_en(free_addr_set_en),
-        .set_read_ptr_value(free_addr_set_value)
+        .set_read_ptr_value(free_addr_set_value[ARCH_ADDR_WIDTH-1:0])
     );
     
     circular_buffer_3port #(.BUFFER_DEPTH(32)) lsq_address_buffer(

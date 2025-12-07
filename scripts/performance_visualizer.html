@@ -443,6 +443,11 @@
                 <!-- Timeline Page -->
                 <div class="page" id="timelinePage">
                     <div class="chart-container">
+                        <div class="chart-title">Instruction Mix Over Time</div>
+                        <canvas id="instructionMixChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
                         <div class="chart-title">Stall Sources Over Time</div>
                         <canvas id="timelineChart"></canvas>
                     </div>
@@ -667,7 +672,7 @@
         }
 
         function parseReport(content, startIndex, cycle) {
-            const report = { rs0: {}, rs1: {}, rs2: {} };
+            const report = { rs0: {}, rs1: {}, rs2: {}, mix: {} };
             
             // Find next report or end - look for next "CYCLE XXXX REPORT" pattern
             const nextCycleMatch = /CYCLE \d+ REPORT/g;
@@ -675,6 +680,23 @@
             const nextMatch = nextCycleMatch.exec(content);
             const section = content.substring(startIndex, nextMatch ? nextMatch.index : content.length);
             
+            // Parse Instruction Mix
+            const mixSection = section.match(/Instruction Mix Analysis \(Last 1000 cycles\):[\s\S]*?(?=RS0)/);
+            if (mixSection) {
+                const text = mixSection[0];
+                const commitsMatch = text.match(/Commits:\s+(\d+)/);
+                const branchesMatch = text.match(/Branches:\s+(\d+)/);
+                const mispredsMatch = text.match(/Mispredicts:\s+(\d+)/);
+                const lsMatch = text.match(/Load\/Stores:\s+(\d+)/);
+                
+                report.mix = {
+                    commits: commitsMatch ? parseInt(commitsMatch[1]) : 0,
+                    branches: branchesMatch ? parseInt(branchesMatch[1]) : 0,
+                    mispredicts: mispredsMatch ? parseInt(mispredsMatch[1]) : 0,
+                    ls: lsMatch ? parseInt(lsMatch[1]) : 0
+                };
+            }
+
             // Parse each RS
             ['rs0', 'rs1', 'rs2'].forEach((rs, idx) => {
                 const rsName = `RS${idx}`;
@@ -1296,6 +1318,9 @@
             const cycles = logData.cycles;
             const rsUnits = currentRS === 'all' ? ['rs0', 'rs1', 'rs2'] : [currentRS];
             
+            // Instruction Mix chart
+            renderInstructionMixChart(cycles);
+
             // Timeline chart
             renderTimelineChart(cycles, rsUnits);
             
@@ -1304,6 +1329,74 @@
             
             // Bottleneck chart
             renderBottleneckChart(cycles, rsUnits);
+        }
+
+        function renderInstructionMixChart(cycles) {
+            const ctx = document.getElementById('instructionMixChart');
+            
+            if (charts.instructionMix) {
+                charts.instructionMix.destroy();
+            }
+            
+            const datasets = [
+                {
+                    label: 'Commits',
+                    data: cycles.map(c => logData.reports[c].mix?.commits || 0),
+                    borderColor: '#4ec9b0',
+                    backgroundColor: '#4ec9b040',
+                    tension: 0.3
+                },
+                {
+                    label: 'Branches',
+                    data: cycles.map(c => logData.reports[c].mix?.branches || 0),
+                    borderColor: '#569cd6',
+                    backgroundColor: '#569cd640',
+                    tension: 0.3
+                },
+                {
+                    label: 'Mispredicts',
+                    data: cycles.map(c => logData.reports[c].mix?.mispredicts || 0),
+                    borderColor: '#c586c0',
+                    backgroundColor: '#c586c040',
+                    tension: 0.3
+                },
+                {
+                    label: 'Load/Stores',
+                    data: cycles.map(c => logData.reports[c].mix?.ls || 0),
+                    borderColor: '#dcdcaa',
+                    backgroundColor: '#dcdcaa40',
+                    tension: 0.3
+                }
+            ];
+            
+            charts.instructionMix = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: cycles,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#d4d4d4' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Cycle', color: '#d4d4d4' },
+                            ticks: { color: '#9d9d9d' },
+                            grid: { color: '#3e3e42' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Count', color: '#d4d4d4' },
+                            ticks: { color: '#9d9d9d' },
+                            grid: { color: '#3e3e42' }
+                        }
+                    }
+                }
+            });
         }
 
         function renderTimelineChart(cycles, rsUnits) {

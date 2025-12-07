@@ -78,10 +78,6 @@ module reorder_buffer #(
         input  logic cdb_exception_3_1,
         input  logic cdb_exception_3_2,
 
-        input  logic [DATA_WIDTH-1:0] cdb_correct_pc_0, // Correct PC for branch/jalr
-        input  logic [DATA_WIDTH-1:0] cdb_correct_pc_1,
-        input  logic [DATA_WIDTH-1:0] cdb_correct_pc_2,
-
         input  logic cdb_is_branch_0, // Is the instruction a branch
         input  logic cdb_is_branch_1,
         input  logic cdb_is_branch_2,
@@ -146,18 +142,9 @@ module reorder_buffer #(
         output logic commit_exception_1,
         output logic commit_exception_2,
 
-        output logic [DATA_WIDTH-1:0] commit_correct_pc_0,
-        output logic [DATA_WIDTH-1:0] commit_correct_pc_1,
-        output logic [DATA_WIDTH-1:0] commit_correct_pc_2,
-
         output logic commit_is_branch_0,
         output logic commit_is_branch_1,
         output logic commit_is_branch_2,
-
-        output logic [DATA_WIDTH-1:0] upadate_predictor_pc_0, // For branch predictor update
-        output logic [DATA_WIDTH-1:0] upadate_predictor_pc_1,
-        output logic [DATA_WIDTH-1:0] upadate_predictor_pc_2,
-
 
         //==========================================================================
         // STORE PERMISSION OUTPUTS
@@ -203,11 +190,10 @@ module reorder_buffer #(
     // ROB entry structure - packed for better waveform visibility
     typedef struct packed {
         logic [DATA_WIDTH-1:0] data;
-        logic [TAG_WIDTH-1:0] tag;
+        logic [TAG_WIDTH-1:0] tag; // todo remove - design path without tag
         logic [ADDR_WIDTH-1:0] addr;
         logic executed;
         logic exception;
-        logic [DATA_WIDTH-1:0] correct_pc;
         logic is_branch;
         logic is_store;
     } rob_entry_t;
@@ -312,13 +298,9 @@ module reorder_buffer #(
     // entries_used >= N ensures head+N-1 is within valid range
     assign commit_valid_0 = buffer[head_idx].executed && (entries_used >= 1);
 
-    assign commit_valid_1 = commit_valid_0 & !buffer[head_idx].exception &
-        buffer[head_plus_1_idx].executed & !buffer[head_plus_1_idx].exception &
-        (entries_used >= 2);
+    assign commit_valid_1 = commit_valid_0 & buffer[head_plus_1_idx].executed & (entries_used >= 2);
 
-    assign commit_valid_2 = commit_valid_0 & commit_valid_1 & !buffer[head_plus_1_idx].exception &
-        buffer[head_plus_2_idx].executed & !buffer[head_plus_2_idx].exception &
-        (entries_used >= 3);
+    assign commit_valid_2 = commit_valid_0 & commit_valid_1 & buffer[head_plus_2_idx].executed & (entries_used >= 3);
 
 
     assign lsq_commit_valid_0 = commit_valid_0 & buffer[head_idx].is_store;
@@ -334,21 +316,12 @@ module reorder_buffer #(
     assign commit_addr_2 = buffer[head_plus_2_idx].addr;
 
     assign commit_exception_0 = buffer[head_idx].exception & commit_valid_0;
-    assign commit_exception_1 = 1'b0; //buffer[head_plus_1_idx].exception;
-    assign commit_exception_2 = 1'b0; //buffer[head_plus_2_idx].exception;
-
-    assign commit_correct_pc_0 = buffer[head_idx].correct_pc;
-    assign commit_correct_pc_1 = '0; //buffer[head_plus_1_idx].correct_pc;
-    assign commit_correct_pc_2 = '0; //buffer[head_plus_2_idx].correct_pc;
+    assign commit_exception_1 = buffer[head_plus_1_idx].exception & commit_valid_1;
+    assign commit_exception_2 = buffer[head_plus_2_idx].exception & commit_valid_2;
 
     assign commit_is_branch_0 = buffer[head_idx].is_branch & commit_valid_0;
     assign commit_is_branch_1 = buffer[head_plus_1_idx].is_branch & commit_valid_1;
     assign commit_is_branch_2 = buffer[head_plus_2_idx].is_branch & commit_valid_2;
-
-    assign upadate_predictor_pc_0 = buffer[head_idx].data;
-    assign upadate_predictor_pc_1 = buffer[head_plus_1_idx].data;
-    assign upadate_predictor_pc_2 = buffer[head_plus_2_idx].data;
-
 
     // Store permission outputs
     assign store_can_issue_0 =  buffer[head_idx].is_store && buffer[head_idx].tag==TAG_VALID; //TODO add 2 more store can issue signals for head+1 and head+2 and check brnach status
@@ -740,7 +713,6 @@ module reorder_buffer #(
                     buffer[alloc_idx_0].addr <= #D alloc_addr_0;
                     buffer[alloc_idx_0].executed <= #D 1'b0;
                     buffer[alloc_idx_0].exception <= #D 1'b0;
-                    buffer[alloc_idx_0].correct_pc <= #D '0;
                     buffer[alloc_idx_0].is_branch <= #D 1'b0; // todo set is_branch at allocation
                     buffer[alloc_idx_0].is_store <= #D alloc_is_store_0;
 
@@ -767,7 +739,6 @@ module reorder_buffer #(
                     buffer[alloc_idx_1].addr <= #D alloc_addr_1;
                     buffer[alloc_idx_1].executed <= #D 1'b0;
                     buffer[alloc_idx_1].exception <= #D 1'b0;
-                    buffer[alloc_idx_1].correct_pc <= #D '0;
                     buffer[alloc_idx_1].is_branch <= #D 1'b0;
                     buffer[alloc_idx_1].is_store <= #D alloc_is_store_1;
 
@@ -792,7 +763,6 @@ module reorder_buffer #(
                     buffer[alloc_idx_2].addr <= #D alloc_addr_2;
                     buffer[alloc_idx_2].executed <= #D 1'b0;
                     buffer[alloc_idx_2].exception <= #D 1'b0;
-                    buffer[alloc_idx_2].correct_pc <= #D '0;
                     buffer[alloc_idx_2].is_branch <= #D 1'b0;
                     buffer[alloc_idx_2].is_store <= #D alloc_is_store_2;
 
@@ -821,7 +791,6 @@ module reorder_buffer #(
                 buffer[cdb_addr_0].tag <= #D TAG_VALID;
                 buffer[cdb_addr_0].executed <= #D !cdb_mem_addr_calculation_0;
                 buffer[cdb_addr_0].exception <= #D cdb_exception_0;
-                buffer[cdb_addr_0].correct_pc <= #D cdb_correct_pc_0;
                 buffer[cdb_addr_0].is_branch <= #D cdb_is_branch_0;
             end
                 `ifndef SYNTHESIS
@@ -840,7 +809,6 @@ module reorder_buffer #(
                 buffer[cdb_addr_1].tag <= #D TAG_VALID;
                 buffer[cdb_addr_1].executed <= #D !cdb_mem_addr_calculation_1;
                 buffer[cdb_addr_1].exception <= #D cdb_exception_1;
-                buffer[cdb_addr_1].correct_pc <= #D cdb_correct_pc_1;
                 buffer[cdb_addr_1].is_branch <= #D cdb_is_branch_1;
 
             end
@@ -860,7 +828,6 @@ module reorder_buffer #(
                 buffer[cdb_addr_2].tag <= #D TAG_VALID;
                 buffer[cdb_addr_2].executed <= #D !cdb_mem_addr_calculation_2;
                 buffer[cdb_addr_2].exception <= #D cdb_exception_2;
-                buffer[cdb_addr_2].correct_pc <= #D cdb_correct_pc_2;
                 buffer[cdb_addr_2].is_branch <= #D cdb_is_branch_2;
 
 
@@ -882,8 +849,6 @@ module reorder_buffer #(
                 buffer[cdb_addr_3_2].executed <= #D 1'b1;
                 buffer[cdb_addr_3_2].exception <= #D cdb_exception_3_2;
                 buffer[cdb_addr_3_2].is_store <= #D 1'b1;
-
-                buffer[cdb_addr_3_2].correct_pc <= #D '0;
                 buffer[cdb_addr_3_2].is_branch <= #D 1'b0;
 
                     `ifndef SYNTHESIS
@@ -897,8 +862,6 @@ module reorder_buffer #(
                 buffer[cdb_addr_3_1].executed <= #D 1'b1;
                 buffer[cdb_addr_3_1].exception <= #D cdb_exception_3_1;
                 buffer[cdb_addr_3_1].is_store <= #D 1'b1;
-
-                buffer[cdb_addr_3_1].correct_pc <= #D '0;
                 buffer[cdb_addr_3_1].is_branch <= #D 1'b0;
 
                     `ifndef SYNTHESIS
@@ -912,9 +875,6 @@ module reorder_buffer #(
                 buffer[cdb_addr_3_0].executed <= #D 1'b1;
                 buffer[cdb_addr_3_0].exception <= #D cdb_exception_3_0;
                 buffer[cdb_addr_3_0].is_store <= #D 1'b1;
-
-
-                buffer[cdb_addr_3_0].correct_pc <= #D '0;
                 buffer[cdb_addr_3_0].is_branch <= #D 1'b0;
 
                     `ifndef SYNTHESIS

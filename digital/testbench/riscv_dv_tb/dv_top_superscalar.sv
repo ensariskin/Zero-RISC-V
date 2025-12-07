@@ -72,22 +72,6 @@ module dv_top_superscalar;
     logic timer_interrupt;
     logic software_interrupt;
     
-    // Debug interface
-    logic [DATA_WIDTH-1:0] debug_pc;
-    logic [DATA_WIDTH-1:0] debug_instruction;
-    logic debug_valid;
-    
-    // Performance counters
-    logic [31:0] perf_cycles;
-    logic [31:0] perf_instructions_fetched;
-    logic [31:0] perf_instructions_executed;
-    logic [31:0] perf_branch_mispredictions;
-    logic [31:0] perf_buffer_stalls;
-    
-    // Status outputs (unused in testbench but required by interface)
-    logic processor_halted; // Connected to DUT but not used
-    logic [2:0] current_privilege_mode; // Connected to DUT but not used
-    
     // Wishbone signals for instruction memory (3 ports)
     logic inst0_wb_cyc, inst0_wb_stb, inst0_wb_we;
     logic [31:0] inst0_wb_adr, inst0_wb_dat_o, inst0_wb_dat_i;
@@ -171,11 +155,6 @@ module dv_top_superscalar;
     logic test_passed;
     logic test_failed;
     integer cycle_count;
-    
-    // Previous values for change detection
-    logic [31:0] prev_debug_pc;
-    logic [31:0] prev_perf_instructions_executed;
-
 
     logic ecall_detected;
     assign ecall_detected = (tracer_0.valid && (tracer_0.instr == 32'h00000073)) | (tracer_1.valid && (tracer_1.instr == 32'h73)) | (tracer_2.valid && (tracer_2.instr == 32'h00000073)); //ECALL instruction
@@ -290,23 +269,7 @@ module dv_top_superscalar;
         // External Interrupt Interface
         .external_interrupt(external_interrupt),
         .timer_interrupt(timer_interrupt),
-        .software_interrupt(software_interrupt),
-        
-        // Debug Interface
-        .debug_pc(debug_pc),
-        .debug_instruction(debug_instruction),
-        .debug_valid(debug_valid),
-        
-        // Performance Counters
-        .perf_cycles(perf_cycles),
-        .perf_instructions_fetched(perf_instructions_fetched),
-        .perf_instructions_executed(perf_instructions_executed),
-        .perf_branch_mispredictions(perf_branch_mispredictions),
-        .perf_buffer_stalls(perf_buffer_stalls),
-        
-        // Status Outputs
-        .processor_halted(processor_halted),
-        .current_privilege_mode(current_privilege_mode)
+        .software_interrupt(software_interrupt)
     );
     
     //==========================================================================
@@ -1370,27 +1333,48 @@ module dv_top_superscalar;
                 total_branches++;
                 
                 // Check if this branch was mispredicted
-                if (dut.misprediction_detected) begin
+                if (dut.dispatch_stage_unit.rob.commit_exception_0) begin
                     mispredicted_branches++;
                     total_mispredictions++;
-                    // Record ROB occupancy at misprediction
-                    total_rob_entries_on_mispred = total_rob_entries_on_mispred + dut.dispatch_stage_unit.rob.buffer_count;
-                    //$display("[%t] BRANCH MISPREDICTION: Branch #%0d was mispredicted, ROB count=%0d", 
-                    //         $time, total_branches, dut.dispatch_stage_unit.rob.buffer_count);
                 end
-            end else  if (dut.dispatch_stage_unit.rob.commit_is_branch_1) begin
+            end 
+            if (dut.dispatch_stage_unit.rob.commit_is_branch_1) begin
                 total_branches++;
-            end else  if (dut.dispatch_stage_unit.rob.commit_is_branch_2) begin
+                // Check if this branch was mispredicted
+                if (dut.dispatch_stage_unit.rob.commit_exception_1) begin
+                    mispredicted_branches++;
+                    total_mispredictions++;
+                end
+            end 
+            if (dut.dispatch_stage_unit.rob.commit_is_branch_2) begin
                 total_branches++;
-            end else if (dut.misprediction_detected && !dut.commit_is_branch_0) begin
+                // Check if this branch was mispredicted
+                if (dut.dispatch_stage_unit.rob.commit_exception_2) begin
+                    mispredicted_branches++;
+                    total_mispredictions++;
+                end
+            end 
+            if (dut.dispatch_stage_unit.rob.commit_exception_0 && 
+                !dut.dispatch_stage_unit.rob.commit_is_branch_0) begin
                 // Misprediction without prediction_valid = JALR
                 jalr_count++;
                 total_mispredictions++;
-                // Record ROB occupancy at misprediction
-                total_rob_entries_on_mispred = total_rob_entries_on_mispred + dut.dispatch_stage_unit.rob.buffer_count;
-                //$display("[%t] JALR DETECTED: Misprediction without prediction update, ROB count=%0d", 
-                //         $time, dut.dispatch_stage_unit.rob.buffer_count);
+                
             end
+            if (dut.dispatch_stage_unit.rob.commit_exception_1 && 
+                !dut.dispatch_stage_unit.rob.commit_is_branch_1) begin
+                // Misprediction without prediction_valid = JALR
+                jalr_count++;
+                total_mispredictions++;
+                
+            end
+            if (dut.dispatch_stage_unit.rob.commit_exception_2 && 
+                !dut.dispatch_stage_unit.rob.commit_is_branch_2) begin
+                // Misprediction without prediction_valid = JALR
+                jalr_count++;
+                total_mispredictions++;  
+            end
+
         end
     end
     
@@ -1782,7 +1766,7 @@ module dv_top_superscalar;
     // PIPELINE PERFORMANCE ANALYZER V2 INSTANTIATION
     //==========================================================================
     
-    pipeline_performance_analyzer_v2 perf_analyzer (
+    pipeline_performance_analyzer perf_analyzer (
         .clk(clk),
         .reset(~rst_n),
         
@@ -1811,7 +1795,13 @@ module dv_top_superscalar;
         .decode_valid_i(dut.issue_stage_unit.decode_valid_i),
         .decode_ready_o(dut.issue_stage_unit.decode_ready_o),
         .rename_ready(dut.issue_stage_unit.rename_ready),
-        .lsq_alloc_ready(dut.issue_stage_unit.lsq_alloc_ready)
+        .lsq_alloc_ready(dut.issue_stage_unit.lsq_alloc_ready),
+
+        // New signals for Commit/Branch/LS analysis
+        .commit_valid(dut.commit_valid),
+        .lsq_commit_valid({dut.lsq_commit_valid_2, dut.lsq_commit_valid_1, dut.lsq_commit_valid_0}),
+        .brat_branch_resolved(dut.brat_branch_resolved),
+        .brat_branch_mispredicted(dut.brat_branch_mispredicted)
     );
 
 endmodule
