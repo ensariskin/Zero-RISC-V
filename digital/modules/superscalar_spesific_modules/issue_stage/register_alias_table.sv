@@ -107,7 +107,12 @@ module register_alias_table #(
     // Push inputs for is_jalr and pc_at_prediction (from issue_stage)
     input logic push_is_jalr_0_i,
     input logic push_is_jalr_1_i,
-    input logic push_is_jalr_2_i
+    input logic push_is_jalr_2_i,
+
+    input logic [2:0] push_ras_tos_i,
+    output logic ras_restore_valid_o,
+    output logic [2:0] ras_restore_tos_o
+
    
 );
 
@@ -349,7 +354,8 @@ module register_alias_table #(
         .BUFFER_DEPTH(BRAT_STACK_DEPTH),
         .ARCH_REGS(ARCH_REGS),
         .PHYS_ADDR_WIDTH(PHYS_ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH)
+        .DATA_WIDTH(DATA_WIDTH),
+        .RAS_PTR_WIDTH(3)
     ) brat_buffer (
         .clk(clk),
         .rst_n(reset),
@@ -367,6 +373,10 @@ module register_alias_table #(
         .push_is_jalr_0(push_is_jalr_0_i),
         .push_is_jalr_1(push_is_jalr_1_i),
         .push_is_jalr_2(push_is_jalr_2_i),
+
+        .push_ras_tos_0(push_ras_tos_i),
+        .push_ras_tos_1(push_ras_tos_i),
+        .push_ras_tos_2(push_ras_tos_i),
         
         // Commit interface - keep snapshots in sync with RF
         .commit_valid_0(commit_valid[0]),
@@ -419,6 +429,9 @@ module register_alias_table #(
         .restore_en(1'b0),  // Internal restore handled by BRAT
         .restore_idx(brat_restore_idx),
         .restore_rat_snapshot(brat_restore_snapshot),
+
+        .ras_restore_valid_o(ras_restore_valid_o),
+        .ras_restore_tos_o(ras_restore_tos_o),
         
         // Peek interface (not used, connect to open)
         .peek_branch_phys_0(),

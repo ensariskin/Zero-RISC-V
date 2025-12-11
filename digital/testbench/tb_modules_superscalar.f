@@ -25,3 +25,4 @@ tb_modules/pipeline_performance_analyzer.sv
 
 // Superscalar testbench top
 riscv_dv_tb/dv_top_superscalar.sv
+tb_modules/ras_monitor.sv

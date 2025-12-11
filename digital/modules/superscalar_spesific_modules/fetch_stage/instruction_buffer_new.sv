@@ -39,7 +39,7 @@ module instruction_buffer_new #(
     input  logic [DATA_WIDTH-1:0] imm_i_0, imm_i_1, imm_i_2, imm_i_3, imm_i_4,
     input  logic [DATA_WIDTH-1:0] pc_at_prediction_i_0, pc_at_prediction_i_1, pc_at_prediction_i_2, pc_at_prediction_i_3, pc_at_prediction_i_4,
     input  logic branch_prediction_i_0, branch_prediction_i_1, branch_prediction_i_2, branch_prediction_i_3, branch_prediction_i_4,
-    
+    input  logic [2:0] ras_tos_checkpoint_i,
     // Output to decode stages (up to 3 instructions per cycle)
     output logic [2:0] decode_valid_o,          // How many instructions are available for decode
     output logic [DATA_WIDTH-1:0] instruction_o_0, instruction_o_1, instruction_o_2,
@@ -47,7 +47,7 @@ module instruction_buffer_new #(
     output logic [DATA_WIDTH-1:0] imm_o_0, imm_o_1, imm_o_2,
     output logic [DATA_WIDTH-1:0] pc_value_at_prediction_o_0, pc_value_at_prediction_o_1, pc_value_at_prediction_o_2,
     output logic branch_prediction_o_0, branch_prediction_o_1, branch_prediction_o_2,
-
+    output logic [2:0] ras_tos_checkpoint_o,
     // Control signals
     input  logic [2:0] decode_ready_i,          // Which decode stages are ready to accept instructions
     output logic fetch_ready_o,                // Can accept more instructions from fetch
@@ -67,6 +67,7 @@ module instruction_buffer_new #(
     logic [DATA_WIDTH-1:0] pc_at_prediction_mem [BUFFER_DEPTH];
     logic [DATA_WIDTH-1:0] imm_mem [BUFFER_DEPTH];
     logic branch_prediction_mem [BUFFER_DEPTH];
+    logic [2:0] ras_tos_checkpoint_mem [BUFFER_DEPTH];
     
     // Pointers (3-bit for 8 entries)
     logic [$clog2(BUFFER_DEPTH):0] head_ptr;    // Points to next read location
@@ -175,6 +176,7 @@ module instruction_buffer_new #(
                 imm_mem[i] <= #D 32'h0;
                 branch_prediction_mem[i] <= #D 1'b0;
                 pc_at_prediction_mem[i] <= #D 32'h0;
+                ras_tos_checkpoint_mem[i] <= #D 3'd0;
             end
         end else begin
             // Handle flush
@@ -202,6 +204,7 @@ module instruction_buffer_new #(
                     imm_mem[tail_ptr] <= #D imm_i_0;
                     branch_prediction_mem[tail_ptr] <= #D branch_prediction_i_0;
                     pc_at_prediction_mem[tail_ptr] <= #D pc_at_prediction_i_0;
+                    ras_tos_checkpoint_mem[tail_ptr] <= #D ras_tos_checkpoint_i;
                     
                 end
                 
@@ -211,6 +214,7 @@ module instruction_buffer_new #(
                     imm_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D imm_i_1;
                     branch_prediction_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D branch_prediction_i_1;
                     pc_at_prediction_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D pc_at_prediction_i_1;
+                    ras_tos_checkpoint_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D ras_tos_checkpoint_i;
                    
                 end
                 
@@ -220,6 +224,7 @@ module instruction_buffer_new #(
                     imm_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D imm_i_2;
                     branch_prediction_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D branch_prediction_i_2;
                     pc_at_prediction_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D pc_at_prediction_i_2;
+                    ras_tos_checkpoint_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D ras_tos_checkpoint_i;
                 end
                 if (write_en_3) begin
                     instruction_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D instruction_i_3;
@@ -227,6 +232,7 @@ module instruction_buffer_new #(
                     imm_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D imm_i_3;
                     branch_prediction_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D branch_prediction_i_3;
                     pc_at_prediction_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D pc_at_prediction_i_3;
+                    ras_tos_checkpoint_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D ras_tos_checkpoint_i;
                 end
                 if (write_en_4) begin
                     instruction_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D instruction_i_4;
@@ -234,6 +240,7 @@ module instruction_buffer_new #(
                     imm_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D imm_i_4;
                     branch_prediction_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D branch_prediction_i_4;
                     pc_at_prediction_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D pc_at_prediction_i_4;
+                    ras_tos_checkpoint_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D ras_tos_checkpoint_i;
                 end                    
             end
         end
@@ -266,12 +273,14 @@ module instruction_buffer_new #(
                 imm_o_0 = imm_i_0;
                 branch_prediction_o_0 = branch_prediction_i_0;
                 pc_value_at_prediction_o_0 = pc_at_prediction_i_0;
+                ras_tos_checkpoint_o = ras_tos_checkpoint_i;
             end else begin
                 instruction_o_0 = instruction_mem[head_ptr];
                 pc_o_0 = pc_mem[head_ptr];
                 imm_o_0 = imm_mem[head_ptr];
                 branch_prediction_o_0 = branch_prediction_mem[head_ptr];
                 pc_value_at_prediction_o_0 = pc_at_prediction_mem[head_ptr];
+                ras_tos_checkpoint_o = ras_tos_checkpoint_mem[head_ptr];
             end
         end
         
@@ -283,12 +292,14 @@ module instruction_buffer_new #(
                     imm_o_1 = imm_i_1;
                     branch_prediction_o_1 = branch_prediction_i_1;
                     pc_value_at_prediction_o_1 = pc_at_prediction_i_1;
+                    ras_tos_checkpoint_o = ras_tos_checkpoint_i;
                 end else begin
                     instruction_o_1 = instruction_i_0;
                     pc_o_1 = pc_i_0;
                     imm_o_1 = imm_i_0;
                     branch_prediction_o_1 = branch_prediction_i_0;
                     pc_value_at_prediction_o_1 = pc_at_prediction_i_0;
+                    ras_tos_checkpoint_o = ras_tos_checkpoint_i;
                 end
             end else begin
                 instruction_o_1 = instruction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
@@ -296,6 +307,7 @@ module instruction_buffer_new #(
                 imm_o_1 = imm_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
                 branch_prediction_o_1 = branch_prediction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
                 pc_value_at_prediction_o_1 = pc_at_prediction_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
+                ras_tos_checkpoint_o = ras_tos_checkpoint_mem[(head_ptr + decode_1_read_offset) % BUFFER_DEPTH];
             end
         end
         
@@ -308,12 +320,14 @@ module instruction_buffer_new #(
                         imm_o_2 = imm_i_2;
                         branch_prediction_o_2 = branch_prediction_i_2;
                         pc_value_at_prediction_o_2 = pc_at_prediction_i_2;
+                        ras_tos_checkpoint_o = ras_tos_checkpoint_i;
                     end else begin
                         instruction_o_2 = instruction_i_1;
                         pc_o_2 = pc_i_1;
                         imm_o_2 = imm_i_1;
                         branch_prediction_o_2 = branch_prediction_i_1;
                         pc_value_at_prediction_o_2 = pc_at_prediction_i_1;
+                        ras_tos_checkpoint_o = ras_tos_checkpoint_i;
                     end
                 end else begin
                     if(use_fwd_0) begin
@@ -322,12 +336,14 @@ module instruction_buffer_new #(
                         imm_o_2 = imm_i_1;
                         branch_prediction_o_2 = branch_prediction_i_1;
                         pc_value_at_prediction_o_2 = pc_at_prediction_i_1;
+                        ras_tos_checkpoint_o = ras_tos_checkpoint_i;
                     end else begin
                         instruction_o_2 = instruction_i_0;
                         pc_o_2 = pc_i_0;
                         imm_o_2 = imm_i_0;
                         branch_prediction_o_2 = branch_prediction_i_0;
                         pc_value_at_prediction_o_2 = pc_at_prediction_i_0;
+                        ras_tos_checkpoint_o = ras_tos_checkpoint_i;
                     end
                 end
             end else begin
@@ -336,6 +352,7 @@ module instruction_buffer_new #(
                 imm_o_2 = imm_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
                 branch_prediction_o_2 = branch_prediction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
                 pc_value_at_prediction_o_2 = pc_at_prediction_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
+                ras_tos_checkpoint_o = ras_tos_checkpoint_mem[(head_ptr + decode_2_read_offset) % BUFFER_DEPTH];
             end
         end
     end

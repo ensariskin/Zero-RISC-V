@@ -1804,4 +1804,49 @@ module dv_top_superscalar;
         .brat_branch_mispredicted(dut.brat_branch_mispredicted)
     );
 
+    // RAS Monitor Instantiation (Direct Hierarchical Access)
+    ras_monitor #(
+        .ADDR_WIDTH(32),
+        .RAS_DEPTH(8)
+    ) ras_mon_inst (
+        .clk(clk),
+        .reset(rst_n),
+        .is_call_0(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.is_call_0),
+        .is_call_1(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.is_call_1),
+        .is_call_2(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.is_call_2),
+        .is_call_3(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.is_call_3),
+        .is_call_4(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.is_call_4),
+        .is_return_0(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.is_return_i_0),
+        .is_return_1(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.is_return_i_1),
+        .is_return_2(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.is_return_i_2),
+        .is_return_3(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.is_return_i_3),
+        .is_return_4(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.is_return_i_4),
+        .current_pc_0(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.current_pc_0),
+        .current_pc_1(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.current_pc_1),
+        .current_pc_2(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.current_pc_2),
+        .current_pc_3(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.current_pc_3),
+        .current_pc_4(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.current_pc_4),
+        .call_return_addr_0(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.call_return_addr_0),
+        .call_return_addr_1(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.call_return_addr_1),
+        .call_return_addr_2(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.call_return_addr_2),
+        .call_return_addr_3(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.call_return_addr_3),
+        .call_return_addr_4(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.call_return_addr_4),
+        .jalr_prediction_valid_o(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.jalr_prediction_valid_o),
+        .jalr_prediction_target_o(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.jalr_prediction_target_o),
+        .update_prediction_valid_i_0(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.update_prediction_valid_i_0),
+        .update_prediction_valid_i_1(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.update_prediction_valid_i_1),
+        .update_prediction_valid_i_2(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.update_prediction_valid_i_2),
+        .misprediction_0(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.misprediction_0),
+        .misprediction_1(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.misprediction_1),
+        .misprediction_2(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.misprediction_2),
+        .correct_pc_0(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.correct_pc_0),
+        .correct_pc_1(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.correct_pc_1),
+        .correct_pc_2(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.correct_pc_2),
+        .ras_restore_en_i(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.ras_restore_en_i),
+        .ras_restore_tos_i(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.ras_restore_tos_i),
+        .ras_tos_checkpoint_o(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.ras_tos_checkpoint_o),
+        .ras_stack(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.ras_stack),
+        .ras_tos(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.ras_tos)
+    );
+
 endmodule

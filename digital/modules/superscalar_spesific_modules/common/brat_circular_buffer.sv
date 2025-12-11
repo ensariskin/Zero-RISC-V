@@ -23,7 +23,8 @@ module brat_circular_buffer #(
     parameter BUFFER_DEPTH = 16,
     parameter ARCH_REGS = 32,
     parameter PHYS_ADDR_WIDTH = 6,
-    parameter DATA_WIDTH = 32
+    parameter DATA_WIDTH = 32,
+    parameter RAS_PTR_WIDTH = 3
 )(
     input logic clk,
     input logic rst_n,
@@ -43,6 +44,10 @@ module brat_circular_buffer #(
     input logic push_is_jalr_0,  // 0=branch, 1=JALR
     input logic push_is_jalr_1,
     input logic push_is_jalr_2,
+
+    input logic [RAS_PTR_WIDTH-1:0] push_ras_tos_0,  
+    input logic [RAS_PTR_WIDTH-1:0] push_ras_tos_1,
+    input logic [RAS_PTR_WIDTH-1:0] push_ras_tos_2,
 
     //==========================================================================
     // Commit interface (3-way parallel) - from ROB commit
@@ -107,6 +112,12 @@ module brat_circular_buffer #(
     input logic restore_en,
     input logic [1:0] restore_idx,  // 0=oldest, 1=2nd oldest, 2=3rd oldest
     output logic [PHYS_ADDR_WIDTH-1:0] restore_rat_snapshot [ARCH_REGS-1:0],
+
+    //==========================================================================
+    // RAS restore interface 
+    //==========================================================================
+    output logic ras_restore_valid_o,
+    output logic [RAS_PTR_WIDTH-1:0] ras_restore_tos_o,
     
     //==========================================================================
     // Peek interface - non-destructive read of oldest 3 branches
@@ -146,6 +157,8 @@ module brat_circular_buffer #(
     logic [BUFFER_DEPTH-1:0] is_jalr_mem;
     // PC at prediction time storage
     logic [DATA_WIDTH-1:0] pc_at_prediction_mem [BUFFER_DEPTH-1:0];
+    // RAS TOS storage
+    logic [RAS_PTR_WIDTH-1:0] ras_tos_mem [BUFFER_DEPTH-1:0];
     
     //==========================================================================
     // Pointers
@@ -441,6 +454,9 @@ module brat_circular_buffer #(
     
     // Output the selected snapshot
     assign restore_rat_snapshot = rat_snapshot_mem[snapshot_ptr[IDX_WIDTH-1:0]];
+    // Output RAS restore info
+    assign ras_restore_valid_o = do_restore;
+    assign ras_restore_tos_o = ras_tos_mem[snapshot_ptr[IDX_WIDTH-1:0]];
     
     //==========================================================================
     // Push pointers
@@ -467,6 +483,7 @@ module brat_circular_buffer #(
                 buffer_phys[i] <= #D '0;
                 correct_pc_mem[i] <= #D '0;
                 pc_at_prediction_mem[i] <= #D '0;
+                ras_tos_mem[i] <= #D '0;
                 for (int j = 0; j < ARCH_REGS; j++) begin
                     rat_snapshot_mem[i][j] <= #D '0;
                 end
@@ -546,6 +563,7 @@ module brat_circular_buffer #(
                 correct_pc_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D '0;
                 is_jalr_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D push_is_jalr_0;
                 pc_at_prediction_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D '0;
+                ras_tos_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D push_ras_tos_0;
             end
             
             if (push_en_1 && !buffer_full && !do_restore && !restore_en) begin
@@ -556,6 +574,7 @@ module brat_circular_buffer #(
                 correct_pc_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D '0;
                 is_jalr_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D push_is_jalr_1;
                 pc_at_prediction_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D '0;
+                ras_tos_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D push_ras_tos_1;
             end
             
             if (push_en_2 && !buffer_full && !do_restore && !restore_en) begin
@@ -566,6 +585,7 @@ module brat_circular_buffer #(
                 correct_pc_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D '0;
                 is_jalr_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D push_is_jalr_2;
                 pc_at_prediction_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D '0;
+                ras_tos_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D push_ras_tos_2;
             end
         end
     end

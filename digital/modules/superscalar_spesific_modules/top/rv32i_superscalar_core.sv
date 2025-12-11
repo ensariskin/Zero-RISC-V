@@ -134,6 +134,11 @@ module rv32i_superscalar_core #(
     logic [DATA_WIDTH-1:0] brat_pc_at_prediction_1;  // PC at prediction for 2nd oldest
     logic [DATA_WIDTH-1:0] brat_pc_at_prediction_2;  // PC at prediction for 3rd oldest
 
+    // RAS Checkpoint
+    logic [2:0] ras_top_checkpoint;
+    logic ras_restore_valid;
+    logic [2:0] ras_restore_tos;
+
     // JALR detection and misprediction signals from execute stage
     logic ex0_is_jalr;
     logic ex1_is_jalr;
@@ -223,7 +228,11 @@ module rv32i_superscalar_core #(
         // Status outputs
         .buffer_empty_o(buffer_empty),
         .buffer_full_o(buffer_full),
-        .occupancy_o(buffer_occupancy)
+        .occupancy_o(buffer_occupancy),
+
+        .ras_tos_checkpoint_o(ras_top_checkpoint),
+        .ras_restore_en_i(ras_restore_valid),
+        .ras_restore_tos_i(ras_restore_tos)
     );
 
     
@@ -323,6 +332,10 @@ module rv32i_superscalar_core #(
         .pc_at_prediction_0_o(brat_pc_at_prediction_0),
         .pc_at_prediction_1_o(brat_pc_at_prediction_1),
         .pc_at_prediction_2_o(brat_pc_at_prediction_2),
+
+        .push_ras_tos_i(ras_top_checkpoint),
+        .ras_restore_valid_o(ras_restore_valid),
+        .ras_restore_tos_o(ras_restore_tos),
         
         `ifndef SYNTHESIS
         .tracer_0(tracer_issue_0),

@@ -85,6 +85,11 @@ module issue_stage #(
     output logic [DATA_WIDTH-1:0] pc_at_prediction_1_o, // PC at prediction for 2nd oldest
     output logic [DATA_WIDTH-1:0] pc_at_prediction_2_o, // PC at prediction for 3rd oldest
 
+    // RAS checkpoint interface
+    input  logic [2:0] push_ras_tos_i,
+    output logic ras_restore_valid_o,
+    output logic [2:0] ras_restore_tos_o,
+
     `ifndef SYNTHESIS
     // Debug Tracer Interfaces
     tracer_interface.source tracer_0,
@@ -261,6 +266,11 @@ module issue_stage #(
         .push_is_jalr_0_i(branch_sel_internal_0 == 3'b111),  // JALR has branch_sel = 110
         .push_is_jalr_1_i(branch_sel_internal_1 == 3'b111),
         .push_is_jalr_2_i(branch_sel_internal_2 == 3'b111),
+
+        // RAS checkpoint interface
+        .push_ras_tos_i(push_ras_tos_i),
+        .ras_restore_valid_o(ras_restore_valid_o),
+        .ras_restore_tos_o(ras_restore_tos_o),
         
         // Decode interface - separated signals
         .rs1_arch_0(rs1_arch_0), .rs1_arch_1(rs1_arch_1), .rs1_arch_2(rs1_arch_2),

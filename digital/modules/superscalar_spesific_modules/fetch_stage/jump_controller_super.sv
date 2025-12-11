@@ -23,7 +23,7 @@
 module jump_controller_super #(parameter size = 32)(
 	input  logic clk,
 	input  logic reset,
-
+	input  logic base_valid_i,
 	// instruction and pc interface
 	input  logic [size-1 : 0] current_pc_0,
 	input  logic [size-1 : 0] current_pc_1,
@@ -67,6 +67,11 @@ module jump_controller_super #(parameter size = 32)(
 	input logic jalr_update_valid_2,
 	input logic [size-1 : 0] jalr_update_prediction_pc_2,
 
+	//RAS restore interface
+	input logic ras_restore_en_i,
+	input logic [2:0] ras_restore_tos_i,
+	output logic [2:0] ras_tos_checkpoint_o,
+
 	// decision interface 
    output logic jump_0, // 1 : taken , 0 : not taken
 	output logic jump_1, // 1 : taken , 0 : not taken
@@ -101,6 +106,17 @@ module jump_controller_super #(parameter size = 32)(
 	logic b_type_4;
 	logic branch_taken_4;
 
+	logic block_0;  // Invalidate inst_1 and inst_2 if inst_0 branches
+   logic block_1;    // Invalidate inst_2 if inst_1 branches
+   logic block_2;    
+   logic block_3;  
+
+	// Branch prediction invalidation logic
+   assign block_0 = jump_0 | jalr_0 | ~base_valid_i;  // If inst_0 is predicted taken, invalidate inst_1 and inst_2
+   assign block_1 = jump_1 | jalr_1 | ~base_valid_i;    // If inst_1 is predicted taken, invalidate inst_2
+   assign block_2 = jump_2 | jalr_2 | ~base_valid_i;
+   assign block_3 = jump_3 | jalr_3 | ~base_valid_i;
+
 
 	assign j_type_0 = instruction_0[6:0] === 7'b1101111; // JAL instruction
 	assign b_type_0 = instruction_0[6:0] === 7'b1100011; // B-type instructions
@@ -132,6 +148,34 @@ module jump_controller_super #(parameter size = 32)(
 
 	assign jump_4 = j_type_4 | (b_type_4 & branch_taken_4);
 	assign jalr_4 = instruction_4[6:0] === 7'b1100111; // JALR instruction
+
+	// CALL RETURN Detection for RAS
+	logic is_call_0, is_call_1, is_call_2, is_call_3, is_call_4;
+	logic is_return_0, is_return_1, is_return_2, is_return_3, is_return_4;
+
+	assign is_call_0 = (j_type_0 || jalr_0) && (instruction_0[11:7] == 5'd1 || instruction_0[11:7] == 5'd5) & base_valid_i; // rd == x1 or x5
+	assign is_call_1 = (j_type_1 || jalr_1) && (instruction_1[11:7] == 5'd1 || instruction_1[11:7] == 5'd5) & ~block_0;                 
+	assign is_call_2 = (j_type_2 || jalr_2) && (instruction_2[11:7] == 5'd1 || instruction_2[11:7] == 5'd5) & ~block_0 & ~block_1;  
+	assign is_call_3 = (j_type_3 || jalr_3) && (instruction_3[11:7] == 5'd1 || instruction_3[11:7] == 5'd5) & ~block_0 & ~block_1 & ~block_2;
+	assign is_call_4 = (j_type_4 || jalr_4) && (instruction_4[11:7] == 5'd1 || instruction_4[11:7] == 5'd5) & ~block_0 & ~block_1 & ~block_2 & ~block_3;
+
+	assign is_return_0 = jalr_0 && (instruction_0[19:15] == 5'd1 || instruction_0[19:15] == 5'd5) && (instruction_0[11:7] == 5'd0) & base_valid_i; // rs1 == x1 or x5 and rd == x0
+	assign is_return_1 = jalr_1 && (instruction_1[19:15] == 5'd1 || instruction_1[19:15] == 5'd5) && (instruction_1[11:7] == 5'd0) & ~block_0;
+	assign is_return_2 = jalr_2 && (instruction_2[19:15] == 5'd1 || instruction_2[19:15] == 5'd5) && (instruction_2[11:7] == 5'd0) & ~block_0 & ~block_1;  
+	assign is_return_3 = jalr_3 && (instruction_3[19:15] == 5'd1 || instruction_3[19:15] == 5'd5) && (instruction_3[11:7] == 5'd0) & ~block_0 & ~block_1 & ~block_2;
+	assign is_return_4 = jalr_4 && (instruction_4[19:15] == 5'd1 || instruction_4[19:15] == 5'd5) && (instruction_4[11:7] == 5'd0) & ~block_0 & ~block_1 & ~block_2 & ~block_3;
+
+	logic [size-1:0] call_return_addr_0;
+	logic [size-1:0] call_return_addr_1;
+	logic [size-1:0] call_return_addr_2;
+	logic [size-1:0] call_return_addr_3;
+	logic [size-1:0] call_return_addr_4;
+
+	assign call_return_addr_0 = current_pc_0 + 32'd4;
+	assign call_return_addr_1 = current_pc_1 + 32'd4;
+	assign call_return_addr_2 = current_pc_2 + 32'd4;
+	assign call_return_addr_3 = current_pc_3 + 32'd4;
+	assign call_return_addr_4 = current_pc_4 + 32'd4;
 
 	// Instantiate branch predictor
 	branch_predictor_super #(.ADDR_WIDTH(32),.ENTRIES(32)) branch_predictor_inst (
@@ -172,7 +216,8 @@ module jump_controller_super #(parameter size = 32)(
 
 	jalr_predictor #(
 		.ADDR_WIDTH(32),
-		.ENTRIES(16)
+		.CACHE_ENTRIES(32),
+		.RAS_DEPTH(8)
 	) jalr_predictor_inst (
 		.clk(clk),
 		.reset(reset),
@@ -189,6 +234,28 @@ module jump_controller_super #(parameter size = 32)(
 		.is_jalr_i_2(jalr_2),
 		.is_jalr_i_3(jalr_3),
 		.is_jalr_i_4(jalr_4),
+
+		.is_call_0(is_call_0),
+		.is_call_1(is_call_1),
+		.is_call_2(is_call_2),
+		.is_call_3(is_call_3),
+		.is_call_4(is_call_4),
+
+		.is_return_i_0(is_return_0),
+		.is_return_i_1(is_return_1),
+		.is_return_i_2(is_return_2),
+		.is_return_i_3(is_return_3),
+		.is_return_i_4(is_return_4),
+
+		.call_return_addr_0(call_return_addr_0),
+		.call_return_addr_1(call_return_addr_1),
+		.call_return_addr_2(call_return_addr_2),
+		.call_return_addr_3(call_return_addr_3),
+		.call_return_addr_4(call_return_addr_4),
+
+		.ras_restore_en_i(ras_restore_en_i),
+		.ras_restore_tos_i(ras_restore_tos_i),
+		.ras_tos_checkpoint_o(ras_tos_checkpoint_o),
 
 		// Prediction output
 		.jalr_prediction_valid_o(jalr_prediction_valid),

@@ -83,12 +83,18 @@ def analyze_csv(file_path):
     r_yz = correlation(load_stores, mispredicts) # Correlation between LS and Mispredicts
     
     partial_corr_ls = partial_correlation(r_xy, r_xz, r_yz)
+    
+    # r_commits_mispred_given_ls: Correlation of Commits and Mispredicts, controlling for LS
+    # x = Commits, z = Mispredicts, y = LS
+    # We want r_xz.y = (r_xz - r_xy * r_yz) / sqrt((1 - r_xy^2) * (1 - r_yz^2))
+    partial_corr_mispred = partial_correlation(r_xz, r_xy, r_yz)
 
     print("\nKismi Korelasyon Analizi (Partial Correlation):")
     print("Bu analiz, bir faktorun etkisini sabit tutarak digerinin saf etkisini gosterir.")
     print("-" * 60)
     print(f"LS ve Mispredicts arasindaki iliski (r): {r_yz:.4f}")
     print(f"Load/Store Etkisi (Mispredicts sabit tutuldugunda): {partial_corr_ls:.4f}")
+    print(f"Mispredict Etkisi (Load/Store sabit tutuldugunda): {partial_corr_mispred:.4f}")
     print("-" * 60)
 
     print("\nDetayli Analiz ve Yorumlar:")
@@ -131,6 +137,15 @@ def analyze_csv(file_path):
         print("   - Bu, bellek sisteminin (LSU/Cache) oldukca verimli calistigini gosterir.")
     else:
         print("   - Load/Store islemlerinin performansa belirgin bir bagimsiz etkisi yok.")
+
+    print(f"\n5. Misprediction Etkisi (Load/Store'dan arindirilmis) (r_partial={partial_corr_mispred:.2f}):")
+    if partial_corr_mispred < -0.5:
+        print("   - Load/Store etkisi kaldirildiginda bile Misprediction performansi COK GUCLU NEGATIF etkiliyor.")
+        print("   - Bu, islemcinin en buyuk darboğazinin kesinlikle Branch Prediction oldugunu dogrular.")
+    elif partial_corr_mispred < 0:
+        print("   - Misprediction performansi negatif etkilemeye devam ediyor, ancak etkisi Load/Store yogunlugu ile kismen iliskili.")
+    else:
+        print("   - Ilginc bir sekilde Load/Store etkisi cikarildiginda Misprediction etkisi azaliyor.")
 
 if __name__ == "__main__":
     # Use the path provided in the prompt context if available, otherwise default

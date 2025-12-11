@@ -20,7 +20,8 @@
 
 module jalr_predictor #(
     parameter ADDR_WIDTH = 32,
-    parameter ENTRIES = 16
+    parameter CACHE_ENTRIES = 16,
+    parameter RAS_DEPTH = 8
 ) (
     input  logic clk,
     input  logic reset,
@@ -37,6 +38,28 @@ module jalr_predictor #(
     input  logic is_jalr_i_2,
     input  logic is_jalr_i_3,
     input  logic is_jalr_i_4,
+
+    input  logic is_call_0,
+    input  logic is_call_1,
+    input  logic is_call_2,
+    input  logic is_call_3,
+    input  logic is_call_4,
+
+    input  logic is_return_i_0,
+    input  logic is_return_i_1,
+    input  logic is_return_i_2,
+    input  logic is_return_i_3,
+    input  logic is_return_i_4,
+
+    input  logic [ADDR_WIDTH-1:0] call_return_addr_0,
+    input  logic [ADDR_WIDTH-1:0] call_return_addr_1,
+    input  logic [ADDR_WIDTH-1:0] call_return_addr_2,
+    input  logic [ADDR_WIDTH-1:0] call_return_addr_3,
+    input  logic [ADDR_WIDTH-1:0] call_return_addr_4,
+
+    input  logic ras_restore_en_i,
+    input  logic [$clog2(RAS_DEPTH)-1:0] ras_restore_tos_i,
+    output logic [$clog2(RAS_DEPTH)-1:0] ras_tos_checkpoint_o,
 
     // Prediction output - single prediction for earliest JALR
     output logic jalr_prediction_valid_o,
@@ -59,121 +82,200 @@ module jalr_predictor #(
     input  logic [ADDR_WIDTH-1:0] correct_pc_2
 );
 
-    localparam INDEX_BITS = $clog2(ENTRIES);
+    localparam CACHE_INDEX_BITS = $clog2(CACHE_ENTRIES);
+    localparam CACHE_TAG_WIDTH = 10;
+    localparam RAS_PTR_WIDTH = $clog2(RAS_DEPTH);
     localparam D = 1; // Delay for simulation
 
-    // JALR prediction table
-    // Each entry stores: valid bit + target address
-    logic [ENTRIES-1:0] valid;
-    logic [ADDR_WIDTH-1:0] target_table [ENTRIES-1:0];
+    // RAS
+    logic [ADDR_WIDTH-1:0] ras_stack [RAS_DEPTH-1:0];
+    logic [RAS_PTR_WIDTH-1:0] ras_tos; // Top of stack
 
-    // Index calculation helpers
-    logic [INDEX_BITS-1:0] lookup_idx_0, lookup_idx_1, lookup_idx_2, lookup_idx_3, lookup_idx_4;
-    logic [INDEX_BITS-1:0] update_idx_0, update_idx_1, update_idx_2;
+    assign ras_tos_checkpoint_o = ras_tos;
 
-    // Lookup results
-    logic [ADDR_WIDTH-1:0] prediction_target_0, prediction_target_1, prediction_target_2, prediction_target_3, prediction_target_4;
+    // Target cache
+    logic [CACHE_ENTRIES-1:0] cache_valid;
+    logic [CACHE_TAG_WIDTH-1:0] cache_tag [CACHE_ENTRIES-1:0];
+    logic [ADDR_WIDTH-1:0] cache_target [CACHE_ENTRIES-1:0];
 
-    // Update detection
-    logic jalr_misprediction_0, jalr_misprediction_1, jalr_misprediction_2;
+    logic [CACHE_INDEX_BITS-1:0] cache_idx_0, cache_idx_1, cache_idx_2, cache_idx_3, cache_idx_4;
+    logic [CACHE_TAG_WIDTH-1:0] cache_tag_0, cache_tag_1, cache_tag_2, cache_tag_3, cache_tag_4;
 
-    //==========================================================================
-    // INDEX CALCULATION
-    //==========================================================================
-    // Use lower bits of PC for indexing (PC[INDEX_BITS+1:2] to skip byte offset)
-    assign lookup_idx_0 = current_pc_0[INDEX_BITS+1:2];
-    assign lookup_idx_1 = current_pc_1[INDEX_BITS+1:2];
-    assign lookup_idx_2 = current_pc_2[INDEX_BITS+1:2];
-    assign lookup_idx_3 = current_pc_3[INDEX_BITS+1:2];
-    assign lookup_idx_4 = current_pc_4[INDEX_BITS+1:2];
+    assign cache_idx_0 = current_pc_0[CACHE_INDEX_BITS+1:2];
+    assign cache_idx_1 = current_pc_1[CACHE_INDEX_BITS+1:2];
+    assign cache_idx_2 = current_pc_2[CACHE_INDEX_BITS+1:2];
+    assign cache_idx_3 = current_pc_3[CACHE_INDEX_BITS+1:2];
+    assign cache_idx_4 = current_pc_4[CACHE_INDEX_BITS+1:2];
 
-    // Update index uses (update_pc - 4) to get the JALR instruction PC
-    assign update_idx_0 = (update_prediction_pc_0 - 4) >> 2;
-    assign update_idx_1 = (update_prediction_pc_1 - 4) >> 2;
-    assign update_idx_2 = (update_prediction_pc_2 - 4) >> 2;
+    assign cache_tag_0 = current_pc_0[CACHE_INDEX_BITS+CACHE_TAG_WIDTH+1:2+CACHE_INDEX_BITS];
+    assign cache_tag_1 = current_pc_1[CACHE_INDEX_BITS+CACHE_TAG_WIDTH+1:2+CACHE_INDEX_BITS];
+    assign cache_tag_2 = current_pc_2[CACHE_INDEX_BITS+CACHE_TAG_WIDTH+1:2+CACHE_INDEX_BITS];
+    assign cache_tag_3 = current_pc_3[CACHE_INDEX_BITS+CACHE_TAG_WIDTH+1:2+CACHE_INDEX_BITS];
+    assign cache_tag_4 = current_pc_4[CACHE_INDEX_BITS+CACHE_TAG_WIDTH+1:2+CACHE_INDEX_BITS];
 
-    //==========================================================================
-    // JALR MISPREDICTION DETECTION
-    //==========================================================================
-    // JALR misprediction
-    assign jalr_misprediction_0 = misprediction_0 && update_prediction_valid_i_0;
-    assign jalr_misprediction_1 = misprediction_1 && update_prediction_valid_i_1;
-    assign jalr_misprediction_2 = misprediction_2 && update_prediction_valid_i_2;
+    logic cache_hit_0, cache_hit_1, cache_hit_2, cache_hit_3, cache_hit_4;
+    assign cache_hit_0 = cache_valid[cache_idx_0] && (cache_tag[cache_idx_0] == cache_tag_0);
+    assign cache_hit_1 = cache_valid[cache_idx_1] && (cache_tag[cache_idx_1] == cache_tag_1);
+    assign cache_hit_2 = cache_valid[cache_idx_2] && (cache_tag[cache_idx_2] == cache_tag_2);
+    assign cache_hit_3 = cache_valid[cache_idx_3] && (cache_tag[cache_idx_3] == cache_tag_3);
+    assign cache_hit_4 = cache_valid[cache_idx_4] && (cache_tag[cache_idx_4] == cache_tag_4);
 
-    //==========================================================================
-    // PREDICTION TABLE LOOKUP
-    //==========================================================================
-    always_comb begin
-        // Instruction 0 lookup
-        prediction_target_0 = target_table[lookup_idx_0];
+    // RAS PREDICTION LOGIC
+    logic ras_valid;
+    logic [ADDR_WIDTH-1:0] ras_top_value;
+    logic disable_ras;
 
-        // Instruction 1 lookup
-        prediction_target_1 = target_table[lookup_idx_1];
+    assign disable_ras = 1'b0; // Placeholder for future RAS disable logic
 
-        // Instruction 2 lookup
-        prediction_target_2 = target_table[lookup_idx_2];
+    assign ras_valid = (ras_tos != '0);
+    assign ras_top_value = ras_valid ? ras_stack[ras_tos-1] : '0;
 
-        // Instruction 3 lookup
-        prediction_target_3 = target_table[lookup_idx_3];
-
-        // Instruction 4 lookup
-        prediction_target_4 = target_table[lookup_idx_4];
-    end
-
-    //==========================================================================
-    // PREDICTION OUTPUT PRIORITY ENCODING
-    //==========================================================================
-    // If multiple JALRs present, use the earliest one (lowest index)
+    // Prediction output 
     always_comb begin
         jalr_prediction_valid_o = 1'b0;
         jalr_prediction_target_o = '0;
 
+        // Priority encoding for JALR predictions
         if (is_jalr_i_0) begin
-            jalr_prediction_valid_o = valid[lookup_idx_0];
-            jalr_prediction_target_o = prediction_target_0;
+            if(is_return_i_0 && ras_valid) begin
+                jalr_prediction_valid_o = 1'b1;
+                jalr_prediction_target_o = ras_top_value;
+            end else begin
+                jalr_prediction_valid_o = cache_hit_0;
+                jalr_prediction_target_o = cache_target[cache_idx_0];
+            end 
         end else if (is_jalr_i_1) begin
-            jalr_prediction_valid_o = valid[lookup_idx_1];;
-            jalr_prediction_target_o = prediction_target_1;
+            if(is_return_i_1 && ras_valid) begin
+                jalr_prediction_valid_o = 1'b1;
+                jalr_prediction_target_o = ras_top_value;
+            end else begin
+                jalr_prediction_valid_o = cache_hit_1;
+                jalr_prediction_target_o = cache_target[cache_idx_1];
+            end 
         end else if (is_jalr_i_2) begin
-            jalr_prediction_valid_o = valid[lookup_idx_2];
-            jalr_prediction_target_o = prediction_target_2;
+            if(is_return_i_2 && ras_valid) begin
+                jalr_prediction_valid_o = 1'b1;
+                jalr_prediction_target_o = ras_top_value;
+            end else begin
+                jalr_prediction_valid_o = cache_hit_2;
+                jalr_prediction_target_o = cache_target[cache_idx_2];
+            end 
         end else if (is_jalr_i_3) begin
-            jalr_prediction_valid_o = valid[lookup_idx_3];
-            jalr_prediction_target_o = prediction_target_3;
+            if(is_return_i_3 && ras_valid) begin
+                jalr_prediction_valid_o = 1'b1;
+                jalr_prediction_target_o = ras_top_value;
+            end else begin
+                jalr_prediction_valid_o = cache_hit_3;
+                jalr_prediction_target_o = cache_target[cache_idx_3];
+            end 
         end else if (is_jalr_i_4) begin
-            jalr_prediction_valid_o = valid[lookup_idx_4];
-            jalr_prediction_target_o = prediction_target_4;
+            if(is_return_i_4 && ras_valid) begin
+                jalr_prediction_valid_o = 1'b1;
+                jalr_prediction_target_o = ras_top_value;
+            end else begin
+                jalr_prediction_valid_o = cache_hit_4;
+                jalr_prediction_target_o = cache_target[cache_idx_4];
+            end 
         end
     end
 
-    //==========================================================================
-    // PREDICTION TABLE UPDATE
-    //==========================================================================
+
+    // RAS Speculative Update
+    logic do_push, do_pop;
+    logic [ADDR_WIDTH-1:0] push_addr;
+
+    always_comb begin
+        do_push = 1'b0;
+        do_pop = 1'b0;
+        push_addr = '0;
+        
+        // Check each instruction for call/return
+        if (is_call_0) begin
+            do_push = 1'b1;
+            push_addr = call_return_addr_0;
+        end else if (is_call_1) begin
+            do_push = 1'b1;
+            push_addr = call_return_addr_1;
+        end else if (is_call_2) begin
+            do_push = 1'b1;
+            push_addr = call_return_addr_2;
+        end else if (is_call_3) begin
+            do_push = 1'b1;
+            push_addr = call_return_addr_3;
+        end else if (is_call_4) begin
+            do_push = 1'b1;
+            push_addr = call_return_addr_4;
+        end else if (is_return_i_0 || is_return_i_1 || is_return_i_2 || is_return_i_3 || is_return_i_4) begin
+            do_pop = 1'b1;
+        end
+    end
+    
+    // RAS Stack Update
     always_ff @(posedge clk or negedge reset) begin
         if (!reset) begin
-            valid <= #D '0;
-            for (int i = 0; i < ENTRIES; i++) begin
-                target_table[i] <= #D '0;
+            ras_tos <= #D '0;
+            for (int i = 0; i < RAS_DEPTH; i++) begin
+                ras_stack[i] <= #D '0;
             end
         end else begin
-             // Update port 2
+            if (ras_restore_en_i) begin
+                ras_tos <= #D ras_restore_tos_i;
+            end else begin
+                if (do_push) begin
+                    ras_stack[ras_tos] <= #D push_addr;
+                    ras_tos <= #D ras_tos + 1;
+                end else if (do_pop && ras_valid) begin
+                    ras_tos <= #D ras_tos - 1;
+                end
+            end
+        end
+    end
+
+    // Prediction Cache Update
+    logic [CACHE_INDEX_BITS-1:0] update_idx_0, update_idx_1, update_idx_2;
+    logic [CACHE_TAG_WIDTH-1:0] update_tag_0, update_tag_1, update_tag_2;
+    logic jalr_misprediction_0, jalr_misprediction_1, jalr_misprediction_2;
+
+    assign update_idx_0 = (update_prediction_pc_0 - 4) >> 2;
+    assign update_idx_1 = (update_prediction_pc_1 - 4) >> 2;
+    assign update_idx_2 = (update_prediction_pc_2 - 4) >> 2;
+
+    assign update_tag_0 = (update_prediction_pc_0 - 4) >> (2 + CACHE_INDEX_BITS);
+    assign update_tag_1 = (update_prediction_pc_1 - 4) >> (2 + CACHE_INDEX_BITS);
+    assign update_tag_2 = (update_prediction_pc_2 - 4) >> (2 + CACHE_INDEX_BITS);
+    
+    assign jalr_misprediction_0 = misprediction_0 && update_prediction_valid_i_0;
+    assign jalr_misprediction_1 = misprediction_1 && update_prediction_valid_i_1;
+    assign jalr_misprediction_2 = misprediction_2 && update_prediction_valid_i_2;
+
+    always_ff @(posedge clk or negedge reset) begin
+        if (!reset) begin
+            cache_valid <= #D '0;
+            for (int i = 0; i < CACHE_ENTRIES; i++) begin
+                cache_tag[i] <= #D '0;
+                cache_target[i] <= #D '0;
+            end
+        end else begin
+            // Update port 2
             if (jalr_misprediction_2) begin
-                valid[update_idx_2] <= #D 1'b1;
-                target_table[update_idx_2] <= #D correct_pc_2;
+                cache_valid[update_idx_2] <= #D 1'b1;
+                cache_tag[update_idx_2] <= #D update_tag_2;
+                cache_target[update_idx_2] <= #D correct_pc_2;
             end
 
-             // Update port 1
+            // Update port 1
             if (jalr_misprediction_1) begin
-                valid[update_idx_1] <= #D 1'b1;
-                target_table[update_idx_1] <= #D correct_pc_1;
+                cache_valid[update_idx_1] <= #D 1'b1;
+                cache_tag[update_idx_1] <= #D update_tag_1;
+                cache_target[update_idx_1] <= #D correct_pc_1;
             end
 
             // Update port 0
             if (jalr_misprediction_0) begin
-                valid[update_idx_0] <= #D 1'b1;
-                target_table[update_idx_0] <= #D correct_pc_0;
+                cache_valid[update_idx_0] <= #D 1'b1;
+                cache_tag[update_idx_0] <= #D update_tag_0;
+                cache_target[update_idx_0] <= #D correct_pc_0;
             end
-
         end
     end
 

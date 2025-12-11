@@ -67,6 +67,11 @@ module fetch_buffer_top #(
     // Decode stage ready signals
     input  logic [2:0] decode_ready_i,          // Which decode stages are ready to accept instructions
     
+    //RAS checkpoint/restore interface
+    output logic [2:0] ras_tos_checkpoint_o, // RAS TOS pointers at fetch time for each instruction
+    input  logic ras_restore_en_i,              // Signal to restore RAS from BRAT on misprediction
+    input  logic [2:0] ras_restore_tos_i,
+
     // Status outputs
     output logic buffer_empty_o,
     output logic buffer_full_o,
@@ -81,7 +86,7 @@ module fetch_buffer_top #(
     logic [DATA_WIDTH-1:0] fetch_inst_0, fetch_inst_1, fetch_inst_2, fetch_inst_3, fetch_inst_4;
     logic [DATA_WIDTH-1:0] fetch_pc_value_at_prediction_0, fetch_pc_value_at_prediction_1, fetch_pc_value_at_prediction_2, fetch_pc_value_at_prediction_3, fetch_pc_value_at_prediction_4;
     logic fetch_branch_pred_0, fetch_branch_pred_1, fetch_branch_pred_2, fetch_branch_pred_3, fetch_branch_pred_4;
-    
+    logic [2:0] ras_tos_checkpoint;
     // Multi-Fetch Unit
     multi_fetch #(.size(DATA_WIDTH)) fetch_unit (
         .clk(clk),
@@ -161,7 +166,12 @@ module fetch_buffer_top #(
         .imm_o_1(fetch_imm_1),
         .imm_o_2(fetch_imm_2),
         .imm_o_3(fetch_imm_3),
-        .imm_o_4(fetch_imm_4)
+        .imm_o_4(fetch_imm_4),
+
+        //RAS checkpoint/restore interface
+        .ras_tos_checkpoint_o(ras_tos_checkpoint),
+        .ras_restore_en_i(ras_restore_en_i),
+        .ras_restore_tos_i(ras_restore_tos_i)
     );
     // TODO : There are one clock cycle latency from fetch to buffer due to multi_fetch internal registers
     //       : This can be optimized by removing some internal registers in multi_fetch if needed
@@ -215,6 +225,7 @@ module fetch_buffer_top #(
         .pc_at_prediction_i_3(fetch_pc_value_at_prediction_3),
         .pc_at_prediction_i_4(fetch_pc_value_at_prediction_4),
         
+        .ras_tos_checkpoint_i(ras_tos_checkpoint),
         // Output to decode stages
         .decode_ready_i(decode_ready_i),
         .decode_valid_o(decode_valid_o),
@@ -234,6 +245,8 @@ module fetch_buffer_top #(
         .pc_value_at_prediction_o_0(pc_value_at_prediction_0),
         .pc_value_at_prediction_o_1(pc_value_at_prediction_1),
         .pc_value_at_prediction_o_2(pc_value_at_prediction_2),
+
+        .ras_tos_checkpoint_o(ras_tos_checkpoint_o),
         
         
         // Status outputs

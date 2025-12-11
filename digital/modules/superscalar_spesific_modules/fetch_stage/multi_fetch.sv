@@ -79,7 +79,12 @@ module multi_fetch #(parameter size = 32)(
       output logic [size-1 : 0] instruction_o_4,
       output logic [size-1 : 0] imm_o_4,
       output logic [size-1 : 0] pc_value_at_prediction_4, // PC value used for prediction
-      output logic branch_prediction_o_4
+      output logic branch_prediction_o_4,
+
+      // RAS checkpoint/restore interface
+      output logic [2:0] ras_tos_checkpoint_o, // RAS TOS pointers at fetch time for each instruction
+      input  logic ras_restore_en_i,
+      input  logic [2:0] ras_restore_tos_i
 
    );
 
@@ -216,6 +221,8 @@ module multi_fetch #(parameter size = 32)(
       .clk(clk),
       .reset(reset),
 
+      .base_valid_i(base_valid),
+
       .current_pc_0(current_pc_0),
       .current_pc_1(current_pc_1),
       .current_pc_2(current_pc_2),
@@ -273,7 +280,11 @@ module multi_fetch #(parameter size = 32)(
       .jalr_4(jalr_4),
 
       .jalr_prediction_valid(jalr_prediction_valid),
-      .jalr_prediction_target(jalr_predicition_target)
+      .jalr_prediction_target(jalr_predicition_target),
+
+      .ras_restore_en_i(ras_restore_en_i),
+      .ras_restore_tos_i(ras_restore_tos_i),
+      .ras_tos_checkpoint_o(ras_tos_checkpoint_o)
 
    );
 
@@ -347,7 +358,7 @@ module multi_fetch #(parameter size = 32)(
 
    assign branch_prediction_o_0 = jump_0 | jalr_0;
    assign branch_prediction_o_1 = jump_1 | jalr_1;
-   assign branch_prediction_o_2 = jump_2 | jalr_2;;
+   assign branch_prediction_o_2 = jump_2 | jalr_2;
    assign branch_prediction_o_3 = jump_3 | jalr_3;
    assign branch_prediction_o_4 = jump_4 | jalr_4;
    //assign pc_plus_o = pc_save;
