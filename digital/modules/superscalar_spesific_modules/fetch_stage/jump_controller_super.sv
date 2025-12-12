@@ -178,7 +178,7 @@ module jump_controller_super #(parameter size = 32)(
 	assign call_return_addr_4 = current_pc_4 + 32'd4;
 
 	// Instantiate branch predictor
-	branch_predictor_super #(.ADDR_WIDTH(32),.ENTRIES(32)) branch_predictor_inst (
+	branch_predictor_super #(.ADDR_WIDTH(32),.ENTRIES(128)) branch_predictor_inst (
 		.clk(clk),
 		.reset(reset),
 

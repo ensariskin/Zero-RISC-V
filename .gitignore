@@ -1,5 +1,6 @@
 # Ignore simulation output files
 *.vcd
+*.vcd,
 *.wlf
 *.fsdb
 *.vcd.gz
@@ -8,11 +9,14 @@
 *.env
 *.obj
 *.sir
+*.ron
+*.wcfg
+*.dst
+*.csv
 
 # Ignore compiled object files and binaries
 *.o
 *.so
-#*.hex
 *.elf
 *.bin
 *.s
@@ -76,5 +80,5 @@ digital/sim/run/dvlcom.env
 tools/riscv-dv/
 dvt_build.log
 *.pyc
-digital/sim/run/*
 .github/copilot-instructions.md
+digital/sim/run/ss_risc_dv/*
