@@ -20,7 +20,11 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module jump_controller_super #(parameter size = 32)(
+module jump_controller_super #( 
+	 parameter size = 32,
+	 parameter ENTRIES = 32,                        // Number of predictor entries
+    parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
+)(
 	input  logic clk,
 	input  logic reset,
 	input  logic base_valid_i,
@@ -37,7 +41,7 @@ module jump_controller_super #(parameter size = 32)(
 	input  logic [size-1 : 0] instruction_3,
 	input  logic [size-1 : 0] instruction_4,
 
-   // update prediction interface TODO : I am not sure if we need 3 ports here. Maybe less will be enough
+   // update prediction interface 
    input  logic [size-1 : 0] update_prediction_pc_0,
 	input  logic [size-1 : 0] update_prediction_pc_1,
 	input  logic [size-1 : 0] update_prediction_pc_2,
@@ -49,6 +53,10 @@ module jump_controller_super #(parameter size = 32)(
 	input  logic misprediction_0, 
 	input  logic misprediction_1,
 	input  logic misprediction_2,
+
+	input  logic [INDEX_WIDTH:0] update_global_history_0,
+	input  logic [INDEX_WIDTH:0] update_global_history_1,
+	input  logic [INDEX_WIDTH:0] update_global_history_2,
 
 	// Correct PC interface (for branch predictor updates)
 	input  logic [size-1 : 0] correct_pc_0,
@@ -84,6 +92,12 @@ module jump_controller_super #(parameter size = 32)(
 	output logic jalr_2,
 	output logic jalr_3,
 	output logic jalr_4,
+
+	output logic [INDEX_WIDTH:0] global_history_0_o, // Current global history and prediction
+	output logic [INDEX_WIDTH:0] global_history_1_o, 
+	output logic [INDEX_WIDTH:0] global_history_2_o, 
+	output logic [INDEX_WIDTH:0] global_history_3_o, 
+	output logic [INDEX_WIDTH:0] global_history_4_o, 
 
 	output logic jalr_prediction_valid,
 	output logic [size-1:0] jalr_prediction_target
@@ -178,38 +192,57 @@ module jump_controller_super #(parameter size = 32)(
 	assign call_return_addr_4 = current_pc_4 + 32'd4;
 
 	// Instantiate branch predictor
-	branch_predictor_super #(.ADDR_WIDTH(32),.ENTRIES(128)) branch_predictor_inst (
+	//branch_predictor_super #(.ADDR_WIDTH(32),.ENTRIES(8192)) branch_predictor_inst (
+	gshare_predictor_super #(.ADDR_WIDTH(size),.ENTRIES(ENTRIES)) gshare_predictor_inst (
 		.clk(clk),
 		.reset(reset),
+		.base_valid(base_valid_i),
 
 		.current_pc_0(current_pc_0),
 		.is_branch_i_0(b_type_0),
+
 		.current_pc_1(current_pc_1),
 		.is_branch_i_1(b_type_1),
+		.ignore_inst_1(b_type_1 & (j_type_0 | jalr_0)),
+
 		.current_pc_2(current_pc_2),
 		.is_branch_i_2(b_type_2),
+		.ignore_inst_2(b_type_2 & (j_type_1 | jalr_1)),
+
 		.current_pc_3(current_pc_3),
 		.is_branch_i_3(b_type_3),
+		.ignore_inst_3(b_type_3 & (j_type_2 | jalr_2)),
+
 		.current_pc_4(current_pc_4),
 		.is_branch_i_4(b_type_4),
-		
+		.ignore_inst_4(b_type_4 & (j_type_3 | jalr_3)),
+
 		.branch_taken_o_0(branch_taken_0),
 		.branch_taken_o_1(branch_taken_1),
 		.branch_taken_o_2(branch_taken_2),
 		.branch_taken_o_3(branch_taken_3),
 		.branch_taken_o_4(branch_taken_4),
 
+		.global_history_0_o,
+		.global_history_1_o,
+		.global_history_2_o,
+		.global_history_3_o,
+		.global_history_4_o,
+
 		.update_prediction_pc_0(update_prediction_pc_0),
 		.update_prediction_valid_i_0(update_prediction_valid_i_0),
 		.misprediction_0(misprediction_0),
+		.update_global_history_0, 
 
 		.update_prediction_pc_1(update_prediction_pc_1),
 		.update_prediction_valid_i_1(update_prediction_valid_i_1),
 		.misprediction_1(misprediction_1),
+		.update_global_history_1,
 		
 		.update_prediction_pc_2(update_prediction_pc_2),
 		.update_prediction_valid_i_2(update_prediction_valid_i_2),
-		.misprediction_2(misprediction_2)
+		.misprediction_2(misprediction_2),
+		.update_global_history_2
 	);
 
 	// Instantiate JALR predictor

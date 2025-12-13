@@ -20,7 +20,9 @@
 module issue_stage #(
     parameter DATA_WIDTH = 32,
     parameter ARCH_REG_ADDR_WIDTH = 5,
-    parameter PHYS_REG_ADDR_WIDTH = 6
+    parameter PHYS_REG_ADDR_WIDTH = 6,
+    parameter ENTRIES = 32,                        // Number of predictor entries
+    parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
 )(
     // Clock and Reset
     input logic clk,
@@ -33,6 +35,9 @@ module issue_stage #(
     input logic [DATA_WIDTH-1:0] pc_i_0, pc_i_1, pc_i_2,
     input logic [DATA_WIDTH-1:0] pc_value_at_prediction_i_0, pc_value_at_prediction_i_1, pc_value_at_prediction_i_2,
     input logic branch_prediction_i_0, branch_prediction_i_1, branch_prediction_i_2,
+    input logic [INDEX_WIDTH:0] global_history_0_i, // Current global history and prediction
+    input logic [INDEX_WIDTH:0] global_history_1_i, // Current global history and prediction
+    input logic [INDEX_WIDTH:0] global_history_2_i, // Current global history and prediction
     
     // Ready signal to previous stage
     output logic [2:0] decode_ready_o,
@@ -84,6 +89,9 @@ module issue_stage #(
     output logic [DATA_WIDTH-1:0] pc_at_prediction_0_o, // PC at prediction for oldest
     output logic [DATA_WIDTH-1:0] pc_at_prediction_1_o, // PC at prediction for 2nd oldest
     output logic [DATA_WIDTH-1:0] pc_at_prediction_2_o, // PC at prediction for 3rd oldest
+    output logic [INDEX_WIDTH:0] update_global_history_0_o,
+    output logic [INDEX_WIDTH:0] update_global_history_1_o,
+    output logic [INDEX_WIDTH:0] update_global_history_2_o,
 
     // RAS checkpoint interface
     input  logic [2:0] push_ras_tos_i,
@@ -226,7 +234,8 @@ module issue_stage #(
         .ARCH_REGS(32),
         .PHYS_REGS(64),
         .ARCH_ADDR_WIDTH(ARCH_REG_ADDR_WIDTH),
-        .PHYS_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH)
+        .PHYS_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
+        .ENTRIES(ENTRIES)
     ) rat_inst (
         .clk(clk),
         .reset(reset),
@@ -255,6 +264,10 @@ module issue_stage #(
         .correct_pc_0_o(correct_pc_0_o),
         .correct_pc_1_o(correct_pc_1_o),
         .correct_pc_2_o(correct_pc_2_o),
+        .update_global_history_0_o(update_global_history_0_o),
+        .update_global_history_1_o(update_global_history_1_o),
+        .update_global_history_2_o(update_global_history_2_o),
+        
         .is_jalr_0_o(is_jalr_0_o),
         .is_jalr_1_o(is_jalr_1_o),
         .is_jalr_2_o(is_jalr_2_o),
@@ -279,6 +292,9 @@ module issue_stage #(
         .decode_valid(decode_valid_i),
         .rd_write_enable_0(rd_write_enable_0), .rd_write_enable_1(rd_write_enable_1), .rd_write_enable_2(rd_write_enable_2),
         .branch_0(branch_0), .branch_1(branch_1), .branch_2(branch_2),
+        .global_history_0_i(global_history_0_i),
+        .global_history_1_i(global_history_1_i),
+        .global_history_2_i(global_history_2_i),
         
         // Rename outputs - separated signals
         .rs1_phys_0(rs1_phys_0), .rs1_phys_1(rs1_phys_1), .rs1_phys_2(rs1_phys_2),

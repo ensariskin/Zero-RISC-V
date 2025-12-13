@@ -27,7 +27,9 @@ module register_alias_table #(
     parameter ARCH_ADDR_WIDTH = $clog2(ARCH_REGS),
     parameter PHYS_ADDR_WIDTH = $clog2(PHYS_REGS),
     parameter BRAT_STACK_DEPTH = 16,
-    parameter DATA_WIDTH = 32
+    parameter DATA_WIDTH = 32,
+    parameter ENTRIES = 32,                        // Number of predictor entries
+    parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
 )(
     input logic clk,
     input logic reset,
@@ -40,6 +42,9 @@ module register_alias_table #(
     input logic [2:0] decode_valid,
     input logic rd_write_enable_0, rd_write_enable_1, rd_write_enable_2,
     input logic branch_0, branch_1, branch_2,
+    input logic [INDEX_WIDTH:0] global_history_0_i, // Current global history and prediction
+    input logic [INDEX_WIDTH:0] global_history_1_i, // Current global history and prediction
+    input logic [INDEX_WIDTH:0] global_history_2_i, // Current global history and predicti
     
     // Rename outputs (physical register addresses)
     output logic [PHYS_ADDR_WIDTH-1:0] rs1_phys_0, rs1_phys_1, rs1_phys_2,
@@ -49,7 +54,6 @@ module register_alias_table #(
     output logic [PHYS_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2,
     output logic [2:0] rename_valid,
     output logic [2:0] rename_ready, // Indicates RAT can allocate physical registers
-    
 
     // Commit interface (from ROB - frees old physical registers)
     input logic [4:0] commit_addr_0,
@@ -103,6 +107,9 @@ module register_alias_table #(
     output logic [DATA_WIDTH-1:0] pc_at_prediction_0_o, // PC at prediction for oldest
     output logic [DATA_WIDTH-1:0] pc_at_prediction_1_o, // PC at prediction for 2nd oldest
     output logic [DATA_WIDTH-1:0] pc_at_prediction_2_o, // PC at prediction for 3rd oldest
+    output logic [INDEX_WIDTH:0] update_global_history_0_o,
+    output logic [INDEX_WIDTH:0] update_global_history_1_o,
+    output logic [INDEX_WIDTH:0] update_global_history_2_o,
     
     // Push inputs for is_jalr and pc_at_prediction (from issue_stage)
     input logic push_is_jalr_0_i,
@@ -139,6 +146,8 @@ module register_alias_table #(
     logic [PHYS_ADDR_WIDTH-1:0] brat_resolved_phys_0, brat_resolved_phys_1, brat_resolved_phys_2;
     logic brat_is_jalr_0, brat_is_jalr_1, brat_is_jalr_2;
     logic [DATA_WIDTH-1:0] brat_pc_at_prediction_0, brat_pc_at_prediction_1, brat_pc_at_prediction_2;
+    logic [INDEX_WIDTH:0] brat_global_history_0, brat_global_history_1, brat_global_history_2;
+
     
     // Restore interface
     logic [PHYS_ADDR_WIDTH-1:0] brat_restore_snapshot [ARCH_REGS-1:0];
@@ -183,7 +192,9 @@ module register_alias_table #(
     assign pc_at_prediction_0_o = brat_pc_at_prediction_0;
     assign pc_at_prediction_1_o = brat_pc_at_prediction_1;
     assign pc_at_prediction_2_o = brat_pc_at_prediction_2;
-
+    assign update_global_history_0_o = brat_global_history_0;
+    assign update_global_history_1_o = brat_global_history_1;
+    assign update_global_history_2_o = brat_global_history_2;
     //==========================================================================
     // Free address buffer set logic - now uses BRAT outputs (in-order!)
     //==========================================================================
@@ -355,6 +366,7 @@ module register_alias_table #(
         .ARCH_REGS(ARCH_REGS),
         .PHYS_ADDR_WIDTH(PHYS_ADDR_WIDTH),
         .DATA_WIDTH(DATA_WIDTH),
+        .ENTRIES(ENTRIES),
         .RAS_PTR_WIDTH(3)
     ) brat_buffer (
         .clk(clk),
@@ -370,6 +382,9 @@ module register_alias_table #(
         .push_branch_phys_0(brat_push_phys_0),
         .push_branch_phys_1(brat_push_phys_1),
         .push_branch_phys_2(brat_push_phys_2),
+        .push_global_history_0(global_history_0_i),
+        .push_global_history_1(global_history_1_i),
+        .push_global_history_2(global_history_2_i),
         .push_is_jalr_0(push_is_jalr_0_i),
         .push_is_jalr_1(push_is_jalr_1_i),
         .push_is_jalr_2(push_is_jalr_2_i),
@@ -418,6 +433,9 @@ module register_alias_table #(
         .resolved_phys_reg_o_0(brat_resolved_phys_0),
         .resolved_phys_reg_o_1(brat_resolved_phys_1),
         .resolved_phys_reg_o_2(brat_resolved_phys_2),
+        .global_history_o_0(brat_global_history_0),
+        .global_history_o_1(brat_global_history_1),
+        .global_history_o_2(brat_global_history_2),
         .is_jalr_o_0(brat_is_jalr_0),
         .is_jalr_o_1(brat_is_jalr_1),
         .is_jalr_o_2(brat_is_jalr_2),

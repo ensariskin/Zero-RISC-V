@@ -24,7 +24,9 @@ module brat_circular_buffer #(
     parameter ARCH_REGS = 32,
     parameter PHYS_ADDR_WIDTH = 6,
     parameter DATA_WIDTH = 32,
-    parameter RAS_PTR_WIDTH = 3
+    parameter RAS_PTR_WIDTH = 3,
+    parameter ENTRIES = 32,                        // Number of predictor entries
+    parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
 )(
     input logic clk,
     input logic rst_n,
@@ -41,6 +43,10 @@ module brat_circular_buffer #(
     input logic [PHYS_ADDR_WIDTH-1:0] push_branch_phys_0,  // ROB ID (rd_phys[4:0])
     input logic [PHYS_ADDR_WIDTH-1:0] push_branch_phys_1,
     input logic [PHYS_ADDR_WIDTH-1:0] push_branch_phys_2,
+    input logic [INDEX_WIDTH:0] push_global_history_0, // Global history and prediction
+    input logic [INDEX_WIDTH:0] push_global_history_1,
+    input logic [INDEX_WIDTH:0] push_global_history_2,
+
     input logic push_is_jalr_0,  // 0=branch, 1=JALR
     input logic push_is_jalr_1,
     input logic push_is_jalr_2,
@@ -99,6 +105,10 @@ module brat_circular_buffer #(
     output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_o_0,  // ROB ID of resolved branch
     output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_o_1,
     output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_o_2,
+    output logic [INDEX_WIDTH:0] global_history_o_0, // Global history at resolution time
+    output logic [INDEX_WIDTH:0] global_history_o_1,
+    output logic [INDEX_WIDTH:0] global_history_o_2,
+
     output logic is_jalr_o_0,             // Is resolved branch a JALR?
     output logic is_jalr_o_1,
     output logic is_jalr_o_2,
@@ -157,6 +167,8 @@ module brat_circular_buffer #(
     logic [BUFFER_DEPTH-1:0] is_jalr_mem;
     // PC at prediction time storage
     logic [DATA_WIDTH-1:0] pc_at_prediction_mem [BUFFER_DEPTH-1:0];
+    // Global history storage
+    logic [INDEX_WIDTH:0] global_history_mem [BUFFER_DEPTH-1:0];
     // RAS TOS storage
     logic [RAS_PTR_WIDTH-1:0] ras_tos_mem [BUFFER_DEPTH-1:0];
     
@@ -355,6 +367,9 @@ module brat_circular_buffer #(
         correct_pc_o_0 = '0;
         correct_pc_o_1 = '0;
         correct_pc_o_2 = '0;
+        global_history_o_0 = '0;
+        global_history_o_1 = '0;
+        global_history_o_2 = '0;
         resolved_phys_reg_o_0 = '0;
         resolved_phys_reg_o_1 = '0;
         resolved_phys_reg_o_2 = '0;
@@ -373,6 +388,7 @@ module brat_circular_buffer #(
             resolved_phys_reg_o_0 = peek_branch_phys_0;
             is_jalr_o_0 = is_jalr_mem[peek_idx_0];
             pc_at_prediction_o_0 = eff_pc_at_prediction_0;
+            global_history_o_0 = global_history_mem[peek_idx_0];
             
             // If oldest is mispredicted, don't output younger branches
             // They will be flushed anyway
@@ -385,6 +401,7 @@ module brat_circular_buffer #(
                     resolved_phys_reg_o_1 = peek_branch_phys_1;
                     is_jalr_o_1 = is_jalr_mem[peek_idx_1];
                     pc_at_prediction_o_1 = eff_pc_at_prediction_1;
+                    global_history_o_1 = global_history_mem[peek_idx_1];
                     
                     // 3rd oldest (peek_2) - only if 1st and 2nd are resolved and NOT mispredicted
                     if (!eff_mispredicted_1 && peek_valid_2 && eff_resolved_2) begin
@@ -394,6 +411,7 @@ module brat_circular_buffer #(
                         resolved_phys_reg_o_2 = peek_branch_phys_2;
                         is_jalr_o_2 = is_jalr_mem[peek_idx_2];
                         pc_at_prediction_o_2 = eff_pc_at_prediction_2;
+                        global_history_o_2 = global_history_mem[peek_idx_2];
                     end
                 end
             end
@@ -456,7 +474,7 @@ module brat_circular_buffer #(
     assign restore_rat_snapshot = rat_snapshot_mem[snapshot_ptr[IDX_WIDTH-1:0]];
     // Output RAS restore info
     assign ras_restore_valid_o = do_restore;
-    assign ras_restore_tos_o = ras_tos_mem[snapshot_ptr[IDX_WIDTH-1:0]];
+    assign ras_restore_tos_o = ras_tos_mem[snapshot_ptr[IDX_WIDTH-1:0]]; // todo check logic
     
     //==========================================================================
     // Push pointers
@@ -483,6 +501,7 @@ module brat_circular_buffer #(
                 buffer_phys[i] <= #D '0;
                 correct_pc_mem[i] <= #D '0;
                 pc_at_prediction_mem[i] <= #D '0;
+                global_history_mem[i] <= #D '0;
                 ras_tos_mem[i] <= #D '0;
                 for (int j = 0; j < ARCH_REGS; j++) begin
                     rat_snapshot_mem[i][j] <= #D '0;
@@ -563,6 +582,7 @@ module brat_circular_buffer #(
                 correct_pc_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D '0;
                 is_jalr_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D push_is_jalr_0;
                 pc_at_prediction_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D '0;
+                global_history_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D push_global_history_0;
                 ras_tos_mem[push_ptr_0[IDX_WIDTH-1:0]] <= #D push_ras_tos_0;
             end
             
@@ -574,6 +594,7 @@ module brat_circular_buffer #(
                 correct_pc_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D '0;
                 is_jalr_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D push_is_jalr_1;
                 pc_at_prediction_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D '0;
+                global_history_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D push_global_history_1;
                 ras_tos_mem[push_ptr_1[IDX_WIDTH-1:0]] <= #D push_ras_tos_1;
             end
             
@@ -585,6 +606,7 @@ module brat_circular_buffer #(
                 correct_pc_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D '0;
                 is_jalr_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D push_is_jalr_2;
                 pc_at_prediction_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D '0;
+                global_history_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D push_global_history_2;
                 ras_tos_mem[push_ptr_2[IDX_WIDTH-1:0]] <= #D push_ras_tos_2;
             end
         end

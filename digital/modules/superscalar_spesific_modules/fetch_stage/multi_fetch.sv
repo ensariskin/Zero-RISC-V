@@ -1,6 +1,10 @@
 `timescale 1ns/1ns
 
-module multi_fetch #(parameter size = 32)(
+module multi_fetch #(
+   parameter size = 32,
+   parameter ENTRIES = 32,                        // Number of predictor entries
+   parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
+)(
       input  logic clk,
       input  logic reset,
 
@@ -50,6 +54,10 @@ module multi_fetch #(parameter size = 32)(
       input  logic [size-1 : 0] correct_pc_i_1,
       input  logic [size-1 : 0] correct_pc_i_2,
 
+      input  logic [INDEX_WIDTH:0] update_global_history_0,
+      input  logic [INDEX_WIDTH:0] update_global_history_1,
+      input  logic [INDEX_WIDTH:0] update_global_history_2,
+
       // New interface for instruction buffer integration
       output logic [4:0] fetch_valid_o,        // Which of the 3 instructions are valid
       input  logic fetch_ready_i,              // Instruction buffer can accept instructions
@@ -60,26 +68,32 @@ module multi_fetch #(parameter size = 32)(
       output logic [size-1 : 0] imm_o_0,
       output logic [size-1 : 0] pc_value_at_prediction_0, // PC value used for prediction
       output logic branch_prediction_o_0,
+      output logic [INDEX_WIDTH:0] global_history_0_o, // Current global history and prediction
 
       output logic [size-1 : 0] instruction_o_1,
       output logic [size-1 : 0] imm_o_1,
       output logic [size-1 : 0] pc_value_at_prediction_1, // PC value used for prediction
       output logic branch_prediction_o_1,
+      output logic [INDEX_WIDTH:0] global_history_1_o, 
 
       output logic [size-1 : 0] instruction_o_2,
       output logic [size-1 : 0] imm_o_2,
       output logic [size-1 : 0] pc_value_at_prediction_2, // PC value used for prediction
       output logic branch_prediction_o_2,
+      output logic [INDEX_WIDTH:0] global_history_2_o,
 
       output logic [size-1 : 0] instruction_o_3,
       output logic [size-1 : 0] imm_o_3,
       output logic [size-1 : 0] pc_value_at_prediction_3, // PC value used for prediction
       output logic branch_prediction_o_3,
+      output logic [INDEX_WIDTH:0] global_history_3_o,
 
       output logic [size-1 : 0] instruction_o_4,
       output logic [size-1 : 0] imm_o_4,
       output logic [size-1 : 0] pc_value_at_prediction_4, // PC value used for prediction
       output logic branch_prediction_o_4,
+      output logic [INDEX_WIDTH:0] global_history_4_o,
+      
 
       // RAS checkpoint/restore interface
       output logic [2:0] ras_tos_checkpoint_o, // RAS TOS pointers at fetch time for each instruction
@@ -217,7 +231,7 @@ module multi_fetch #(parameter size = 32)(
       .imm_o(imm_4));
 
    // Jump controller
-   jump_controller_super jump_ctrl(
+   jump_controller_super #(.size(size), .ENTRIES(ENTRIES)) jump_ctrl(
       .clk(clk),
       .reset(reset),
 
@@ -255,6 +269,10 @@ module multi_fetch #(parameter size = 32)(
       .correct_pc_1(correct_pc_i_1),
       .correct_pc_2(correct_pc_i_2),
 
+      .update_global_history_0, 
+      .update_global_history_1, 
+      .update_global_history_2, 
+
       //==========================================================================
       // JALR predictor update (from BRAT - when update_valid & is_jalr)
       //=========================================================================
@@ -278,6 +296,12 @@ module multi_fetch #(parameter size = 32)(
       .jalr_2(jalr_2),
       .jalr_3(jalr_3),
       .jalr_4(jalr_4),
+
+      .global_history_0_o,
+		.global_history_1_o,
+		.global_history_2_o,
+		.global_history_3_o,
+		.global_history_4_o,
 
       .jalr_prediction_valid(jalr_prediction_valid),
       .jalr_prediction_target(jalr_predicition_target),

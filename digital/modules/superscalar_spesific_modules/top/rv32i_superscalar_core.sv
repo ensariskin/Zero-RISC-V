@@ -20,7 +20,9 @@
 module rv32i_superscalar_core #(
     parameter DATA_WIDTH = 32,
     parameter BUFFER_DEPTH = 16,
-    parameter REG_FILE_ADDR_WIDTH = 5
+    parameter REG_FILE_ADDR_WIDTH = 5,
+    parameter ENTRIES = 4096,                        // Number of predictor entries
+    parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
 )(
     // Clock and Reset
     input  logic clk,
@@ -76,6 +78,7 @@ module rv32i_superscalar_core #(
     logic [DATA_WIDTH-1:0] fetch_pc_0, fetch_pc_1, fetch_pc_2;
     logic [DATA_WIDTH-1:0] fetch_imm_0, fetch_imm_1, fetch_imm_2; // todo remove from fetch buffer recalculate in decode
     logic fetch_branch_pred_0, fetch_branch_pred_1, fetch_branch_pred_2;
+    logic [INDEX_WIDTH:0] fetch_global_history_0, fetch_global_history_1, fetch_global_history_2;
     logic [2:0] decode_ready;
     logic buffer_empty, buffer_full;
     logic [$clog2(BUFFER_DEPTH):0] buffer_occupancy;
@@ -134,6 +137,10 @@ module rv32i_superscalar_core #(
     logic [DATA_WIDTH-1:0] brat_pc_at_prediction_1;  // PC at prediction for 2nd oldest
     logic [DATA_WIDTH-1:0] brat_pc_at_prediction_2;  // PC at prediction for 3rd oldest
 
+    logic [INDEX_WIDTH:0] brat_global_history_0;
+    logic [INDEX_WIDTH:0] brat_global_history_1;
+    logic [INDEX_WIDTH:0] brat_global_history_2;
+
     // RAS Checkpoint
     logic [2:0] ras_top_checkpoint;
     logic ras_restore_valid;
@@ -158,7 +165,8 @@ module rv32i_superscalar_core #(
     
     fetch_buffer_top #(
         .DATA_WIDTH(DATA_WIDTH),
-        .BUFFER_DEPTH(BUFFER_DEPTH)
+        .BUFFER_DEPTH(BUFFER_DEPTH),
+        .ENTRIES(ENTRIES)
     ) fetch_buffer_unit (
         .clk(clk),
         .reset(reset),
@@ -198,6 +206,9 @@ module rv32i_superscalar_core #(
         .branch_prediction_decode_o_0(fetch_branch_pred_0),
         .branch_prediction_decode_o_1(fetch_branch_pred_1),
         .branch_prediction_decode_o_2(fetch_branch_pred_2),
+        .global_history_0_o(fetch_global_history_0),
+        .global_history_1_o(fetch_global_history_1),
+        .global_history_2_o(fetch_global_history_2),
         
         //======================================================================
         // BRAT-based In-Order Branch Resolution (Simplified Interface)
@@ -210,6 +221,7 @@ module rv32i_superscalar_core #(
         .is_jalr_i_0(brat_is_jalr_0),
         .pc_at_prediction_i_0(brat_pc_at_prediction_0),
         .correct_pc_i_0(brat_correct_pc_0),
+        .update_global_history_0(brat_global_history_0),
         
         // Port 1 (2nd oldest resolved branch from BRAT)
         .misprediction_i_1(brat_branch_resolved[1] & brat_branch_mispredicted[1]),
@@ -217,6 +229,7 @@ module rv32i_superscalar_core #(
         .is_jalr_i_1(brat_is_jalr_1),
         .pc_at_prediction_i_1(brat_pc_at_prediction_1),
         .correct_pc_i_1(brat_correct_pc_1),
+        .update_global_history_1(brat_global_history_1),
         
         // Port 2 (3rd oldest resolved branch from BRAT)
         .misprediction_i_2(brat_branch_resolved[2] & brat_branch_mispredicted[2]),
@@ -224,6 +237,7 @@ module rv32i_superscalar_core #(
         .is_jalr_i_2(brat_is_jalr_2),
         .pc_at_prediction_i_2(brat_pc_at_prediction_2),
         .correct_pc_i_2(brat_correct_pc_2),
+        .update_global_history_2(brat_global_history_2),
         
         // Status outputs
         .buffer_empty_o(buffer_empty),
@@ -263,7 +277,8 @@ module rv32i_superscalar_core #(
     issue_stage #(
         .DATA_WIDTH(DATA_WIDTH),
         .ARCH_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH),
-        .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1)
+        .PHYS_REG_ADDR_WIDTH(REG_FILE_ADDR_WIDTH+1),
+        .ENTRIES(ENTRIES)
     ) issue_stage_unit (
         .clk(clk),
         .reset(reset),
@@ -285,6 +300,9 @@ module rv32i_superscalar_core #(
         .branch_prediction_i_0(fetch_branch_pred_0),
         .branch_prediction_i_1(fetch_branch_pred_1),
         .branch_prediction_i_2(fetch_branch_pred_2),
+        .global_history_0_i(fetch_global_history_0),
+        .global_history_1_i(fetch_global_history_1),
+        .global_history_2_i(fetch_global_history_2),
         
         // Ready signal to fetch/buffer stage
         .decode_ready_o(decode_ready),
@@ -332,6 +350,9 @@ module rv32i_superscalar_core #(
         .pc_at_prediction_0_o(brat_pc_at_prediction_0),
         .pc_at_prediction_1_o(brat_pc_at_prediction_1),
         .pc_at_prediction_2_o(brat_pc_at_prediction_2),
+        .update_global_history_0_o(brat_global_history_0),
+        .update_global_history_1_o(brat_global_history_1),
+        .update_global_history_2_o(brat_global_history_2),
 
         .push_ras_tos_i(ras_top_checkpoint),
         .ras_restore_valid_o(ras_restore_valid),

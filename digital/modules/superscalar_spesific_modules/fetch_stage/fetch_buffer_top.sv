@@ -25,7 +25,9 @@
 
 module fetch_buffer_top #(
     parameter DATA_WIDTH = 32,
-    parameter BUFFER_DEPTH = 16
+    parameter BUFFER_DEPTH = 16,
+    parameter ENTRIES = 32,                        // Number of predictor entries
+    parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
 )(
     input  logic clk,
     input  logic reset,
@@ -54,8 +56,11 @@ module fetch_buffer_top #(
     
     // 5. Correct PC (for misprediction redirect and predictor update)
     input  logic [DATA_WIDTH-1:0] correct_pc_i_0, correct_pc_i_1, correct_pc_i_2,
-    
-    
+
+    input  logic [INDEX_WIDTH:0] update_global_history_0,
+    input  logic [INDEX_WIDTH:0] update_global_history_1,
+    input  logic [INDEX_WIDTH:0] update_global_history_2,
+
     // Output to decode stages
     output logic [2:0] decode_valid_o,          // How many instructions are available for decode
     output logic [DATA_WIDTH-1:0] instruction_o_0, instruction_o_1, instruction_o_2,
@@ -63,6 +68,10 @@ module fetch_buffer_top #(
     output logic [DATA_WIDTH-1:0] imm_decode_o_0, imm_decode_o_1, imm_decode_o_2,
     output logic branch_prediction_decode_o_0, branch_prediction_decode_o_1, branch_prediction_decode_o_2,
     output logic [DATA_WIDTH-1:0] pc_value_at_prediction_0, pc_value_at_prediction_1, pc_value_at_prediction_2,
+    output logic [INDEX_WIDTH:0] global_history_0_o, // Current global history and prediction
+    output logic [INDEX_WIDTH:0] global_history_1_o, // Current global history and prediction
+    output logic [INDEX_WIDTH:0] global_history_2_o, // Current global history and prediction
+
 
     // Decode stage ready signals
     input  logic [2:0] decode_ready_i,          // Which decode stages are ready to accept instructions
@@ -87,8 +96,10 @@ module fetch_buffer_top #(
     logic [DATA_WIDTH-1:0] fetch_pc_value_at_prediction_0, fetch_pc_value_at_prediction_1, fetch_pc_value_at_prediction_2, fetch_pc_value_at_prediction_3, fetch_pc_value_at_prediction_4;
     logic fetch_branch_pred_0, fetch_branch_pred_1, fetch_branch_pred_2, fetch_branch_pred_3, fetch_branch_pred_4;
     logic [2:0] ras_tos_checkpoint;
+    logic [INDEX_WIDTH:0] global_history_0, global_history_1, global_history_2, global_history_3, global_history_4;
+
     // Multi-Fetch Unit
-    multi_fetch #(.size(DATA_WIDTH)) fetch_unit (
+    multi_fetch #(.size(DATA_WIDTH), .ENTRIES(ENTRIES)) fetch_unit (
         .clk(clk),
         .reset(reset),
         
@@ -135,18 +146,31 @@ module fetch_buffer_top #(
         .correct_pc_i_0(correct_pc_i_0),
         .correct_pc_i_1(correct_pc_i_1),
         .correct_pc_i_2(correct_pc_i_2),
+
+        .update_global_history_0, 
+        .update_global_history_1, 
+        .update_global_history_2,
         
         // Legacy outputs (fetch-stage predictions)
         .pc_value_at_prediction_0(fetch_pc_value_at_prediction_0),
         .branch_prediction_o_0(fetch_branch_pred_0),
+        .global_history_0_o(global_history_0),
+        
         .pc_value_at_prediction_1(fetch_pc_value_at_prediction_1),
         .branch_prediction_o_1(fetch_branch_pred_1),
+        .global_history_1_o(global_history_1),
+
         .pc_value_at_prediction_2(fetch_pc_value_at_prediction_2),
         .branch_prediction_o_2(fetch_branch_pred_2),
+        .global_history_2_o(global_history_2),
+
         .pc_value_at_prediction_3(fetch_pc_value_at_prediction_3),
         .branch_prediction_o_3(fetch_branch_pred_3),
+        .global_history_3_o(global_history_3),
+
         .pc_value_at_prediction_4(fetch_pc_value_at_prediction_4),
         .branch_prediction_o_4(fetch_branch_pred_4),
+        .global_history_4_o(global_history_4),
         
         // New buffer interface
         .fetch_valid_o(fetch_valid),
@@ -173,11 +197,6 @@ module fetch_buffer_top #(
         .ras_restore_en_i(ras_restore_en_i),
         .ras_restore_tos_i(ras_restore_tos_i)
     );
-    // TODO : There are one clock cycle latency from fetch to buffer due to multi_fetch internal registers
-    //       : This can be optimized by removing some internal registers in multi_fetch if needed
-    
-
-    
 
     // Generate combined eager flush signal (any misprediction triggers flush)
     logic eager_flush;
@@ -186,7 +205,8 @@ module fetch_buffer_top #(
     // Instruction Buffer
     instruction_buffer_new #(
         .BUFFER_DEPTH(BUFFER_DEPTH),
-        .DATA_WIDTH(DATA_WIDTH)
+        .DATA_WIDTH(DATA_WIDTH),
+        .ENTRIES(ENTRIES)
     ) inst_buffer (
         .clk(clk),
         .reset(reset),
@@ -225,6 +245,12 @@ module fetch_buffer_top #(
         .pc_at_prediction_i_3(fetch_pc_value_at_prediction_3),
         .pc_at_prediction_i_4(fetch_pc_value_at_prediction_4),
         
+        .global_history_0_i(global_history_0),
+        .global_history_1_i(global_history_1),
+        .global_history_2_i(global_history_2),
+        .global_history_3_i(global_history_3),
+        .global_history_4_i(global_history_4),
+
         .ras_tos_checkpoint_i(ras_tos_checkpoint),
         // Output to decode stages
         .decode_ready_i(decode_ready_i),
@@ -245,6 +271,9 @@ module fetch_buffer_top #(
         .pc_value_at_prediction_o_0(pc_value_at_prediction_0),
         .pc_value_at_prediction_o_1(pc_value_at_prediction_1),
         .pc_value_at_prediction_o_2(pc_value_at_prediction_2),
+        .global_history_0_o(global_history_0_o),
+        .global_history_1_o(global_history_1_o),
+        .global_history_2_o(global_history_2_o),
 
         .ras_tos_checkpoint_o(ras_tos_checkpoint_o),
         
