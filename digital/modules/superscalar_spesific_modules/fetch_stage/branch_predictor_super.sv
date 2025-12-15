@@ -106,7 +106,7 @@ module branch_predictor_super #(
         if (!reset) begin
             // Initialize all entries
             for (int i = 0; i < ENTRIES; i++) begin
-                predictor_table[i].counter <= #D WEAK_TAKEN;  // Start with weak not taken
+                predictor_table[i].counter <= #D WEAK_NOT_TAKEN;  // Start with weak not taken
             end
         end else begin
             if (update_prediction_valid_i_0) begin

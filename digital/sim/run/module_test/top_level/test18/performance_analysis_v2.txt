@@ -1,0 +1,2885 @@
+========================================
+Pipeline Performance Analyzer V2
+Focus: Why is issue_valid = 0?
+========================================
+
+
+========================================
+CYCLE 1000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      309 cycles (30.9%)
+  Not Occupied:      218 cycles (70.6%)
+    Misprediction Penalty: 60 (27.5%)
+    Previous Stage Bottleneck: 158 (72.5%)
+      Decode Not Ready: 158 (100.0%)
+        ROB Full: 155 (98.1%)
+        LSQ Full: 2 (1.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 91 cycles (29.4%)
+    Dependency Pattern:
+      Both waiting:   0 (0.0%)
+      Only A waiting: 91 (100.0%)
+      Only B waiting: 0 (0.0%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 91 (100.0%)
+      CDB3: 0 (0.0%)
+    Operand B waiting for:
+      CDB0: 0 (-nan%)
+      CDB1: 0 (-nan%)
+      CDB2: 0 (-nan%)
+      CDB3: 0 (-nan%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      380 cycles (38.0%)
+  Not Occupied:      366 cycles (96.3%)
+    Misprediction Penalty: 61 (16.7%)
+    Previous Stage Bottleneck: 305 (83.3%)
+      Decode Not Ready: 305 (100.0%)
+        ROB Full: 302 (99.0%)
+        LSQ Full: 2 (0.7%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 14 cycles (3.7%)
+    Dependency Pattern:
+      Both waiting:   0 (0.0%)
+      Only A waiting: 11 (78.6%)
+      Only B waiting: 3 (21.4%)
+    Operand A waiting for:
+      CDB0: 11 (100.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 0 (0.0%)
+    Operand B waiting for:
+      CDB0: 3 (100.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 0 (0.0%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      533 cycles (53.3%)
+  Not Occupied:      426 cycles (79.9%)
+    Misprediction Penalty: 63 (14.8%)
+    Previous Stage Bottleneck: 363 (85.2%)
+      Decode Not Ready: 363 (100.0%)
+        ROB Full: 360 (99.2%)
+        LSQ Full: 2 (0.6%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 107 cycles (20.1%)
+    Dependency Pattern:
+      Both waiting:   2 (1.9%)
+      Only A waiting: 14 (13.1%)
+      Only B waiting: 91 (85.0%)
+    Operand A waiting for:
+      CDB0: 6 (37.5%)
+      CDB1: 10 (62.5%)
+      CDB2: 0 (0.0%)
+      CDB3: 0 (0.0%)
+    Operand B waiting for:
+      CDB0: 1 (1.1%)
+      CDB1: 92 (98.9%)
+      CDB2: 0 (0.0%)
+      CDB3: 0 (0.0%)
+
+
+========================================
+CYCLE 2000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      750 cycles (37.5%)
+  Not Occupied:      467 cycles (62.3%)
+    Misprediction Penalty: 269 (57.6%)
+    Previous Stage Bottleneck: 198 (42.4%)
+      Decode Not Ready: 198 (100.0%)
+        ROB Full: 195 (98.5%)
+        LSQ Full: 2 (1.0%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 283 cycles (37.7%)
+    Dependency Pattern:
+      Both waiting:   2 (0.7%)
+      Only A waiting: 266 (94.0%)
+      Only B waiting: 15 (5.3%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 91 (34.0%)
+      CDB3: 177 (66.0%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 17 (100.0%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      800 cycles (40.0%)
+  Not Occupied:      651 cycles (81.4%)
+    Misprediction Penalty: 282 (43.3%)
+    Previous Stage Bottleneck: 369 (56.7%)
+      Decode Not Ready: 366 (99.2%)
+        ROB Full: 363 (99.2%)
+        LSQ Full: 2 (0.5%)
+      Instruction Buffer Empty: 3 (0.8%)
+  Operands Not Ready: 149 cycles (18.6%)
+    Dependency Pattern:
+      Both waiting:   1 (0.7%)
+      Only A waiting: 99 (66.4%)
+      Only B waiting: 49 (32.9%)
+    Operand A waiting for:
+      CDB0: 35 (35.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 65 (65.0%)
+    Operand B waiting for:
+      CDB0: 3 (6.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 47 (94.0%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      1108 cycles (55.4%)
+  Not Occupied:      749 cycles (67.6%)
+    Misprediction Penalty: 298 (39.8%)
+    Previous Stage Bottleneck: 451 (60.2%)
+      Decode Not Ready: 448 (99.3%)
+        ROB Full: 445 (99.3%)
+        LSQ Full: 2 (0.4%)
+      Instruction Buffer Empty: 3 (0.7%)
+  Operands Not Ready: 359 cycles (32.4%)
+    Dependency Pattern:
+      Both waiting:   12 (3.3%)
+      Only A waiting: 222 (61.8%)
+      Only B waiting: 125 (34.8%)
+    Operand A waiting for:
+      CDB0: 56 (23.9%)
+      CDB1: 10 (4.3%)
+      CDB2: 0 (0.0%)
+      CDB3: 168 (71.8%)
+    Operand B waiting for:
+      CDB0: 4 (2.9%)
+      CDB1: 92 (67.2%)
+      CDB2: 0 (0.0%)
+      CDB3: 41 (29.9%)
+
+
+========================================
+CYCLE 3000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      1236 cycles (41.2%)
+  Not Occupied:      735 cycles (59.5%)
+    Misprediction Penalty: 537 (73.1%)
+    Previous Stage Bottleneck: 198 (26.9%)
+      Decode Not Ready: 198 (100.0%)
+        ROB Full: 195 (98.5%)
+        LSQ Full: 2 (1.0%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 501 cycles (40.5%)
+    Dependency Pattern:
+      Both waiting:   2 (0.4%)
+      Only A waiting: 466 (93.0%)
+      Only B waiting: 33 (6.6%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 91 (19.4%)
+      CDB3: 377 (80.6%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 35 (100.0%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      1252 cycles (41.7%)
+  Not Occupied:      929 cycles (74.2%)
+    Misprediction Penalty: 560 (60.3%)
+    Previous Stage Bottleneck: 369 (39.7%)
+      Decode Not Ready: 366 (99.2%)
+        ROB Full: 363 (99.2%)
+        LSQ Full: 2 (0.5%)
+      Instruction Buffer Empty: 3 (0.8%)
+  Operands Not Ready: 323 cycles (25.8%)
+    Dependency Pattern:
+      Both waiting:   1 (0.3%)
+      Only A waiting: 228 (70.6%)
+      Only B waiting: 94 (29.1%)
+    Operand A waiting for:
+      CDB0: 63 (27.5%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 166 (72.5%)
+    Operand B waiting for:
+      CDB0: 3 (3.2%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 92 (96.8%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      1622 cycles (54.1%)
+  Not Occupied:      1048 cycles (64.6%)
+    Misprediction Penalty: 597 (57.0%)
+    Previous Stage Bottleneck: 451 (43.0%)
+      Decode Not Ready: 448 (99.3%)
+        ROB Full: 445 (99.3%)
+        LSQ Full: 2 (0.4%)
+      Instruction Buffer Empty: 3 (0.7%)
+  Operands Not Ready: 574 cycles (35.4%)
+    Dependency Pattern:
+      Both waiting:   24 (4.2%)
+      Only A waiting: 359 (62.5%)
+      Only B waiting: 191 (33.3%)
+    Operand A waiting for:
+      CDB0: 92 (24.0%)
+      CDB1: 10 (2.6%)
+      CDB2: 0 (0.0%)
+      CDB3: 281 (73.4%)
+    Operand B waiting for:
+      CDB0: 10 (4.7%)
+      CDB1: 92 (42.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 113 (52.6%)
+
+
+========================================
+CYCLE 4000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      1692 cycles (42.3%)
+  Not Occupied:      998 cycles (59.0%)
+    Misprediction Penalty: 800 (80.2%)
+    Previous Stage Bottleneck: 198 (19.8%)
+      Decode Not Ready: 198 (100.0%)
+        ROB Full: 195 (98.5%)
+        LSQ Full: 2 (1.0%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 694 cycles (41.0%)
+    Dependency Pattern:
+      Both waiting:   3 (0.4%)
+      Only A waiting: 652 (93.9%)
+      Only B waiting: 39 (5.6%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 91 (13.9%)
+      CDB3: 564 (86.1%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 42 (100.0%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      1762 cycles (44.0%)
+  Not Occupied:      1202 cycles (68.2%)
+    Misprediction Penalty: 832 (69.2%)
+    Previous Stage Bottleneck: 370 (30.8%)
+      Decode Not Ready: 366 (98.9%)
+        ROB Full: 363 (99.2%)
+        LSQ Full: 2 (0.5%)
+      Instruction Buffer Empty: 4 (1.1%)
+  Operands Not Ready: 560 cycles (31.8%)
+    Dependency Pattern:
+      Both waiting:   1 (0.2%)
+      Only A waiting: 405 (72.3%)
+      Only B waiting: 154 (27.5%)
+    Operand A waiting for:
+      CDB0: 78 (19.2%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 328 (80.8%)
+    Operand B waiting for:
+      CDB0: 3 (1.9%)
+      CDB1: 0 (0.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 152 (98.1%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      2122 cycles (53.0%)
+  Not Occupied:      1343 cycles (63.3%)
+    Misprediction Penalty: 891 (66.3%)
+    Previous Stage Bottleneck: 452 (33.7%)
+      Decode Not Ready: 448 (99.1%)
+        ROB Full: 445 (99.3%)
+        LSQ Full: 2 (0.4%)
+      Instruction Buffer Empty: 4 (0.9%)
+  Operands Not Ready: 779 cycles (36.7%)
+    Dependency Pattern:
+      Both waiting:   30 (3.9%)
+      Only A waiting: 531 (68.2%)
+      Only B waiting: 218 (28.0%)
+    Operand A waiting for:
+      CDB0: 117 (20.9%)
+      CDB1: 10 (1.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 434 (77.4%)
+    Operand B waiting for:
+      CDB0: 10 (4.0%)
+      CDB1: 92 (37.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 146 (58.9%)
+
+
+========================================
+CYCLE 5000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      2101 cycles (42.0%)
+  Not Occupied:      1215 cycles (57.8%)
+    Misprediction Penalty: 1008 (83.0%)
+    Previous Stage Bottleneck: 207 (17.0%)
+      Decode Not Ready: 207 (100.0%)
+        ROB Full: 204 (98.6%)
+        LSQ Full: 2 (1.0%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 886 cycles (42.2%)
+    Dependency Pattern:
+      Both waiting:   3 (0.3%)
+      Only A waiting: 797 (90.0%)
+      Only B waiting: 86 (9.7%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.5%)
+      CDB2: 92 (11.5%)
+      CDB3: 704 (88.0%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 6 (6.7%)
+      CDB3: 83 (93.3%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      2225 cycles (44.5%)
+  Not Occupied:      1424 cycles (64.0%)
+    Misprediction Penalty: 1046 (73.5%)
+    Previous Stage Bottleneck: 378 (26.5%)
+      Decode Not Ready: 371 (98.1%)
+        ROB Full: 368 (99.2%)
+        LSQ Full: 2 (0.5%)
+      Instruction Buffer Empty: 7 (1.9%)
+  Operands Not Ready: 801 cycles (36.0%)
+    Dependency Pattern:
+      Both waiting:   1 (0.1%)
+      Only A waiting: 585 (73.0%)
+      Only B waiting: 215 (26.8%)
+    Operand A waiting for:
+      CDB0: 117 (20.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 3 (0.5%)
+      CDB3: 466 (79.5%)
+    Operand B waiting for:
+      CDB0: 10 (4.6%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.5%)
+      CDB3: 205 (94.9%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      2640 cycles (52.8%)
+  Not Occupied:      1585 cycles (60.0%)
+    Misprediction Penalty: 1118 (70.5%)
+    Previous Stage Bottleneck: 467 (29.5%)
+      Decode Not Ready: 463 (99.1%)
+        ROB Full: 460 (99.4%)
+        LSQ Full: 2 (0.4%)
+      Instruction Buffer Empty: 4 (0.9%)
+  Operands Not Ready: 1055 cycles (40.0%)
+    Dependency Pattern:
+      Both waiting:   40 (3.8%)
+      Only A waiting: 744 (70.5%)
+      Only B waiting: 271 (25.7%)
+    Operand A waiting for:
+      CDB0: 157 (20.0%)
+      CDB1: 32 (4.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 595 (75.9%)
+    Operand B waiting for:
+      CDB0: 11 (3.5%)
+      CDB1: 93 (29.9%)
+      CDB2: 0 (0.0%)
+      CDB3: 207 (66.6%)
+
+
+========================================
+CYCLE 6000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      2502 cycles (41.7%)
+  Not Occupied:      1479 cycles (59.1%)
+    Misprediction Penalty: 1108 (74.9%)
+    Previous Stage Bottleneck: 371 (25.1%)
+      Decode Not Ready: 371 (100.0%)
+        ROB Full: 368 (99.2%)
+        LSQ Full: 2 (0.5%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 1023 cycles (40.9%)
+    Dependency Pattern:
+      Both waiting:   3 (0.3%)
+      Only A waiting: 832 (81.3%)
+      Only B waiting: 188 (18.4%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 13 (1.6%)
+      CDB2: 98 (11.7%)
+      CDB3: 724 (86.7%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (2.1%)
+      CDB2: 39 (20.4%)
+      CDB3: 148 (77.5%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      2693 cycles (44.9%)
+  Not Occupied:      1691 cycles (62.8%)
+    Misprediction Penalty: 1147 (67.8%)
+    Previous Stage Bottleneck: 544 (32.2%)
+      Decode Not Ready: 537 (98.7%)
+        ROB Full: 534 (99.4%)
+        LSQ Full: 2 (0.4%)
+      Instruction Buffer Empty: 7 (1.3%)
+  Operands Not Ready: 1002 cycles (37.2%)
+    Dependency Pattern:
+      Both waiting:   1 (0.1%)
+      Only A waiting: 709 (70.8%)
+      Only B waiting: 292 (29.1%)
+    Operand A waiting for:
+      CDB0: 202 (28.5%)
+      CDB1: 0 (0.0%)
+      CDB2: 11 (1.5%)
+      CDB3: 497 (70.0%)
+    Operand B waiting for:
+      CDB0: 10 (3.4%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.3%)
+      CDB3: 282 (96.2%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      3174 cycles (52.9%)
+  Not Occupied:      1856 cycles (58.5%)
+    Misprediction Penalty: 1220 (65.7%)
+    Previous Stage Bottleneck: 636 (34.3%)
+      Decode Not Ready: 630 (99.1%)
+        ROB Full: 627 (99.5%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 6 (0.9%)
+  Operands Not Ready: 1318 cycles (41.5%)
+    Dependency Pattern:
+      Both waiting:   48 (3.6%)
+      Only A waiting: 902 (68.4%)
+      Only B waiting: 368 (27.9%)
+    Operand A waiting for:
+      CDB0: 190 (20.0%)
+      CDB1: 50 (5.3%)
+      CDB2: 0 (0.0%)
+      CDB3: 710 (74.7%)
+    Operand B waiting for:
+      CDB0: 12 (2.9%)
+      CDB1: 99 (23.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 305 (73.3%)
+
+
+========================================
+CYCLE 7000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      2887 cycles (41.2%)
+  Not Occupied:      1732 cycles (60.0%)
+    Misprediction Penalty: 1152 (66.5%)
+    Previous Stage Bottleneck: 580 (33.5%)
+      Decode Not Ready: 580 (100.0%)
+        ROB Full: 577 (99.5%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 1155 cycles (40.0%)
+    Dependency Pattern:
+      Both waiting:   5 (0.4%)
+      Only A waiting: 835 (72.3%)
+      Only B waiting: 315 (27.3%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 14 (1.7%)
+      CDB2: 98 (11.7%)
+      CDB3: 728 (86.7%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (1.2%)
+      CDB2: 164 (51.2%)
+      CDB3: 152 (47.5%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      3086 cycles (44.1%)
+  Not Occupied:      1946 cycles (63.1%)
+    Misprediction Penalty: 1192 (61.3%)
+    Previous Stage Bottleneck: 754 (38.7%)
+      Decode Not Ready: 747 (99.1%)
+        ROB Full: 744 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 7 (0.9%)
+  Operands Not Ready: 1140 cycles (36.9%)
+    Dependency Pattern:
+      Both waiting:   1 (0.1%)
+      Only A waiting: 828 (72.6%)
+      Only B waiting: 311 (27.3%)
+    Operand A waiting for:
+      CDB0: 209 (25.2%)
+      CDB1: 0 (0.0%)
+      CDB2: 123 (14.8%)
+      CDB3: 497 (60.0%)
+    Operand B waiting for:
+      CDB0: 12 (3.8%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.3%)
+      CDB3: 299 (95.8%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      3611 cycles (51.6%)
+  Not Occupied:      2116 cycles (58.6%)
+    Misprediction Penalty: 1266 (59.8%)
+    Previous Stage Bottleneck: 850 (40.2%)
+      Decode Not Ready: 842 (99.1%)
+        ROB Full: 839 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 8 (0.9%)
+  Operands Not Ready: 1495 cycles (41.4%)
+    Dependency Pattern:
+      Both waiting:   161 (10.8%)
+      Only A waiting: 963 (64.4%)
+      Only B waiting: 371 (24.8%)
+    Operand A waiting for:
+      CDB0: 231 (20.6%)
+      CDB1: 69 (6.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 824 (73.3%)
+    Operand B waiting for:
+      CDB0: 12 (2.3%)
+      CDB1: 102 (19.2%)
+      CDB2: 0 (0.0%)
+      CDB3: 418 (78.6%)
+
+
+========================================
+CYCLE 8000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      3144 cycles (39.3%)
+  Not Occupied:      1832 cycles (58.3%)
+    Misprediction Penalty: 1252 (68.3%)
+    Previous Stage Bottleneck: 580 (31.7%)
+      Decode Not Ready: 580 (100.0%)
+        ROB Full: 577 (99.5%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 1312 cycles (41.7%)
+    Dependency Pattern:
+      Both waiting:   15 (1.1%)
+      Only A waiting: 835 (63.6%)
+      Only B waiting: 462 (35.2%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 14 (1.6%)
+      CDB2: 98 (11.5%)
+      CDB3: 738 (86.8%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.8%)
+      CDB2: 305 (63.9%)
+      CDB3: 168 (35.2%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      3363 cycles (42.0%)
+  Not Occupied:      2048 cycles (60.9%)
+    Misprediction Penalty: 1294 (63.2%)
+    Previous Stage Bottleneck: 754 (36.8%)
+      Decode Not Ready: 747 (99.1%)
+        ROB Full: 744 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 7 (0.9%)
+  Operands Not Ready: 1315 cycles (39.1%)
+    Dependency Pattern:
+      Both waiting:   1 (0.1%)
+      Only A waiting: 985 (74.9%)
+      Only B waiting: 329 (25.0%)
+    Operand A waiting for:
+      CDB0: 225 (22.8%)
+      CDB1: 0 (0.0%)
+      CDB2: 264 (26.8%)
+      CDB3: 497 (50.4%)
+    Operand B waiting for:
+      CDB0: 25 (7.6%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.3%)
+      CDB3: 304 (92.1%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      3942 cycles (49.3%)
+  Not Occupied:      2222 cycles (56.4%)
+    Misprediction Penalty: 1368 (61.6%)
+    Previous Stage Bottleneck: 854 (38.4%)
+      Decode Not Ready: 842 (98.6%)
+        ROB Full: 839 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 12 (1.4%)
+  Operands Not Ready: 1720 cycles (43.6%)
+    Dependency Pattern:
+      Both waiting:   305 (17.7%)
+      Only A waiting: 1035 (60.2%)
+      Only B waiting: 380 (22.1%)
+    Operand A waiting for:
+      CDB0: 303 (22.6%)
+      CDB1: 69 (5.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 968 (72.2%)
+    Operand B waiting for:
+      CDB0: 13 (1.9%)
+      CDB1: 108 (15.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 564 (82.3%)
+
+
+========================================
+CYCLE 9000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      3414 cycles (37.9%)
+  Not Occupied:      1976 cycles (57.9%)
+    Misprediction Penalty: 1396 (70.6%)
+    Previous Stage Bottleneck: 580 (29.4%)
+      Decode Not Ready: 580 (100.0%)
+        ROB Full: 577 (99.5%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 1438 cycles (42.1%)
+    Dependency Pattern:
+      Both waiting:   29 (2.0%)
+      Only A waiting: 835 (58.1%)
+      Only B waiting: 574 (39.9%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 14 (1.6%)
+      CDB2: 98 (11.3%)
+      CDB3: 752 (87.0%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.7%)
+      CDB2: 413 (68.5%)
+      CDB3: 186 (30.8%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      3612 cycles (40.1%)
+  Not Occupied:      2194 cycles (60.7%)
+    Misprediction Penalty: 1440 (65.6%)
+    Previous Stage Bottleneck: 754 (34.4%)
+      Decode Not Ready: 747 (99.1%)
+        ROB Full: 744 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 7 (0.9%)
+  Operands Not Ready: 1418 cycles (39.3%)
+    Dependency Pattern:
+      Both waiting:   1 (0.1%)
+      Only A waiting: 1057 (74.5%)
+      Only B waiting: 360 (25.4%)
+    Operand A waiting for:
+      CDB0: 243 (23.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 318 (30.1%)
+      CDB3: 497 (47.0%)
+    Operand B waiting for:
+      CDB0: 43 (11.9%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.3%)
+      CDB3: 317 (87.8%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      4314 cycles (47.9%)
+  Not Occupied:      2373 cycles (55.0%)
+    Misprediction Penalty: 1514 (63.8%)
+    Previous Stage Bottleneck: 859 (36.2%)
+      Decode Not Ready: 843 (98.1%)
+        ROB Full: 840 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 16 (1.9%)
+  Operands Not Ready: 1941 cycles (45.0%)
+    Dependency Pattern:
+      Both waiting:   415 (21.4%)
+      Only A waiting: 1128 (58.1%)
+      Only B waiting: 398 (20.5%)
+    Operand A waiting for:
+      CDB0: 378 (24.5%)
+      CDB1: 87 (5.6%)
+      CDB2: 0 (0.0%)
+      CDB3: 1078 (69.9%)
+    Operand B waiting for:
+      CDB0: 22 (2.7%)
+      CDB1: 112 (13.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 679 (83.5%)
+
+
+========================================
+CYCLE 10000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      3664 cycles (36.6%)
+  Not Occupied:      2106 cycles (57.5%)
+    Misprediction Penalty: 1524 (72.4%)
+    Previous Stage Bottleneck: 582 (27.6%)
+      Decode Not Ready: 582 (100.0%)
+        ROB Full: 579 (99.5%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 1558 cycles (42.5%)
+    Dependency Pattern:
+      Both waiting:   49 (3.1%)
+      Only A waiting: 835 (53.6%)
+      Only B waiting: 674 (43.3%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 14 (1.6%)
+      CDB2: 98 (11.1%)
+      CDB3: 772 (87.3%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.6%)
+      CDB2: 509 (70.4%)
+      CDB3: 210 (29.0%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      3902 cycles (39.0%)
+  Not Occupied:      2326 cycles (59.6%)
+    Misprediction Penalty: 1572 (67.6%)
+    Previous Stage Bottleneck: 754 (32.4%)
+      Decode Not Ready: 747 (99.1%)
+        ROB Full: 744 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 7 (0.9%)
+  Operands Not Ready: 1576 cycles (40.4%)
+    Dependency Pattern:
+      Both waiting:   1 (0.1%)
+      Only A waiting: 1171 (74.3%)
+      Only B waiting: 404 (25.6%)
+    Operand A waiting for:
+      CDB0: 261 (22.3%)
+      CDB1: 0 (0.0%)
+      CDB2: 414 (35.3%)
+      CDB3: 497 (42.4%)
+    Operand B waiting for:
+      CDB0: 71 (17.5%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.2%)
+      CDB3: 333 (82.2%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      4659 cycles (46.6%)
+  Not Occupied:      2519 cycles (54.1%)
+    Misprediction Penalty: 1646 (65.3%)
+    Previous Stage Bottleneck: 873 (34.7%)
+      Decode Not Ready: 849 (97.3%)
+        ROB Full: 846 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 24 (2.7%)
+  Operands Not Ready: 2140 cycles (45.9%)
+    Dependency Pattern:
+      Both waiting:   513 (24.0%)
+      Only A waiting: 1223 (57.1%)
+      Only B waiting: 404 (18.9%)
+    Operand A waiting for:
+      CDB0: 471 (27.1%)
+      CDB1: 89 (5.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 1176 (67.7%)
+    Operand B waiting for:
+      CDB0: 22 (2.4%)
+      CDB1: 116 (12.6%)
+      CDB2: 0 (0.0%)
+      CDB3: 779 (85.0%)
+
+
+========================================
+CYCLE 11000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      3945 cycles (35.9%)
+  Not Occupied:      2230 cycles (56.5%)
+    Misprediction Penalty: 1648 (73.9%)
+    Previous Stage Bottleneck: 582 (26.1%)
+      Decode Not Ready: 582 (100.0%)
+        ROB Full: 579 (99.5%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 1715 cycles (43.5%)
+    Dependency Pattern:
+      Both waiting:   59 (3.4%)
+      Only A waiting: 835 (48.7%)
+      Only B waiting: 821 (47.9%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 14 (1.6%)
+      CDB2: 98 (11.0%)
+      CDB3: 782 (87.5%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.5%)
+      CDB2: 650 (73.9%)
+      CDB3: 226 (25.7%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      4084 cycles (37.1%)
+  Not Occupied:      2453 cycles (60.1%)
+    Misprediction Penalty: 1699 (69.3%)
+    Previous Stage Bottleneck: 754 (30.7%)
+      Decode Not Ready: 747 (99.1%)
+        ROB Full: 744 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 7 (0.9%)
+  Operands Not Ready: 1631 cycles (39.9%)
+    Dependency Pattern:
+      Both waiting:   1 (0.1%)
+      Only A waiting: 1209 (74.1%)
+      Only B waiting: 421 (25.8%)
+    Operand A waiting for:
+      CDB0: 278 (23.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 435 (36.0%)
+      CDB3: 497 (41.1%)
+    Operand B waiting for:
+      CDB0: 83 (19.7%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.2%)
+      CDB3: 338 (80.1%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      5056 cycles (46.0%)
+  Not Occupied:      2652 cycles (52.5%)
+    Misprediction Penalty: 1773 (66.9%)
+    Previous Stage Bottleneck: 879 (33.1%)
+      Decode Not Ready: 849 (96.6%)
+        ROB Full: 846 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 30 (3.4%)
+  Operands Not Ready: 2404 cycles (47.5%)
+    Dependency Pattern:
+      Both waiting:   657 (27.3%)
+      Only A waiting: 1330 (55.3%)
+      Only B waiting: 417 (17.3%)
+    Operand A waiting for:
+      CDB0: 538 (27.1%)
+      CDB1: 129 (6.5%)
+      CDB2: 0 (0.0%)
+      CDB3: 1320 (66.4%)
+    Operand B waiting for:
+      CDB0: 26 (2.4%)
+      CDB1: 122 (11.4%)
+      CDB2: 0 (0.0%)
+      CDB3: 926 (86.2%)
+
+
+========================================
+CYCLE 12000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      4206 cycles (35.0%)
+  Not Occupied:      2330 cycles (55.4%)
+    Misprediction Penalty: 1748 (75.0%)
+    Previous Stage Bottleneck: 582 (25.0%)
+      Decode Not Ready: 582 (100.0%)
+        ROB Full: 579 (99.5%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 1876 cycles (44.6%)
+    Dependency Pattern:
+      Both waiting:   63 (3.4%)
+      Only A waiting: 835 (44.5%)
+      Only B waiting: 978 (52.1%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 14 (1.6%)
+      CDB2: 98 (10.9%)
+      CDB3: 786 (87.5%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.4%)
+      CDB2: 803 (77.1%)
+      CDB3: 234 (22.5%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      4210 cycles (35.1%)
+  Not Occupied:      2556 cycles (60.7%)
+    Misprediction Penalty: 1802 (70.5%)
+    Previous Stage Bottleneck: 754 (29.5%)
+      Decode Not Ready: 747 (99.1%)
+        ROB Full: 744 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 7 (0.9%)
+  Operands Not Ready: 1654 cycles (39.3%)
+    Dependency Pattern:
+      Both waiting:   1 (0.1%)
+      Only A waiting: 1219 (73.7%)
+      Only B waiting: 434 (26.2%)
+    Operand A waiting for:
+      CDB0: 288 (23.6%)
+      CDB1: 0 (0.0%)
+      CDB2: 435 (35.7%)
+      CDB3: 497 (40.7%)
+    Operand B waiting for:
+      CDB0: 87 (20.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.2%)
+      CDB3: 347 (79.8%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      5453 cycles (45.4%)
+  Not Occupied:      2763 cycles (50.7%)
+    Misprediction Penalty: 1876 (67.9%)
+    Previous Stage Bottleneck: 887 (32.1%)
+      Decode Not Ready: 849 (95.7%)
+        ROB Full: 846 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 38 (4.3%)
+  Operands Not Ready: 2690 cycles (49.3%)
+    Dependency Pattern:
+      Both waiting:   812 (30.2%)
+      Only A waiting: 1453 (54.0%)
+      Only B waiting: 425 (15.8%)
+    Operand A waiting for:
+      CDB0: 610 (26.9%)
+      CDB1: 180 (7.9%)
+      CDB2: 0 (0.0%)
+      CDB3: 1475 (65.1%)
+    Operand B waiting for:
+      CDB0: 28 (2.3%)
+      CDB1: 126 (10.2%)
+      CDB2: 0 (0.0%)
+      CDB3: 1083 (87.6%)
+
+
+========================================
+CYCLE 13000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      4527 cycles (34.8%)
+  Not Occupied:      2553 cycles (56.4%)
+    Misprediction Penalty: 1876 (73.5%)
+    Previous Stage Bottleneck: 677 (26.5%)
+      Decode Not Ready: 677 (100.0%)
+        ROB Full: 674 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 1974 cycles (43.6%)
+    Dependency Pattern:
+      Both waiting:   68 (3.4%)
+      Only A waiting: 900 (45.6%)
+      Only B waiting: 1006 (51.0%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 15 (1.5%)
+      CDB2: 122 (12.6%)
+      CDB3: 831 (85.8%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.4%)
+      CDB2: 818 (76.2%)
+      CDB3: 252 (23.5%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      4563 cycles (35.1%)
+  Not Occupied:      2788 cycles (61.1%)
+    Misprediction Penalty: 1936 (69.4%)
+    Previous Stage Bottleneck: 852 (30.6%)
+      Decode Not Ready: 845 (99.2%)
+        ROB Full: 842 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 7 (0.8%)
+  Operands Not Ready: 1775 cycles (38.9%)
+    Dependency Pattern:
+      Both waiting:   30 (1.7%)
+      Only A waiting: 1257 (70.8%)
+      Only B waiting: 488 (27.5%)
+    Operand A waiting for:
+      CDB0: 313 (24.3%)
+      CDB1: 0 (0.0%)
+      CDB2: 436 (33.9%)
+      CDB3: 538 (41.8%)
+    Operand B waiting for:
+      CDB0: 91 (17.6%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.2%)
+      CDB3: 426 (82.2%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      5910 cycles (45.5%)
+  Not Occupied:      3008 cycles (50.9%)
+    Misprediction Penalty: 2014 (67.0%)
+    Previous Stage Bottleneck: 994 (33.0%)
+      Decode Not Ready: 954 (96.0%)
+        ROB Full: 951 (99.7%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 40 (4.0%)
+  Operands Not Ready: 2902 cycles (49.1%)
+    Dependency Pattern:
+      Both waiting:   827 (28.5%)
+      Only A waiting: 1619 (55.8%)
+      Only B waiting: 456 (15.7%)
+    Operand A waiting for:
+      CDB0: 642 (26.2%)
+      CDB1: 240 (9.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1564 (63.9%)
+    Operand B waiting for:
+      CDB0: 55 (4.3%)
+      CDB1: 129 (10.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 1099 (85.7%)
+
+
+========================================
+CYCLE 14000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      4812 cycles (34.4%)
+  Not Occupied:      2737 cycles (56.9%)
+    Misprediction Penalty: 2060 (75.3%)
+    Previous Stage Bottleneck: 677 (24.7%)
+      Decode Not Ready: 677 (100.0%)
+        ROB Full: 674 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2075 cycles (43.1%)
+    Dependency Pattern:
+      Both waiting:   73 (3.5%)
+      Only A waiting: 973 (46.9%)
+      Only B waiting: 1029 (49.6%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 15 (1.4%)
+      CDB2: 152 (14.5%)
+      CDB3: 879 (84.0%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.4%)
+      CDB2: 818 (74.2%)
+      CDB3: 280 (25.4%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      4927 cycles (35.2%)
+  Not Occupied:      2978 cycles (60.4%)
+    Misprediction Penalty: 2126 (71.4%)
+    Previous Stage Bottleneck: 852 (28.6%)
+      Decode Not Ready: 845 (99.2%)
+        ROB Full: 842 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 7 (0.8%)
+  Operands Not Ready: 1949 cycles (39.6%)
+    Dependency Pattern:
+      Both waiting:   73 (3.7%)
+      Only A waiting: 1309 (67.2%)
+      Only B waiting: 567 (29.1%)
+    Operand A waiting for:
+      CDB0: 355 (25.7%)
+      CDB1: 0 (0.0%)
+      CDB2: 436 (31.5%)
+      CDB3: 591 (42.8%)
+    Operand B waiting for:
+      CDB0: 100 (15.6%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.2%)
+      CDB3: 539 (84.2%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      6305 cycles (45.0%)
+  Not Occupied:      3204 cycles (50.8%)
+    Misprediction Penalty: 2208 (68.9%)
+    Previous Stage Bottleneck: 996 (31.1%)
+      Decode Not Ready: 954 (95.8%)
+        ROB Full: 951 (99.7%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 42 (4.2%)
+  Operands Not Ready: 3101 cycles (49.2%)
+    Dependency Pattern:
+      Both waiting:   827 (26.7%)
+      Only A waiting: 1795 (57.9%)
+      Only B waiting: 479 (15.4%)
+    Operand A waiting for:
+      CDB0: 671 (25.6%)
+      CDB1: 291 (11.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 1660 (63.3%)
+    Operand B waiting for:
+      CDB0: 73 (5.6%)
+      CDB1: 134 (10.3%)
+      CDB2: 0 (0.0%)
+      CDB3: 1099 (84.2%)
+
+
+========================================
+CYCLE 15000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      5249 cycles (35.0%)
+  Not Occupied:      3168 cycles (60.4%)
+    Misprediction Penalty: 2491 (78.6%)
+    Previous Stage Bottleneck: 677 (21.4%)
+      Decode Not Ready: 677 (100.0%)
+        ROB Full: 674 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2081 cycles (39.6%)
+    Dependency Pattern:
+      Both waiting:   73 (3.5%)
+      Only A waiting: 979 (47.0%)
+      Only B waiting: 1029 (49.4%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 15 (1.4%)
+      CDB2: 155 (14.7%)
+      CDB3: 882 (83.8%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.4%)
+      CDB2: 818 (74.2%)
+      CDB3: 280 (25.4%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      5419 cycles (36.1%)
+  Not Occupied:      3450 cycles (63.7%)
+    Misprediction Penalty: 2579 (74.8%)
+    Previous Stage Bottleneck: 871 (25.2%)
+      Decode Not Ready: 845 (97.0%)
+        ROB Full: 842 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 26 (3.0%)
+  Operands Not Ready: 1969 cycles (36.3%)
+    Dependency Pattern:
+      Both waiting:   75 (3.8%)
+      Only A waiting: 1322 (67.1%)
+      Only B waiting: 572 (29.1%)
+    Operand A waiting for:
+      CDB0: 368 (26.3%)
+      CDB1: 0 (0.0%)
+      CDB2: 436 (31.2%)
+      CDB3: 593 (42.4%)
+    Operand B waiting for:
+      CDB0: 101 (15.6%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.2%)
+      CDB3: 545 (84.2%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      6933 cycles (46.2%)
+  Not Occupied:      3690 cycles (53.2%)
+    Misprediction Penalty: 2690 (72.9%)
+    Previous Stage Bottleneck: 1000 (27.1%)
+      Decode Not Ready: 954 (95.4%)
+        ROB Full: 951 (99.7%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 46 (4.6%)
+  Operands Not Ready: 3243 cycles (46.8%)
+    Dependency Pattern:
+      Both waiting:   827 (25.5%)
+      Only A waiting: 1920 (59.2%)
+      Only B waiting: 496 (15.3%)
+    Operand A waiting for:
+      CDB0: 761 (27.7%)
+      CDB1: 322 (11.7%)
+      CDB2: 0 (0.0%)
+      CDB3: 1664 (60.6%)
+    Operand B waiting for:
+      CDB0: 90 (6.8%)
+      CDB1: 134 (10.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 1099 (83.1%)
+
+
+========================================
+CYCLE 16000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      5650 cycles (35.3%)
+  Not Occupied:      3569 cycles (63.2%)
+    Misprediction Penalty: 2892 (81.0%)
+    Previous Stage Bottleneck: 677 (19.0%)
+      Decode Not Ready: 677 (100.0%)
+        ROB Full: 674 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2081 cycles (36.8%)
+    Dependency Pattern:
+      Both waiting:   73 (3.5%)
+      Only A waiting: 979 (47.0%)
+      Only B waiting: 1029 (49.4%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 15 (1.4%)
+      CDB2: 155 (14.7%)
+      CDB3: 882 (83.8%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.4%)
+      CDB2: 818 (74.2%)
+      CDB3: 280 (25.4%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      5876 cycles (36.7%)
+  Not Occupied:      3894 cycles (66.3%)
+    Misprediction Penalty: 3001 (77.1%)
+    Previous Stage Bottleneck: 893 (22.9%)
+      Decode Not Ready: 845 (94.6%)
+        ROB Full: 842 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 48 (5.4%)
+  Operands Not Ready: 1982 cycles (33.7%)
+    Dependency Pattern:
+      Both waiting:   75 (3.8%)
+      Only A waiting: 1335 (67.4%)
+      Only B waiting: 572 (28.9%)
+    Operand A waiting for:
+      CDB0: 381 (27.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 436 (30.9%)
+      CDB3: 593 (42.1%)
+    Operand B waiting for:
+      CDB0: 101 (15.6%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.2%)
+      CDB3: 545 (84.2%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      7553 cycles (47.2%)
+  Not Occupied:      4146 cycles (54.9%)
+    Misprediction Penalty: 3137 (75.7%)
+    Previous Stage Bottleneck: 1009 (24.3%)
+      Decode Not Ready: 954 (94.5%)
+        ROB Full: 951 (99.7%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 55 (5.5%)
+  Operands Not Ready: 3407 cycles (45.1%)
+    Dependency Pattern:
+      Both waiting:   827 (24.3%)
+      Only A waiting: 2065 (60.6%)
+      Only B waiting: 515 (15.1%)
+    Operand A waiting for:
+      CDB0: 875 (30.3%)
+      CDB1: 353 (12.2%)
+      CDB2: 0 (0.0%)
+      CDB3: 1664 (57.5%)
+    Operand B waiting for:
+      CDB0: 109 (8.1%)
+      CDB1: 134 (10.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 1099 (81.9%)
+
+
+========================================
+CYCLE 17000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      6043 cycles (35.5%)
+  Not Occupied:      3961 cycles (65.5%)
+    Misprediction Penalty: 3284 (82.9%)
+    Previous Stage Bottleneck: 677 (17.1%)
+      Decode Not Ready: 677 (100.0%)
+        ROB Full: 674 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2082 cycles (34.5%)
+    Dependency Pattern:
+      Both waiting:   73 (3.5%)
+      Only A waiting: 979 (47.0%)
+      Only B waiting: 1030 (49.5%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 15 (1.4%)
+      CDB2: 155 (14.7%)
+      CDB3: 882 (83.8%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.4%)
+      CDB2: 818 (74.2%)
+      CDB3: 281 (25.5%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      6331 cycles (37.2%)
+  Not Occupied:      4338 cycles (68.5%)
+    Misprediction Penalty: 3411 (78.6%)
+    Previous Stage Bottleneck: 927 (21.4%)
+      Decode Not Ready: 845 (91.2%)
+        ROB Full: 842 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 82 (8.8%)
+  Operands Not Ready: 1993 cycles (31.5%)
+    Dependency Pattern:
+      Both waiting:   78 (3.9%)
+      Only A waiting: 1342 (67.3%)
+      Only B waiting: 573 (28.8%)
+    Operand A waiting for:
+      CDB0: 388 (27.3%)
+      CDB1: 0 (0.0%)
+      CDB2: 436 (30.7%)
+      CDB3: 596 (42.0%)
+    Operand B waiting for:
+      CDB0: 102 (15.7%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.2%)
+      CDB3: 548 (84.2%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      8169 cycles (48.1%)
+  Not Occupied:      4582 cycles (56.1%)
+    Misprediction Penalty: 3569 (77.9%)
+    Previous Stage Bottleneck: 1013 (22.1%)
+      Decode Not Ready: 954 (94.2%)
+        ROB Full: 951 (99.7%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 59 (5.8%)
+  Operands Not Ready: 3587 cycles (43.9%)
+    Dependency Pattern:
+      Both waiting:   827 (23.1%)
+      Only A waiting: 2221 (61.9%)
+      Only B waiting: 539 (15.0%)
+    Operand A waiting for:
+      CDB0: 993 (32.6%)
+      CDB1: 391 (12.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1664 (54.6%)
+    Operand B waiting for:
+      CDB0: 133 (9.7%)
+      CDB1: 134 (9.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1099 (80.5%)
+
+
+========================================
+CYCLE 18000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      6402 cycles (35.6%)
+  Not Occupied:      4177 cycles (65.2%)
+    Misprediction Penalty: 3500 (83.8%)
+    Previous Stage Bottleneck: 677 (16.2%)
+      Decode Not Ready: 677 (100.0%)
+        ROB Full: 674 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2225 cycles (34.8%)
+    Dependency Pattern:
+      Both waiting:   169 (7.6%)
+      Only A waiting: 1021 (45.9%)
+      Only B waiting: 1035 (46.5%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 15 (1.3%)
+      CDB2: 170 (14.3%)
+      CDB3: 1005 (84.5%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.3%)
+      CDB2: 818 (67.9%)
+      CDB3: 382 (31.7%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      6656 cycles (37.0%)
+  Not Occupied:      4560 cycles (68.5%)
+    Misprediction Penalty: 3632 (79.6%)
+    Previous Stage Bottleneck: 928 (20.4%)
+      Decode Not Ready: 845 (91.1%)
+        ROB Full: 842 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 83 (8.9%)
+  Operands Not Ready: 2096 cycles (31.5%)
+    Dependency Pattern:
+      Both waiting:   90 (4.3%)
+      Only A waiting: 1415 (67.5%)
+      Only B waiting: 591 (28.2%)
+    Operand A waiting for:
+      CDB0: 407 (27.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 490 (32.6%)
+      CDB3: 608 (40.4%)
+    Operand B waiting for:
+      CDB0: 104 (15.3%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.1%)
+      CDB3: 576 (84.6%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      8580 cycles (47.7%)
+  Not Occupied:      4811 cycles (56.1%)
+    Misprediction Penalty: 3797 (78.9%)
+    Previous Stage Bottleneck: 1014 (21.1%)
+      Decode Not Ready: 954 (94.1%)
+        ROB Full: 951 (99.7%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 60 (5.9%)
+  Operands Not Ready: 3769 cycles (43.9%)
+    Dependency Pattern:
+      Both waiting:   904 (24.0%)
+      Only A waiting: 2249 (59.7%)
+      Only B waiting: 616 (16.3%)
+    Operand A waiting for:
+      CDB0: 1014 (32.2%)
+      CDB1: 398 (12.6%)
+      CDB2: 0 (0.0%)
+      CDB3: 1741 (55.2%)
+    Operand B waiting for:
+      CDB0: 194 (12.8%)
+      CDB1: 144 (9.5%)
+      CDB2: 0 (0.0%)
+      CDB3: 1182 (77.8%)
+
+
+========================================
+CYCLE 19000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      6830 cycles (35.9%)
+  Not Occupied:      4350 cycles (63.7%)
+    Misprediction Penalty: 3673 (84.4%)
+    Previous Stage Bottleneck: 677 (15.6%)
+      Decode Not Ready: 677 (100.0%)
+        ROB Full: 674 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2480 cycles (36.3%)
+    Dependency Pattern:
+      Both waiting:   343 (13.8%)
+      Only A waiting: 1091 (44.0%)
+      Only B waiting: 1046 (42.2%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 15 (1.0%)
+      CDB2: 192 (13.4%)
+      CDB3: 1227 (85.6%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 4 (0.3%)
+      CDB2: 818 (58.9%)
+      CDB3: 567 (40.8%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      6950 cycles (36.6%)
+  Not Occupied:      4741 cycles (68.2%)
+    Misprediction Penalty: 3813 (80.4%)
+    Previous Stage Bottleneck: 928 (19.6%)
+      Decode Not Ready: 845 (91.1%)
+        ROB Full: 842 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 83 (8.9%)
+  Operands Not Ready: 2209 cycles (31.8%)
+    Dependency Pattern:
+      Both waiting:   99 (4.5%)
+      Only A waiting: 1492 (67.5%)
+      Only B waiting: 618 (28.0%)
+    Operand A waiting for:
+      CDB0: 420 (26.4%)
+      CDB1: 0 (0.0%)
+      CDB2: 554 (34.8%)
+      CDB3: 617 (38.8%)
+    Operand B waiting for:
+      CDB0: 104 (14.5%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.1%)
+      CDB3: 612 (85.4%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      8911 cycles (46.9%)
+  Not Occupied:      4994 cycles (56.0%)
+    Misprediction Penalty: 3979 (79.7%)
+    Previous Stage Bottleneck: 1015 (20.3%)
+      Decode Not Ready: 954 (94.0%)
+        ROB Full: 951 (99.7%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 61 (6.0%)
+  Operands Not Ready: 3917 cycles (44.0%)
+    Dependency Pattern:
+      Both waiting:   938 (23.9%)
+      Only A waiting: 2271 (58.0%)
+      Only B waiting: 708 (18.1%)
+    Operand A waiting for:
+      CDB0: 1028 (32.0%)
+      CDB1: 406 (12.7%)
+      CDB2: 0 (0.0%)
+      CDB3: 1775 (55.3%)
+    Operand B waiting for:
+      CDB0: 262 (15.9%)
+      CDB1: 162 (9.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1222 (74.2%)
+
+
+========================================
+CYCLE 20000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      7190 cycles (36.0%)
+  Not Occupied:      4521 cycles (62.9%)
+    Misprediction Penalty: 3844 (85.0%)
+    Previous Stage Bottleneck: 677 (15.0%)
+      Decode Not Ready: 677 (100.0%)
+        ROB Full: 674 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2669 cycles (37.1%)
+    Dependency Pattern:
+      Both waiting:   461 (17.3%)
+      Only A waiting: 1141 (42.8%)
+      Only B waiting: 1067 (40.0%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 16 (1.0%)
+      CDB2: 211 (13.2%)
+      CDB3: 1375 (85.8%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 17 (1.1%)
+      CDB2: 818 (53.5%)
+      CDB3: 693 (45.4%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      7286 cycles (36.4%)
+  Not Occupied:      4918 cycles (67.5%)
+    Misprediction Penalty: 3990 (81.1%)
+    Previous Stage Bottleneck: 928 (18.9%)
+      Decode Not Ready: 845 (91.1%)
+        ROB Full: 842 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 83 (8.9%)
+  Operands Not Ready: 2368 cycles (32.5%)
+    Dependency Pattern:
+      Both waiting:   144 (6.1%)
+      Only A waiting: 1566 (66.1%)
+      Only B waiting: 658 (27.8%)
+    Operand A waiting for:
+      CDB0: 456 (26.7%)
+      CDB1: 0 (0.0%)
+      CDB2: 592 (34.6%)
+      CDB3: 662 (38.7%)
+    Operand B waiting for:
+      CDB0: 138 (17.2%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.1%)
+      CDB3: 663 (82.7%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      9324 cycles (46.6%)
+  Not Occupied:      5184 cycles (55.6%)
+    Misprediction Penalty: 4168 (80.4%)
+    Previous Stage Bottleneck: 1016 (19.6%)
+      Decode Not Ready: 954 (93.9%)
+        ROB Full: 951 (99.7%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 62 (6.1%)
+  Operands Not Ready: 4140 cycles (44.4%)
+    Dependency Pattern:
+      Both waiting:   965 (23.3%)
+      Only A waiting: 2321 (56.1%)
+      Only B waiting: 854 (20.6%)
+    Operand A waiting for:
+      CDB0: 1053 (32.0%)
+      CDB1: 431 (13.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 1802 (54.8%)
+    Operand B waiting for:
+      CDB0: 318 (17.5%)
+      CDB1: 171 (9.4%)
+      CDB2: 0 (0.0%)
+      CDB3: 1330 (73.1%)
+
+
+========================================
+CYCLE 21000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      7445 cycles (35.5%)
+  Not Occupied:      4697 cycles (63.1%)
+    Misprediction Penalty: 4020 (85.6%)
+    Previous Stage Bottleneck: 677 (14.4%)
+      Decode Not Ready: 677 (100.0%)
+        ROB Full: 674 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2748 cycles (36.9%)
+    Dependency Pattern:
+      Both waiting:   479 (17.4%)
+      Only A waiting: 1173 (42.7%)
+      Only B waiting: 1096 (39.9%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 16 (1.0%)
+      CDB2: 243 (14.7%)
+      CDB3: 1393 (84.3%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 45 (2.9%)
+      CDB2: 818 (51.9%)
+      CDB3: 712 (45.2%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      7664 cycles (36.5%)
+  Not Occupied:      5096 cycles (66.5%)
+    Misprediction Penalty: 4168 (81.8%)
+    Previous Stage Bottleneck: 928 (18.2%)
+      Decode Not Ready: 845 (91.1%)
+        ROB Full: 842 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 83 (8.9%)
+  Operands Not Ready: 2568 cycles (33.5%)
+    Dependency Pattern:
+      Both waiting:   225 (8.8%)
+      Only A waiting: 1626 (63.3%)
+      Only B waiting: 717 (27.9%)
+    Operand A waiting for:
+      CDB0: 516 (27.9%)
+      CDB1: 0 (0.0%)
+      CDB2: 592 (32.0%)
+      CDB3: 743 (40.1%)
+    Operand B waiting for:
+      CDB0: 194 (20.6%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.1%)
+      CDB3: 747 (79.3%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      9799 cycles (46.7%)
+  Not Occupied:      5379 cycles (54.9%)
+    Misprediction Penalty: 4361 (81.1%)
+    Previous Stage Bottleneck: 1018 (18.9%)
+      Decode Not Ready: 954 (93.7%)
+        ROB Full: 951 (99.7%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 64 (6.3%)
+  Operands Not Ready: 4420 cycles (45.1%)
+    Dependency Pattern:
+      Both waiting:   971 (22.0%)
+      Only A waiting: 2397 (54.2%)
+      Only B waiting: 1052 (23.8%)
+    Operand A waiting for:
+      CDB0: 1092 (32.4%)
+      CDB1: 468 (13.9%)
+      CDB2: 0 (0.0%)
+      CDB3: 1808 (53.7%)
+    Operand B waiting for:
+      CDB0: 358 (17.7%)
+      CDB1: 180 (8.9%)
+      CDB2: 0 (0.0%)
+      CDB3: 1485 (73.4%)
+
+
+========================================
+CYCLE 22000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      7734 cycles (35.2%)
+  Not Occupied:      4909 cycles (63.5%)
+    Misprediction Penalty: 4232 (86.2%)
+    Previous Stage Bottleneck: 677 (13.8%)
+      Decode Not Ready: 677 (100.0%)
+        ROB Full: 674 (99.6%)
+        LSQ Full: 2 (0.3%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2825 cycles (36.5%)
+    Dependency Pattern:
+      Both waiting:   501 (17.7%)
+      Only A waiting: 1201 (42.5%)
+      Only B waiting: 1123 (39.8%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 16 (0.9%)
+      CDB2: 271 (15.9%)
+      CDB3: 1415 (83.1%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 71 (4.4%)
+      CDB2: 818 (50.4%)
+      CDB3: 735 (45.3%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      8067 cycles (36.7%)
+  Not Occupied:      5311 cycles (65.8%)
+    Misprediction Penalty: 4383 (82.5%)
+    Previous Stage Bottleneck: 928 (17.5%)
+      Decode Not Ready: 845 (91.1%)
+        ROB Full: 842 (99.6%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 83 (8.9%)
+  Operands Not Ready: 2756 cycles (34.2%)
+    Dependency Pattern:
+      Both waiting:   298 (10.8%)
+      Only A waiting: 1678 (60.9%)
+      Only B waiting: 780 (28.3%)
+    Operand A waiting for:
+      CDB0: 568 (28.7%)
+      CDB1: 0 (0.0%)
+      CDB2: 592 (30.0%)
+      CDB3: 816 (41.3%)
+    Operand B waiting for:
+      CDB0: 251 (23.3%)
+      CDB1: 0 (0.0%)
+      CDB2: 1 (0.1%)
+      CDB3: 826 (76.6%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      10291 cycles (46.8%)
+  Not Occupied:      5611 cycles (54.5%)
+    Misprediction Penalty: 4592 (81.8%)
+    Previous Stage Bottleneck: 1019 (18.2%)
+      Decode Not Ready: 954 (93.6%)
+        ROB Full: 951 (99.7%)
+        LSQ Full: 2 (0.2%)
+      Instruction Buffer Empty: 65 (6.4%)
+  Operands Not Ready: 4680 cycles (45.5%)
+    Dependency Pattern:
+      Both waiting:   980 (20.9%)
+      Only A waiting: 2467 (52.7%)
+      Only B waiting: 1233 (26.3%)
+    Operand A waiting for:
+      CDB0: 1131 (32.8%)
+      CDB1: 499 (14.5%)
+      CDB2: 0 (0.0%)
+      CDB3: 1817 (52.7%)
+    Operand B waiting for:
+      CDB0: 398 (18.0%)
+      CDB1: 190 (8.6%)
+      CDB2: 0 (0.0%)
+      CDB3: 1625 (73.4%)
+
+
+========================================
+CYCLE 23000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      8071 cycles (35.1%)
+  Not Occupied:      5195 cycles (64.4%)
+    Misprediction Penalty: 4496 (86.5%)
+    Previous Stage Bottleneck: 699 (13.5%)
+      Decode Not Ready: 699 (100.0%)
+        ROB Full: 691 (98.9%)
+        LSQ Full: 7 (1.0%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2876 cycles (35.6%)
+    Dependency Pattern:
+      Both waiting:   511 (17.8%)
+      Only A waiting: 1232 (42.8%)
+      Only B waiting: 1133 (39.4%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 27 (1.5%)
+      CDB2: 289 (16.6%)
+      CDB3: 1427 (81.9%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.7%)
+      CDB2: 818 (49.8%)
+      CDB3: 748 (45.5%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      8500 cycles (37.0%)
+  Not Occupied:      5608 cycles (66.0%)
+    Misprediction Penalty: 4652 (83.0%)
+    Previous Stage Bottleneck: 956 (17.0%)
+      Decode Not Ready: 873 (91.3%)
+        ROB Full: 865 (99.1%)
+        LSQ Full: 7 (0.8%)
+      Instruction Buffer Empty: 83 (8.7%)
+  Operands Not Ready: 2892 cycles (34.0%)
+    Dependency Pattern:
+      Both waiting:   328 (11.3%)
+      Only A waiting: 1742 (60.2%)
+      Only B waiting: 822 (28.4%)
+    Operand A waiting for:
+      CDB0: 618 (29.9%)
+      CDB1: 0 (0.0%)
+      CDB2: 606 (29.3%)
+      CDB3: 846 (40.9%)
+    Operand B waiting for:
+      CDB0: 281 (24.4%)
+      CDB1: 0 (0.0%)
+      CDB2: 7 (0.6%)
+      CDB3: 862 (75.0%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      10813 cycles (47.0%)
+  Not Occupied:      5929 cycles (54.8%)
+    Misprediction Penalty: 4878 (82.3%)
+    Previous Stage Bottleneck: 1051 (17.7%)
+      Decode Not Ready: 985 (93.7%)
+        ROB Full: 977 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 66 (6.3%)
+  Operands Not Ready: 4884 cycles (45.2%)
+    Dependency Pattern:
+      Both waiting:   1022 (20.9%)
+      Only A waiting: 2538 (52.0%)
+      Only B waiting: 1324 (27.1%)
+    Operand A waiting for:
+      CDB0: 1184 (33.3%)
+      CDB1: 516 (14.5%)
+      CDB2: 0 (0.0%)
+      CDB3: 1860 (52.2%)
+    Operand B waiting for:
+      CDB0: 427 (18.2%)
+      CDB1: 207 (8.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1712 (73.0%)
+
+
+========================================
+CYCLE 24000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      8382 cycles (34.9%)
+  Not Occupied:      5498 cycles (65.6%)
+    Misprediction Penalty: 4707 (85.6%)
+    Previous Stage Bottleneck: 791 (14.4%)
+      Decode Not Ready: 791 (100.0%)
+        ROB Full: 783 (99.0%)
+        LSQ Full: 7 (0.9%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2884 cycles (34.4%)
+    Dependency Pattern:
+      Both waiting:   511 (17.7%)
+      Only A waiting: 1240 (43.0%)
+      Only B waiting: 1133 (39.3%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 27 (1.5%)
+      CDB2: 289 (16.5%)
+      CDB3: 1435 (82.0%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.7%)
+      CDB2: 818 (49.8%)
+      CDB3: 748 (45.5%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      8873 cycles (37.0%)
+  Not Occupied:      5926 cycles (66.8%)
+    Misprediction Penalty: 4873 (82.2%)
+    Previous Stage Bottleneck: 1053 (17.8%)
+      Decode Not Ready: 970 (92.1%)
+        ROB Full: 962 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 83 (7.9%)
+  Operands Not Ready: 2947 cycles (33.2%)
+    Dependency Pattern:
+      Both waiting:   328 (11.1%)
+      Only A waiting: 1797 (61.0%)
+      Only B waiting: 822 (27.9%)
+    Operand A waiting for:
+      CDB0: 645 (30.4%)
+      CDB1: 0 (0.0%)
+      CDB2: 606 (28.5%)
+      CDB3: 874 (41.1%)
+    Operand B waiting for:
+      CDB0: 281 (24.4%)
+      CDB1: 0 (0.0%)
+      CDB2: 7 (0.6%)
+      CDB3: 862 (75.0%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      11244 cycles (46.9%)
+  Not Occupied:      6255 cycles (55.6%)
+    Misprediction Penalty: 5105 (81.6%)
+    Previous Stage Bottleneck: 1150 (18.4%)
+      Decode Not Ready: 1079 (93.8%)
+        ROB Full: 1071 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 71 (6.2%)
+  Operands Not Ready: 4989 cycles (44.4%)
+    Dependency Pattern:
+      Both waiting:   1022 (20.5%)
+      Only A waiting: 2643 (53.0%)
+      Only B waiting: 1324 (26.5%)
+    Operand A waiting for:
+      CDB0: 1240 (33.8%)
+      CDB1: 560 (15.3%)
+      CDB2: 0 (0.0%)
+      CDB3: 1865 (50.9%)
+    Operand B waiting for:
+      CDB0: 427 (18.2%)
+      CDB1: 207 (8.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1712 (73.0%)
+
+
+========================================
+CYCLE 25000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      8836 cycles (35.3%)
+  Not Occupied:      5930 cycles (67.1%)
+    Misprediction Penalty: 5136 (86.6%)
+    Previous Stage Bottleneck: 794 (13.4%)
+      Decode Not Ready: 794 (100.0%)
+        ROB Full: 786 (99.0%)
+        LSQ Full: 7 (0.9%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2906 cycles (32.9%)
+    Dependency Pattern:
+      Both waiting:   511 (17.6%)
+      Only A waiting: 1262 (43.4%)
+      Only B waiting: 1133 (39.0%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 27 (1.5%)
+      CDB2: 289 (16.3%)
+      CDB3: 1457 (82.2%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.7%)
+      CDB2: 818 (49.8%)
+      CDB3: 748 (45.5%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      9398 cycles (37.6%)
+  Not Occupied:      6401 cycles (68.1%)
+    Misprediction Penalty: 5322 (83.1%)
+    Previous Stage Bottleneck: 1079 (16.9%)
+      Decode Not Ready: 973 (90.2%)
+        ROB Full: 965 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 106 (9.8%)
+  Operands Not Ready: 2997 cycles (31.9%)
+    Dependency Pattern:
+      Both waiting:   328 (10.9%)
+      Only A waiting: 1845 (61.6%)
+      Only B waiting: 824 (27.5%)
+    Operand A waiting for:
+      CDB0: 676 (31.1%)
+      CDB1: 0 (0.0%)
+      CDB2: 606 (27.9%)
+      CDB3: 891 (41.0%)
+    Operand B waiting for:
+      CDB0: 283 (24.6%)
+      CDB1: 0 (0.0%)
+      CDB2: 7 (0.6%)
+      CDB3: 862 (74.8%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      11887 cycles (47.5%)
+  Not Occupied:      6741 cycles (56.7%)
+    Misprediction Penalty: 5575 (82.7%)
+    Previous Stage Bottleneck: 1166 (17.3%)
+      Decode Not Ready: 1082 (92.8%)
+        ROB Full: 1074 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 84 (7.2%)
+  Operands Not Ready: 5146 cycles (43.3%)
+    Dependency Pattern:
+      Both waiting:   1022 (19.9%)
+      Only A waiting: 2778 (54.0%)
+      Only B waiting: 1346 (26.2%)
+    Operand A waiting for:
+      CDB0: 1323 (34.8%)
+      CDB1: 574 (15.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 1903 (50.1%)
+    Operand B waiting for:
+      CDB0: 448 (18.9%)
+      CDB1: 208 (8.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1712 (72.3%)
+
+
+========================================
+CYCLE 26000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      9331 cycles (35.9%)
+  Not Occupied:      6417 cycles (68.8%)
+    Misprediction Penalty: 5620 (87.6%)
+    Previous Stage Bottleneck: 797 (12.4%)
+      Decode Not Ready: 797 (100.0%)
+        ROB Full: 789 (99.0%)
+        LSQ Full: 7 (0.9%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2914 cycles (31.2%)
+    Dependency Pattern:
+      Both waiting:   511 (17.5%)
+      Only A waiting: 1262 (43.3%)
+      Only B waiting: 1141 (39.2%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 27 (1.5%)
+      CDB2: 289 (16.3%)
+      CDB3: 1457 (82.2%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.7%)
+      CDB2: 818 (49.5%)
+      CDB3: 756 (45.8%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      9973 cycles (38.4%)
+  Not Occupied:      6915 cycles (69.3%)
+    Misprediction Penalty: 5825 (84.2%)
+    Previous Stage Bottleneck: 1090 (15.8%)
+      Decode Not Ready: 977 (89.6%)
+        ROB Full: 969 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 113 (10.4%)
+  Operands Not Ready: 3058 cycles (30.7%)
+    Dependency Pattern:
+      Both waiting:   328 (10.7%)
+      Only A waiting: 1904 (62.3%)
+      Only B waiting: 826 (27.0%)
+    Operand A waiting for:
+      CDB0: 735 (32.9%)
+      CDB1: 0 (0.0%)
+      CDB2: 606 (27.2%)
+      CDB3: 891 (39.9%)
+    Operand B waiting for:
+      CDB0: 285 (24.7%)
+      CDB1: 0 (0.0%)
+      CDB2: 7 (0.6%)
+      CDB3: 862 (74.7%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      12488 cycles (48.0%)
+  Not Occupied:      7268 cycles (58.2%)
+    Misprediction Penalty: 6087 (83.8%)
+    Previous Stage Bottleneck: 1181 (16.2%)
+      Decode Not Ready: 1087 (92.0%)
+        ROB Full: 1079 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 94 (8.0%)
+  Operands Not Ready: 5220 cycles (41.8%)
+    Dependency Pattern:
+      Both waiting:   1023 (19.6%)
+      Only A waiting: 2836 (54.3%)
+      Only B waiting: 1361 (26.1%)
+    Operand A waiting for:
+      CDB0: 1361 (35.3%)
+      CDB1: 590 (15.3%)
+      CDB2: 0 (0.0%)
+      CDB3: 1908 (49.4%)
+    Operand B waiting for:
+      CDB0: 452 (19.0%)
+      CDB1: 209 (8.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1723 (72.3%)
+
+
+========================================
+CYCLE 27000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      9801 cycles (36.3%)
+  Not Occupied:      6802 cycles (69.4%)
+    Misprediction Penalty: 5992 (88.1%)
+    Previous Stage Bottleneck: 810 (11.9%)
+      Decode Not Ready: 810 (100.0%)
+        ROB Full: 802 (99.0%)
+        LSQ Full: 7 (0.9%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 2999 cycles (30.6%)
+    Dependency Pattern:
+      Both waiting:   511 (17.0%)
+      Only A waiting: 1331 (44.4%)
+      Only B waiting: 1157 (38.6%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 38 (2.1%)
+      CDB2: 331 (18.0%)
+      CDB3: 1473 (80.0%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.7%)
+      CDB2: 818 (49.0%)
+      CDB3: 772 (46.3%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      10538 cycles (39.0%)
+  Not Occupied:      7322 cycles (69.5%)
+    Misprediction Penalty: 6206 (84.8%)
+    Previous Stage Bottleneck: 1116 (15.2%)
+      Decode Not Ready: 1003 (89.9%)
+        ROB Full: 995 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 113 (10.1%)
+  Operands Not Ready: 3216 cycles (30.5%)
+    Dependency Pattern:
+      Both waiting:   331 (10.3%)
+      Only A waiting: 2052 (63.8%)
+      Only B waiting: 833 (25.9%)
+    Operand A waiting for:
+      CDB0: 805 (33.8%)
+      CDB1: 0 (0.0%)
+      CDB2: 618 (25.9%)
+      CDB3: 960 (40.3%)
+    Operand B waiting for:
+      CDB0: 295 (25.3%)
+      CDB1: 0 (0.0%)
+      CDB2: 7 (0.6%)
+      CDB3: 862 (74.1%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      13120 cycles (48.6%)
+  Not Occupied:      7711 cycles (58.8%)
+    Misprediction Penalty: 6500 (84.3%)
+    Previous Stage Bottleneck: 1211 (15.7%)
+      Decode Not Ready: 1114 (92.0%)
+        ROB Full: 1106 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 97 (8.0%)
+  Operands Not Ready: 5409 cycles (41.2%)
+    Dependency Pattern:
+      Both waiting:   1028 (19.0%)
+      Only A waiting: 2989 (55.3%)
+      Only B waiting: 1392 (25.7%)
+    Operand A waiting for:
+      CDB0: 1433 (35.7%)
+      CDB1: 654 (16.3%)
+      CDB2: 0 (0.0%)
+      CDB3: 1930 (48.0%)
+    Operand B waiting for:
+      CDB0: 459 (19.0%)
+      CDB1: 214 (8.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1747 (72.2%)
+
+
+========================================
+CYCLE 28000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      10253 cycles (36.6%)
+  Not Occupied:      7153 cycles (69.8%)
+    Misprediction Penalty: 6343 (88.7%)
+    Previous Stage Bottleneck: 810 (11.3%)
+      Decode Not Ready: 810 (100.0%)
+        ROB Full: 802 (99.0%)
+        LSQ Full: 7 (0.9%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 3100 cycles (30.2%)
+    Dependency Pattern:
+      Both waiting:   511 (16.5%)
+      Only A waiting: 1412 (45.5%)
+      Only B waiting: 1177 (38.0%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 48 (2.5%)
+      CDB2: 399 (20.7%)
+      CDB3: 1476 (76.8%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.6%)
+      CDB2: 818 (48.5%)
+      CDB3: 792 (46.9%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      11061 cycles (39.5%)
+  Not Occupied:      7677 cycles (69.4%)
+    Misprediction Penalty: 6561 (85.5%)
+    Previous Stage Bottleneck: 1116 (14.5%)
+      Decode Not Ready: 1003 (89.9%)
+        ROB Full: 995 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 113 (10.1%)
+  Operands Not Ready: 3384 cycles (30.6%)
+    Dependency Pattern:
+      Both waiting:   335 (9.9%)
+      Only A waiting: 2206 (65.2%)
+      Only B waiting: 843 (24.9%)
+    Operand A waiting for:
+      CDB0: 861 (33.9%)
+      CDB1: 0 (0.0%)
+      CDB2: 642 (25.3%)
+      CDB3: 1038 (40.9%)
+    Operand B waiting for:
+      CDB0: 309 (26.2%)
+      CDB1: 0 (0.0%)
+      CDB2: 7 (0.6%)
+      CDB3: 862 (73.2%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      13762 cycles (49.1%)
+  Not Occupied:      8132 cycles (59.1%)
+    Misprediction Penalty: 6917 (85.1%)
+    Previous Stage Bottleneck: 1215 (14.9%)
+      Decode Not Ready: 1114 (91.7%)
+        ROB Full: 1106 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 101 (8.3%)
+  Operands Not Ready: 5630 cycles (40.9%)
+    Dependency Pattern:
+      Both waiting:   1030 (18.3%)
+      Only A waiting: 3141 (55.8%)
+      Only B waiting: 1459 (25.9%)
+    Operand A waiting for:
+      CDB0: 1491 (35.7%)
+      CDB1: 715 (17.1%)
+      CDB2: 0 (0.0%)
+      CDB3: 1965 (47.1%)
+    Operand B waiting for:
+      CDB0: 459 (18.4%)
+      CDB1: 221 (8.9%)
+      CDB2: 0 (0.0%)
+      CDB3: 1809 (72.7%)
+
+
+========================================
+CYCLE 29000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      10717 cycles (37.0%)
+  Not Occupied:      7498 cycles (70.0%)
+    Misprediction Penalty: 6688 (89.2%)
+    Previous Stage Bottleneck: 810 (10.8%)
+      Decode Not Ready: 810 (100.0%)
+        ROB Full: 802 (99.0%)
+        LSQ Full: 7 (0.9%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 3219 cycles (30.0%)
+    Dependency Pattern:
+      Both waiting:   511 (15.9%)
+      Only A waiting: 1506 (46.8%)
+      Only B waiting: 1202 (37.3%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 60 (3.0%)
+      CDB2: 461 (22.9%)
+      CDB3: 1496 (74.2%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.6%)
+      CDB2: 818 (47.8%)
+      CDB3: 817 (47.7%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      11598 cycles (40.0%)
+  Not Occupied:      8026 cycles (69.2%)
+    Misprediction Penalty: 6910 (86.1%)
+    Previous Stage Bottleneck: 1116 (13.9%)
+      Decode Not Ready: 1003 (89.9%)
+        ROB Full: 995 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 113 (10.1%)
+  Operands Not Ready: 3572 cycles (30.8%)
+    Dependency Pattern:
+      Both waiting:   340 (9.5%)
+      Only A waiting: 2348 (65.7%)
+      Only B waiting: 884 (24.7%)
+    Operand A waiting for:
+      CDB0: 909 (33.8%)
+      CDB1: 0 (0.0%)
+      CDB2: 661 (24.6%)
+      CDB3: 1118 (41.6%)
+    Operand B waiting for:
+      CDB0: 326 (26.6%)
+      CDB1: 0 (0.0%)
+      CDB2: 16 (1.3%)
+      CDB3: 882 (72.1%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      14407 cycles (49.7%)
+  Not Occupied:      8542 cycles (59.3%)
+    Misprediction Penalty: 7323 (85.7%)
+    Previous Stage Bottleneck: 1219 (14.3%)
+      Decode Not Ready: 1114 (91.4%)
+        ROB Full: 1106 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 105 (8.6%)
+  Operands Not Ready: 5865 cycles (40.7%)
+    Dependency Pattern:
+      Both waiting:   1030 (17.6%)
+      Only A waiting: 3289 (56.1%)
+      Only B waiting: 1546 (26.4%)
+    Operand A waiting for:
+      CDB0: 1545 (35.8%)
+      CDB1: 774 (17.9%)
+      CDB2: 0 (0.0%)
+      CDB3: 2000 (46.3%)
+    Operand B waiting for:
+      CDB0: 480 (18.6%)
+      CDB1: 227 (8.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1869 (72.6%)
+
+
+========================================
+CYCLE 30000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      11187 cycles (37.3%)
+  Not Occupied:      7844 cycles (70.1%)
+    Misprediction Penalty: 7028 (89.6%)
+    Previous Stage Bottleneck: 816 (10.4%)
+      Decode Not Ready: 816 (100.0%)
+        ROB Full: 808 (99.0%)
+        LSQ Full: 7 (0.9%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 3343 cycles (29.9%)
+    Dependency Pattern:
+      Both waiting:   531 (15.9%)
+      Only A waiting: 1602 (47.9%)
+      Only B waiting: 1210 (36.2%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 84 (3.9%)
+      CDB2: 519 (24.3%)
+      CDB3: 1530 (71.7%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.5%)
+      CDB2: 818 (47.0%)
+      CDB3: 845 (48.5%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      12108 cycles (40.4%)
+  Not Occupied:      8382 cycles (69.2%)
+    Misprediction Penalty: 7256 (86.6%)
+    Previous Stage Bottleneck: 1126 (13.4%)
+      Decode Not Ready: 1013 (90.0%)
+        ROB Full: 1005 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 113 (10.0%)
+  Operands Not Ready: 3726 cycles (30.8%)
+    Dependency Pattern:
+      Both waiting:   404 (10.8%)
+      Only A waiting: 2427 (65.1%)
+      Only B waiting: 895 (24.0%)
+    Operand A waiting for:
+      CDB0: 968 (34.2%)
+      CDB1: 0 (0.0%)
+      CDB2: 677 (23.9%)
+      CDB3: 1186 (41.9%)
+    Operand B waiting for:
+      CDB0: 338 (26.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 16 (1.2%)
+      CDB3: 945 (72.7%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      14987 cycles (50.0%)
+  Not Occupied:      8927 cycles (59.6%)
+    Misprediction Penalty: 7695 (86.2%)
+    Previous Stage Bottleneck: 1232 (13.8%)
+      Decode Not Ready: 1115 (90.5%)
+        ROB Full: 1107 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 117 (9.5%)
+  Operands Not Ready: 6060 cycles (40.4%)
+    Dependency Pattern:
+      Both waiting:   1096 (18.1%)
+      Only A waiting: 3410 (56.3%)
+      Only B waiting: 1554 (25.6%)
+    Operand A waiting for:
+      CDB0: 1588 (35.2%)
+      CDB1: 886 (19.7%)
+      CDB2: 0 (0.0%)
+      CDB3: 2032 (45.1%)
+    Operand B waiting for:
+      CDB0: 481 (18.2%)
+      CDB1: 234 (8.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 1935 (73.0%)
+
+
+========================================
+CYCLE 31000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      11630 cycles (37.5%)
+  Not Occupied:      8244 cycles (70.9%)
+    Misprediction Penalty: 7416 (90.0%)
+    Previous Stage Bottleneck: 828 (10.0%)
+      Decode Not Ready: 828 (100.0%)
+        ROB Full: 820 (99.0%)
+        LSQ Full: 7 (0.8%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 3386 cycles (29.1%)
+    Dependency Pattern:
+      Both waiting:   531 (15.7%)
+      Only A waiting: 1641 (48.5%)
+      Only B waiting: 1214 (35.9%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 88 (4.1%)
+      CDB2: 529 (24.4%)
+      CDB3: 1555 (71.6%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.5%)
+      CDB2: 818 (46.9%)
+      CDB3: 849 (48.7%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      12584 cycles (40.6%)
+  Not Occupied:      8805 cycles (70.0%)
+    Misprediction Penalty: 7663 (87.0%)
+    Previous Stage Bottleneck: 1142 (13.0%)
+      Decode Not Ready: 1025 (89.8%)
+        ROB Full: 1017 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 117 (10.2%)
+  Operands Not Ready: 3779 cycles (30.0%)
+    Dependency Pattern:
+      Both waiting:   411 (10.9%)
+      Only A waiting: 2457 (65.0%)
+      Only B waiting: 911 (24.1%)
+    Operand A waiting for:
+      CDB0: 981 (34.2%)
+      CDB1: 0 (0.0%)
+      CDB2: 681 (23.7%)
+      CDB3: 1206 (42.1%)
+    Operand B waiting for:
+      CDB0: 343 (25.9%)
+      CDB1: 0 (0.0%)
+      CDB2: 16 (1.2%)
+      CDB3: 963 (72.8%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      15560 cycles (50.2%)
+  Not Occupied:      9368 cycles (60.2%)
+    Misprediction Penalty: 8117 (86.6%)
+    Previous Stage Bottleneck: 1251 (13.4%)
+      Decode Not Ready: 1130 (90.3%)
+        ROB Full: 1122 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 121 (9.7%)
+  Operands Not Ready: 6192 cycles (39.8%)
+    Dependency Pattern:
+      Both waiting:   1106 (17.9%)
+      Only A waiting: 3507 (56.6%)
+      Only B waiting: 1579 (25.5%)
+    Operand A waiting for:
+      CDB0: 1639 (35.5%)
+      CDB1: 914 (19.8%)
+      CDB2: 0 (0.0%)
+      CDB3: 2060 (44.7%)
+    Operand B waiting for:
+      CDB0: 486 (18.1%)
+      CDB1: 241 (9.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 1958 (72.9%)
+
+
+========================================
+CYCLE 32000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      12114 cycles (37.9%)
+  Not Occupied:      8706 cycles (71.9%)
+    Misprediction Penalty: 7878 (90.5%)
+    Previous Stage Bottleneck: 828 (9.5%)
+      Decode Not Ready: 828 (100.0%)
+        ROB Full: 820 (99.0%)
+        LSQ Full: 7 (0.8%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 3408 cycles (28.1%)
+    Dependency Pattern:
+      Both waiting:   531 (15.6%)
+      Only A waiting: 1653 (48.5%)
+      Only B waiting: 1224 (35.9%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 92 (4.2%)
+      CDB2: 533 (24.4%)
+      CDB3: 1559 (71.4%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.4%)
+      CDB2: 818 (46.6%)
+      CDB3: 859 (48.9%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      13134 cycles (41.0%)
+  Not Occupied:      9311 cycles (70.9%)
+    Misprediction Penalty: 8152 (87.6%)
+    Previous Stage Bottleneck: 1159 (12.4%)
+      Decode Not Ready: 1025 (88.4%)
+        ROB Full: 1017 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 134 (11.6%)
+  Operands Not Ready: 3823 cycles (29.1%)
+    Dependency Pattern:
+      Both waiting:   411 (10.8%)
+      Only A waiting: 2498 (65.3%)
+      Only B waiting: 914 (23.9%)
+    Operand A waiting for:
+      CDB0: 991 (34.1%)
+      CDB1: 0 (0.0%)
+      CDB2: 682 (23.4%)
+      CDB3: 1236 (42.5%)
+    Operand B waiting for:
+      CDB0: 346 (26.1%)
+      CDB1: 0 (0.0%)
+      CDB2: 16 (1.2%)
+      CDB3: 963 (72.7%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      16187 cycles (50.6%)
+  Not Occupied:      9890 cycles (61.1%)
+    Misprediction Penalty: 8633 (87.3%)
+    Previous Stage Bottleneck: 1257 (12.7%)
+      Decode Not Ready: 1130 (89.9%)
+        ROB Full: 1122 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 127 (10.1%)
+  Operands Not Ready: 6297 cycles (38.9%)
+    Dependency Pattern:
+      Both waiting:   1110 (17.6%)
+      Only A waiting: 3597 (57.1%)
+      Only B waiting: 1590 (25.3%)
+    Operand A waiting for:
+      CDB0: 1691 (35.9%)
+      CDB1: 943 (20.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 2073 (44.0%)
+    Operand B waiting for:
+      CDB0: 492 (18.2%)
+      CDB1: 242 (9.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 1966 (72.8%)
+
+
+========================================
+CYCLE 33000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      12611 cycles (38.2%)
+  Not Occupied:      9177 cycles (72.8%)
+    Misprediction Penalty: 8349 (91.0%)
+    Previous Stage Bottleneck: 828 (9.0%)
+      Decode Not Ready: 828 (100.0%)
+        ROB Full: 820 (99.0%)
+        LSQ Full: 7 (0.8%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 3434 cycles (27.2%)
+    Dependency Pattern:
+      Both waiting:   531 (15.5%)
+      Only A waiting: 1669 (48.6%)
+      Only B waiting: 1234 (35.9%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 98 (4.5%)
+      CDB2: 539 (24.5%)
+      CDB3: 1563 (71.0%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.4%)
+      CDB2: 818 (46.3%)
+      CDB3: 869 (49.2%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      13687 cycles (41.5%)
+  Not Occupied:      9817 cycles (71.7%)
+    Misprediction Penalty: 8650 (88.1%)
+    Previous Stage Bottleneck: 1167 (11.9%)
+      Decode Not Ready: 1025 (87.8%)
+        ROB Full: 1017 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 142 (12.2%)
+  Operands Not Ready: 3870 cycles (28.3%)
+    Dependency Pattern:
+      Both waiting:   411 (10.6%)
+      Only A waiting: 2541 (65.7%)
+      Only B waiting: 918 (23.7%)
+    Operand A waiting for:
+      CDB0: 1002 (33.9%)
+      CDB1: 0 (0.0%)
+      CDB2: 684 (23.2%)
+      CDB3: 1266 (42.9%)
+    Operand B waiting for:
+      CDB0: 350 (26.3%)
+      CDB1: 0 (0.0%)
+      CDB2: 16 (1.2%)
+      CDB3: 963 (72.5%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      16827 cycles (51.0%)
+  Not Occupied:      10421 cycles (61.9%)
+    Misprediction Penalty: 9155 (87.9%)
+    Previous Stage Bottleneck: 1266 (12.1%)
+      Decode Not Ready: 1130 (89.3%)
+        ROB Full: 1122 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 136 (10.7%)
+  Operands Not Ready: 6406 cycles (38.1%)
+    Dependency Pattern:
+      Both waiting:   1114 (17.4%)
+      Only A waiting: 3688 (57.6%)
+      Only B waiting: 1604 (25.0%)
+    Operand A waiting for:
+      CDB0: 1745 (36.3%)
+      CDB1: 968 (20.2%)
+      CDB2: 0 (0.0%)
+      CDB3: 2089 (43.5%)
+    Operand B waiting for:
+      CDB0: 500 (18.4%)
+      CDB1: 244 (9.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 1974 (72.6%)
+
+
+========================================
+CYCLE 34000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      13107 cycles (38.5%)
+  Not Occupied:      9660 cycles (73.7%)
+    Misprediction Penalty: 8832 (91.4%)
+    Previous Stage Bottleneck: 828 (8.6%)
+      Decode Not Ready: 828 (100.0%)
+        ROB Full: 820 (99.0%)
+        LSQ Full: 7 (0.8%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 3447 cycles (26.3%)
+    Dependency Pattern:
+      Both waiting:   531 (15.4%)
+      Only A waiting: 1677 (48.7%)
+      Only B waiting: 1239 (35.9%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 101 (4.6%)
+      CDB2: 542 (24.5%)
+      CDB3: 1565 (70.9%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.4%)
+      CDB2: 818 (46.2%)
+      CDB3: 874 (49.4%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      14239 cycles (41.9%)
+  Not Occupied:      10341 cycles (72.6%)
+    Misprediction Penalty: 9166 (88.6%)
+    Previous Stage Bottleneck: 1175 (11.4%)
+      Decode Not Ready: 1025 (87.2%)
+        ROB Full: 1017 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 150 (12.8%)
+  Operands Not Ready: 3898 cycles (27.4%)
+    Dependency Pattern:
+      Both waiting:   411 (10.5%)
+      Only A waiting: 2567 (65.9%)
+      Only B waiting: 920 (23.6%)
+    Operand A waiting for:
+      CDB0: 1012 (34.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 685 (23.0%)
+      CDB3: 1281 (43.0%)
+    Operand B waiting for:
+      CDB0: 352 (26.4%)
+      CDB1: 0 (0.0%)
+      CDB2: 16 (1.2%)
+      CDB3: 963 (72.4%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      17479 cycles (51.4%)
+  Not Occupied:      10973 cycles (62.8%)
+    Misprediction Penalty: 9701 (88.4%)
+    Previous Stage Bottleneck: 1272 (11.6%)
+      Decode Not Ready: 1130 (88.8%)
+        ROB Full: 1122 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 142 (11.2%)
+  Operands Not Ready: 6506 cycles (37.2%)
+    Dependency Pattern:
+      Both waiting:   1116 (17.2%)
+      Only A waiting: 3775 (58.0%)
+      Only B waiting: 1615 (24.8%)
+    Operand A waiting for:
+      CDB0: 1798 (36.8%)
+      CDB1: 996 (20.4%)
+      CDB2: 0 (0.0%)
+      CDB3: 2097 (42.9%)
+    Operand B waiting for:
+      CDB0: 508 (18.6%)
+      CDB1: 245 (9.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 1978 (72.4%)
+
+
+========================================
+CYCLE 35000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      13597 cycles (38.8%)
+  Not Occupied:      10124 cycles (74.5%)
+    Misprediction Penalty: 9296 (91.8%)
+    Previous Stage Bottleneck: 828 (8.2%)
+      Decode Not Ready: 828 (100.0%)
+        ROB Full: 820 (99.0%)
+        LSQ Full: 7 (0.8%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 3473 cycles (25.5%)
+    Dependency Pattern:
+      Both waiting:   531 (15.3%)
+      Only A waiting: 1693 (48.7%)
+      Only B waiting: 1249 (36.0%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 107 (4.8%)
+      CDB2: 548 (24.6%)
+      CDB3: 1569 (70.5%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.4%)
+      CDB2: 818 (46.0%)
+      CDB3: 884 (49.7%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      14792 cycles (42.3%)
+  Not Occupied:      10847 cycles (73.3%)
+    Misprediction Penalty: 9656 (89.0%)
+    Previous Stage Bottleneck: 1191 (11.0%)
+      Decode Not Ready: 1025 (86.1%)
+        ROB Full: 1017 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 166 (13.9%)
+  Operands Not Ready: 3945 cycles (26.7%)
+    Dependency Pattern:
+      Both waiting:   411 (10.4%)
+      Only A waiting: 2610 (66.2%)
+      Only B waiting: 924 (23.4%)
+    Operand A waiting for:
+      CDB0: 1023 (33.9%)
+      CDB1: 0 (0.0%)
+      CDB2: 687 (22.7%)
+      CDB3: 1311 (43.4%)
+    Operand B waiting for:
+      CDB0: 356 (26.7%)
+      CDB1: 0 (0.0%)
+      CDB2: 16 (1.2%)
+      CDB3: 963 (72.1%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      18116 cycles (51.8%)
+  Not Occupied:      11491 cycles (63.4%)
+    Misprediction Penalty: 10215 (88.9%)
+    Previous Stage Bottleneck: 1276 (11.1%)
+      Decode Not Ready: 1130 (88.6%)
+        ROB Full: 1122 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 146 (11.4%)
+  Operands Not Ready: 6625 cycles (36.6%)
+    Dependency Pattern:
+      Both waiting:   1120 (16.9%)
+      Only A waiting: 3874 (58.5%)
+      Only B waiting: 1631 (24.6%)
+    Operand A waiting for:
+      CDB0: 1861 (37.3%)
+      CDB1: 1020 (20.4%)
+      CDB2: 0 (0.0%)
+      CDB3: 2113 (42.3%)
+    Operand B waiting for:
+      CDB0: 518 (18.8%)
+      CDB1: 247 (9.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 1986 (72.2%)
+
+
+========================================
+CYCLE 36000 REPORT
+========================================
+
+RS0 (Pipeline 0) Analysis:
+RS0 Stall:      14089 cycles (39.1%)
+  Not Occupied:      10600 cycles (75.2%)
+    Misprediction Penalty: 9772 (92.2%)
+    Previous Stage Bottleneck: 828 (7.8%)
+      Decode Not Ready: 828 (100.0%)
+        ROB Full: 820 (99.0%)
+        LSQ Full: 7 (0.8%)
+      Instruction Buffer Empty: 0 (0.0%)
+  Operands Not Ready: 3489 cycles (24.8%)
+    Dependency Pattern:
+      Both waiting:   531 (15.2%)
+      Only A waiting: 1704 (48.8%)
+      Only B waiting: 1254 (35.9%)
+    Operand A waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 111 (5.0%)
+      CDB2: 553 (24.7%)
+      CDB3: 1571 (70.3%)
+    Operand B waiting for:
+      CDB0: 0 (0.0%)
+      CDB1: 78 (4.4%)
+      CDB2: 818 (45.8%)
+      CDB3: 889 (49.8%)
+
+RS1 (Pipeline 1) Analysis:
+RS1 Stall:      15344 cycles (42.6%)
+  Not Occupied:      11366 cycles (74.1%)
+    Misprediction Penalty: 10161 (89.4%)
+    Previous Stage Bottleneck: 1205 (10.6%)
+      Decode Not Ready: 1025 (85.1%)
+        ROB Full: 1017 (99.2%)
+        LSQ Full: 7 (0.7%)
+      Instruction Buffer Empty: 180 (14.9%)
+  Operands Not Ready: 3978 cycles (25.9%)
+    Dependency Pattern:
+      Both waiting:   411 (10.3%)
+      Only A waiting: 2641 (66.4%)
+      Only B waiting: 926 (23.3%)
+    Operand A waiting for:
+      CDB0: 1037 (34.0%)
+      CDB1: 0 (0.0%)
+      CDB2: 689 (22.6%)
+      CDB3: 1326 (43.4%)
+    Operand B waiting for:
+      CDB0: 358 (26.8%)
+      CDB1: 0 (0.0%)
+      CDB2: 16 (1.2%)
+      CDB3: 963 (72.0%)
+
+RS2 (Pipeline 2) Analysis:
+RS2 Stall:      18761 cycles (52.1%)
+  Not Occupied:      12027 cycles (64.1%)
+    Misprediction Penalty: 10747 (89.4%)
+    Previous Stage Bottleneck: 1280 (10.6%)
+      Decode Not Ready: 1130 (88.3%)
+        ROB Full: 1122 (99.3%)
+        LSQ Full: 7 (0.6%)
+      Instruction Buffer Empty: 150 (11.7%)
+  Operands Not Ready: 6734 cycles (35.9%)
+    Dependency Pattern:
+      Both waiting:   1122 (16.7%)
+      Only A waiting: 3969 (58.9%)
+      Only B waiting: 1643 (24.4%)
+    Operand A waiting for:
+      CDB0: 1920 (37.7%)
+      CDB1: 1050 (20.6%)
+      CDB2: 0 (0.0%)
+      CDB3: 2121 (41.7%)
+    Operand B waiting for:
+      CDB0: 526 (19.0%)
+      CDB1: 249 (9.0%)
+      CDB2: 0 (0.0%)
+      CDB3: 1990 (72.0%)
+

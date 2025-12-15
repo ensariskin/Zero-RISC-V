@@ -21,518 +21,521 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module dispatch_stage #(
-    parameter DATA_WIDTH = 32,
-    parameter PHYS_REG_ADDR_WIDTH = 6,
-    parameter NUM_PHYS_REGS = 64
-)(
-    // Clock and Reset
-    input logic clk,
-    input logic reset,
+      parameter DATA_WIDTH = 32,
+      parameter PHYS_REG_ADDR_WIDTH = 6,
+      parameter NUM_PHYS_REGS = 64
+   )(
+      // Clock and Reset
+      input logic clk,
+      input logic reset,
 
-    // Pipeline Control
-    //input logic flush,
-    //input logic bubble,
+      // Pipeline Control
+      //input logic flush,
+      //input logic bubble,
 
-    // Input from Issue Stage (3 instruction streams)
-    issue_to_dispatch_if.dispatch issue_to_dispatch_0,
-    issue_to_dispatch_if.dispatch issue_to_dispatch_1,
-    issue_to_dispatch_if.dispatch issue_to_dispatch_2,
+      // Input from Issue Stage (3 instruction streams)
+      issue_to_dispatch_if.dispatch issue_to_dispatch_0,
+      issue_to_dispatch_if.dispatch issue_to_dispatch_1,
+      issue_to_dispatch_if.dispatch issue_to_dispatch_2,
 
-    // Output to Functional Units (3 execution units)
-    rs_to_exec_if.reservation_station dispatch_to_alu_0,
-    rs_to_exec_if.reservation_station dispatch_to_alu_1,
-    rs_to_exec_if.reservation_station dispatch_to_alu_2,
+      // Output to Functional Units (3 execution units)
+      rs_to_exec_if.reservation_station dispatch_to_alu_0,
+      rs_to_exec_if.reservation_station dispatch_to_alu_1,
+      rs_to_exec_if.reservation_station dispatch_to_alu_2,
 
-    cdb_if cdb_interface,  // Common Data Bus interface
-
-    `ifndef SYNTHESIS
-    tracer_interface i_tracer_0,
-    tracer_interface i_tracer_1,
-    tracer_interface i_tracer_2,
-
-    tracer_interface o_tracer_0,
-    tracer_interface o_tracer_1,
-    tracer_interface o_tracer_2,
-    `endif
-
-    output logic [DATA_WIDTH-1:0] data_0_addr,
-    output logic [DATA_WIDTH-1:0] data_0_write,
-    input  logic [DATA_WIDTH-1:0] data_0_read,
-    output logic data_0_we,
-    output logic [3:0] data_0_be,
-    output logic data_0_req,
-    input  logic data_0_ack,
-
-    output logic [DATA_WIDTH-1:0] data_1_addr,
-    output logic [DATA_WIDTH-1:0] data_1_write,
-    input  logic [DATA_WIDTH-1:0] data_1_read,
-    output logic data_1_we,
-    output logic [3:0] data_1_be,
-    output logic data_1_req,
-    input  logic data_1_ack,
-
-    output logic [DATA_WIDTH-1:0] data_2_addr,
-    output logic [DATA_WIDTH-1:0] data_2_write,
-    input  logic [DATA_WIDTH-1:0] data_2_read,
-    output logic data_2_we,
-    output logic [3:0] data_2_be,
-    output logic data_2_req,
-    input  logic data_2_ack,
-
-    output logic [2:0] commit_valid,
-    output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0,
-    output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_1,
-    output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_2,
-    output logic [4:0] commit_rob_idx_0,
-    output logic [4:0] commit_rob_idx_1,
-    output logic [4:0] commit_rob_idx_2,
-
-    output logic commit_is_branch_0,
-    output logic misprediction_detected_0,
-
-    output logic commit_is_branch_1,
-    output logic misprediction_detected_1,
-
-    output logic commit_is_branch_2,
-    output logic misprediction_detected_2,
-
-    output logic lsq_commit_valid_0,
-    output logic lsq_commit_valid_1,
-    output logic lsq_commit_valid_2,
-    
-    // Eager misprediction flush outputs (for issue stage LSQ circular buffer)
-    output logic        lsq_flush_valid_o,
-    output logic [4:0]  first_invalid_lsq_idx_o,
-    
-    //==========================================================================
-    // BRAT v2 In-Order Branch Resolution Inputs (from issue_stage)
-    //==========================================================================
-    input logic [2:0] brat_branch_resolved_i,           // In-order resolved branches
-    input logic [2:0] brat_branch_mispredicted_i,       // In-order misprediction flags
-    input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_0_i,  // ROB ID of oldest resolved
-    input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_1_i,  // ROB ID of 2nd oldest resolved
-    input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_2_i   // ROB ID of 3rd oldest resolved
-);
-
-    //==========================================================================
-    // INTERNAL SIGNALS
-    //==========================================================================
-
-    // Physical register file interface signals
-    // Read ports (6 total: 2 per reservation station)
-    logic [PHYS_REG_ADDR_WIDTH-1:0] inst_0_read_addr_a, inst_0_read_addr_b;
-    logic [PHYS_REG_ADDR_WIDTH-1:0] inst_1_read_addr_a, inst_1_read_addr_b;
-    logic [PHYS_REG_ADDR_WIDTH-1:0] inst_2_read_addr_a, inst_2_read_addr_b;
-
-    // Data from ROB
-    logic [DATA_WIDTH-1:0] rob_0_read_data_a, rob_0_read_data_b;
-    logic [DATA_WIDTH-1:0] rob_1_read_data_a, rob_1_read_data_b;
-    logic [DATA_WIDTH-1:0] rob_2_read_data_a, rob_2_read_data_b;
-    logic [2:0] rob_0_read_tag_a, rob_0_read_tag_b;
-    logic [2:0] rob_1_read_tag_a, rob_1_read_tag_b;
-    logic [2:0] rob_2_read_tag_a, rob_2_read_tag_b;
-
-    // Data from Register File
-    logic [DATA_WIDTH-1:0] reg_file_read_data_a_0, reg_file_read_data_b_0;
-    logic [DATA_WIDTH-1:0] reg_file_read_data_a_1, reg_file_read_data_b_1;
-    logic [DATA_WIDTH-1:0] reg_file_read_data_a_2, reg_file_read_data_b_2;
-
-    // Final operand data to dispatch to functional units
-    logic [DATA_WIDTH-1:0] inst_0_read_data_a, inst_0_read_data_b;
-    logic [DATA_WIDTH-1:0] inst_1_read_data_a, inst_1_read_data_b;
-    logic [DATA_WIDTH-1:0] inst_2_read_data_a, inst_2_read_data_b;
-    logic [2:0] inst_0_read_tag_a, inst_0_read_tag_b;
-    logic [2:0] inst_1_read_tag_a, inst_1_read_tag_b;
-    logic [2:0] inst_2_read_tag_a, inst_2_read_tag_b;
-
-    logic commit_valid_0, commit_valid_1, commit_valid_2;
-    logic [DATA_WIDTH-1:0] commit_data_0, commit_data_1, commit_data_2;
-
-    logic [4:0] rob_head_idx;
-    
-    // load store 
-    logic alloc_0_is_store, alloc_1_is_store, alloc_2_is_store;
-    assign alloc_0_is_store = issue_to_dispatch_0.control_signals[3] & ~issue_to_dispatch_0.control_signals[6];
-    assign alloc_1_is_store = issue_to_dispatch_1.control_signals[3] & ~issue_to_dispatch_1.control_signals[6];
-    assign alloc_2_is_store = issue_to_dispatch_2.control_signals[3] & ~issue_to_dispatch_2.control_signals[6];
-
-    logic store_can_issue_0, store_can_issue_1, store_can_issue_2;
-    logic [PHYS_REG_ADDR_WIDTH-1:0] allowed_store_address_0, allowed_store_address_1, allowed_store_address_2;
-    //logic commit_exception_0, commit_exception_1, commit_exception_2;
-
-    // Eager misprediction signals from ROB to LSQ
-    logic [4:0]  rob_head_ptr;
-    
-    //==========================================================================
-    // BRAT-based Eager Misprediction Signals (for RS and LSQ)
-    //==========================================================================
-    // Use BRAT's in-order outputs for misprediction handling
-    // Priority: oldest mispredicted branch first (index 0)
-    logic        brat_eager_misprediction;
-    logic [5:0]  brat_mispredicted_phys_reg;
-    
-    always_comb begin
-        if (brat_branch_resolved_i[0] && brat_branch_mispredicted_i[0]) begin
-            brat_eager_misprediction = 1'b1;
-            brat_mispredicted_phys_reg = brat_resolved_phys_0_i;
-        end else if (brat_branch_resolved_i[1] && brat_branch_mispredicted_i[1]) begin
-            brat_eager_misprediction = 1'b1;
-            brat_mispredicted_phys_reg = brat_resolved_phys_1_i;
-        end else if (brat_branch_resolved_i[2] && brat_branch_mispredicted_i[2]) begin
-            brat_eager_misprediction = 1'b1;
-            brat_mispredicted_phys_reg = brat_resolved_phys_2_i;
-        end else begin
-            brat_eager_misprediction = 1'b0;
-            brat_mispredicted_phys_reg = 6'b0;
-        end
-    end
-    
-    // Calculate distance from mispredicted branch to ROB head
-    // This is needed by RS and LSQ for selective flush
-    logic [5:0] brat_mispredicted_distance;
-    assign brat_mispredicted_distance = brat_mispredicted_phys_reg[4:0] >= rob_head_ptr ? 
-                                       (brat_mispredicted_phys_reg[4:0] - rob_head_ptr) :
-                                       (32 + brat_mispredicted_phys_reg[4:0] - rob_head_ptr);
+      cdb_if cdb_interface,  // Common Data Bus interface
 
     `ifndef SYNTHESIS
-    logic [DATA_WIDTH-1:0] tracer_store_data_0, tracer_store_data_1, tracer_store_data_2;
+      tracer_interface i_tracer_0,
+      tracer_interface i_tracer_1,
+      tracer_interface i_tracer_2,
+
+      tracer_interface o_tracer_0,
+      tracer_interface o_tracer_1,
+      tracer_interface o_tracer_2,
     `endif
 
-    assign commit_rob_idx_0 = rob_head_idx;
-    assign commit_rob_idx_1 = rob_head_idx + 1;
-    assign commit_rob_idx_2 = rob_head_idx + 2;
-    assign commit_valid = {commit_valid_2, commit_valid_1, commit_valid_0};
-    //==========================================================================
-    //Reorder Buffer
-    //==========================================================================
+      output logic [DATA_WIDTH-1:0] data_0_addr,
+      output logic [DATA_WIDTH-1:0] data_0_write,
+      input  logic [DATA_WIDTH-1:0] data_0_read,
+      output logic data_0_we,
+      output logic [3:0] data_0_be,
+      output logic data_0_req,
+      input  logic data_0_ack,
 
-    reorder_buffer rob (
-        .clk(clk),
-        .reset(reset),
+      output logic [DATA_WIDTH-1:0] data_1_addr,
+      output logic [DATA_WIDTH-1:0] data_1_write,
+      input  logic [DATA_WIDTH-1:0] data_1_read,
+      output logic data_1_we,
+      output logic [3:0] data_1_be,
+      output logic data_1_req,
+      input  logic data_1_ack,
 
-        .alloc_enable_0(issue_to_dispatch_0.dispatch_valid), 
-        .alloc_enable_1(issue_to_dispatch_1.dispatch_valid),
-        .alloc_enable_2(issue_to_dispatch_2.dispatch_valid),
-        .alloc_addr_0(issue_to_dispatch_0.rd_arch_addr),
-        .alloc_addr_1(issue_to_dispatch_1.rd_arch_addr),
-        .alloc_addr_2(issue_to_dispatch_2.rd_arch_addr),
-        .alloc_tag_0(issue_to_dispatch_0.alloc_tag),
-        .alloc_tag_1(issue_to_dispatch_1.alloc_tag),
-        .alloc_tag_2(issue_to_dispatch_2.alloc_tag),
-        .alloc_is_store_0(alloc_0_is_store),
-        .alloc_is_store_1(alloc_1_is_store),
-        .alloc_is_store_2(alloc_2_is_store),
-        
-        .cdb_valid_0(cdb_interface.cdb_valid_0 & cdb_interface.cdb_dest_reg_0[5]),
-        .cdb_valid_1(cdb_interface.cdb_valid_1 & cdb_interface.cdb_dest_reg_1[5]),
-        .cdb_valid_2(cdb_interface.cdb_valid_2 & cdb_interface.cdb_dest_reg_2[5]),
-        .cdb_valid_3_2(cdb_interface.cdb_valid_3_2 & cdb_interface.cdb_dest_reg_3_2[5]),
-        .cdb_valid_3_1(cdb_interface.cdb_valid_3_1 & cdb_interface.cdb_dest_reg_3_1[5]),
-        .cdb_valid_3_0(cdb_interface.cdb_valid_3_0 & cdb_interface.cdb_dest_reg_3_0[5]),
+      output logic [DATA_WIDTH-1:0] data_2_addr,
+      output logic [DATA_WIDTH-1:0] data_2_write,
+      input  logic [DATA_WIDTH-1:0] data_2_read,
+      output logic data_2_we,
+      output logic [3:0] data_2_be,
+      output logic data_2_req,
+      input  logic data_2_ack,
 
-        .cdb_addr_0(cdb_interface.cdb_dest_reg_0[4:0]),
-        .cdb_addr_1(cdb_interface.cdb_dest_reg_1[4:0]),
-        .cdb_addr_2(cdb_interface.cdb_dest_reg_2[4:0]),
-        .cdb_addr_3_2(cdb_interface.cdb_dest_reg_3_2[4:0]),
-        .cdb_addr_3_1(cdb_interface.cdb_dest_reg_3_1[4:0]),
-        .cdb_addr_3_0(cdb_interface.cdb_dest_reg_3_0[4:0]),
+      output logic [2:0] commit_valid,
+      output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0,
+      output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_1,
+      output logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_2,
+      output logic [4:0] commit_rob_idx_0,
+      output logic [4:0] commit_rob_idx_1,
+      output logic [4:0] commit_rob_idx_2,
 
-        .cdb_data_0(cdb_interface.cdb_data_0),
-        .cdb_data_1(cdb_interface.cdb_data_1),
-        .cdb_data_2(cdb_interface.cdb_data_2),
-        .cdb_data_3_2(cdb_interface.cdb_data_3_2),
-        .cdb_data_3_1(cdb_interface.cdb_data_3_1),
-        .cdb_data_3_0(cdb_interface.cdb_data_3_0),
+      output logic commit_is_branch_0,
+      output logic misprediction_detected_0,
 
-        .cdb_exception_0(cdb_interface.cdb_misprediction_0),  
-        .cdb_exception_1(cdb_interface.cdb_misprediction_1),  
-        .cdb_exception_2(cdb_interface.cdb_misprediction_2),  
-        .cdb_exception_3_2(0),  
-        .cdb_exception_3_1(0),
-        .cdb_exception_3_0(0),    
-        
-        .cdb_is_branch_0(cdb_interface.cdb_is_branch_0),
-        .cdb_is_branch_1(cdb_interface.cdb_is_branch_1),
-        .cdb_is_branch_2(cdb_interface.cdb_is_branch_2),
-        .cdb_mem_addr_calculation_0(cdb_interface.cdb_mem_addr_calculation_0),
-        .cdb_mem_addr_calculation_1(cdb_interface.cdb_mem_addr_calculation_1),
-        .cdb_mem_addr_calculation_2(cdb_interface.cdb_mem_addr_calculation_2),
+      output logic commit_is_branch_1,
+      output logic misprediction_detected_1,
+
+      output logic commit_is_branch_2,
+      output logic misprediction_detected_2,
+
+      output logic lsq_commit_valid_0,
+      output logic lsq_commit_valid_1,
+      output logic lsq_commit_valid_2,
+
+      // Eager misprediction flush outputs (for issue stage LSQ circular buffer)
+      output logic        lsq_flush_valid_o,
+      output logic [4:0]  first_invalid_lsq_idx_o,
+
+      //==========================================================================
+      // BRAT v2 In-Order Branch Resolution Inputs (from issue_stage)
+      //==========================================================================
+      input logic [2:0] brat_branch_resolved_i,           // In-order resolved branches
+      input logic [2:0] brat_branch_mispredicted_i,       // In-order misprediction flags
+      input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_0_i,  // ROB ID of oldest resolved
+      input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_1_i,  // ROB ID of 2nd oldest resolved
+      input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_2_i   // ROB ID of 3rd oldest resolved
+   );
+
+   //==========================================================================
+   // INTERNAL SIGNALS
+   //==========================================================================
+
+   // Physical register file interface signals
+   // Read ports (6 total: 2 per reservation station)
+   logic [PHYS_REG_ADDR_WIDTH-1:0] inst_0_read_addr_a, inst_0_read_addr_b;
+   logic [PHYS_REG_ADDR_WIDTH-1:0] inst_1_read_addr_a, inst_1_read_addr_b;
+   logic [PHYS_REG_ADDR_WIDTH-1:0] inst_2_read_addr_a, inst_2_read_addr_b;
+
+   // Data from ROB
+   logic [DATA_WIDTH-1:0] rob_0_read_data_a, rob_0_read_data_b;
+   logic [DATA_WIDTH-1:0] rob_1_read_data_a, rob_1_read_data_b;
+   logic [DATA_WIDTH-1:0] rob_2_read_data_a, rob_2_read_data_b;
+   logic [2:0] rob_0_read_tag_a, rob_0_read_tag_b;
+   logic [2:0] rob_1_read_tag_a, rob_1_read_tag_b;
+   logic [2:0] rob_2_read_tag_a, rob_2_read_tag_b;
+
+   // Data from Register File
+   logic [DATA_WIDTH-1:0] reg_file_read_data_a_0, reg_file_read_data_b_0;
+   logic [DATA_WIDTH-1:0] reg_file_read_data_a_1, reg_file_read_data_b_1;
+   logic [DATA_WIDTH-1:0] reg_file_read_data_a_2, reg_file_read_data_b_2;
+
+   // Final operand data to dispatch to functional units
+   logic [DATA_WIDTH-1:0] inst_0_read_data_a, inst_0_read_data_b;
+   logic [DATA_WIDTH-1:0] inst_1_read_data_a, inst_1_read_data_b;
+   logic [DATA_WIDTH-1:0] inst_2_read_data_a, inst_2_read_data_b;
+   logic [2:0] inst_0_read_tag_a, inst_0_read_tag_b;
+   logic [2:0] inst_1_read_tag_a, inst_1_read_tag_b;
+   logic [2:0] inst_2_read_tag_a, inst_2_read_tag_b;
+
+   logic commit_valid_0, commit_valid_1, commit_valid_2;
+   logic [DATA_WIDTH-1:0] commit_data_0, commit_data_1, commit_data_2;
+
+   logic [4:0] rob_head_idx;
+
+   // load store
+   logic alloc_0_is_store, alloc_1_is_store, alloc_2_is_store;
+   assign alloc_0_is_store = issue_to_dispatch_0.control_signals[3] & ~issue_to_dispatch_0.control_signals[6];
+   assign alloc_1_is_store = issue_to_dispatch_1.control_signals[3] & ~issue_to_dispatch_1.control_signals[6];
+   assign alloc_2_is_store = issue_to_dispatch_2.control_signals[3] & ~issue_to_dispatch_2.control_signals[6];
+
+   logic store_can_issue_0, store_can_issue_1, store_can_issue_2;
+   logic [PHYS_REG_ADDR_WIDTH-1:0] allowed_store_address_0, allowed_store_address_1, allowed_store_address_2;
+   //logic commit_exception_0, commit_exception_1, commit_exception_2;
+
+   // Eager misprediction signals from ROB to LSQ
+   logic [4:0]  rob_head_ptr;
+
+   //==========================================================================
+   // BRAT-based Eager Misprediction Signals (for RS and LSQ)
+   //==========================================================================
+   // Use BRAT's in-order outputs for misprediction handling
+   // Priority: oldest mispredicted branch first (index 0)
+   logic        brat_eager_misprediction;
+   logic [5:0]  brat_mispredicted_phys_reg;
+
+   always_comb begin
+      if (brat_branch_resolved_i[0] && brat_branch_mispredicted_i[0]) begin
+         brat_eager_misprediction = 1'b1;
+         brat_mispredicted_phys_reg = brat_resolved_phys_0_i;
+      end else if (brat_branch_resolved_i[1] && brat_branch_mispredicted_i[1]) begin
+         brat_eager_misprediction = 1'b1;
+         brat_mispredicted_phys_reg = brat_resolved_phys_1_i;
+      end else if (brat_branch_resolved_i[2] && brat_branch_mispredicted_i[2]) begin
+         brat_eager_misprediction = 1'b1;
+         brat_mispredicted_phys_reg = brat_resolved_phys_2_i;
+      end else begin
+         brat_eager_misprediction = 1'b0;
+         brat_mispredicted_phys_reg = 6'b0;
+      end
+   end
+
+   // Calculate distance from mispredicted branch to ROB head
+   // This is needed by RS and LSQ for selective flush
+   logic [5:0] brat_mispredicted_distance;
+   assign brat_mispredicted_distance = brat_mispredicted_phys_reg[4:0] >= rob_head_ptr ?
+      (brat_mispredicted_phys_reg[4:0] - rob_head_ptr) :
+      (32 + brat_mispredicted_phys_reg[4:0] - rob_head_ptr);
+
+    `ifndef SYNTHESIS
+   logic [DATA_WIDTH-1:0] tracer_store_data_0, tracer_store_data_1, tracer_store_data_2;
+    `endif
+
+   assign commit_rob_idx_0 = rob_head_idx;
+   assign commit_rob_idx_1 = rob_head_idx + 1;
+   assign commit_rob_idx_2 = rob_head_idx + 2;
+   assign commit_valid = {commit_valid_2, commit_valid_1, commit_valid_0};
+   //==========================================================================
+   //Reorder Buffer
+   //==========================================================================
+
+   reorder_buffer rob (
+      .clk(clk),
+      .reset(reset),
+
+      .alloc_enable_0(issue_to_dispatch_0.dispatch_valid),
+      .alloc_enable_1(issue_to_dispatch_1.dispatch_valid),
+      .alloc_enable_2(issue_to_dispatch_2.dispatch_valid),
+      .alloc_addr_0(issue_to_dispatch_0.rd_arch_addr),
+      .alloc_addr_1(issue_to_dispatch_1.rd_arch_addr),
+      .alloc_addr_2(issue_to_dispatch_2.rd_arch_addr),
+      .alloc_tag_0(issue_to_dispatch_0.alloc_tag),
+      .alloc_tag_1(issue_to_dispatch_1.alloc_tag),
+      .alloc_tag_2(issue_to_dispatch_2.alloc_tag),
+      .alloc_is_store_0(alloc_0_is_store),
+      .alloc_is_store_1(alloc_1_is_store),
+      .alloc_is_store_2(alloc_2_is_store),
+
+      .cdb_valid_0(cdb_interface.cdb_valid_0 & cdb_interface.cdb_dest_reg_0[5]),
+      .cdb_valid_1(cdb_interface.cdb_valid_1 & cdb_interface.cdb_dest_reg_1[5]),
+      .cdb_valid_2(cdb_interface.cdb_valid_2 & cdb_interface.cdb_dest_reg_2[5]),
+      .cdb_valid_3_2(cdb_interface.cdb_valid_3_2 & cdb_interface.cdb_dest_reg_3_2[5]),
+      .cdb_valid_3_1(cdb_interface.cdb_valid_3_1 & cdb_interface.cdb_dest_reg_3_1[5]),
+      .cdb_valid_3_0(cdb_interface.cdb_valid_3_0 & cdb_interface.cdb_dest_reg_3_0[5]),
+
+      .cdb_addr_0(cdb_interface.cdb_dest_reg_0[4:0]),
+      .cdb_addr_1(cdb_interface.cdb_dest_reg_1[4:0]),
+      .cdb_addr_2(cdb_interface.cdb_dest_reg_2[4:0]),
+      .cdb_addr_3_2(cdb_interface.cdb_dest_reg_3_2[4:0]),
+      .cdb_addr_3_1(cdb_interface.cdb_dest_reg_3_1[4:0]),
+      .cdb_addr_3_0(cdb_interface.cdb_dest_reg_3_0[4:0]),
+
+      .cdb_data_0(cdb_interface.cdb_data_0),
+      .cdb_data_1(cdb_interface.cdb_data_1),
+      .cdb_data_2(cdb_interface.cdb_data_2),
+      .cdb_data_3_2(cdb_interface.cdb_data_3_2),
+      .cdb_data_3_1(cdb_interface.cdb_data_3_1),
+      .cdb_data_3_0(cdb_interface.cdb_data_3_0),
+
+      .cdb_exception_0(cdb_interface.cdb_misprediction_0),
+      .cdb_exception_1(cdb_interface.cdb_misprediction_1),
+      .cdb_exception_2(cdb_interface.cdb_misprediction_2),
+      .cdb_exception_3_2(0),
+      .cdb_exception_3_1(0),
+      .cdb_exception_3_0(0),
+
+      .cdb_is_branch_0(cdb_interface.cdb_is_branch_0),
+      .cdb_is_branch_1(cdb_interface.cdb_is_branch_1),
+      .cdb_is_branch_2(cdb_interface.cdb_is_branch_2),
+      .cdb_mem_addr_calculation_0(cdb_interface.cdb_mem_addr_calculation_0),
+      .cdb_mem_addr_calculation_1(cdb_interface.cdb_mem_addr_calculation_1),
+      .cdb_mem_addr_calculation_2(cdb_interface.cdb_mem_addr_calculation_2),
 
         `ifndef SYNTHESIS
-        .i_tracer_0(i_tracer_0),
-        .i_tracer_1(i_tracer_1),   
-        .i_tracer_2(i_tracer_2),
+      .i_tracer_0(i_tracer_0),
+      .i_tracer_1(i_tracer_1),
+      .i_tracer_2(i_tracer_2),
 
-        .o_tracer_0(o_tracer_0),
-        .o_tracer_1(o_tracer_1),
-        .o_tracer_2(o_tracer_2),
+      .o_tracer_0(o_tracer_0),
+      .o_tracer_1(o_tracer_1),
+      .o_tracer_2(o_tracer_2),
 
-        .tracer_store_data_0(tracer_store_data_0),
-        .tracer_store_data_1(tracer_store_data_1),
-        .tracer_store_data_2(tracer_store_data_2),
+      .tracer_store_data_0(tracer_store_data_0),
+      .tracer_store_data_1(tracer_store_data_1),
+      .tracer_store_data_2(tracer_store_data_2),
         `endif
 
-        .read_addr_0(inst_0_read_addr_a[4:0]),
-        .read_addr_1(inst_0_read_addr_b[4:0]),
-        .read_addr_2(inst_1_read_addr_a[4:0]),
-        .read_addr_3(inst_1_read_addr_b[4:0]),
-        .read_addr_4(inst_2_read_addr_a[4:0]),
-        .read_addr_5(inst_2_read_addr_b[4:0]),
-        .read_data_0(rob_0_read_data_a),
-        .read_data_1(rob_0_read_data_b),
-        .read_data_2(rob_1_read_data_a),
-        .read_data_3(rob_1_read_data_b),
-        .read_data_4(rob_2_read_data_a),
-        .read_data_5(rob_2_read_data_b),
-        .read_tag_0(rob_0_read_tag_a),
-        .read_tag_1(rob_0_read_tag_b),
-        .read_tag_2(rob_1_read_tag_a),
-        .read_tag_3(rob_1_read_tag_b),
-        .read_tag_4(rob_2_read_tag_a),
-        .read_tag_5(rob_2_read_tag_b),
+      .read_addr_0(inst_0_read_addr_a[4:0]),
+      .read_addr_1(inst_0_read_addr_b[4:0]),
+      .read_addr_2(inst_1_read_addr_a[4:0]),
+      .read_addr_3(inst_1_read_addr_b[4:0]),
+      .read_addr_4(inst_2_read_addr_a[4:0]),
+      .read_addr_5(inst_2_read_addr_b[4:0]),
+      .read_data_0(rob_0_read_data_a),
+      .read_data_1(rob_0_read_data_b),
+      .read_data_2(rob_1_read_data_a),
+      .read_data_3(rob_1_read_data_b),
+      .read_data_4(rob_2_read_data_a),
+      .read_data_5(rob_2_read_data_b),
+      .read_tag_0(rob_0_read_tag_a),
+      .read_tag_1(rob_0_read_tag_b),
+      .read_tag_2(rob_1_read_tag_a),
+      .read_tag_3(rob_1_read_tag_b),
+      .read_tag_4(rob_2_read_tag_a),
+      .read_tag_5(rob_2_read_tag_b),
 
-        .commit_valid_0(commit_valid_0),
-        .commit_valid_1(commit_valid_1),
-        .commit_valid_2(commit_valid_2),
-        .commit_data_0(commit_data_0),
-        .commit_data_1(commit_data_1),
-        .commit_data_2(commit_data_2),
-        .commit_addr_0(commit_addr_0),
-        .commit_addr_1(commit_addr_1),
-        .commit_addr_2(commit_addr_2),
-        .commit_exception_0(misprediction_detected_0),
-        .commit_exception_1(),
-        .commit_exception_2(),
-        .commit_is_branch_0(commit_is_branch_0),
-        .commit_is_branch_1(),
-        .commit_is_branch_2(),
+      .commit_valid_0(commit_valid_0),
+      .commit_valid_1(commit_valid_1),
+      .commit_valid_2(commit_valid_2),
+      .commit_data_0(commit_data_0),
+      .commit_data_1(commit_data_1),
+      .commit_data_2(commit_data_2),
+      .commit_addr_0(commit_addr_0),
+      .commit_addr_1(commit_addr_1),
+      .commit_addr_2(commit_addr_2),
+      .commit_exception_0(misprediction_detected_0),
+      .commit_exception_1(),
+      .commit_exception_2(),
+      .commit_is_branch_0(commit_is_branch_0),
+      .commit_is_branch_1(),
+      .commit_is_branch_2(),
 
-        .lsq_commit_valid_0(lsq_commit_valid_0),
-        .lsq_commit_valid_1(lsq_commit_valid_1),
-        .lsq_commit_valid_2(lsq_commit_valid_2),
+      .lsq_commit_valid_0(lsq_commit_valid_0),
+      .lsq_commit_valid_1(lsq_commit_valid_1),
+      .lsq_commit_valid_2(lsq_commit_valid_2),
 
-        .store_can_issue_0(store_can_issue_0),
-        .allowed_store_address_0(allowed_store_address_0),
+      .store_can_issue_0(store_can_issue_0),
+      .allowed_store_address_0(allowed_store_address_0),
 
-        .store_can_issue_1(store_can_issue_1),
-        .allowed_store_address_1(allowed_store_address_1),
+      .store_can_issue_1(store_can_issue_1),
+      .allowed_store_address_1(allowed_store_address_1),
 
-        .store_can_issue_2(store_can_issue_2),
-        .allowed_store_address_2(allowed_store_address_2),
+      .store_can_issue_2(store_can_issue_2),
+      .allowed_store_address_2(allowed_store_address_2),
 
-        .head_ptr(rob_head_idx),
-        
-        // Eager misprediction outputs (for LSQ flush)
-        .branch_misprediction_i(brat_eager_misprediction),
-        .branch_mispredicted_rob_idx_i(brat_mispredicted_phys_reg[4:0]),
-        .rob_head_ptr_o(rob_head_ptr)
-    );
+      .head_ptr(rob_head_idx),
 
-    multi_port_register_file #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .ADDR_WIDTH(5),  // 6 bits for 64 registers
-        .NUM_REGISTERS(32)      // 64 physical registers
-    ) physical_reg_file (
-        .clk(clk),
-        .reset(reset),
+      // Eager misprediction outputs (for LSQ flush)
+      .branch_misprediction_i(brat_eager_misprediction),
+      .branch_mispredicted_rob_idx_i(brat_mispredicted_phys_reg[4:0]),
+      .rob_head_ptr_o(rob_head_ptr)
+   );
 
-        // Read ports (descriptive naming)
-        .inst_0_read_addr_a(inst_0_read_addr_a[4:0]), .inst_0_read_data_a(reg_file_read_data_a_0),   // RS0 operand A
-        .inst_0_read_addr_b(inst_0_read_addr_b[4:0]), .inst_0_read_data_b(reg_file_read_data_b_0),   // RS0 operand B
-        .inst_1_read_addr_a(inst_1_read_addr_a[4:0]), .inst_1_read_data_a(reg_file_read_data_a_1),   // RS1 operand A
-        .inst_1_read_addr_b(inst_1_read_addr_b[4:0]), .inst_1_read_data_b(reg_file_read_data_b_1),   // RS1 operand B
-        .inst_2_read_addr_a(inst_2_read_addr_a[4:0]), .inst_2_read_data_a(reg_file_read_data_a_2),   // RS2 operand A
-        .inst_2_read_addr_b(inst_2_read_addr_b[4:0]), .inst_2_read_data_b(reg_file_read_data_b_2),   // RS2 operand B
+   multi_port_register_file #(
+      .DATA_WIDTH(DATA_WIDTH),
+      .ADDR_WIDTH(5),  // 6 bits for 64 registers
+      .NUM_REGISTERS(32)      // 64 physical registers
+   ) physical_reg_file (
+      .clk(clk),
+      .reset(reset),
 
-        // Commit ports - write results from CDB when complete
-        .commit_enable_0(commit_valid_0), .commit_addr_0(commit_addr_0), .commit_data_0(commit_data_0),
-        .commit_enable_1(commit_valid_1), .commit_addr_1(commit_addr_1), .commit_data_1(commit_data_1),
-        .commit_enable_2(commit_valid_2), .commit_addr_2(commit_addr_2), .commit_data_2(commit_data_2)
-    );
+      // Read ports (descriptive naming)
+      .inst_0_read_addr_a(inst_0_read_addr_a[4:0]), .inst_0_read_data_a(reg_file_read_data_a_0),   // RS0 operand A
+      .inst_0_read_addr_b(inst_0_read_addr_b[4:0]), .inst_0_read_data_b(reg_file_read_data_b_0),   // RS0 operand B
+      .inst_1_read_addr_a(inst_1_read_addr_a[4:0]), .inst_1_read_data_a(reg_file_read_data_a_1),   // RS1 operand A
+      .inst_1_read_addr_b(inst_1_read_addr_b[4:0]), .inst_1_read_data_b(reg_file_read_data_b_1),   // RS1 operand B
+      .inst_2_read_addr_a(inst_2_read_addr_a[4:0]), .inst_2_read_data_a(reg_file_read_data_a_2),   // RS2 operand A
+      .inst_2_read_addr_b(inst_2_read_addr_b[4:0]), .inst_2_read_data_b(reg_file_read_data_b_2),   // RS2 operand B
 
-    assign inst_0_read_data_a = inst_0_read_addr_a[5] ? rob_0_read_data_a : reg_file_read_data_a_0;
-    assign inst_0_read_tag_a  = inst_0_read_addr_a[5] ? rob_0_read_tag_a  : 3'b111; // Ready if from reg file
-    assign inst_0_read_data_b = inst_0_read_addr_b[5] ? rob_0_read_data_b : reg_file_read_data_b_0;
-    assign inst_0_read_tag_b  = inst_0_read_addr_b[5] ? rob_0_read_tag_b  : 3'b111; // Ready if from reg file
-    assign inst_1_read_data_a = inst_1_read_addr_a[5] ? rob_1_read_data_a : reg_file_read_data_a_1;
-    assign inst_1_read_tag_a  = inst_1_read_addr_a[5] ? rob_1_read_tag_a  : 3'b111; // Ready if from reg file
-    assign inst_1_read_data_b = inst_1_read_addr_b[5] ? rob_1_read_data_b : reg_file_read_data_b_1;
-    assign inst_1_read_tag_b  = inst_1_read_addr_b[5] ? rob_1_read_tag_b  : 3'b111; // Ready if from reg file
-    assign inst_2_read_data_a = inst_2_read_addr_a[5] ? rob_2_read_data_a : reg_file_read_data_a_2;
-    assign inst_2_read_tag_a  = inst_2_read_addr_a[5] ? rob_2_read_tag_a  : 3'b111; // Ready if from reg file
-    assign inst_2_read_data_b = inst_2_read_addr_b[5] ? rob_2_read_data_b : reg_file_read_data_b_2;
-    assign inst_2_read_tag_b  = inst_2_read_addr_b[5] ? rob_2_read_tag_b  : 3'b111; // Ready if from reg file
+      // Commit ports - write results from CDB when complete
+      .commit_enable_0(commit_valid_0), .commit_addr_0(commit_addr_0), .commit_data_0(commit_data_0),
+      .commit_enable_1(commit_valid_1), .commit_addr_1(commit_addr_1), .commit_data_1(commit_data_1),
+      .commit_enable_2(commit_valid_2), .commit_addr_2(commit_addr_2), .commit_data_2(commit_data_2)
+   );
+
+   assign inst_0_read_data_a = inst_0_read_addr_a[5] ? rob_0_read_data_a : reg_file_read_data_a_0;
+   assign inst_0_read_tag_a  = inst_0_read_addr_a[5] ? rob_0_read_tag_a  : 3'b111; // Ready if from reg file
+   assign inst_0_read_data_b = inst_0_read_addr_b[5] ? rob_0_read_data_b : reg_file_read_data_b_0;
+   assign inst_0_read_tag_b  = inst_0_read_addr_b[5] ? rob_0_read_tag_b  : 3'b111; // Ready if from reg file
+   assign inst_1_read_data_a = inst_1_read_addr_a[5] ? rob_1_read_data_a : reg_file_read_data_a_1;
+   assign inst_1_read_tag_a  = inst_1_read_addr_a[5] ? rob_1_read_tag_a  : 3'b111; // Ready if from reg file
+   assign inst_1_read_data_b = inst_1_read_addr_b[5] ? rob_1_read_data_b : reg_file_read_data_b_1;
+   assign inst_1_read_tag_b  = inst_1_read_addr_b[5] ? rob_1_read_tag_b  : 3'b111; // Ready if from reg file
+   assign inst_2_read_data_a = inst_2_read_addr_a[5] ? rob_2_read_data_a : reg_file_read_data_a_2;
+   assign inst_2_read_tag_a  = inst_2_read_addr_a[5] ? rob_2_read_tag_a  : 3'b111; // Ready if from reg file
+   assign inst_2_read_data_b = inst_2_read_addr_b[5] ? rob_2_read_data_b : reg_file_read_data_b_2;
+   assign inst_2_read_tag_b  = inst_2_read_addr_b[5] ? rob_2_read_tag_b  : 3'b111; // Ready if from reg file
 
 
-    //==========================================================================
-    // INTERFACE BRIDGE: Convert new issue_to_dispatch_if to register file access
-    //==========================================================================
+   //==========================================================================
+   // INTERFACE BRIDGE: Convert new issue_to_dispatch_if to register file access
+   //==========================================================================
 
-    // Connect interface addresses to register file read ports
-    // RS0: Read ports 0 and 1
-    assign inst_0_read_addr_a = issue_to_dispatch_0.operand_a_phys_addr;  // RS0 operand A
-    assign inst_0_read_addr_b = issue_to_dispatch_0.operand_b_phys_addr;  // RS0 operand B
+   // Connect interface addresses to register file read ports
+   // RS0: Read ports 0 and 1
+   assign inst_0_read_addr_a = issue_to_dispatch_0.operand_a_phys_addr;  // RS0 operand A
+   assign inst_0_read_addr_b = issue_to_dispatch_0.operand_b_phys_addr;  // RS0 operand B
 
-    // RS1: Read ports 2 and 3
-    assign inst_1_read_addr_a = issue_to_dispatch_1.operand_a_phys_addr;  // RS1 operand A
-    assign inst_1_read_addr_b = issue_to_dispatch_1.operand_b_phys_addr;  // RS1 operand B
+   // RS1: Read ports 2 and 3
+   assign inst_1_read_addr_a = issue_to_dispatch_1.operand_a_phys_addr;  // RS1 operand A
+   assign inst_1_read_addr_b = issue_to_dispatch_1.operand_b_phys_addr;  // RS1 operand B
 
-    // RS2: Read ports 4 and 5
-    assign inst_2_read_addr_a = issue_to_dispatch_2.operand_a_phys_addr;  // RS2 operand A
-    assign inst_2_read_addr_b = issue_to_dispatch_2.operand_b_phys_addr;  // RS2 operand B
+   // RS2: Read ports 4 and 5
+   assign inst_2_read_addr_a = issue_to_dispatch_2.operand_a_phys_addr;  // RS2 operand A
+   assign inst_2_read_addr_b = issue_to_dispatch_2.operand_b_phys_addr;  // RS2 operand B
 
-    //==========================================================================
-    // INTERNAL INTERFACES: Create legacy interfaces for reservation stations
-    //==========================================================================
+   //==========================================================================
+   // INTERNAL INTERFACES: Create legacy interfaces for reservation stations
+   //==========================================================================
 
-    // Create internal decode_to_rs_if interfaces for each reservation station
-    decode_to_rs_if internal_rs_if_0();
-    decode_to_rs_if internal_rs_if_1();
-    decode_to_rs_if internal_rs_if_2();
+   // Create internal decode_to_rs_if interfaces for each reservation station
+   decode_to_rs_if internal_rs_if_0();
+   decode_to_rs_if internal_rs_if_1();
+   decode_to_rs_if internal_rs_if_2();
 
-    // Connect new interfaces directly to internal interfaces
-    // RS0 interface
-    assign internal_rs_if_0.dispatch_valid = issue_to_dispatch_0.dispatch_valid;
-    assign issue_to_dispatch_0.dispatch_ready = internal_rs_if_0.dispatch_ready;
-    assign internal_rs_if_0.control_signals = issue_to_dispatch_0.control_signals;
-    assign internal_rs_if_0.pc = issue_to_dispatch_0.pc;
-    assign internal_rs_if_0.operand_a_data = inst_0_read_data_a;  // Data from register file
-    assign internal_rs_if_0.operand_b_data = issue_to_dispatch_0.control_signals[3] ? issue_to_dispatch_0.immediate_value : inst_0_read_data_b; // Immediate or register
-    assign internal_rs_if_0.store_data = inst_0_read_data_b;      // Store data same as operand B (from rs2)
-    assign internal_rs_if_0.operand_a_tag = inst_0_read_tag_a;    // Tag from register file
-    assign internal_rs_if_0.operand_b_tag = issue_to_dispatch_0.control_signals[3] ? 3'b111 : inst_0_read_tag_b; // Immediate always ready (tag 11)
-    assign internal_rs_if_0.rd_phys_addr = issue_to_dispatch_0.rd_phys_addr;
-    assign internal_rs_if_0.pc_value_at_prediction = issue_to_dispatch_0.pc_value_at_prediction;
-    assign internal_rs_if_0.branch_sel = issue_to_dispatch_0.branch_sel;
-    assign internal_rs_if_0.branch_prediction = issue_to_dispatch_0.branch_prediction;
+   // Connect new interfaces directly to internal interfaces
+   // RS0 interface
+   assign internal_rs_if_0.dispatch_valid = issue_to_dispatch_0.dispatch_valid;
+   assign issue_to_dispatch_0.dispatch_ready = internal_rs_if_0.dispatch_ready;
+   assign internal_rs_if_0.control_signals = issue_to_dispatch_0.control_signals;
+   assign internal_rs_if_0.pc = issue_to_dispatch_0.pc;
+   assign internal_rs_if_0.operand_a_data = inst_0_read_data_a;  // Data from register file
+   assign internal_rs_if_0.operand_b_data = issue_to_dispatch_0.control_signals[3] ? issue_to_dispatch_0.immediate_value : inst_0_read_data_b; // Immediate or register
+   assign internal_rs_if_0.store_data = inst_0_read_data_b;      // Store data same as operand B (from rs2)
+   assign internal_rs_if_0.operand_a_tag = inst_0_read_tag_a;    // Tag from register file
+   assign internal_rs_if_0.operand_b_tag = issue_to_dispatch_0.control_signals[3] ? 3'b111 : inst_0_read_tag_b; // Immediate always ready (tag 11)
+   assign internal_rs_if_0.rd_phys_addr = issue_to_dispatch_0.rd_phys_addr;
+   assign internal_rs_if_0.pc_value_at_prediction = issue_to_dispatch_0.pc_value_at_prediction;
+   assign internal_rs_if_0.branch_sel = issue_to_dispatch_0.branch_sel;
+   assign internal_rs_if_0.branch_prediction = issue_to_dispatch_0.branch_prediction;
 
-    // RS1 interface
-    assign internal_rs_if_1.dispatch_valid = issue_to_dispatch_1.dispatch_valid;
-    assign issue_to_dispatch_1.dispatch_ready = internal_rs_if_1.dispatch_ready;
-    assign internal_rs_if_1.control_signals = issue_to_dispatch_1.control_signals;
-    assign internal_rs_if_1.pc = issue_to_dispatch_1.pc;
-    assign internal_rs_if_1.operand_a_data = inst_1_read_data_a;  // Data from register file
-    assign internal_rs_if_1.operand_b_data = issue_to_dispatch_1.control_signals[3] ? issue_to_dispatch_1.immediate_value : inst_1_read_data_b; // Immediate or register
-    assign internal_rs_if_1.store_data = inst_1_read_data_b;      // Store data same as operand B (from rs2)
-    assign internal_rs_if_1.operand_a_tag = inst_1_read_tag_a;    // Tag from register file
-    assign internal_rs_if_1.operand_b_tag = issue_to_dispatch_1.control_signals[3] ? 3'b111 : inst_1_read_tag_b; // Immediate always ready (tag 11)
-    assign internal_rs_if_1.rd_phys_addr = issue_to_dispatch_1.rd_phys_addr;
-    assign internal_rs_if_1.pc_value_at_prediction = issue_to_dispatch_1.pc_value_at_prediction;
-    assign internal_rs_if_1.branch_sel = issue_to_dispatch_1.branch_sel;
-    assign internal_rs_if_1.branch_prediction = issue_to_dispatch_1.branch_prediction;
+   // RS1 interface
+   assign internal_rs_if_1.dispatch_valid = issue_to_dispatch_1.dispatch_valid;
+   assign issue_to_dispatch_1.dispatch_ready = internal_rs_if_1.dispatch_ready;
+   assign internal_rs_if_1.control_signals = issue_to_dispatch_1.control_signals;
+   assign internal_rs_if_1.pc = issue_to_dispatch_1.pc;
+   assign internal_rs_if_1.operand_a_data = inst_1_read_data_a;  // Data from register file
+   assign internal_rs_if_1.operand_b_data = issue_to_dispatch_1.control_signals[3] ? issue_to_dispatch_1.immediate_value : inst_1_read_data_b; // Immediate or register
+   assign internal_rs_if_1.store_data = inst_1_read_data_b;      // Store data same as operand B (from rs2)
+   assign internal_rs_if_1.operand_a_tag = inst_1_read_tag_a;    // Tag from register file
+   assign internal_rs_if_1.operand_b_tag = issue_to_dispatch_1.control_signals[3] ? 3'b111 : inst_1_read_tag_b; // Immediate always ready (tag 11)
+   assign internal_rs_if_1.rd_phys_addr = issue_to_dispatch_1.rd_phys_addr;
+   assign internal_rs_if_1.pc_value_at_prediction = issue_to_dispatch_1.pc_value_at_prediction;
+   assign internal_rs_if_1.branch_sel = issue_to_dispatch_1.branch_sel;
+   assign internal_rs_if_1.branch_prediction = issue_to_dispatch_1.branch_prediction;
 
-    // RS2 interface
-    assign internal_rs_if_2.dispatch_valid = issue_to_dispatch_2.dispatch_valid;
-    assign issue_to_dispatch_2.dispatch_ready = internal_rs_if_2.dispatch_ready;
-    assign internal_rs_if_2.control_signals = issue_to_dispatch_2.control_signals;
-    assign internal_rs_if_2.pc = issue_to_dispatch_2.pc;
-    assign internal_rs_if_2.operand_a_data = inst_2_read_data_a;  // Data from register file
-    assign internal_rs_if_2.operand_b_data = issue_to_dispatch_2.control_signals[3] ? issue_to_dispatch_2.immediate_value : inst_2_read_data_b; // Immediate or register
-    assign internal_rs_if_2.store_data = inst_2_read_data_b;      // Store data same as operand B (from rs2)
-    assign internal_rs_if_2.operand_a_tag = inst_2_read_tag_a;    // Tag from register file
-    assign internal_rs_if_2.operand_b_tag = issue_to_dispatch_2.control_signals[3] ? 3'b111 : inst_2_read_tag_b; // Immediate always ready (tag 11)
-    assign internal_rs_if_2.rd_phys_addr = issue_to_dispatch_2.rd_phys_addr;
-    assign internal_rs_if_2.pc_value_at_prediction = issue_to_dispatch_2.pc_value_at_prediction;
-    assign internal_rs_if_2.branch_sel = issue_to_dispatch_2.branch_sel;
-    assign internal_rs_if_2.branch_prediction = issue_to_dispatch_2.branch_prediction;
+   // RS2 interface
+   assign internal_rs_if_2.dispatch_valid = issue_to_dispatch_2.dispatch_valid;
+   assign issue_to_dispatch_2.dispatch_ready = internal_rs_if_2.dispatch_ready;
+   assign internal_rs_if_2.control_signals = issue_to_dispatch_2.control_signals;
+   assign internal_rs_if_2.pc = issue_to_dispatch_2.pc;
+   assign internal_rs_if_2.operand_a_data = inst_2_read_data_a;  // Data from register file
+   assign internal_rs_if_2.operand_b_data = issue_to_dispatch_2.control_signals[3] ? issue_to_dispatch_2.immediate_value : inst_2_read_data_b; // Immediate or register
+   assign internal_rs_if_2.store_data = inst_2_read_data_b;      // Store data same as operand B (from rs2)
+   assign internal_rs_if_2.operand_a_tag = inst_2_read_tag_a;    // Tag from register file
+   assign internal_rs_if_2.operand_b_tag = issue_to_dispatch_2.control_signals[3] ? 3'b111 : inst_2_read_tag_b; // Immediate always ready (tag 11)
+   assign internal_rs_if_2.rd_phys_addr = issue_to_dispatch_2.rd_phys_addr;
+   assign internal_rs_if_2.pc_value_at_prediction = issue_to_dispatch_2.pc_value_at_prediction;
+   assign internal_rs_if_2.branch_sel = issue_to_dispatch_2.branch_sel;
+   assign internal_rs_if_2.branch_prediction = issue_to_dispatch_2.branch_prediction;
 
-    //==========================================================================
-    // RESERVATION STATION 0 (ALU0)
-    //==========================================================================
+   //==========================================================================
+   // RESERVATION STATION 0 (ALU0)
+   //==========================================================================
 
-    reservation_station #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
-        .ALU_TAG(3'b000)  // ALU0 tag
-    ) rs_0 (
-        .clk(clk),
-        .reset(reset),
-        
-        // Eager misprediction flush interface (from BRAT in-order resolution)
-        .eager_misprediction_i(brat_eager_misprediction),
-        .mispredicted_distance_i(brat_mispredicted_distance),
-        .rob_head_ptr_i(rob_head_ptr),
+   reservation_station #(
+      .DATA_WIDTH(DATA_WIDTH),
+      .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
+      .ALU_TAG(3'b000)  // ALU0 tag
+   ) rs_0 (
+      .clk(clk),
+      .reset(reset),
 
-        // Interface to issue stage
-        .decode_if(internal_rs_if_0),
+      // Eager misprediction flush interface (from BRAT in-order resolution)
+      .eager_misprediction_i(brat_eager_misprediction),
+      .mispredicted_distance_i(brat_mispredicted_distance),
+      .rob_head_ptr_i(rob_head_ptr),
 
-        // Interface to CDB
-        .cdb_if_port(cdb_interface.rs0),  // Use rs0 modport
+      // Interface to issue stage
+      .decode_if(internal_rs_if_0),
 
-        // Interface to functional unit
-        .exec_if(dispatch_to_alu_0)
-    );
+      // Interface to CDB
+      .cdb_if_port(cdb_interface.rs0),  // Use rs0 modport
 
-    //==========================================================================
-    // RESERVATION STATION 1 (ALU1)
-    //==========================================================================
+      // Interface to functional unit
+      .exec_if(dispatch_to_alu_0)
+   );
 
-    reservation_station #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
-        .ALU_TAG(3'b001)  // ALU1 tag
-    ) rs_1 (
-        .clk(clk),
-        .reset(reset),
-        
-        // Eager misprediction flush interface (from BRAT in-order resolution)
-        .eager_misprediction_i(brat_eager_misprediction),
-        .mispredicted_distance_i(brat_mispredicted_distance),
-        .rob_head_ptr_i(rob_head_ptr),
+   //==========================================================================
+   // RESERVATION STATION 1 (ALU1)
+   //==========================================================================
 
-        // Interface to issue stage
-        .decode_if(internal_rs_if_1),
+   reservation_station #(
+      .DATA_WIDTH(DATA_WIDTH),
+      .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
+      .ALU_TAG(3'b001)  // ALU1 tag
+   ) rs_1 (
+      .clk(clk),
+      .reset(reset),
 
-        // Interface to CDB
-        .cdb_if_port(cdb_interface.rs1),  // Use rs1 modport
+      // Eager misprediction flush interface (from BRAT in-order resolution)
+      .eager_misprediction_i(brat_eager_misprediction),
+      .mispredicted_distance_i(brat_mispredicted_distance),
+      .rob_head_ptr_i(rob_head_ptr),
 
-        // Interface to functional unit
-        .exec_if(dispatch_to_alu_1)
-    );
+      // Interface to issue stage
+      .decode_if(internal_rs_if_1),
 
-    //==========================================================================
-    // RESERVATION STATION 2 (ALU2)
-    //==========================================================================
+      // Interface to CDB
+      .cdb_if_port(cdb_interface.rs1),  // Use rs1 modport
 
-    reservation_station #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
-        .ALU_TAG(3'b010)  // ALU2 tag
-    ) rs_2 (
-        .clk(clk),
-        .reset(reset),
-        
-        // Eager misprediction flush interface (from BRAT in-order resolution)
-        .eager_misprediction_i(brat_eager_misprediction),
-        .mispredicted_distance_i(brat_mispredicted_distance),
-        .rob_head_ptr_i(rob_head_ptr),
+      // Interface to functional unit
+      .exec_if(dispatch_to_alu_1)
+   );
 
-        // Interface to issue stage
-        .decode_if(internal_rs_if_2),
+   //==========================================================================
+   // RESERVATION STATION 2 (ALU2)
+   //==========================================================================
 
-        // Interface to CDB
-        .cdb_if_port(cdb_interface.rs2),  // Use rs2 modport
+   reservation_station #(
+      .DATA_WIDTH(DATA_WIDTH),
+      .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH),
+      .ALU_TAG(3'b010)  // ALU2 tag
+   ) rs_2 (
+      .clk(clk),
+      .reset(reset),
 
-        // Interface to functional unit
-        .exec_if(dispatch_to_alu_2)
-    );
+      // Eager misprediction flush interface (from BRAT in-order resolution)
+      .eager_misprediction_i(brat_eager_misprediction),
+      .mispredicted_distance_i(brat_mispredicted_distance),
+      .rob_head_ptr_i(rob_head_ptr),
 
-    // LSQ instance (simple, all ports explicit, connections skipped)
-    lsq_simple_top lsq (
+      // Interface to issue stage
+      .decode_if(internal_rs_if_2),
+
+      // Interface to CDB
+      .cdb_if_port(cdb_interface.rs2),  // Use rs2 modport
+
+      // Interface to functional unit
+      .exec_if(dispatch_to_alu_2)
+   );
+
+   // LSQ instance (simple, all ports explicit, connections skipped)
+   lsq_simple_top lsq (
       // Clock and reset
       .clk(clk),
       .rst_n(reset ),
-      
+
       // Eager misprediction inputs (from BRAT in-order resolution)
       .eager_misprediction_i(brat_eager_misprediction),
       .mispredicted_distance_i(brat_mispredicted_distance),
       .rob_head_ptr_i(rob_head_ptr),
-      
-      .store_can_issue_0(store_can_issue_0), 
+      .lsq_commit_0(lsq_commit_valid_0),
+      .lsq_commit_1(lsq_commit_valid_1),
+      .lsq_commit_2(lsq_commit_valid_2),
+
+      .store_can_issue_0(store_can_issue_0),
       .allowed_store_address_0(allowed_store_address_0),
-      .store_can_issue_1(store_can_issue_1), 
+      .store_can_issue_1(store_can_issue_1),
       .allowed_store_address_1(allowed_store_address_1),
-      .store_can_issue_2(store_can_issue_2), 
+      .store_can_issue_2(store_can_issue_2),
       .allowed_store_address_2(allowed_store_address_2),
       // Allocation interface (from Issue Stage)
       // Allocation 0
@@ -566,7 +569,7 @@ module dispatch_stage #(
       .alloc_ready_o(),
 
       // CDB interface
-      .cdb_interface(cdb_interface.lsq),  
+      .cdb_interface(cdb_interface.lsq),
 
       // Memory interface
       .mem_0_req_addr_o(data_0_addr),    // data_addr
@@ -577,7 +580,7 @@ module dispatch_stage #(
       .mem_0_req_valid_o(data_0_req), // data_req
       .mem_0_resp_valid_i(data_0_ack), //data_ack
       .mem_0_req_ready_i(1'b1), //mem_ready
-     
+
       .mem_1_req_addr_o(data_1_addr),    // data_addr
       .mem_1_req_data_o(data_1_write),    // data_write
       .mem_1_resp_data_i(data_1_read),   // data_read
@@ -601,29 +604,29 @@ module dispatch_stage #(
       .tracer_1_store_data(tracer_store_data_1),
       .tracer_2_store_data(tracer_store_data_2),
       `endif
-      
+
       // Status outputs
       .lsq_count_o(),
       .lsq_full_o(),
       .lsq_empty_o(),
-      
+
       // Eager misprediction flush outputs (connect to dispatch outputs for issue stage)
       .first_invalid_lsq_idx_o(first_invalid_lsq_idx_o),
       .lsq_flush_valid_o(lsq_flush_valid_o)
-    );
-    
-    logic [1:0] active_rs_number;
-    assign active_rs_number = cdb_interface.cdb_valid_0 +
-                              cdb_interface.cdb_valid_1 +
-                              cdb_interface.cdb_valid_2;
+   );
 
-    
+   logic [1:0] active_rs_number;
+   assign active_rs_number = cdb_interface.cdb_valid_0 +
+      cdb_interface.cdb_valid_1 +
+      cdb_interface.cdb_valid_2;
 
 
-    //==========================================================================
-    // STATUS AND DEBUG OUTPUTS
-    //==========================================================================
-    /*
+
+
+   //==========================================================================
+   // STATUS AND DEBUG OUTPUTS
+   //==========================================================================
+   /*
     // Track reservation station occupancy
     assign rs_occupancy[0] = issue_to_dispatch_0.dispatch_valid && issue_to_dispatch_0.dispatch_ready;
     assign rs_occupancy[1] = issue_to_dispatch_1.dispatch_valid && issue_to_dispatch_1.dispatch_ready;
