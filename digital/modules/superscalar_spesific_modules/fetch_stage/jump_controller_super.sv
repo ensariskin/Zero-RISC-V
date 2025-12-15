@@ -191,9 +191,15 @@ module jump_controller_super #(
 	assign call_return_addr_3 = current_pc_3 + 32'd4;
 	assign call_return_addr_4 = current_pc_4 + 32'd4;
 
+	logic ignore_inst_1, ignore_inst_2, ignore_inst_3, ignore_inst_4;
+	assign ignore_inst_1 = (j_type_0 | jalr_0);
+	assign ignore_inst_2 = (j_type_1 | jalr_1) | ignore_inst_1;
+	assign ignore_inst_3 = (j_type_2 | jalr_2) | ignore_inst_2;
+	assign ignore_inst_4 = (j_type_3 | jalr_3) | ignore_inst_3;
+
 	// Instantiate branch predictor
 	//branch_predictor_super #(.ADDR_WIDTH(32),.ENTRIES(8192)) branch_predictor_inst (
-	tournament_predictor #(.ADDR_WIDTH(size),.ENTRIES(ENTRIES)) tournament_predictor (
+	gshare_predictor_super #(.ADDR_WIDTH(size),.ENTRIES(ENTRIES)) branch_predictor (
 		.clk(clk),
 		.reset(reset),
 		.base_valid(base_valid_i),
@@ -203,19 +209,19 @@ module jump_controller_super #(
 
 		.current_pc_1(current_pc_1),
 		.is_branch_i_1(b_type_1),
-		.ignore_inst_1(b_type_1 & (j_type_0 | jalr_0)),
+		.ignore_inst_1(ignore_inst_1),
 
 		.current_pc_2(current_pc_2),
 		.is_branch_i_2(b_type_2),
-		.ignore_inst_2(b_type_2 & (j_type_1 | jalr_1)),
+		.ignore_inst_2(ignore_inst_2),
 
 		.current_pc_3(current_pc_3),
 		.is_branch_i_3(b_type_3),
-		.ignore_inst_3(b_type_3 & (j_type_2 | jalr_2)),
+		.ignore_inst_3(ignore_inst_3),
 
 		.current_pc_4(current_pc_4),
 		.is_branch_i_4(b_type_4),
-		.ignore_inst_4(b_type_4 & (j_type_3 | jalr_3)),
+		.ignore_inst_4(ignore_inst_4),
 
 		.branch_taken_o_0(branch_taken_0),
 		.branch_taken_o_1(branch_taken_1),

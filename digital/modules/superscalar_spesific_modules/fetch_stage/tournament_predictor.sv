@@ -123,7 +123,7 @@ module tournament_predictor #(
       if (!reset) begin
          // Initialize all entries
          for (int i = 0; i < ENTRIES; i++) begin
-            predictor_table[i].counter <= #D STRONG_BIMODAL;  // Start with weak taken
+            predictor_table[i].counter <= #D WEAK_GSHARE;  // Start with weak taken
          end
       end else begin
 
@@ -142,7 +142,7 @@ module tournament_predictor #(
                end
                WEAK_GSHARE: begin
                   if (misprediction_0)
-                     predictor_table[update_index_0].counter <= #D WEAK_BIMODAL;
+                     predictor_table[update_index_0].counter <= #D WEAK_GSHARE; //WEAK_BIMODAL;
                   else
                      predictor_table[update_index_0].counter <= #D STRONG_GSHARE;
                end
@@ -248,12 +248,12 @@ module tournament_predictor #(
       .update_global_history_0,
 
       .update_prediction_pc_1(update_prediction_pc_1),
-      .update_prediction_valid_i_1(update_prediction_valid_i_1 & predictor_table[update_index_0].counter[1]),
+      .update_prediction_valid_i_1(update_prediction_valid_i_1 & predictor_table[update_index_1].counter[1]),
       .misprediction_1(misprediction_1),
       .update_global_history_1,
 
       .update_prediction_pc_2(update_prediction_pc_2),
-      .update_prediction_valid_i_2(update_prediction_valid_i_2 & predictor_table[update_index_0].counter[1]),
+      .update_prediction_valid_i_2(update_prediction_valid_i_2 & predictor_table[update_index_2].counter[1]),
       .misprediction_2(misprediction_2),
       .update_global_history_2
    );
@@ -288,11 +288,11 @@ module tournament_predictor #(
       .misprediction_0(misprediction_0),
 
       .update_prediction_pc_1(update_prediction_pc_1),
-      .update_prediction_valid_i_1(update_prediction_valid_i_1 & ~predictor_table[update_index_0].counter[1]),
+      .update_prediction_valid_i_1(update_prediction_valid_i_1 & ~predictor_table[update_index_1].counter[1]),
       .misprediction_1(misprediction_1),
 
       .update_prediction_pc_2(update_prediction_pc_2),
-      .update_prediction_valid_i_2(update_prediction_valid_i_2 & ~predictor_table[update_index_0].counter[1]),
+      .update_prediction_valid_i_2(update_prediction_valid_i_2 & ~predictor_table[update_index_2].counter[1]),
       .misprediction_2(misprediction_2)
    );
 

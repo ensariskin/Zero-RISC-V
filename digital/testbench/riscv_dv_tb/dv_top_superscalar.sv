@@ -654,7 +654,7 @@ module dv_top_superscalar;
     );
 
     // Region 0 data memory (64KB = 16K words)
-    memory_3rw_unaligned #(
+    memory_3rw #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
@@ -702,7 +702,7 @@ module dv_top_superscalar;
     );
 
     // Region 1 data memory (64KB = 16K words)
-    memory_3rw_unaligned #(
+    memory_3rw #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)

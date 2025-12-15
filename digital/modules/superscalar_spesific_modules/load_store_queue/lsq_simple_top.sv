@@ -193,6 +193,21 @@ module lsq_simple_top
    logic [LSQ_ADDR_WIDTH:0] head_ptr_1;
    logic [LSQ_ADDR_WIDTH:0] head_ptr_2;
 
+   // Next-state head pointers (needed to avoid flush/dealloc races)
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_n;
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_1_n;
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_2_n;
+
+   // Effective (flush-applied) head pointers + age reference for comparisons
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_eff_0;
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_eff_1;
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_eff_2;
+   logic [LSQ_ADDR_WIDTH:0] tail_ptr_age_ref;
+   logic [LSQ_ADDR_WIDTH+1:0] age_dist_0;
+   logic [LSQ_ADDR_WIDTH+1:0] age_dist_1;
+   logic [LSQ_ADDR_WIDTH+1:0] age_dist_2;
+   logic [LSQ_ADDR_WIDTH:0] newest_ptr_eff;
+
    logic [LSQ_ADDR_WIDTH:0] last_commit_ptr_0, last_commit_ptr_1, last_commit_ptr_2;
    logic [1:0] commit_cnt;
 
@@ -683,6 +698,68 @@ module lsq_simple_top
    assign effective_dealloc_1 = (deallocate_head_1 | fwd_head_1) && !(lsq_flush_valid_o && modify_head_1);
    assign effective_dealloc_2 = (deallocate_head_2 | fwd_head_2) && !(lsq_flush_valid_o && modify_head_2);
 
+   //----------------------------------------------------------------------
+   // Head pointer next-state calculation
+   //
+   // Problem being fixed:
+   //  - On a misprediction, some heads get "modified" (jumped) to new_tail.
+   //  - In the SAME cycle, another head that is NOT modified may deallocate.
+   //  - The old code computed the dealloc update using the *pre-flush* head
+   //    values (because of NBAs), so it could skip an entry (e.g. 10 -> 11).
+   //
+   // Fix:
+   //  - Build "effective" head pointers where flush modifications are
+   //    already applied.
+   //  - Use an age reference that also respects flush (tail becomes new_tail).
+   //  - Derive the newest head (closest to tail) from the effective pointers,
+   //    then refill deallocated slots as newest+1 (+offsets for multi-dealloc).
+   //----------------------------------------------------------------------
+   always_comb begin
+      // Apply flush modifications first (combinationally)
+      head_ptr_eff_0 = head_ptr;
+      head_ptr_eff_1 = head_ptr_1;
+      head_ptr_eff_2 = head_ptr_2;
+
+      if (lsq_flush_valid_o) begin
+         if (modify_head_0) head_ptr_eff_0 = head_0_modified_val;
+         if (modify_head_1) head_ptr_eff_1 = head_1_modified_val;
+         if (modify_head_2) head_ptr_eff_2 = head_2_modified_val;
+      end
+
+      // Age reference: when flushing, tail effectively becomes new_tail
+      tail_ptr_age_ref = lsq_flush_valid_o ? new_tail : tail_ptr;
+
+      // Distance-to-tail metric (smaller => newer)
+      age_dist_0 = (tail_ptr_age_ref + 3) - head_ptr_eff_0;
+      age_dist_1 = (tail_ptr_age_ref + 3) - head_ptr_eff_1;
+      age_dist_2 = (tail_ptr_age_ref + 3) - head_ptr_eff_2;
+
+      // Newest head is the one with the smallest distance
+      if ((age_dist_0 <= age_dist_1) && (age_dist_0 <= age_dist_2)) begin
+         newest_ptr_eff = head_ptr_eff_0;
+      end else if (age_dist_1 <= age_dist_2) begin
+         newest_ptr_eff = head_ptr_eff_1;
+      end else begin
+         newest_ptr_eff = head_ptr_eff_2;
+      end
+
+      // Default next-state: keep (flush-updated) heads
+      head_ptr_n   = head_ptr_eff_0;
+      head_ptr_1_n = head_ptr_eff_1;
+      head_ptr_2_n = head_ptr_eff_2;
+
+      // Refill deallocated slots after the newest pointer (preserves window)
+      if (effective_dealloc_0) begin
+         head_ptr_n = newest_ptr_eff + 1;
+      end
+      if (effective_dealloc_1) begin
+         head_ptr_1_n = newest_ptr_eff + 1 + effective_dealloc_0;
+      end
+      if (effective_dealloc_2) begin
+         head_ptr_2_n = newest_ptr_eff + 1 + effective_dealloc_0 + effective_dealloc_1;
+      end
+   end
+
    always_comb begin
       actual_alloc_0 = 1'b0;
       actual_alloc_1 = 1'b0;
@@ -823,6 +900,12 @@ module lsq_simple_top
 
          tail_ptr <= #D new_tail;
 
+         // Update head pointers from the unified next-state calculation.
+         // This avoids flush/dealloc races (see "Head pointer next-state" block).
+         head_ptr   <= #D head_ptr_n;
+         head_ptr_1 <= #D head_ptr_1_n;
+         head_ptr_2 <= #D head_ptr_2_n;
+
          //==================================================================
          // EAGER MISPREDICTION FLUSH - Invalidate speculative entries
          //==================================================================
@@ -911,100 +994,6 @@ module lsq_simple_top
                end
             end
          end
-
-         if(lsq_flush_valid_o & modify_head_0) begin
-            head_ptr <= #D head_0_modified_val;
-         end else if (effective_dealloc_0) begin
-
-            if(distance_0 < distance_1) begin
-               if(distance_0 < distance_2) begin
-                  head_ptr <= #D head_ptr + 1;
-               end
-               else begin
-                  head_ptr <= #D head_ptr_2 + 1;
-               end
-            end
-            else begin
-               if(distance_1 < distance_2) begin
-                  head_ptr <= #D head_ptr_1 + 1;
-               end
-               else begin
-                  head_ptr <= #D head_ptr_2 + 1;
-               end
-            end
-
-            //lsq_buffer[head_idx].valid <= #D 1'b0;
-            lsq_buffer[head_idx].addr_tag <= #D 3'd0;
-            lsq_buffer[head_idx].addr_valid <= #D 1'b0;
-            lsq_buffer[head_idx].address <= #D 32'd0;
-            lsq_buffer[head_idx].data <= #D 32'd0;
-            lsq_buffer[head_idx].data_tag <= #D 3'd0;
-            lsq_buffer[head_idx].data_valid <= #D 1'b0;
-            lsq_buffer[head_idx].is_store <= #D 1'b0;
-            lsq_buffer[head_idx].mem_complete <= #D 1'b0;
-            lsq_buffer[head_idx].mem_issued <= #D 1'b0;
-            //lsq_buffer[head_idx].phys_reg <= #D '0;
-            lsq_buffer[head_idx].sign_extend <= #D 1'b0;
-            lsq_buffer[head_idx].size <= #D mem_size_t'(0);
-
-         end
-
-         if(lsq_flush_valid_o & modify_head_1) begin
-            head_ptr_1 <= #D head_1_modified_val;
-         end else if(effective_dealloc_1) begin
-            if(distance_0 < distance_1) begin
-               if(distance_0 < distance_2) begin
-                  head_ptr_1 <= #D head_ptr + 1 + (effective_dealloc_0);
-               end
-               else begin
-                  head_ptr_1 <= #D head_ptr_2 + 1 + (effective_dealloc_0);
-               end
-            end
-            else begin
-               if(distance_1 < distance_2) begin
-                  head_ptr_1 <= #D head_ptr_1 + 1 + (effective_dealloc_0);
-               end
-               else begin
-                  head_ptr_1 <= #D head_ptr_2 + 1 + (effective_dealloc_0);
-               end
-            end
-            //lsq_buffer[head_idx_1].valid <= #D 1'b0;
-            lsq_buffer[head_idx_1].addr_tag <= #D 3'd0;
-            lsq_buffer[head_idx_1].addr_valid <= #D 1'b0;
-            lsq_buffer[head_idx_1].address <= #D 32'd0;
-            lsq_buffer[head_idx_1].data <= #D 32'd0;
-            lsq_buffer[head_idx_1].data_tag <= #D 3'd0;
-            lsq_buffer[head_idx_1].data_valid <= #D 1'b0;
-            lsq_buffer[head_idx_1].is_store <= #D 1'b0;
-            lsq_buffer[head_idx_1].mem_complete <= #D 1'b0;
-            lsq_buffer[head_idx_1].mem_issued <= #D 1'b0;
-            //lsq_buffer[head_idx_1].phys_reg <= #D '0;
-            lsq_buffer[head_idx_1].sign_extend <= #D 1'b0;
-            lsq_buffer[head_idx_1].size <= #D mem_size_t'(0);
-         end
-
-         if(lsq_flush_valid_o & modify_head_2) begin
-            head_ptr_2 <= #D head_2_modified_val;
-         end else if(effective_dealloc_2) begin
-            if(distance_0 < distance_1) begin
-               if(distance_0 < distance_2) begin
-                  head_ptr_2 <= #D head_ptr + 1 + (effective_dealloc_0) + (effective_dealloc_1);
-               end
-               else begin
-                  head_ptr_2 <= #D head_ptr_2 + 1 + (effective_dealloc_0) + (effective_dealloc_1);
-               end
-            end
-            else begin
-               if(distance_1 < distance_2) begin
-                  head_ptr_2 <= #D head_ptr_1 + 1 + (effective_dealloc_0) + (effective_dealloc_1);
-               end
-               else begin
-                  head_ptr_2 <= #D head_ptr_2 + 1 + (effective_dealloc_0) + (effective_dealloc_1);
-               end
-            end
-
-         end
-
          if(commit_cnt >=1) begin
             lsq_buffer[last_commit_ptr_0[LSQ_ADDR_WIDTH-1:0]].valid <= #D 1'b0;
             lsq_buffer[last_commit_ptr_0[LSQ_ADDR_WIDTH-1:0]].addr_tag <= #D 3'd0;
