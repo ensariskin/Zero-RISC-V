@@ -47,16 +47,22 @@ module gshare_predictor_super #(
         // Update interface (from resolve/execute)
         input  logic [ADDR_WIDTH-1:0] update_prediction_pc_0,
         input  logic update_prediction_valid_i_0,
+
+        input  logic update_train_en_i_0,
         input  logic misprediction_0,
         input  logic [INDEX_WIDTH:0] update_global_history_0,
 
         input  logic [ADDR_WIDTH-1:0] update_prediction_pc_1,
         input  logic update_prediction_valid_i_1,
+
+        input  logic update_train_en_i_1,
         input  logic misprediction_1,
         input  logic [INDEX_WIDTH:0] update_global_history_1,
 
         input  logic [ADDR_WIDTH-1:0] update_prediction_pc_2,
         input  logic update_prediction_valid_i_2,
+
+        input  logic update_train_en_i_2,
         input  logic misprediction_2,
         input  logic [INDEX_WIDTH:0] update_global_history_2
     );
@@ -239,7 +245,7 @@ module gshare_predictor_super #(
             // ------------------------------------------------------------
 
             // group for index_0
-            if (update_prediction_valid_i_0) begin
+            if (update_train_en_i_0) begin
                 logic [1:0] c;
                 c = predictor_table[update_index_0].counter;
 
@@ -251,7 +257,7 @@ module gshare_predictor_super #(
                 end
 
                 // fold update 1 if same index
-                if (update_prediction_valid_i_1 && (update_index_1 == update_index_0)) begin
+                if (update_train_en_i_1 && (update_index_1 == update_index_0)) begin
                     if (act1) begin
                         if (c != STRONG_TAKEN)     c = c + 2'b01;
                     end else begin
@@ -260,7 +266,7 @@ module gshare_predictor_super #(
                 end
 
                 // fold update 2 if same index
-                if (update_prediction_valid_i_2 && (update_index_2 == update_index_0)) begin
+                if (update_train_en_i_2 && (update_index_2 == update_index_0)) begin
                     if (act2) begin
                         if (c != STRONG_TAKEN)     c = c + 2'b01;
                     end else begin
@@ -272,8 +278,8 @@ module gshare_predictor_super #(
             end
 
             // group for index_1 (only if not folded into index_0)
-            if (update_prediction_valid_i_1 &&
-                    !(update_prediction_valid_i_0 && (update_index_1 == update_index_0))) begin
+            if (update_train_en_i_1 &&
+                    !(update_train_en_i_0 && (update_index_1 == update_index_0))) begin
                 logic [1:0] c;
                 c = predictor_table[update_index_1].counter;
 
@@ -285,7 +291,7 @@ module gshare_predictor_super #(
                 end
 
                 // fold update 2 if same index as 1
-                if (update_prediction_valid_i_2 && (update_index_2 == update_index_1)) begin
+                if (update_train_en_i_2 && (update_index_2 == update_index_1)) begin
                     if (act2) begin
                         if (c != STRONG_TAKEN)     c = c + 2'b01;
                     end else begin
@@ -297,9 +303,9 @@ module gshare_predictor_super #(
             end
 
             // group for index_2 (only if not folded into 0 or 1)
-            if (update_prediction_valid_i_2 &&
-                    !(update_prediction_valid_i_0 && (update_index_2 == update_index_0)) &&
-                    !(update_prediction_valid_i_1 && (update_index_2 == update_index_1))) begin
+            if (update_train_en_i_2 &&
+                    !(update_train_en_i_0 && (update_index_2 == update_index_0)) &&
+                    !(update_train_en_i_1 && (update_index_2 == update_index_1))) begin
                 logic [1:0] c;
                 c = predictor_table[update_index_2].counter;
 
@@ -490,7 +496,7 @@ module gshare_predictor_super #(
                 upd_same_idx_01++;
             if (update_prediction_valid_i_0 && update_prediction_valid_i_2 && (update_index_0 == update_index_2))
                 upd_same_idx_02++;
-            if (update_prediction_valid_i_1 && update_prediction_valid_i_2 && (update_index_1 == update_index_2))
+            if (update_train_en_i_1 && update_prediction_valid_i_2 && (update_index_1 == update_index_2))
                 upd_same_idx_12++;
             if (update_prediction_valid_i_0 && update_prediction_valid_i_1 && update_prediction_valid_i_2 &&
                     (update_index_0 == update_index_1) && (update_index_0 == update_index_2))

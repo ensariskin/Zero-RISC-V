@@ -22,106 +22,106 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module register_alias_table #(
-    parameter ARCH_REGS = 32,
-    parameter PHYS_REGS = 64,
-    parameter ARCH_ADDR_WIDTH = $clog2(ARCH_REGS),
-    parameter PHYS_ADDR_WIDTH = $clog2(PHYS_REGS),
-    parameter BRAT_STACK_DEPTH = 16,
-    parameter DATA_WIDTH = 32,
-    parameter ENTRIES = 32,                        // Number of predictor entries
-    parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
-)(
-    input logic clk,
-    input logic reset,
-    input logic flush,
+        parameter ARCH_REGS = 32,
+        parameter PHYS_REGS = 64,
+        parameter ARCH_ADDR_WIDTH = $clog2(ARCH_REGS),
+        parameter PHYS_ADDR_WIDTH = $clog2(PHYS_REGS),
+        parameter BRAT_STACK_DEPTH = 16,
+        parameter DATA_WIDTH = 32,
+        parameter ENTRIES = 32,                        // Number of predictor entries
+        parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
+    )(
+        input logic clk,
+        input logic reset,
+        input logic flush,
 
-    // 3-way decode interface (architectural register addresses from decoders)
-    input logic [ARCH_ADDR_WIDTH-1:0] rs1_arch_0, rs1_arch_1, rs1_arch_2,
-    input logic [ARCH_ADDR_WIDTH-1:0] rs2_arch_0, rs2_arch_1, rs2_arch_2,
-    input logic [ARCH_ADDR_WIDTH-1:0] rd_arch_0, rd_arch_1, rd_arch_2,
-    input logic [2:0] decode_valid,
-    input logic rd_write_enable_0, rd_write_enable_1, rd_write_enable_2,
-    input logic branch_0, branch_1, branch_2,
-    input logic [INDEX_WIDTH:0] global_history_0_i, // Current global history and prediction
-    input logic [INDEX_WIDTH:0] global_history_1_i, // Current global history and prediction
-    input logic [INDEX_WIDTH:0] global_history_2_i, // Current global history and predicti
-    
-    // Rename outputs (physical register addresses)
-    output logic [PHYS_ADDR_WIDTH-1:0] rs1_phys_0, rs1_phys_1, rs1_phys_2,
-    output logic [PHYS_ADDR_WIDTH-1:0] rs2_phys_0, rs2_phys_1, rs2_phys_2,
-    output logic [PHYS_ADDR_WIDTH-1:0] rd_phys_0, rd_phys_1, rd_phys_2,
-    output logic [2:0] alloc_tag_0, alloc_tag_1, alloc_tag_2, 
-    output logic [PHYS_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2,
-    output logic [2:0] rename_valid,
-    output logic [2:0] rename_ready, // Indicates RAT can allocate physical registers
+        // 3-way decode interface (architectural register addresses from decoders)
+        input logic [ARCH_ADDR_WIDTH-1:0] rs1_arch_0, rs1_arch_1, rs1_arch_2,
+        input logic [ARCH_ADDR_WIDTH-1:0] rs2_arch_0, rs2_arch_1, rs2_arch_2,
+        input logic [ARCH_ADDR_WIDTH-1:0] rd_arch_0, rd_arch_1, rd_arch_2,
+        input logic [2:0] decode_valid,
+        input logic rd_write_enable_0, rd_write_enable_1, rd_write_enable_2,
+        input logic branch_0, branch_1, branch_2,
+        input logic [INDEX_WIDTH+2:0] global_history_0_i, // Current global history and prediction
+        input logic [INDEX_WIDTH+2:0] global_history_1_i, // Current global history and prediction
+        input logic [INDEX_WIDTH+2:0] global_history_2_i, // Current global history and predicti
 
-    // Commit interface (from ROB - frees old physical registers)
-    input logic [4:0] commit_addr_0,
-    input logic [4:0] commit_addr_1,
-    input logic [4:0] commit_addr_2,
-    input logic [4:0] commit_rob_idx_0,
-    input logic [4:0] commit_rob_idx_1,
-    input logic [4:0] commit_rob_idx_2,
-    input logic [2:0] commit_valid,
+        // Rename outputs (physical register addresses)
+        output logic [PHYS_ADDR_WIDTH-1:0] rs1_phys_0, rs1_phys_1, rs1_phys_2,
+        output logic [PHYS_ADDR_WIDTH-1:0] rs2_phys_0, rs2_phys_1, rs2_phys_2,
+        output logic [PHYS_ADDR_WIDTH-1:0] rd_phys_0, rd_phys_1, rd_phys_2,
+        output logic [2:0] alloc_tag_0, alloc_tag_1, alloc_tag_2,
+        output logic [PHYS_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2,
+        output logic [2:0] rename_valid,
+        output logic [2:0] rename_ready, // Indicates RAT can allocate physical registers
 
-    input logic load_store_0, load_store_1, load_store_2, // Indicates if instruction is load/store (for LSQ allocation)
-    output logic [2:0] lsq_alloc_ready,
-    output logic lsq_alloc_0_valid, lsq_alloc_1_valid, lsq_alloc_2_valid,
-    input logic lsq_commit_0,
-    input logic lsq_commit_1,
-    input logic lsq_commit_2,
-    
-    // Eager misprediction flush interface (for LSQ circular buffer)
-    input logic lsq_flush_valid_i,                      // LSQ flush is needed
-    input logic [4:0] first_invalid_lsq_idx_i,          // First invalid LSQ index (new tail)
+        // Commit interface (from ROB - frees old physical registers)
+        input logic [4:0] commit_addr_0,
+        input logic [4:0] commit_addr_1,
+        input logic [4:0] commit_addr_2,
+        input logic [4:0] commit_rob_idx_0,
+        input logic [4:0] commit_rob_idx_1,
+        input logic [4:0] commit_rob_idx_2,
+        input logic [2:0] commit_valid,
 
-    //==========================================================================
-    // Execute stage inputs (raw branch results - go into BRAT)
-    //==========================================================================
-    input logic [2:0] exec_branch_valid_i,              // Branch executed on FU 0/1/2
-    input logic [2:0] exec_mispredicted_i,              // Misprediction flag from FU 0/1/2
-    input logic [PHYS_ADDR_WIDTH-1:0] exec_rob_id_0_i,  // ROB ID (phys_reg) of branch on FU0
-    input logic [PHYS_ADDR_WIDTH-1:0] exec_rob_id_1_i,  // ROB ID (phys_reg) of branch on FU1
-    input logic [PHYS_ADDR_WIDTH-1:0] exec_rob_id_2_i,  // ROB ID (phys_reg) of branch on FU2
-    input logic [DATA_WIDTH-1:0] exec_correct_pc_0_i,   // Correct PC from FU0
-    input logic [DATA_WIDTH-1:0] exec_correct_pc_1_i,   // Correct PC from FU1
-    input logic [DATA_WIDTH-1:0] exec_correct_pc_2_i,   // Correct PC from FU2
-    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_0_i,
-    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_1_i,
-    input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_2_i,
-    
-    //==========================================================================
-    // Branch resolution outputs (in-order, from BRAT - go to other modules)
-    //==========================================================================
-    output logic [2:0] branch_resolved_o,               // In-order resolved branches
-    output logic [2:0] branch_mispredicted_o,           // In-order misprediction flags
-    output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_0_o,  // ROB ID of oldest resolved
-    output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_1_o,  // ROB ID of 2nd oldest resolved
-    output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_2_o,  // ROB ID of 3rd oldest resolved
-    output logic [DATA_WIDTH-1:0] correct_pc_0_o,       // Correct PC for oldest
-    output logic [DATA_WIDTH-1:0] correct_pc_1_o,       // Correct PC for 2nd oldest
-    output logic [DATA_WIDTH-1:0] correct_pc_2_o,       // Correct PC for 3rd oldest
-    output logic is_jalr_0_o,                           // Is oldest resolved a JALR?
-    output logic is_jalr_1_o,                           // Is 2nd oldest a JALR?
-    output logic is_jalr_2_o,                           // Is 3rd oldest a JALR?
-    output logic [DATA_WIDTH-1:0] pc_at_prediction_0_o, // PC at prediction for oldest
-    output logic [DATA_WIDTH-1:0] pc_at_prediction_1_o, // PC at prediction for 2nd oldest
-    output logic [DATA_WIDTH-1:0] pc_at_prediction_2_o, // PC at prediction for 3rd oldest
-    output logic [INDEX_WIDTH:0] update_global_history_0_o,
-    output logic [INDEX_WIDTH:0] update_global_history_1_o,
-    output logic [INDEX_WIDTH:0] update_global_history_2_o,
-    
-    // Push inputs for is_jalr and pc_at_prediction (from issue_stage)
-    input logic push_is_jalr_0_i,
-    input logic push_is_jalr_1_i,
-    input logic push_is_jalr_2_i,
+        input logic load_store_0, load_store_1, load_store_2, // Indicates if instruction is load/store (for LSQ allocation)
+        output logic [2:0] lsq_alloc_ready,
+        output logic lsq_alloc_0_valid, lsq_alloc_1_valid, lsq_alloc_2_valid,
+        input logic lsq_commit_0,
+        input logic lsq_commit_1,
+        input logic lsq_commit_2,
 
-    input logic [2:0] push_ras_tos_i,
-    output logic ras_restore_valid_o,
-    output logic [2:0] ras_restore_tos_o
+        // Eager misprediction flush interface (for LSQ circular buffer)
+        input logic lsq_flush_valid_i,                      // LSQ flush is needed
+        input logic [4:0] first_invalid_lsq_idx_i,          // First invalid LSQ index (new tail)
 
-   
-);
+        //==========================================================================
+        // Execute stage inputs (raw branch results - go into BRAT)
+        //==========================================================================
+        input logic [2:0] exec_branch_valid_i,              // Branch executed on FU 0/1/2
+        input logic [2:0] exec_mispredicted_i,              // Misprediction flag from FU 0/1/2
+        input logic [PHYS_ADDR_WIDTH-1:0] exec_rob_id_0_i,  // ROB ID (phys_reg) of branch on FU0
+        input logic [PHYS_ADDR_WIDTH-1:0] exec_rob_id_1_i,  // ROB ID (phys_reg) of branch on FU1
+        input logic [PHYS_ADDR_WIDTH-1:0] exec_rob_id_2_i,  // ROB ID (phys_reg) of branch on FU2
+        input logic [DATA_WIDTH-1:0] exec_correct_pc_0_i,   // Correct PC from FU0
+        input logic [DATA_WIDTH-1:0] exec_correct_pc_1_i,   // Correct PC from FU1
+        input logic [DATA_WIDTH-1:0] exec_correct_pc_2_i,   // Correct PC from FU2
+        input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_0_i,
+        input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_1_i,
+        input logic [DATA_WIDTH-1:0] exec_pc_at_prediction_2_i,
+
+        //==========================================================================
+        // Branch resolution outputs (in-order, from BRAT - go to other modules)
+        //==========================================================================
+        output logic [2:0] branch_resolved_o,               // In-order resolved branches
+        output logic [2:0] branch_mispredicted_o,           // In-order misprediction flags
+        output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_0_o,  // ROB ID of oldest resolved
+        output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_1_o,  // ROB ID of 2nd oldest resolved
+        output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_2_o,  // ROB ID of 3rd oldest resolved
+        output logic [DATA_WIDTH-1:0] correct_pc_0_o,       // Correct PC for oldest
+        output logic [DATA_WIDTH-1:0] correct_pc_1_o,       // Correct PC for 2nd oldest
+        output logic [DATA_WIDTH-1:0] correct_pc_2_o,       // Correct PC for 3rd oldest
+        output logic is_jalr_0_o,                           // Is oldest resolved a JALR?
+        output logic is_jalr_1_o,                           // Is 2nd oldest a JALR?
+        output logic is_jalr_2_o,                           // Is 3rd oldest a JALR?
+        output logic [DATA_WIDTH-1:0] pc_at_prediction_0_o, // PC at prediction for oldest
+        output logic [DATA_WIDTH-1:0] pc_at_prediction_1_o, // PC at prediction for 2nd oldest
+        output logic [DATA_WIDTH-1:0] pc_at_prediction_2_o, // PC at prediction for 3rd oldest
+        output logic [INDEX_WIDTH+2:0] update_global_history_0_o,
+        output logic [INDEX_WIDTH+2:0] update_global_history_1_o,
+        output logic [INDEX_WIDTH+2:0] update_global_history_2_o,
+
+        // Push inputs for is_jalr and pc_at_prediction (from issue_stage)
+        input logic push_is_jalr_0_i,
+        input logic push_is_jalr_1_i,
+        input logic push_is_jalr_2_i,
+
+        input logic [2:0] push_ras_tos_i,
+        output logic ras_restore_valid_o,
+        output logic [2:0] ras_restore_tos_o
+
+
+    );
 
     localparam D = 1;
 
@@ -131,14 +131,14 @@ module register_alias_table #(
     //==========================================================================
     // BRAT v2 Signals
     //==========================================================================
-    
+
     // Push interface signals
     logic [2:0] brat_push_en;
     logic [PHYS_ADDR_WIDTH-1:0] brat_push_snapshot_0 [ARCH_REGS-1:0];
     logic [PHYS_ADDR_WIDTH-1:0] brat_push_snapshot_1 [ARCH_REGS-1:0];
     logic [PHYS_ADDR_WIDTH-1:0] brat_push_snapshot_2 [ARCH_REGS-1:0];
     logic [PHYS_ADDR_WIDTH-1:0] brat_push_phys_0, brat_push_phys_1, brat_push_phys_2;
-    
+
     // BRAT output signals (in-order resolution)
     logic brat_resolved_0, brat_resolved_1, brat_resolved_2;
     logic brat_mispredicted_0, brat_mispredicted_1, brat_mispredicted_2;
@@ -146,12 +146,12 @@ module register_alias_table #(
     logic [PHYS_ADDR_WIDTH-1:0] brat_resolved_phys_0, brat_resolved_phys_1, brat_resolved_phys_2;
     logic brat_is_jalr_0, brat_is_jalr_1, brat_is_jalr_2;
     logic [DATA_WIDTH-1:0] brat_pc_at_prediction_0, brat_pc_at_prediction_1, brat_pc_at_prediction_2;
-    logic [INDEX_WIDTH:0] brat_global_history_0, brat_global_history_1, brat_global_history_2;
+    logic [INDEX_WIDTH+2:0] brat_global_history_0, brat_global_history_1, brat_global_history_2;
 
-    
+
     // Restore interface
     logic [PHYS_ADDR_WIDTH-1:0] brat_restore_snapshot [ARCH_REGS-1:0];
-    
+
     // Status
     logic brat_empty, brat_full;
 
@@ -172,7 +172,7 @@ module register_alias_table #(
     // Allocation requirement signals
     logic need_alloc_0, need_alloc_1, need_alloc_2;
     logic need_lsq_alloc_0, need_lsq_alloc_1, need_lsq_alloc_2;
-    
+
     logic brat_restore_en;
 
     //==========================================================================
@@ -241,7 +241,7 @@ module register_alias_table #(
         .set_read_ptr_en(free_addr_set_en),
         .set_read_ptr_value(free_addr_set_value[ARCH_ADDR_WIDTH-1:0])
     );
-    
+
     circular_buffer_3port #(.BUFFER_DEPTH(32)) lsq_address_buffer(
         .clk(clk),
         .rst_n(reset),
@@ -265,22 +265,22 @@ module register_alias_table #(
         .set_read_ptr_en(lsq_flush_valid_i),
         .set_read_ptr_value(first_invalid_lsq_idx_i)
     );
-    
+
     // Count free registers
     assign rename_ready = (free_count >= 3) ? 3'b111 :
-                          (free_count == 2) ? 3'b011 :
-                          (free_count == 1) ? 3'b001 : 3'b000;
+        (free_count == 2) ? 3'b011 :
+        (free_count == 1) ? 3'b001 : 3'b000;
 
     assign lsq_alloc_ready = (lsq_free_count >= 3) ? 3'b111 :
-                             (lsq_free_count == 2) ? 3'b011 :
-                             (lsq_free_count == 1) ? 3'b001 : 3'b000;
+        (lsq_free_count == 2) ? 3'b011 :
+        (lsq_free_count == 1) ? 3'b001 : 3'b000;
 
     // Pre-compute allocation requirements (separate combinational logic)
     always_comb begin
         need_alloc_0 = decode_valid[0] && !brat_restore_en;
         need_alloc_1 = decode_valid[1] && !brat_restore_en;
         need_alloc_2 = decode_valid[2] && !brat_restore_en;
-        
+
         need_lsq_alloc_0 = decode_valid[0] && load_store_0 && !brat_restore_en;
         need_lsq_alloc_1 = decode_valid[1] && load_store_1 && !brat_restore_en;
         need_lsq_alloc_2 = decode_valid[2] && load_store_2 && !brat_restore_en;
@@ -294,26 +294,26 @@ module register_alias_table #(
     logic [PHYS_ADDR_WIDTH-1:0] rat_after_inst0 [ARCH_REGS-1:0];
     logic [PHYS_ADDR_WIDTH-1:0] rat_after_inst1 [ARCH_REGS-1:0];
     logic [PHYS_ADDR_WIDTH-1:0] rat_after_inst2 [ARCH_REGS-1:0];
-  
+
     // First: Apply commits to rat_table (same-cycle commit forwarding)
     // Commits happen when ROB retires - they restore arch reg to RF mapping
     always_comb begin
         rat_with_commits = rat_table;
-        
+
         // Apply commit 0: If committing reg still points to this ROB entry, restore to RF
         if (commit_valid[0] && commit_addr_0 != 0) begin
             if (commit_rob_idx_0 == rat_table[commit_addr_0][4:0]) begin
                 rat_with_commits[commit_addr_0] = {1'b0, commit_addr_0};
             end
         end
-        
+
         // Apply commit 1
         if (commit_valid[1] && commit_addr_1 != 0) begin
             if (commit_rob_idx_1 == rat_with_commits[commit_addr_1][4:0]) begin
                 rat_with_commits[commit_addr_1] = {1'b0, commit_addr_1};
             end
         end
-        
+
         // Apply commit 2
         if (commit_valid[2] && commit_addr_2 != 0) begin
             if (commit_rob_idx_2 == rat_with_commits[commit_addr_2][4:0]) begin
@@ -321,7 +321,7 @@ module register_alias_table #(
             end
         end
     end
-    
+
     // Then: Apply new allocations on top of committed RAT
     always_comb begin
         rat_after_inst0 = rat_with_commits;
@@ -343,13 +343,13 @@ module register_alias_table #(
     //==========================================================================
     // BRAT v2 CIRCULAR BUFFER INSTANCE
     //==========================================================================
-    
+
     // Restore enable from BRAT misprediction detection
- 
+
     assign brat_restore_en = (brat_resolved_0 && brat_mispredicted_0) ||
-                             (brat_resolved_1 && brat_mispredicted_1) ||
-                             (brat_resolved_2 && brat_mispredicted_2);
-    
+        (brat_resolved_1 && brat_mispredicted_1) ||
+        (brat_resolved_2 && brat_mispredicted_2);
+
     // Restore index (which snapshot to use)
     logic [1:0] brat_restore_idx;
     always_comb begin
@@ -360,7 +360,7 @@ module register_alias_table #(
         else
             brat_restore_idx = 2'b10;
     end
-    
+
     brat_circular_buffer #(
         .BUFFER_DEPTH(BRAT_STACK_DEPTH),
         .ARCH_REGS(ARCH_REGS),
@@ -371,7 +371,7 @@ module register_alias_table #(
     ) brat_buffer (
         .clk(clk),
         .rst_n(reset),
-        
+
         // Push interface (from decode/rename)
         .push_en_0(brat_push_en[0]),
         .push_en_1(brat_push_en[1]),
@@ -392,7 +392,7 @@ module register_alias_table #(
         .push_ras_tos_0(push_ras_tos_i),
         .push_ras_tos_1(push_ras_tos_i),
         .push_ras_tos_2(push_ras_tos_i),
-        
+
         // Commit interface - keep snapshots in sync with RF
         .commit_valid_0(commit_valid[0]),
         .commit_valid_1(commit_valid[1]),
@@ -403,7 +403,7 @@ module register_alias_table #(
         .commit_rob_idx_0(commit_rob_idx_0),
         .commit_rob_idx_1(commit_rob_idx_1),
         .commit_rob_idx_2(commit_rob_idx_2),
-        
+
         // Execute result write interface (from execute stage)
         .exec_valid_0(exec_branch_valid_i[0]),
         .exec_valid_1(exec_branch_valid_i[1]),
@@ -442,7 +442,7 @@ module register_alias_table #(
         .pc_at_prediction_o_0(brat_pc_at_prediction_0),
         .pc_at_prediction_o_1(brat_pc_at_prediction_1),
         .pc_at_prediction_o_2(brat_pc_at_prediction_2),
-        
+
         // Restore interface
         .restore_en(1'b0),  // Internal restore handled by BRAT
         .restore_idx(brat_restore_idx),
@@ -450,7 +450,7 @@ module register_alias_table #(
 
         .ras_restore_valid_o(ras_restore_valid_o),
         .ras_restore_tos_o(ras_restore_tos_o),
-        
+
         // Peek interface (not used, connect to open)
         .peek_branch_phys_0(),
         .peek_branch_phys_1(),
@@ -458,7 +458,7 @@ module register_alias_table #(
         .peek_valid_0(),
         .peek_valid_1(),
         .peek_valid_2(),
-        
+
         // Status
         .buffer_empty(brat_empty),
         .buffer_full(brat_full),
@@ -468,13 +468,13 @@ module register_alias_table #(
     //==========================================================================
     // BRAT PUSH CONTROL LOGIC
     //==========================================================================
-    
+
     always_comb begin
         // Push: Add new branch to BRAT
         brat_push_en[0] = decode_valid[0] && branch_0 && !brat_full && !brat_restore_en;
         brat_push_en[1] = decode_valid[1] && branch_1 && !brat_full && !brat_restore_en;
         brat_push_en[2] = decode_valid[2] && branch_2 && !brat_full && !brat_restore_en;
-        
+
         // Push snapshots - Store RAT state AFTER the branch instruction
         // This includes same-cycle commits + the branch's own allocation
         // On misprediction restore, instructions after this branch are flushed
@@ -486,7 +486,7 @@ module register_alias_table #(
         brat_push_snapshot_0 = rat_after_inst0;  // Branch 0: state after branch 0
         brat_push_snapshot_1 = rat_after_inst1;  // Branch 1: state after branch 1
         brat_push_snapshot_2 = rat_after_inst2;  // Branch 2: state after branch 2
-        
+
         brat_push_phys_0 = allocated_phys_reg[0];
         brat_push_phys_1 = allocated_phys_reg[1];
         brat_push_phys_2 = allocated_phys_reg[2];
@@ -515,7 +515,7 @@ module register_alias_table #(
             allocated_phys_reg[2] = third_free;
             allocation_success[2] = 1'b1;
         end
-    end 
+    end
 
     always_comb begin
         // LSQ Allocation logic
@@ -616,7 +616,7 @@ module register_alias_table #(
                 end
             end else begin
                 // Normal operation: Update RAT for commits and new allocations
-                
+
                 // Commit: Restore architectural register to RF mapping when ROB commits
                 if(commit_valid[0] && commit_addr_0 != 0) begin
                     if(commit_rob_idx_0 == rat_table[commit_addr_0][4:0]) begin

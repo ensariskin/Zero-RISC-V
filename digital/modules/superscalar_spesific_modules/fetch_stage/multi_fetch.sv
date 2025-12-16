@@ -1,10 +1,10 @@
 `timescale 1ns/1ns
 
 module multi_fetch #(
-   parameter size = 32,
-   parameter ENTRIES = 32,                        // Number of predictor entries
-   parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
-)(
+      parameter size = 32,
+      parameter ENTRIES = 32,                        // Number of predictor entries
+      parameter INDEX_WIDTH = $clog2(ENTRIES)       // Auto-calculated index width
+   )(
       input  logic clk,
       input  logic reset,
 
@@ -33,67 +33,67 @@ module multi_fetch #(
       input  logic misprediction_i_0,
       input  logic misprediction_i_1,
       input  logic misprediction_i_2,
-      
+
       // 2. Update valid signals (for predictor update - resolved OR mispredicted)
       input  logic update_valid_i_0,
       input  logic update_valid_i_1,
       input  logic update_valid_i_2,
-      
+
       // 3. Is JALR flags (0=branch, 1=JALR - determines which predictor to update)
       input  logic is_jalr_i_0,
       input  logic is_jalr_i_1,
       input  logic is_jalr_i_2,
-      
+
       // 4. PC at prediction (for predictor table lookup during update)
       input  logic [size-1 : 0] pc_at_prediction_i_0,
       input  logic [size-1 : 0] pc_at_prediction_i_1,
       input  logic [size-1 : 0] pc_at_prediction_i_2,
-      
+
       // 5. Correct PC (for misprediction redirect and predictor update)
       input  logic [size-1 : 0] correct_pc_i_0,
       input  logic [size-1 : 0] correct_pc_i_1,
       input  logic [size-1 : 0] correct_pc_i_2,
 
-      input  logic [INDEX_WIDTH:0] update_global_history_0,
-      input  logic [INDEX_WIDTH:0] update_global_history_1,
-      input  logic [INDEX_WIDTH:0] update_global_history_2,
+      input  logic [INDEX_WIDTH+2:0] update_global_history_0,
+      input  logic [INDEX_WIDTH+2:0] update_global_history_1,
+      input  logic [INDEX_WIDTH+2:0] update_global_history_2,
 
       // New interface for instruction buffer integration
       output logic [4:0] fetch_valid_o,        // Which of the 3 instructions are valid
       input  logic fetch_ready_i,              // Instruction buffer can accept instructions
       output logic [size-1 : 0] pc_o_0, pc_o_1, pc_o_2, pc_o_3, pc_o_4,  // PC values for each instruction
-      
+
       // Legacy pipeline outputs (will be removed when buffer is integrated)
       output logic [size-1 : 0] instruction_o_0,
       output logic [size-1 : 0] imm_o_0,
       output logic [size-1 : 0] pc_value_at_prediction_0, // PC value used for prediction
       output logic branch_prediction_o_0,
-      output logic [INDEX_WIDTH:0] global_history_0_o, // Current global history and prediction
+      output logic [INDEX_WIDTH+2:0] global_history_0_o, // Current global history and prediction
 
       output logic [size-1 : 0] instruction_o_1,
       output logic [size-1 : 0] imm_o_1,
       output logic [size-1 : 0] pc_value_at_prediction_1, // PC value used for prediction
       output logic branch_prediction_o_1,
-      output logic [INDEX_WIDTH:0] global_history_1_o, 
+      output logic [INDEX_WIDTH+2:0] global_history_1_o,
 
       output logic [size-1 : 0] instruction_o_2,
       output logic [size-1 : 0] imm_o_2,
       output logic [size-1 : 0] pc_value_at_prediction_2, // PC value used for prediction
       output logic branch_prediction_o_2,
-      output logic [INDEX_WIDTH:0] global_history_2_o,
+      output logic [INDEX_WIDTH+2:0] global_history_2_o,
 
       output logic [size-1 : 0] instruction_o_3,
       output logic [size-1 : 0] imm_o_3,
       output logic [size-1 : 0] pc_value_at_prediction_3, // PC value used for prediction
       output logic branch_prediction_o_3,
-      output logic [INDEX_WIDTH:0] global_history_3_o,
+      output logic [INDEX_WIDTH+2:0] global_history_3_o,
 
       output logic [size-1 : 0] instruction_o_4,
       output logic [size-1 : 0] imm_o_4,
       output logic [size-1 : 0] pc_value_at_prediction_4, // PC value used for prediction
       output logic branch_prediction_o_4,
-      output logic [INDEX_WIDTH:0] global_history_4_o,
-      
+      output logic [INDEX_WIDTH+2:0] global_history_4_o,
+
 
       // RAS checkpoint/restore interface
       output logic [2:0] ras_tos_checkpoint_o, // RAS TOS pointers at fetch time for each instruction
@@ -114,7 +114,7 @@ module multi_fetch #(
    //==========================================================================
    logic eager_flush;
    logic [size-1:0] eager_flush_target_pc;
-   
+
    always_comb begin
       if (misprediction_i_0) begin
          eager_flush = 1'b1;
@@ -130,7 +130,7 @@ module multi_fetch #(
          eager_flush_target_pc = {size{1'b0}};
       end
    end
-   
+
    //==========================================================================
    // Predictor update signal derivation from BRAT interface
    // Branch predictor: update when update_valid & !is_jalr
@@ -138,11 +138,11 @@ module multi_fetch #(
    //==========================================================================
    logic branch_update_valid_0, branch_update_valid_1, branch_update_valid_2;
    logic jalr_update_valid_0, jalr_update_valid_1, jalr_update_valid_2;
-   
+
    assign branch_update_valid_0 = update_valid_i_0 & ~is_jalr_i_0;
    assign branch_update_valid_1 = update_valid_i_1 & ~is_jalr_i_1 & !misprediction_i_0;
    assign branch_update_valid_2 = update_valid_i_2 & ~is_jalr_i_2 & !misprediction_i_0 & !misprediction_i_1;
-   
+
    assign jalr_update_valid_0 = update_valid_i_0 & is_jalr_i_0;
    assign jalr_update_valid_1 = update_valid_i_1 & is_jalr_i_1 & !misprediction_i_0;
    assign jalr_update_valid_2 = update_valid_i_2 & is_jalr_i_2 & !misprediction_i_0 & !misprediction_i_1;
@@ -178,22 +178,22 @@ module multi_fetch #(
 
    logic jalr_prediction_valid;
    logic [size-1:0] jalr_predicition_target;
-   
+
    // New buffer interface signals
    logic internal_bubble; // Combine bubble with buffer backpressure
-   
+
 
    // Smart fetch valid signals based on branch prediction
    // If a branch is predicted taken, don't fetch instructions after it
    logic base_valid;
    logic block_0;  // Invalidate inst_1 and inst_2 if inst_0 branches
    logic block_1;    // Invalidate inst_2 if inst_1 branches
-   logic block_2;    
-   logic block_3;  
-   
+   logic block_2;
+   logic block_3;
+
    // Base validity: instruction is valid if not flushed, buffer ready, and in reset
    assign base_valid = ~eager_flush & fetch_ready_i & reset;
-   
+
    // Branch prediction invalidation logic
    assign block_0 = jump_0 | jalr_0;  // If inst_0 is predicted taken, invalidate inst_1 and inst_2
    assign block_1 = jump_1 | jalr_1;    // If inst_1 is predicted taken, invalidate inst_2
@@ -206,7 +206,7 @@ module multi_fetch #(
    assign fetch_valid_o[2] = base_valid & ~block_0 & ~block_1; // inst_2 invalid if inst_0 or inst_1 branches
    assign fetch_valid_o[3] = base_valid & ~block_0 & ~block_1 & ~block_2; // inst_3 invalid if inst_0, inst_1, or inst_2 branches
    assign fetch_valid_o[4] = base_valid & ~block_0 & ~block_1 & ~block_2 & ~block_3; // inst_4 invalid if any prior instruction branches
-   
+
    // Combine pipeline bubble with buffer backpressure
    assign internal_bubble = buble | ~fetch_ready_i;
    // Immediate decoders
@@ -221,7 +221,7 @@ module multi_fetch #(
    early_stage_immediate_decoder  early_stage_imm_dec_2(
       .instruction(instruction_i_2),
       .imm_o(imm_2));
-   
+
    early_stage_immediate_decoder  early_stage_imm_dec_3(
       .instruction(instruction_i_3),
       .imm_o(imm_3));
@@ -269,19 +269,19 @@ module multi_fetch #(
       .correct_pc_1(correct_pc_i_1),
       .correct_pc_2(correct_pc_i_2),
 
-      .update_global_history_0, 
-      .update_global_history_1, 
-      .update_global_history_2, 
+      .update_global_history_0,
+      .update_global_history_1,
+      .update_global_history_2,
 
       //==========================================================================
       // JALR predictor update (from BRAT - when update_valid & is_jalr)
       //=========================================================================
       .jalr_update_valid_0(jalr_update_valid_0),
       .jalr_update_prediction_pc_0(pc_at_prediction_i_0),
-      
+
       .jalr_update_valid_1(jalr_update_valid_1),
       .jalr_update_prediction_pc_1(pc_at_prediction_i_1),
-      
+
       .jalr_update_valid_2(jalr_update_valid_2),
       .jalr_update_prediction_pc_2(pc_at_prediction_i_2),
 
@@ -298,10 +298,10 @@ module multi_fetch #(
       .jalr_4(jalr_4),
 
       .global_history_0_o,
-		.global_history_1_o,
-		.global_history_2_o,
-		.global_history_3_o,
-		.global_history_4_o,
+      .global_history_1_o,
+      .global_history_2_o,
+      .global_history_3_o,
+      .global_history_4_o,
 
       .jalr_prediction_valid(jalr_prediction_valid),
       .jalr_prediction_target(jalr_predicition_target),

@@ -78,7 +78,7 @@ module rv32i_superscalar_core #(
     logic [DATA_WIDTH-1:0] fetch_pc_0, fetch_pc_1, fetch_pc_2;
     logic [DATA_WIDTH-1:0] fetch_imm_0, fetch_imm_1, fetch_imm_2; // todo remove from fetch buffer recalculate in decode
     logic fetch_branch_pred_0, fetch_branch_pred_1, fetch_branch_pred_2;
-    logic [INDEX_WIDTH:0] fetch_global_history_0, fetch_global_history_1, fetch_global_history_2;
+    logic [INDEX_WIDTH+2:0] fetch_global_history_0, fetch_global_history_1, fetch_global_history_2;
     logic [2:0] decode_ready;
     logic buffer_empty, buffer_full;
     logic [$clog2(BUFFER_DEPTH):0] buffer_occupancy;
@@ -137,9 +137,9 @@ module rv32i_superscalar_core #(
     logic [DATA_WIDTH-1:0] brat_pc_at_prediction_1;  // PC at prediction for 2nd oldest
     logic [DATA_WIDTH-1:0] brat_pc_at_prediction_2;  // PC at prediction for 3rd oldest
 
-    logic [INDEX_WIDTH:0] brat_global_history_0;
-    logic [INDEX_WIDTH:0] brat_global_history_1;
-    logic [INDEX_WIDTH:0] brat_global_history_2;
+    logic [INDEX_WIDTH+2:0] brat_global_history_0;
+    logic [INDEX_WIDTH+2:0] brat_global_history_1;
+    logic [INDEX_WIDTH+2:0] brat_global_history_2;
 
     // RAS Checkpoint
     logic [2:0] ras_top_checkpoint;

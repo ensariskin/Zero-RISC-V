@@ -522,6 +522,7 @@ module dispatch_stage #(
       // Clock and reset
       .clk(clk),
       .rst_n(reset ),
+      .single_pipe_mode_i(1'b1),
 
       // Eager misprediction inputs (from BRAT in-order resolution)
       .eager_misprediction_i(brat_eager_misprediction),

@@ -54,9 +54,9 @@ module jump_controller_super #(
 		input  logic misprediction_1,
 		input  logic misprediction_2,
 
-		input  logic [INDEX_WIDTH:0] update_global_history_0,
-		input  logic [INDEX_WIDTH:0] update_global_history_1,
-		input  logic [INDEX_WIDTH:0] update_global_history_2,
+		input  logic [INDEX_WIDTH+2:0] update_global_history_0,
+		input  logic [INDEX_WIDTH+2:0] update_global_history_1,
+		input  logic [INDEX_WIDTH+2:0] update_global_history_2,
 
 		// Correct PC interface (for branch predictor updates)
 		input  logic [size-1 : 0] correct_pc_0,
@@ -93,11 +93,11 @@ module jump_controller_super #(
 		output logic jalr_3,
 		output logic jalr_4,
 
-		output logic [INDEX_WIDTH:0] global_history_0_o, // Current global history and prediction
-		output logic [INDEX_WIDTH:0] global_history_1_o,
-		output logic [INDEX_WIDTH:0] global_history_2_o,
-		output logic [INDEX_WIDTH:0] global_history_3_o,
-		output logic [INDEX_WIDTH:0] global_history_4_o,
+		output logic [INDEX_WIDTH+2:0] global_history_0_o, // Current global history and prediction
+		output logic [INDEX_WIDTH+2:0] global_history_1_o,
+		output logic [INDEX_WIDTH+2:0] global_history_2_o,
+		output logic [INDEX_WIDTH+2:0] global_history_3_o,
+		output logic [INDEX_WIDTH+2:0] global_history_4_o,
 
 		output logic jalr_prediction_valid,
 		output logic [size-1:0] jalr_prediction_target
@@ -199,7 +199,7 @@ module jump_controller_super #(
 
 	// Instantiate branch predictor
 	//branch_predictor_super #(.ADDR_WIDTH(32),.ENTRIES(8192)) branch_predictor_inst (
-	gshare_predictor_super #(.ADDR_WIDTH(size),.ENTRIES(ENTRIES)) branch_predictor (
+	tournament_predictor #(.ADDR_WIDTH(size),.ENTRIES(ENTRIES)) branch_predictor (
 		.clk(clk),
 		.reset(reset),
 		.base_valid(base_valid_i),

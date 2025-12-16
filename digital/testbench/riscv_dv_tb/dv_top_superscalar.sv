@@ -369,7 +369,7 @@ module dv_top_superscalar;
     // 5-port instruction memory (64KB = 16K words)
     memory_5rw #(
         .DATA_WIDTH(32),
-        .ADDR_WIDTH(16),  // 16K words = 64KB memory (2^14 = 16384 words)
+        .ADDR_WIDTH(17),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
     ) instruction_memory (
         // Port 0 (fetch 0)
@@ -654,7 +654,7 @@ module dv_top_superscalar;
     );
 
     // Region 0 data memory (64KB = 16K words)
-    memory_3rw #(
+    memory_3rw_unaligned #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
@@ -702,7 +702,7 @@ module dv_top_superscalar;
     );
 
     // Region 1 data memory (64KB = 16K words)
-    memory_3rw #(
+    memory_3rw_unaligned #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(14),  // 16K words = 64KB memory (2^14 = 16384 words)
         .NUM_WMASKS(4)
@@ -1920,4 +1920,108 @@ module dv_top_superscalar;
         .ras_tos(dut.fetch_buffer_unit.fetch_unit.jump_ctrl.jalr_predictor_inst.ras_tos)
     );
 
+    /*
+     `define BP dut.fetch_buffer_unit.fetch_unit.jump_ctrl.branch_predictor
+
+     localparam int META_W = $bits(`BP.global_history_0_o);
+     localparam int GH_W   = META_W - 3;
+
+     bp_logger_multi #(
+     .PC_WIDTH(32),
+     .GH_WIDTH(GH_W),
+     .META_WIDTH(META_W),
+     .NUM_FETCH(5),
+     .NUM_UPD(3)
+     ) bp_log (
+     .clk  (`BP.clk),
+     .rst_n(`BP.reset),
+
+     // ---------------- FETCH (0..4) ----------------
+     .pred_valid_i('{
+     (`BP.base_valid & `BP.is_branch_i_0),
+     (`BP.base_valid & `BP.is_branch_i_1 & ~`BP.ignore_inst_1),
+     (`BP.base_valid & `BP.is_branch_i_2 & ~`BP.ignore_inst_2),
+     (`BP.base_valid & `BP.is_branch_i_3 & ~`BP.ignore_inst_3),
+     (`BP.base_valid & `BP.is_branch_i_4 & ~`BP.ignore_inst_4)
+     }),
+
+     .pred_pc_i('{
+     `BP.current_pc_0, `BP.current_pc_1, `BP.current_pc_2, `BP.current_pc_3, `BP.current_pc_4
+     }),
+
+     .pred_taken_final_i('{
+     `BP.branch_taken_o_0, `BP.branch_taken_o_1, `BP.branch_taken_o_2, `BP.branch_taken_o_3, `BP.branch_taken_o_4
+     }),
+
+     // meta layout: {ghr_before[...], gshare_pred, bimodal_pred, chooser_sel}
+     .pred_taken_gshare_i('{
+     `BP.global_history_0_o[2], `BP.global_history_1_o[2], `BP.global_history_2_o[2], `BP.global_history_3_o[2], `BP.global_history_4_o[2]
+     }),
+     .pred_taken_bimodal_i('{
+     `BP.global_history_0_o[1], `BP.global_history_1_o[1], `BP.global_history_2_o[1], `BP.global_history_3_o[1], `BP.global_history_4_o[1]
+     }),
+     .pred_sel_gshare_i('{
+     `BP.global_history_0_o[0], `BP.global_history_1_o[0], `BP.global_history_2_o[0], `BP.global_history_3_o[0], `BP.global_history_4_o[0]
+     }),
+
+     // chooser counter snapshot portun yoksa 0 ver (istersen debug port ekleriz)
+     .pred_chooser_ctr_i('{2'b00,2'b00,2'b00,2'b00,2'b00}),
+
+     .pred_ghr_before_i('{
+     `BP.global_history_0_o[META_W-1:3], `BP.global_history_1_o[META_W-1:3],
+     `BP.global_history_2_o[META_W-1:3], `BP.global_history_3_o[META_W-1:3],
+     `BP.global_history_4_o[META_W-1:3]
+     }),
+
+     .pred_meta_i('{
+     `BP.global_history_0_o, `BP.global_history_1_o, `BP.global_history_2_o, `BP.global_history_3_o, `BP.global_history_4_o
+     }),
+
+     // ---------------- UPDATE (0..2) ----------------
+     // JALR redirect gibi update_valid=0 durumları da loglansın diye: valid = update_prediction_valid OR mispred
+     .upd_valid_i('{
+     (`BP.update_prediction_valid_i_0 | `BP.misprediction_0),
+     (`BP.update_prediction_valid_i_1 | `BP.misprediction_1),
+     (`BP.update_prediction_valid_i_2 | `BP.misprediction_2)
+     }),
+
+     .upd_pc_i('{
+     `BP.update_prediction_pc_0, `BP.update_prediction_pc_1, `BP.update_prediction_pc_2
+     }),
+
+     .upd_meta_i('{
+     `BP.update_global_history_0, `BP.update_global_history_1, `BP.update_global_history_2
+     }),
+
+     .upd_mispred_i('{
+     `BP.misprediction_0, `BP.misprediction_1, `BP.misprediction_2
+     }),
+
+     // redirect cause sinyalin yoksa 0 ver; varsa burada jalr=1 vs bağlarız
+     .upd_redirect_cause_i('{2'd0,2'd0,2'd0}),
+
+     // Train sadece "o predictor seçildiyse" ve update_prediction_valid=1 ise
+     .upd_train_gshare_i('{
+     (`BP.update_prediction_valid_i_0 &  `BP.update_global_history_0[0]),
+     (`BP.update_prediction_valid_i_1 &  `BP.update_global_history_1[0]),
+     (`BP.update_prediction_valid_i_2 &  `BP.update_global_history_2[0])
+     }),
+     .upd_train_bimodal_i('{
+     (`BP.update_prediction_valid_i_0 & ~`BP.update_global_history_0[0]),
+     (`BP.update_prediction_valid_i_1 & ~`BP.update_global_history_1[0]),
+     (`BP.update_prediction_valid_i_2 & ~`BP.update_global_history_2[0])
+     }),
+
+     // Restore: redirect olduğunda (mispred pulse) 1
+     .upd_restore_ghr_i('{
+     `BP.misprediction_0, `BP.misprediction_1, `BP.misprediction_2
+     }),
+
+     // actual outcome’un yoksa 0 bağla
+     .upd_actual_taken_i('{1'b0,1'b0,1'b0}),
+     .upd_actual_valid_i('{1'b0,1'b0,1'b0})
+     );
+
+     `undef BP
+     */
 endmodule
