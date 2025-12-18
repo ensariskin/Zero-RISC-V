@@ -171,9 +171,9 @@ module reorder_buffer #(
         output logic [ADDR_WIDTH:0] buffer_count,  // Number of valid entries
         output logic [ADDR_WIDTH-1:0] head_ptr,
         output logic [ADDR_WIDTH-1:0] tail_ptr,
-        
+
         //==========================================================================
-        // EAGER MISPREDICTION 
+        // EAGER MISPREDICTION
         //==========================================================================
         input  logic branch_misprediction_i,
         input  logic [ADDR_WIDTH-1:0] branch_mispredicted_rob_idx_i,
@@ -228,10 +228,10 @@ module reorder_buffer #(
     // Assign outputs
     assign head_ptr = head_ptr_reg[ADDR_WIDTH-1:0];
     assign tail_ptr = tail_ptr_reg[ADDR_WIDTH-1:0];
-    
+
     // Eager misprediction outputs for LSQ flush
-    assign rob_head_ptr_o = head_ptr_reg;
-    
+    assign rob_head_ptr_o = head_ptr_reg[ADDR_WIDTH-1:0];
+
     // Calculate mispredicted distance - select based on which FU mispredicted
     //==========================================================================
     // BUFFER STATUS
@@ -902,7 +902,7 @@ module reorder_buffer #(
     // Tracer Output
     //==========================================================================
     `ifndef SYNTHESIS
-    always_comb begin 
+    always_comb begin
         o_tracer_0.valid     = commit_valid_0 ? tracer_buffer[head_idx].valid : 1'b0; // todo we don't need tracer buffer valid, we can simply use commit valid
         o_tracer_0.pc        = commit_valid_0 ? tracer_buffer[head_idx].pc : 32'd0;
         o_tracer_0.instr     = commit_valid_0 ? tracer_buffer[head_idx].instr : 32'd0;

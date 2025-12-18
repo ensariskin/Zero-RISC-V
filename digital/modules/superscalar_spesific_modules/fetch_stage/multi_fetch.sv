@@ -105,8 +105,8 @@ module multi_fetch #(
    //localparam D = 1; // Delay for simulation purposes
 
    // Add parallel_mode control signal for pc_ctrl_super
-   logic parallel_mode;
-   assign parallel_mode = 1'b1; // Always enable 3-instruction parallel mode
+   logic secure_mode; // todo : make it port
+   assign secure_mode = 1'b1; // Always enable 3-instruction parallel mode
 
    //==========================================================================
    // Misprediction handling: flush on any misprediction from BRAT (in-order)
@@ -317,7 +317,7 @@ module multi_fetch #(
       .clk(clk),
       .reset(reset),
       .buble(internal_bubble),  // Use combined bubble signal
-      .parallel_mode(parallel_mode),
+      .secure_mode(secure_mode),
 
       .jump_0(jump_0),
       .jump_1(jump_1),
