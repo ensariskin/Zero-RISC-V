@@ -31,13 +31,12 @@ module fetch_buffer_top #(
     )(
         input  logic clk,
         input  logic reset,
+        input  logic buble,
+        input  logic secure_mode,
 
         // Memory interface (3-port for parallel fetch)
         output logic [DATA_WIDTH-1:0] inst_addr_0, inst_addr_1, inst_addr_2, inst_addr_3, inst_addr_4,
         input  logic [DATA_WIDTH-1:0] instruction_i_0, instruction_i_1, instruction_i_2, instruction_i_3, instruction_i_4,
-
-        // Pipeline control signals
-        input  logic buble,
 
         //==========================================================================
         // BRAT Interface (Simplified - all branch/JALR info comes from BRAT in-order)
@@ -72,7 +71,6 @@ module fetch_buffer_top #(
         output logic [INDEX_WIDTH+2:0] global_history_1_o, // Current global history and prediction
         output logic [INDEX_WIDTH+2:0] global_history_2_o, // Current global history and prediction
 
-
         // Decode stage ready signals
         input  logic [2:0] decode_ready_i,          // Which decode stages are ready to accept instructions
 
@@ -102,7 +100,8 @@ module fetch_buffer_top #(
     multi_fetch #(.size(DATA_WIDTH), .ENTRIES(ENTRIES)) fetch_unit (
         .clk(clk),
         .reset(reset),
-
+        .buble(buble),
+        .secure_mode(secure_mode),
         // Memory interface
         .inst_addr_0(inst_addr_0),
         .inst_addr_1(inst_addr_1),
@@ -115,9 +114,6 @@ module fetch_buffer_top #(
         .instruction_i_2(instruction_i_2),
         .instruction_i_3(instruction_i_3),
         .instruction_i_4(instruction_i_4),
-
-        // Pipeline control
-        .buble(buble),
 
         //==========================================================================
         // BRAT Interface (Simplified)
@@ -211,6 +207,8 @@ module fetch_buffer_top #(
         .clk(clk),
         .reset(reset),
         .flush_i(eager_flush),
+        .secure_mode(secure_mode),
+        .fatal_error_o(), // todo connect
         // Input from multi_fetch
         .fetch_valid_i(fetch_valid),
         .fetch_ready_o(fetch_ready),
@@ -276,7 +274,6 @@ module fetch_buffer_top #(
         .global_history_2_o(global_history_2_o),
 
         .ras_tos_checkpoint_o(ras_tos_checkpoint_o),
-
 
         // Status outputs
         .buffer_empty_o(buffer_empty_o),

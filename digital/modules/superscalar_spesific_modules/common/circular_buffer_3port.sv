@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Circular Buffer with 3 Read/Write Ports
-// 
+//
 // This module implements a circular buffer where:
 // - Buffer values are constant and equal to their index positions
 // - 3 independent read ports with individual enable signals
@@ -11,112 +11,171 @@
 //////////////////////////////////////////////////////////////////////////////////
 `timescale 1ns/1ns
 module circular_buffer_3port #(
-    parameter BUFFER_DEPTH = 32,  // Must be power of 2
-    parameter ADDR_WIDTH = $clog2(BUFFER_DEPTH)
-)(
-    input  logic clk,
-    input  logic rst_n,
-    
-    // Manual pointer control for misprediction recovery
-    input  logic set_read_ptr_en,                    // Enable manual read pointer set
-    input  logic [ADDR_WIDTH-1:0] set_read_ptr_value,  // Value to set read pointer to
+        parameter BUFFER_DEPTH = 32,  // Must be power of 2
+        parameter ADDR_WIDTH = $clog2(BUFFER_DEPTH)
+    )(
+        input  logic clk,
+        input  logic rst_n,
+        input  logic secure_mode,            // TMR: Enable secure mode voting
 
-    input  logic redo_last_alloc,
-    
-    // Read port enables
-    input  logic read_en_0,
-    input  logic read_en_1,
-    input  logic read_en_2,
-    
-    // Read data outputs (show current values before pointer update)
-    output logic [ADDR_WIDTH:0] read_data_0,
-    output logic [ADDR_WIDTH:0] read_data_1,
-    output logic [ADDR_WIDTH:0] read_data_2,
-    
-    // Read valid outputs (indicate if read data is valid)
-    output logic read_valid_0,
-    output logic read_valid_1,
-    output logic read_valid_2,
-    
-    // Write port enables
-    input  logic write_en_0,
-    input  logic write_en_1,
-    input  logic write_en_2,
-    
-    // Write data inputs (optional - not used since values = index)
-    //input  logic [DATA_WIDTH-1:0] write_data_0,
-    //input  logic [DATA_WIDTH-1:0] write_data_1,
-    //input  logic [DATA_WIDTH-1:0] write_data_2,
-    
-    // Status outputs
-    output logic buffer_empty,
-    output logic buffer_full,
-    output logic [ADDR_WIDTH:0] buffer_count  // Number of valid entries
-);
-     
+        // Manual pointer control for misprediction recovery
+        input  logic set_read_ptr_en,                    // Enable manual read pointer set
+        input  logic [ADDR_WIDTH-1:0] set_read_ptr_value,  // Value to set read pointer to
+
+        input  logic redo_last_alloc,
+
+        // Read port enables
+        input  logic read_en_0,
+        input  logic read_en_1,
+        input  logic read_en_2,
+
+        // Read data outputs (show current values before pointer update)
+        output logic [ADDR_WIDTH:0] read_data_0,
+        output logic [ADDR_WIDTH:0] read_data_1,
+        output logic [ADDR_WIDTH:0] read_data_2,
+
+        // Read valid outputs (indicate if read data is valid)
+        output logic read_valid_0,
+        output logic read_valid_1,
+        output logic read_valid_2,
+
+        // Write port enables
+        input  logic write_en_0,
+        input  logic write_en_1,
+        input  logic write_en_2,
+
+        // Write data inputs (optional - not used since values = index)
+        //input  logic [DATA_WIDTH-1:0] write_data_0,
+        //input  logic [DATA_WIDTH-1:0] write_data_1,
+        //input  logic [DATA_WIDTH-1:0] write_data_2,
+
+        // Status outputs
+        output logic buffer_empty,
+        output logic buffer_full,
+        output logic [ADDR_WIDTH:0] buffer_count,  // Number of valid entries
+        output logic fatal_error_o                 // TMR: Fatal error (all 3 disagree)
+    );
+
     localparam D = 1; // Delay for non-blocking assignments (for simulation purposes)
     // Internal buffer storage (initialized with index values)
     logic [ADDR_WIDTH-1:0] buffer_mem [0:BUFFER_DEPTH-1];
-    
-    // Read and write pointers (extra bit for full/empty detection)
+
+    // =========================================================================
+    // TMR: Triplicated Pointer Registers
+    // =========================================================================
+    logic [ADDR_WIDTH:0] read_ptr_0, read_ptr_1, read_ptr_2;
+    logic [ADDR_WIDTH:0] write_ptr_0, write_ptr_1, write_ptr_2;
+    logic [1:0] last_alloc_0, last_alloc_1, last_alloc_2;
+
+    // TMR: Voted outputs (active values used in logic)
     logic [ADDR_WIDTH:0] read_ptr;
     logic [ADDR_WIDTH:0] write_ptr;
-    
+    logic [1:0] last_alloc;
+
+    // TMR: Error signals from voters
+    logic read_ptr_mismatch, write_ptr_mismatch, last_alloc_mismatch;
+    logic read_ptr_err_0, read_ptr_err_1, read_ptr_err_2, read_ptr_fatal;
+    logic write_ptr_err_0, write_ptr_err_1, write_ptr_err_2, write_ptr_fatal;
+    logic last_alloc_err_0, last_alloc_err_1, last_alloc_err_2, last_alloc_fatal;
+
+    // Aggregate fatal error
+    assign fatal_error_o = read_ptr_fatal | write_ptr_fatal | last_alloc_fatal;
+
+    // TMR: Voter instances
+    tmr_voter #(.DATA_WIDTH(ADDR_WIDTH+1)) read_ptr_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (read_ptr_0),
+        .data_1_i           (read_ptr_1),
+        .data_2_i           (read_ptr_2),
+        .data_o             (read_ptr),
+        .mismatch_detected_o(read_ptr_mismatch),
+        .error_0_o          (read_ptr_err_0),
+        .error_1_o          (read_ptr_err_1),
+        .error_2_o          (read_ptr_err_2),
+        .fatal_error_o      (read_ptr_fatal)
+    );
+
+    tmr_voter #(.DATA_WIDTH(ADDR_WIDTH+1)) write_ptr_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (write_ptr_0),
+        .data_1_i           (write_ptr_1),
+        .data_2_i           (write_ptr_2),
+        .data_o             (write_ptr),
+        .mismatch_detected_o(write_ptr_mismatch),
+        .error_0_o          (write_ptr_err_0),
+        .error_1_o          (write_ptr_err_1),
+        .error_2_o          (write_ptr_err_2),
+        .fatal_error_o      (write_ptr_fatal)
+    );
+
+    tmr_voter #(.DATA_WIDTH(2)) last_alloc_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (last_alloc_0),
+        .data_1_i           (last_alloc_1),
+        .data_2_i           (last_alloc_2),
+        .data_o             (last_alloc),
+        .mismatch_detected_o(last_alloc_mismatch),
+        .error_0_o          (last_alloc_err_0),
+        .error_1_o          (last_alloc_err_1),
+        .error_2_o          (last_alloc_err_2),
+        .fatal_error_o      (last_alloc_fatal)
+    );
+
     // Internal signals
     logic [ADDR_WIDTH:0] entries_available;
     logic [1:0] num_reads;  // 0-3 reads enabled
     logic [1:0] num_writes; // 0-3 writes enabled
     logic [ADDR_WIDTH:0] next_read_ptr;
     logic [ADDR_WIDTH:0] next_write_ptr;
-    
+
     //==========================================================================
     // BUFFER INITIALIZATION (values equal to index)
     //==========================================================================
-    
+
     always_comb begin
         for (int i = 0; i < BUFFER_DEPTH; i++) begin
             buffer_mem[i] = i[ADDR_WIDTH-1:0];
         end
     end
-    
+
     //==========================================================================
     // COUNT NUMBER OF ENABLED READS/WRITES
     //==========================================================================
-    
+
     always_comb begin
         num_reads  = read_en_0 + read_en_1 + read_en_2;
         num_writes = write_en_0 + write_en_1 + write_en_2;
     end
 
-    
+
     //==========================================================================
     // BUFFER STATUS SIGNALS
     //==========================================================================
-    
+
     // Calculate number of entries available for reading
     assign entries_available = write_ptr[ADDR_WIDTH] ? (write_ptr - read_ptr) : read_ptr[ADDR_WIDTH] ? (BUFFER_DEPTH + write_ptr[ADDR_WIDTH-1:0] - read_ptr[ADDR_WIDTH-1:0])  :  write_ptr - read_ptr;
     assign buffer_count = entries_available;
-    
+
     // Empty when read pointer equals write pointer
     assign buffer_empty = (entries_available == 0);
-    
+
     // Full when count equals buffer depth
     assign buffer_full = (entries_available == BUFFER_DEPTH);
-    
+
     //==========================================================================
     // READ DATA OUTPUTS (Current values before pointer update)
     //==========================================================================
-   
+
     logic [ADDR_WIDTH:0] data_0;
     logic [ADDR_WIDTH:0] data_1;
     logic [ADDR_WIDTH:0] data_2;
-    
+
     logic valid_0;
     logic valid_1;
     logic valid_2;
 
-    logic [1:0] last_alloc;
-    
+
+
     // Read port 0: Current read pointer position
     always_comb begin
         if (!buffer_empty && entries_available >= 1) begin
@@ -127,7 +186,7 @@ module circular_buffer_3port #(
             valid_0 = 1'b0;
         end
     end
-    
+
     // Read port 1: Read pointer + 1
     always_comb begin
         if (!buffer_empty && entries_available >= 2) begin
@@ -138,7 +197,7 @@ module circular_buffer_3port #(
             valid_1 = 1'b0;
         end
     end
-    
+
     // Read port 2: Read pointer + 2
     always_comb begin
         if (!buffer_empty && entries_available >= 3) begin
@@ -149,8 +208,8 @@ module circular_buffer_3port #(
             valid_2 = 1'b0;
         end
     end
-    
-    assign read_valid_0 = read_en_0 ? valid_0 : 1'b0;  
+
+    assign read_valid_0 = read_en_0 ? valid_0 : 1'b0;
     assign read_data_0  = read_valid_0 ? data_0 : '0;
 
     assign read_valid_1 = read_en_1 ? (read_en_0 ? valid_1 : valid_0) : 1'b0;
@@ -161,10 +220,10 @@ module circular_buffer_3port #(
     //==========================================================================
     // POINTER UPDATE LOGIC
     //==========================================================================
-    
+
     // Calculate next read pointer based on number of enabled reads
     always_comb begin
-        // Manual pointer override for misprediction recovery   
+        // Manual pointer override for misprediction recovery
         // TODO we need extra check to find correct location, it can be {0,set_read_ptr_value} or {1,set_read_ptr_value}
         // current code ai generated, need to check
         // TODO
@@ -180,7 +239,7 @@ module circular_buffer_3port #(
             next_read_ptr = read_ptr - last_alloc;
         end else begin
             next_read_ptr = read_ptr;
-            
+
             // Only update if reads are enabled and buffer is not empty
             if (!buffer_empty) begin
                 next_read_ptr = read_ptr + num_reads;
@@ -190,56 +249,72 @@ module circular_buffer_3port #(
     // Calculate next write pointer based on number of enabled writes
     always_comb begin
         next_write_ptr = write_ptr;
-        
+
         // Only update if writes are enabled and buffer is not full
         if (!buffer_full) begin
             next_write_ptr = write_ptr + num_writes;
         end
     end
-    
+
     //==========================================================================
     // SEQUENTIAL LOGIC - POINTER UPDATES
     //==========================================================================
-    
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            read_ptr <= #D '0;
-            write_ptr <= #D {1'b1, {ADDR_WIDTH{1'b0}}}; 
-            last_alloc <= #D 2'b0;
+            // Reset all three copies
+            read_ptr_0   <= #D '0;
+            read_ptr_1   <= #D '0;
+            read_ptr_2   <= #D '0;
+            write_ptr_0  <= #D {1'b1, {ADDR_WIDTH{1'b0}}};
+            write_ptr_1  <= #D {1'b1, {ADDR_WIDTH{1'b0}}};
+            write_ptr_2  <= #D {1'b1, {ADDR_WIDTH{1'b0}}};
+            last_alloc_0 <= #D 2'b0;
+            last_alloc_1 <= #D 2'b0;
+            last_alloc_2 <= #D 2'b0;
         end else begin
-            // Update read pointer
-            read_ptr <= #D next_read_ptr;
-            // Update write pointer
-            write_ptr <= #D next_write_ptr;
-            last_alloc <= #D num_reads;
+            // Update read pointer (all 3 copies)
+            read_ptr_0 <= #D next_read_ptr;
+            read_ptr_1 <= #D next_read_ptr;
+            read_ptr_2 <= #D next_read_ptr;
+
+            // Update write pointer (all 3 copies)
+            write_ptr_0 <= #D next_write_ptr;
+            write_ptr_1 <= #D next_write_ptr;
+            write_ptr_2 <= #D next_write_ptr;
+
+            // Update last_alloc (all 3 copies)
+            last_alloc_0 <= #D num_reads;
+            last_alloc_1 <= #D num_reads;
+            last_alloc_2 <= #D num_reads;
         end
     end
-    
+
     //==========================================================================
     // WRITE OPERATIONS (Optional - values are constant = index)
     //==========================================================================
     // Note: Since buffer values are constant and equal to index,
     // write operations don't actually modify buffer_mem.
     // However, write pointer still advances to track buffer fullness.
-    
+
     // If you need to support actual writes (overwriting the constant values),
     // you can add write logic here. For now, this is commented out since
     // the requirement states "values will be constant and equal to index value"
-    
+
     /*
-    always_ff @(posedge clk) begin
-        if (write_en_0 && !buffer_full) begin
-            buffer_mem[write_ptr[ADDR_WIDTH-1:0]] <= write_data_0;
-        end
-        if (write_en_1 && !buffer_full && entries_available < BUFFER_DEPTH-1) begin
-            buffer_mem[(write_ptr[ADDR_WIDTH-1:0] + 1) % BUFFER_DEPTH] <= write_data_1;
-        end
-        if (write_en_2 && !buffer_full && entries_available < BUFFER_DEPTH-2) begin
-            buffer_mem[(write_ptr[ADDR_WIDTH-1:0] + 2) % BUFFER_DEPTH] <= write_data_2;
-        end
-    end
-    */
-    
+     always_ff @(posedge clk) begin
+     if (write_en_0 && !buffer_full) begin
+     buffer_mem[write_ptr[ADDR_WIDTH-1:0]] <= write_data_0;
+     end
+     if (write_en_1 && !buffer_full && entries_available < BUFFER_DEPTH-1) begin
+     buffer_mem[(write_ptr[ADDR_WIDTH-1:0] + 1) % BUFFER_DEPTH] <= write_data_1;
+     end
+     if (write_en_2 && !buffer_full && entries_available < BUFFER_DEPTH-2) begin
+     buffer_mem[(write_ptr[ADDR_WIDTH-1:0] + 2) % BUFFER_DEPTH] <= write_data_2;
+     end
+     end
+     */
+
     //==========================================================================
     // ASSERTIONS FOR DEBUG
     //==========================================================================
@@ -262,14 +337,14 @@ module circular_buffer_3port #(
             if ((num_reads > 0) && buffer_empty) begin
                 $warning("[%t] Circular buffer read underflow attempt", $time);
             end
-            
+
             // Check for overflow
             if ((num_writes > 0) && buffer_full) begin
                 $warning("[%t] Circular buffer write overflow attempt", $time);
                 //#3ns;
                 //$finish;
             end
-            
+
             // Verify pointer wraparound
             if (read_ptr[ADDR_WIDTH:0] >= 2*BUFFER_DEPTH) begin
                 $error("[%t] Read pointer out of range: %d", $time, read_ptr);

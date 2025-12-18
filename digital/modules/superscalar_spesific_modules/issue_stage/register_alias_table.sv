@@ -219,9 +219,13 @@ module register_alias_table #(
         end
     end
 
+    logic secure_mode;
+    assign secure_mode = 0; //todo make it port.
+
     circular_buffer_3port free_address_buffer(
         .clk(clk),
         .rst_n(reset),
+        .secure_mode(secure_mode),
         .redo_last_alloc(|branch_mispredicted_o),
         .read_en_0(need_alloc_0),
         .read_en_1(need_alloc_1),
@@ -245,6 +249,7 @@ module register_alias_table #(
     circular_buffer_3port #(.BUFFER_DEPTH(32)) lsq_address_buffer(
         .clk(clk),
         .rst_n(reset),
+        .secure_mode(secure_mod),
         .redo_last_alloc(|branch_mispredicted_o),
         .read_en_0(need_lsq_alloc_0),
         .read_en_1(need_lsq_alloc_1),

@@ -33,6 +33,7 @@ module instruction_buffer_new #(
     )(
         input  logic clk,
         input  logic reset,
+        input  logic secure_mode,           // TMR: Enable secure mode voting
 
         // Input from multi_fetch (up to 3 instructions per cycle)
         input  logic [4:0] fetch_valid_i,           // Which of the 3 fetch slots are valid
@@ -66,7 +67,8 @@ module instruction_buffer_new #(
         // Status outputs
         output logic buffer_empty_o,
         output logic buffer_full_o,
-        output logic [$clog2(BUFFER_DEPTH):0] occupancy_o              // Number of valid entries in buffer (up to 8)
+        output logic [$clog2(BUFFER_DEPTH):0] occupancy_o,             // Number of valid entries in buffer (up to 8)
+        output logic fatal_error_o                                    // TMR: Fatal error (all 3 disagree)
     );
 
     localparam D = 1; // Delay for simulation purposes
@@ -80,10 +82,66 @@ module instruction_buffer_new #(
     logic [INDEX_WIDTH+2:0] global_history_mem [BUFFER_DEPTH];
     logic [2:0] ras_tos_checkpoint_mem [BUFFER_DEPTH];
 
-    // Pointers (3-bit for 8 entries)
-    logic [$clog2(BUFFER_DEPTH):0] head_ptr;    // Points to next read location
-    logic [$clog2(BUFFER_DEPTH):0] tail_ptr;    // Points to next write location
-    logic [$clog2(BUFFER_DEPTH):0] count;       // Number of valid entries (0-8)
+    // =========================================================================
+    // TMR: Triplicated Pointer Registers
+    // =========================================================================
+    logic [$clog2(BUFFER_DEPTH):0] head_ptr_0, head_ptr_1, head_ptr_2;
+    logic [$clog2(BUFFER_DEPTH):0] tail_ptr_0, tail_ptr_1, tail_ptr_2;
+    logic [$clog2(BUFFER_DEPTH):0] count_0, count_1, count_2;
+
+    // TMR: Voted outputs (active values used in logic)
+    logic [$clog2(BUFFER_DEPTH):0] head_ptr;
+    logic [$clog2(BUFFER_DEPTH):0] tail_ptr;
+    logic [$clog2(BUFFER_DEPTH):0] count;
+
+    // TMR: Error signals from voters
+    logic head_mismatch, tail_mismatch, count_mismatch;
+    logic head_err_0, head_err_1, head_err_2, head_fatal;
+    logic tail_err_0, tail_err_1, tail_err_2, tail_fatal;
+    logic count_err_0, count_err_1, count_err_2, count_fatal;
+
+    // Aggregate fatal error
+    assign fatal_error_o = head_fatal | tail_fatal | count_fatal;
+
+    // TMR: Voter instances
+    tmr_voter #(.DATA_WIDTH($clog2(BUFFER_DEPTH)+1)) head_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (head_ptr_0),
+        .data_1_i           (head_ptr_1),
+        .data_2_i           (head_ptr_2),
+        .data_o             (head_ptr),
+        .mismatch_detected_o(head_mismatch),
+        .error_0_o          (head_err_0),
+        .error_1_o          (head_err_1),
+        .error_2_o          (head_err_2),
+        .fatal_error_o      (head_fatal)
+    );
+
+    tmr_voter #(.DATA_WIDTH($clog2(BUFFER_DEPTH)+1)) tail_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (tail_ptr_0),
+        .data_1_i           (tail_ptr_1),
+        .data_2_i           (tail_ptr_2),
+        .data_o             (tail_ptr),
+        .mismatch_detected_o(tail_mismatch),
+        .error_0_o          (tail_err_0),
+        .error_1_o          (tail_err_1),
+        .error_2_o          (tail_err_2),
+        .fatal_error_o      (tail_fatal)
+    );
+
+    tmr_voter #(.DATA_WIDTH($clog2(BUFFER_DEPTH)+1)) count_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (count_0),
+        .data_1_i           (count_1),
+        .data_2_i           (count_2),
+        .data_o             (count),
+        .mismatch_detected_o(count_mismatch),
+        .error_0_o          (count_err_0),
+        .error_1_o          (count_err_1),
+        .error_2_o          (count_err_2),
+        .fatal_error_o      (count_fatal)
+    );
 
     logic [$clog2(BUFFER_DEPTH):0] decode_1_read_offset;
     logic [$clog2(BUFFER_DEPTH):0] decode_2_read_offset;
@@ -175,89 +233,126 @@ module instruction_buffer_new #(
     // Sequential logic
     always_ff @(posedge clk or negedge reset) begin
         if (!reset) begin
-            head_ptr <= #D {$clog2(BUFFER_DEPTH)+1{1'b0}};
-            tail_ptr <= #D {$clog2(BUFFER_DEPTH)+1{1'b0}};
-            count <= #D 5'd0;
+            // Reset all three copies
+            head_ptr_0 <= #D '0;
+            head_ptr_1 <= #D '0;
+            head_ptr_2 <= #D '0;
+            tail_ptr_0 <= #D '0;
+            tail_ptr_1 <= #D '0;
+            tail_ptr_2 <= #D '0;
+            count_0    <= #D '0;
+            count_1    <= #D '0;
+            count_2    <= #D '0;
 
             // Initialize memory arrays
             for (int i = 0; i < BUFFER_DEPTH; i++) begin
-
-                instruction_mem[i] <= #D 32'h00000013; // NOP
-                pc_mem[i] <= #D 32'h0;
-                imm_mem[i] <= #D 32'h0;
+                instruction_mem[i]       <= #D 32'h00000013; // NOP
+                pc_mem[i]                <= #D 32'h0;
+                imm_mem[i]               <= #D 32'h0;
                 branch_prediction_mem[i] <= #D 1'b0;
-                pc_at_prediction_mem[i] <= #D 32'h0;
-                global_history_mem[i] <= #D {INDEX_WIDTH+1{1'b0}};
-                ras_tos_checkpoint_mem[i] <= #D 3'd0;
+                pc_at_prediction_mem[i]  <= #D 32'h0;
+                global_history_mem[i]    <= #D '0;
+                ras_tos_checkpoint_mem[i]<= #D 3'd0;
             end
         end else begin
             // Handle flush
             if (flush_i) begin
-                head_ptr <= #D {$clog2(BUFFER_DEPTH)+1{1'b0}};
-                tail_ptr <= #D {$clog2(BUFFER_DEPTH)+1{1'b0}};
-                count <= #D 5'd0;
-
+                head_ptr_0 <= #D '0;
+                head_ptr_1 <= #D '0;
+                head_ptr_2 <= #D '0;
+                tail_ptr_0 <= #D '0;
+                tail_ptr_1 <= #D '0;
+                tail_ptr_2 <= #D '0;
+                count_0    <= #D '0;
+                count_1    <= #D '0;
+                count_2    <= #D '0;
             end else begin
-                // Update pointers and count
-                if (write_en_0 || write_en_1 || write_en_2 || write_en_3 || write_en_4) begin // we can only check write_en_0
-                    tail_ptr <= #D (tail_ptr + num_to_write) % BUFFER_DEPTH;
+                // =========================================================
+                // Tail pointer update (write side)
+                // =========================================================
+                if (write_en_0 || write_en_1 || write_en_2 || write_en_3 || write_en_4) begin
+                    tail_ptr_0 <= #D (tail_ptr + num_to_write) % BUFFER_DEPTH;
+                    tail_ptr_1 <= #D (tail_ptr + num_to_write) % BUFFER_DEPTH;
+                    tail_ptr_2 <= #D (tail_ptr + num_to_write) % BUFFER_DEPTH;
+                end else if (secure_mode && tail_mismatch) begin
+                    // Self-healing: correct erroneous copies during idle
+                    if (tail_err_0) tail_ptr_0 <= #D tail_ptr;
+                    if (tail_err_1) tail_ptr_1 <= #D tail_ptr;
+                    if (tail_err_2) tail_ptr_2 <= #D tail_ptr;
                 end
 
+                // =========================================================
+                // Head pointer update (read side)
+                // =========================================================
                 if (read_en_0 || read_en_1 || read_en_2) begin
-                    head_ptr <= #D (head_ptr + num_to_read) % BUFFER_DEPTH;
+                    head_ptr_0 <= #D (head_ptr + num_to_read) % BUFFER_DEPTH;
+                    head_ptr_1 <= #D (head_ptr + num_to_read) % BUFFER_DEPTH;
+                    head_ptr_2 <= #D (head_ptr + num_to_read) % BUFFER_DEPTH;
+                end else if (secure_mode && head_mismatch) begin
+                    // Self-healing: correct erroneous copies during idle
+                    if (head_err_0) head_ptr_0 <= #D head_ptr;
+                    if (head_err_1) head_ptr_1 <= #D head_ptr;
+                    if (head_err_2) head_ptr_2 <= #D head_ptr;
                 end
 
-                count <= #D count + num_to_write - num_to_read;
+                // =========================================================
+                // Count update
+                // =========================================================
+                count_0 <= #D count + num_to_write - num_to_read;
+                count_1 <= #D count + num_to_write - num_to_read;
+                count_2 <= #D count + num_to_write - num_to_read;
 
-                // Write new instructions
+                // =========================================================
+                // Write new instructions to memory
+                // =========================================================
                 if (write_en_0) begin
-                    instruction_mem[tail_ptr] <= #D instruction_i_0;
-                    pc_mem[tail_ptr] <= #D pc_i_0;
-                    imm_mem[tail_ptr] <= #D imm_i_0;
+                    instruction_mem[tail_ptr]       <= #D instruction_i_0;
+                    pc_mem[tail_ptr]                <= #D pc_i_0;
+                    imm_mem[tail_ptr]               <= #D imm_i_0;
                     branch_prediction_mem[tail_ptr] <= #D branch_prediction_i_0;
-                    pc_at_prediction_mem[tail_ptr] <= #D pc_at_prediction_i_0;
-                    global_history_mem[tail_ptr] <= #D global_history_0_i;
-                    ras_tos_checkpoint_mem[tail_ptr] <= #D ras_tos_checkpoint_i;
-
+                    pc_at_prediction_mem[tail_ptr]  <= #D pc_at_prediction_i_0;
+                    global_history_mem[tail_ptr]    <= #D global_history_0_i;
+                    ras_tos_checkpoint_mem[tail_ptr]<= #D ras_tos_checkpoint_i;
                 end
 
                 if (write_en_1) begin
-                    instruction_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D instruction_i_1;
-                    pc_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D pc_i_1;
-                    imm_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D imm_i_1;
+                    instruction_mem[(tail_ptr + 1) % BUFFER_DEPTH]       <= #D instruction_i_1;
+                    pc_mem[(tail_ptr + 1) % BUFFER_DEPTH]                <= #D pc_i_1;
+                    imm_mem[(tail_ptr + 1) % BUFFER_DEPTH]               <= #D imm_i_1;
                     branch_prediction_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D branch_prediction_i_1;
-                    pc_at_prediction_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D pc_at_prediction_i_1;
-                    global_history_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D global_history_1_i;
-                    ras_tos_checkpoint_mem[(tail_ptr + 1) % BUFFER_DEPTH] <= #D ras_tos_checkpoint_i;
-
+                    pc_at_prediction_mem[(tail_ptr + 1) % BUFFER_DEPTH]  <= #D pc_at_prediction_i_1;
+                    global_history_mem[(tail_ptr + 1) % BUFFER_DEPTH]    <= #D global_history_1_i;
+                    ras_tos_checkpoint_mem[(tail_ptr + 1) % BUFFER_DEPTH]<= #D ras_tos_checkpoint_i;
                 end
 
                 if (write_en_2) begin
-                    instruction_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D instruction_i_2;
-                    pc_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D pc_i_2;
-                    imm_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D imm_i_2;
+                    instruction_mem[(tail_ptr + 2) % BUFFER_DEPTH]       <= #D instruction_i_2;
+                    pc_mem[(tail_ptr + 2) % BUFFER_DEPTH]                <= #D pc_i_2;
+                    imm_mem[(tail_ptr + 2) % BUFFER_DEPTH]               <= #D imm_i_2;
                     branch_prediction_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D branch_prediction_i_2;
-                    pc_at_prediction_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D pc_at_prediction_i_2;
-                    global_history_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D global_history_2_i;
-                    ras_tos_checkpoint_mem[(tail_ptr + 2) % BUFFER_DEPTH] <= #D ras_tos_checkpoint_i;
+                    pc_at_prediction_mem[(tail_ptr + 2) % BUFFER_DEPTH]  <= #D pc_at_prediction_i_2;
+                    global_history_mem[(tail_ptr + 2) % BUFFER_DEPTH]    <= #D global_history_2_i;
+                    ras_tos_checkpoint_mem[(tail_ptr + 2) % BUFFER_DEPTH]<= #D ras_tos_checkpoint_i;
                 end
+
                 if (write_en_3) begin
-                    instruction_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D instruction_i_3;
-                    pc_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D pc_i_3;
-                    imm_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D imm_i_3;
+                    instruction_mem[(tail_ptr + 3) % BUFFER_DEPTH]       <= #D instruction_i_3;
+                    pc_mem[(tail_ptr + 3) % BUFFER_DEPTH]                <= #D pc_i_3;
+                    imm_mem[(tail_ptr + 3) % BUFFER_DEPTH]               <= #D imm_i_3;
                     branch_prediction_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D branch_prediction_i_3;
-                    pc_at_prediction_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D pc_at_prediction_i_3;
-                    global_history_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D global_history_3_i;
-                    ras_tos_checkpoint_mem[(tail_ptr + 3) % BUFFER_DEPTH] <= #D ras_tos_checkpoint_i;
+                    pc_at_prediction_mem[(tail_ptr + 3) % BUFFER_DEPTH]  <= #D pc_at_prediction_i_3;
+                    global_history_mem[(tail_ptr + 3) % BUFFER_DEPTH]    <= #D global_history_3_i;
+                    ras_tos_checkpoint_mem[(tail_ptr + 3) % BUFFER_DEPTH]<= #D ras_tos_checkpoint_i;
                 end
+
                 if (write_en_4) begin
-                    instruction_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D instruction_i_4;
-                    pc_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D pc_i_4;
-                    imm_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D imm_i_4;
+                    instruction_mem[(tail_ptr + 4) % BUFFER_DEPTH]       <= #D instruction_i_4;
+                    pc_mem[(tail_ptr + 4) % BUFFER_DEPTH]                <= #D pc_i_4;
+                    imm_mem[(tail_ptr + 4) % BUFFER_DEPTH]               <= #D imm_i_4;
                     branch_prediction_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D branch_prediction_i_4;
-                    pc_at_prediction_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D pc_at_prediction_i_4;
-                    global_history_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D global_history_4_i;
-                    ras_tos_checkpoint_mem[(tail_ptr + 4) % BUFFER_DEPTH] <= #D ras_tos_checkpoint_i;
+                    pc_at_prediction_mem[(tail_ptr + 4) % BUFFER_DEPTH]  <= #D pc_at_prediction_i_4;
+                    global_history_mem[(tail_ptr + 4) % BUFFER_DEPTH]    <= #D global_history_4_i;
+                    ras_tos_checkpoint_mem[(tail_ptr + 4) % BUFFER_DEPTH]<= #D ras_tos_checkpoint_i;
                 end
             end
         end

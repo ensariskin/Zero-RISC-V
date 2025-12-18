@@ -152,7 +152,8 @@ module rv32i_superscalar_core #(
     logic ex2_is_jalr;
 
     logic eager_flush;
-
+    logic secure_mode;
+    assign secure_mode = 0;
 
     cdb_if #(
         .DATA_WIDTH(DATA_WIDTH),
@@ -170,6 +171,7 @@ module rv32i_superscalar_core #(
     ) fetch_buffer_unit (
         .clk(clk),
         .reset(reset),
+        .secure_mode(secure_mode),
 
         // Memory interface
         .inst_addr_0(inst_addr_0),

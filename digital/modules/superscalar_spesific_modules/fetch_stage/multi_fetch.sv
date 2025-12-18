@@ -7,6 +7,8 @@ module multi_fetch #(
    )(
       input  logic clk,
       input  logic reset,
+      input  logic buble,
+      input  logic secure_mode,
 
       output logic [size-1 : 0] inst_addr_0,
       input  logic [size-1 : 0] instruction_i_0,
@@ -22,9 +24,6 @@ module multi_fetch #(
 
       output logic [size-1 : 0] inst_addr_4,
       input  logic [size-1 : 0] instruction_i_4,
-
-      // Pipeline control signals
-      input  logic buble,
 
       //==========================================================================
       // BRAT Interface (Simplified - all branch/JALR info comes from BRAT in-order)
@@ -103,10 +102,6 @@ module multi_fetch #(
    );
 
    //localparam D = 1; // Delay for simulation purposes
-
-   // Add parallel_mode control signal for pc_ctrl_super
-   logic secure_mode; // todo : make it port
-   assign secure_mode = 1'b1; // Always enable 3-instruction parallel mode
 
    //==========================================================================
    // Misprediction handling: flush on any misprediction from BRAT (in-order)
