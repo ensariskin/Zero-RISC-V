@@ -163,6 +163,7 @@ module data_memory_selector (
             $finish;
         end
     end
+    
     // Debug information
     `ifdef DEBUG_MEMORY_SELECTOR
     always @(posedge clk) begin

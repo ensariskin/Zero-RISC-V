@@ -1,0 +1,776 @@
+{
+  "todotree": {
+    "tree": [
+      {
+        "key": 1732400000001,
+        "children": [
+          {
+            "key": 1732400000002,
+            "children": [],
+            "todo": {
+              "content": "BRAT Circular Buffer Implementation (brat_circular_buffer.sv)",
+              "id": 1732400000002,
+              "level": "default",
+              "done": true,
+              "start": 1732400000002,
+              "focus": false,
+              "end": 1732400000002
+            }
+          },
+          {
+            "key": 1732400000003,
+            "children": [],
+            "todo": {
+              "content": "RAT BRAT Integration - Push/Pop/Restore Logic",
+              "id": 1732400000003,
+              "level": "default",
+              "done": true,
+              "start": 1732400000003,
+              "focus": false,
+              "end": 1732400000003
+            }
+          },
+          {
+            "key": 1732400000004,
+            "children": [],
+            "todo": {
+              "content": "RAT Restore Index Selection (restore_idx for position-specific recovery)",
+              "id": 1732400000004,
+              "level": "default",
+              "done": true,
+              "start": 1732400000004,
+              "focus": false,
+              "end": 1732400000004
+            }
+          },
+          {
+            "key": 1732400000005,
+            "children": [],
+            "todo": {
+              "content": "BRAT Testbench with 8 comprehensive test scenarios",
+              "id": 1732400000005,
+              "level": "default",
+              "done": true,
+              "start": 1732400000005,
+              "focus": false,
+              "end": 1732400000005
+            }
+          }
+        ],
+        "todo": {
+          "content": "COMPLETED: RAT + BRAT (Register Alias Table + Branch RAT)",
+          "id": 1732400000001,
+          "level": "success",
+          "done": true,
+          "start": 1732400000001,
+          "focus": false,
+          "end": 1732400000001
+        }
+      },
+      {
+        "key": 1732400000010,
+        "children": [
+          {
+            "key": 1732400000011,
+            "children": [],
+            "todo": {
+              "content": "Add branch_resolved[2:0] output signals (from execute stage)",
+              "id": 1732400000011,
+              "level": "default",
+              "done": true,
+              "start": 1732400000011,
+              "focus": false,
+              "end": 1764015452750
+            }
+          },
+          {
+            "key": 1732400000012,
+            "children": [],
+            "todo": {
+              "content": "Add resolved_phys_reg_0/1/2[5:0] outputs (branch physical register addresses)",
+              "id": 1732400000012,
+              "level": "default",
+              "done": true,
+              "start": 1732400000012,
+              "focus": false,
+              "end": 1764015464852
+            }
+          },
+          {
+            "key": 1732400000013,
+            "children": [],
+            "todo": {
+              "content": "Generate branch_resolved from (is_branch && issue_valid) for each FU",
+              "id": 1732400000013,
+              "level": "default",
+              "done": true,
+              "start": 1732400000013,
+              "focus": false,
+              "end": 1764015467390
+            }
+          },
+          {
+            "key": 1732400000014,
+            "children": [],
+            "todo": {
+              "content": "Route phys_reg_branch_0/1/2 to resolved_phys_reg outputs",
+              "id": 1732400000014,
+              "level": "default",
+              "done": true,
+              "start": 1732400000014,
+              "focus": false,
+              "end": 1764015469343
+            }
+          }
+        ],
+        "todo": {
+          "content": "EXECUTE STAGE: Branch Resolution Signals (execute_stage.sv)",
+          "id": 1732400000010,
+          "level": "error",
+          "done": true,
+          "start": 1732400000010,
+          "focus": false,
+          "end": 1764015470066
+        }
+      },
+      {
+        "key": 1732400000020,
+        "children": [
+          {
+            "key": 1732400000021,
+            "children": [],
+            "todo": {
+              "content": "Connect execute stage branch_resolved signals to issue stage",
+              "id": 1732400000021,
+              "level": "default",
+              "done": true,
+              "start": 1732400000021,
+              "focus": false,
+              "end": 1764015479890
+            }
+          },
+          {
+            "key": 1732400000022,
+            "children": [],
+            "todo": {
+              "content": "Connect resolved_phys_reg_0/1/2 from execute to issue stage",
+              "id": 1732400000022,
+              "level": "default",
+              "done": true,
+              "start": 1732400000022,
+              "focus": false,
+              "end": 1764015483078
+            }
+          },
+          {
+            "key": 1732400000023,
+            "children": [],
+            "todo": {
+              "content": "Verify existing misprediction signals are properly routed",
+              "id": 1732400000023,
+              "level": "default",
+              "done": true,
+              "start": 1732400000023,
+              "focus": false,
+              "end": 1764015487318
+            }
+          }
+        ],
+        "todo": {
+          "content": "TOP LEVEL: Execute → Issue Stage Signal Routing (rv32i_superscalar_core.sv)",
+          "id": 1732400000020,
+          "level": "error",
+          "done": true,
+          "start": 1732400000020,
+          "focus": false,
+          "end": 1764015488060
+        }
+      },
+      {
+        "key": 1732400000030,
+        "children": [
+          {
+            "key": 1732400000031,
+            "children": [],
+            "todo": {
+              "content": "Add free_list_snapshot to BRAT entry structure",
+              "id": 1732400000031,
+              "level": "default",
+              "done": false,
+              "start": 1732400000031,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000032,
+            "children": [],
+            "todo": {
+              "content": "Capture free_count at branch dispatch time and store in BRAT",
+              "id": 1732400000032,
+              "level": "default",
+              "done": false,
+              "start": 1732400000032,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000033,
+            "children": [],
+            "todo": {
+              "content": "Connect circular_buffer_3port set_read_ptr to BRAT restore logic",
+              "id": 1732400000033,
+              "level": "default",
+              "done": false,
+              "start": 1732400000033,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000034,
+            "children": [],
+            "todo": {
+              "content": "Restore free list read pointer on misprediction (set_read_ptr_en + set_read_ptr_value)",
+              "id": 1732400000034,
+              "level": "default",
+              "done": false,
+              "start": 1732400000034,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000035,
+            "children": [],
+            "todo": {
+              "content": "Test free list recovery with multiple outstanding branches",
+              "id": 1732400000035,
+              "level": "default",
+              "done": false,
+              "start": 1732400000035,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "ISSUE STAGE: Free List Snapshot & Restore (register_alias_table.sv)",
+          "id": 1732400000030,
+          "level": "warning",
+          "done": false,
+          "start": 1732400000030,
+          "focus": false
+        }
+      },
+      {
+        "key": 1732400000040,
+        "children": [
+          {
+            "key": 1732400000041,
+            "children": [],
+            "todo": {
+              "content": "Add misprediction detection input from CDB (branch_mispredicted signal)",
+              "id": 1732400000041,
+              "level": "default",
+              "done": false,
+              "start": 1732400000041,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000042,
+            "children": [],
+            "todo": {
+              "content": "Implement tail pointer manipulation logic on misprediction",
+              "id": 1732400000042,
+              "level": "default",
+              "done": false,
+              "start": 1732400000042,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000043,
+            "children": [],
+            "todo": {
+              "content": "Set tail_ptr to mispredicted branch ROB entry index",
+              "id": 1732400000043,
+              "level": "default",
+              "done": false,
+              "start": 1732400000043,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000044,
+            "children": [],
+            "todo": {
+              "content": "Invalidate all younger entries (mark executed=0, exception=1)",
+              "id": 1732400000044,
+              "level": "default",
+              "done": false,
+              "start": 1732400000044,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000045,
+            "children": [],
+            "todo": {
+              "content": "Ensure mispredicted branch itself is also invalidated",
+              "id": 1732400000045,
+              "level": "default",
+              "done": false,
+              "start": 1732400000045,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000046,
+            "children": [],
+            "todo": {
+              "content": "Test ROB flush with varying numbers of in-flight instructions",
+              "id": 1732400000046,
+              "level": "default",
+              "done": false,
+              "start": 1732400000046,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "DISPATCH/ROB: ROB Tail Manipulation on Misprediction (reorder_buffer.sv)",
+          "id": 1732400000040,
+          "level": "warning",
+          "done": false,
+          "start": 1732400000040,
+          "focus": false
+        }
+      },
+      {
+        "key": 1732400000050,
+        "children": [
+          {
+            "key": 1732400000051,
+            "children": [],
+            "todo": {
+              "content": "Add eager_flush_enable input to fetch_buffer_top",
+              "id": 1732400000051,
+              "level": "default",
+              "done": true,
+              "start": 1732400000051,
+              "focus": false,
+              "end": 1764106946777
+            }
+          },
+          {
+            "key": 1732400000052,
+            "children": [],
+            "todo": {
+              "content": "Add BRAT restore triggered flush input (separate from commit-based flush)",
+              "id": 1732400000052,
+              "level": "default",
+              "done": true,
+              "start": 1732400000052,
+              "focus": false,
+              "end": 1764106946272
+            }
+          },
+          {
+            "key": 1732400000053,
+            "children": [],
+            "todo": {
+              "content": "Flush instruction buffer on BRAT restore (clear all entries)",
+              "id": 1732400000053,
+              "level": "default",
+              "done": true,
+              "start": 1732400000053,
+              "focus": false,
+              "end": 1764106945969
+            }
+          },
+          {
+            "key": 1732400000054,
+            "children": [],
+            "todo": {
+              "content": "Update PC to correct_pc from mispredicted branch resolution",
+              "id": 1732400000054,
+              "level": "default",
+              "done": true,
+              "start": 1732400000054,
+              "focus": false,
+              "end": 1764106945613
+            }
+          },
+          {
+            "key": 1732400000055,
+            "children": [],
+            "todo": {
+              "content": "Test fetch restart latency after eager flush",
+              "id": 1732400000055,
+              "level": "default",
+              "done": true,
+              "start": 1732400000055,
+              "focus": false,
+              "end": 1764106945223
+            }
+          }
+        ],
+        "todo": {
+          "content": "FETCH STAGE: Eager Flush on BRAT Restore (fetch_buffer_top.sv)",
+          "id": 1732400000050,
+          "level": "warning",
+          "done": true,
+          "start": 1732400000050,
+          "focus": false,
+          "end": 1764106941859
+        }
+      },
+      {
+        "key": 1732400000060,
+        "children": [
+          {
+            "key": 1732400000061,
+            "children": [],
+            "todo": {
+              "content": "Wire execute stage branch_resolved to issue stage inputs",
+              "id": 1732400000061,
+              "level": "default",
+              "done": false,
+              "start": 1732400000061,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000062,
+            "children": [],
+            "todo": {
+              "content": "Wire resolved_phys_reg signals from execute to issue",
+              "id": 1732400000062,
+              "level": "default",
+              "done": false,
+              "start": 1732400000062,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000063,
+            "children": [],
+            "todo": {
+              "content": "Create BRAT restore flush signal from issue stage to fetch",
+              "id": 1732400000063,
+              "level": "default",
+              "done": false,
+              "start": 1732400000063,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000064,
+            "children": [],
+            "todo": {
+              "content": "Connect misprediction signals to ROB for tail manipulation",
+              "id": 1732400000064,
+              "level": "default",
+              "done": false,
+              "start": 1732400000064,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000065,
+            "children": [],
+            "todo": {
+              "content": "Add eager_flush_enable global parameter/signal",
+              "id": 1732400000065,
+              "level": "default",
+              "done": false,
+              "start": 1732400000065,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "TOP LEVEL: Global Integration & Signal Routing (rv32i_superscalar_core.sv)",
+          "id": 1732400000060,
+          "level": "warning",
+          "done": false,
+          "start": 1732400000060,
+          "focus": false
+        }
+      },
+      {
+        "key": 1732400000070,
+        "children": [
+          {
+            "key": 1732400000071,
+            "children": [],
+            "todo": {
+              "content": "Create comprehensive testbench for eager misprediction recovery",
+              "id": 1732400000071,
+              "level": "default",
+              "done": false,
+              "start": 1732400000071,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000072,
+            "children": [],
+            "todo": {
+              "content": "Test Case 1: Single branch misprediction with younger instructions",
+              "id": 1732400000072,
+              "level": "default",
+              "done": false,
+              "start": 1732400000072,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000073,
+            "children": [],
+            "todo": {
+              "content": "Test Case 2: Multiple branches in flight (oldest mispredicts)",
+              "id": 1732400000073,
+              "level": "default",
+              "done": false,
+              "start": 1732400000073,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000074,
+            "children": [],
+            "todo": {
+              "content": "Test Case 3: Middle branch mispredicts (restore_idx != 0)",
+              "id": 1732400000074,
+              "level": "default",
+              "done": false,
+              "start": 1732400000074,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000075,
+            "children": [],
+            "todo": {
+              "content": "Test Case 4: Verify RAT, free list, and ROB are correctly restored",
+              "id": 1732400000075,
+              "level": "default",
+              "done": false,
+              "start": 1732400000075,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000076,
+            "children": [],
+            "todo": {
+              "content": "Test Case 5: Back-to-back mispredictions",
+              "id": 1732400000076,
+              "level": "default",
+              "done": false,
+              "start": 1732400000076,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000077,
+            "children": [],
+            "todo": {
+              "content": "Measure recovery latency (cycles from misprediction to first new fetch)",
+              "id": 1732400000077,
+              "level": "default",
+              "done": false,
+              "start": 1732400000077,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "INTEGRATION TESTING: End-to-End Validation",
+          "id": 1732400000070,
+          "level": "error",
+          "done": false,
+          "start": 1732400000070,
+          "focus": false
+        }
+      },
+      {
+        "key": 1732400000080,
+        "children": [
+          {
+            "key": 1732400000081,
+            "children": [],
+            "todo": {
+              "content": "Run test18 benchmark with eager flush disabled (baseline)",
+              "id": 1732400000081,
+              "level": "default",
+              "done": false,
+              "start": 1732400000081,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000082,
+            "children": [],
+            "todo": {
+              "content": "Run test18 with eager flush enabled (optimized)",
+              "id": 1732400000082,
+              "level": "default",
+              "done": false,
+              "start": 1732400000082,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000083,
+            "children": [],
+            "todo": {
+              "content": "Measure total cycle count improvement (target: 36,000 → 28,000)",
+              "id": 1732400000083,
+              "level": "default",
+              "done": false,
+              "start": 1732400000083,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000084,
+            "children": [],
+            "todo": {
+              "content": "Calculate IPC improvement (target: 1.41 → 1.77)",
+              "id": 1732400000084,
+              "level": "default",
+              "done": false,
+              "start": 1732400000084,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000085,
+            "children": [],
+            "todo": {
+              "content": "Measure average misprediction recovery penalty (cycles)",
+              "id": 1732400000085,
+              "level": "default",
+              "done": false,
+              "start": 1732400000085,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000086,
+            "children": [],
+            "todo": {
+              "content": "Generate waveforms and verify no deadlocks/stalls",
+              "id": 1732400000086,
+              "level": "default",
+              "done": false,
+              "start": 1732400000086,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "PERFORMANCE BENCHMARKING: test18 Analysis",
+          "id": 1732400000080,
+          "level": "success",
+          "done": false,
+          "start": 1732400000080,
+          "focus": false
+        }
+      },
+      {
+        "key": 1732400000090,
+        "children": [
+          {
+            "key": 1732400000091,
+            "children": [],
+            "todo": {
+              "content": "Document BRAT circular buffer architecture and design decisions",
+              "id": 1732400000091,
+              "level": "default",
+              "done": false,
+              "start": 1732400000091,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000092,
+            "children": [],
+            "todo": {
+              "content": "Create timing diagrams for eager misprediction recovery flow",
+              "id": 1732400000092,
+              "level": "default",
+              "done": false,
+              "start": 1732400000092,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000093,
+            "children": [],
+            "todo": {
+              "content": "Document free list snapshot/restore mechanism",
+              "id": 1732400000093,
+              "level": "default",
+              "done": false,
+              "start": 1732400000093,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000094,
+            "children": [],
+            "todo": {
+              "content": "Add comments to all modified modules explaining eager flush logic",
+              "id": 1732400000094,
+              "level": "default",
+              "done": false,
+              "start": 1732400000094,
+              "focus": false
+            }
+          },
+          {
+            "key": 1732400000095,
+            "children": [],
+            "todo": {
+              "content": "Update architecture specification with performance numbers",
+              "id": 1732400000095,
+              "level": "default",
+              "done": false,
+              "start": 1732400000095,
+              "focus": false
+            }
+          }
+        ],
+        "todo": {
+          "content": "DOCUMENTATION: Architecture & Design Documentation",
+          "id": 1732400000090,
+          "level": "default",
+          "done": false,
+          "start": 1732400000090,
+          "focus": false
+        }
+      }
+    ],
+    "expandKeys": [
+      1732400000010,
+      1732400000011,
+      1732400000020,
+      1732400000030,
+      1732400000040,
+      1732400000050
+    ],
+    "schema": "https://github.com/Saber2pr/vsc-ext-todolist/blob/master/src/api/type.ts#L3",
+    "add_mode": "bottom",
+    "virtual": false,
+    "timelines": [],
+    "showLine": false,
+    "playFontSize": 24,
+    "title": "fast_misprediction_handling",
+    "autoSort": false,
+    "showEndTime": false,
+    "simpleMode": false,
+    "lang": "en",
+    "version": "1764106946868"
+  }
+}

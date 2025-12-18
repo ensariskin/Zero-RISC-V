@@ -1,5 +1,7 @@
 # Fetch Stage Files
 fetch_stage/branch_predictor_super.sv
+fetch_stage/gshare_predictor_super.sv
+fetch_stage/tournament_predictor.sv
 fetch_stage/jalr_predictor.sv
 fetch_stage/pc_ctrl_super.sv
 fetch_stage/jump_controller_super.sv

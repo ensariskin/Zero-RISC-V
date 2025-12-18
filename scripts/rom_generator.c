@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     char cmd[512];
     FILE *infile, *outfile;
     int len;
-    uint32_t rom[131072]; //this is where the opcodes are stored, you may need to increase its size if your program is too big.
+    uint32_t rom[131072*2]; //this is where the opcodes are stored, you may need to increase its size if your program is too big.
 
     //read and copy the instruction opcodes from .bin file to "rom" array
     infile = fopen(argv[1], "rb");

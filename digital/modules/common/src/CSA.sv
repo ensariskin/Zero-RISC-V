@@ -36,7 +36,7 @@ module CSA#(parameter size = 32)(
     assign S[size-1:1] = RCA_out[size-2:0];
     assign cout = RCA_out[size-1];
 
-    assign v = (S[size-1]^A[size-1]) & ~(A[size-1]^B[size-1]);
+    assign v = (RCA_out[size-2]^A[size-1]) & ~(A[size-1]^B[size-1]);
 
     genvar i;
     generate

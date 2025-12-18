@@ -52,7 +52,7 @@ module multi_port_register_file #(
             for (int i = 0; i < NUM_REGISTERS; i++) begin
                 register_data[i] <= #D '0;
             end
-            register_data[2] <= #D 32'h7FFFFFF0;
+            //register_data[2] <= #D 32'h7FFE_FFF0;
         end else begin
             // Handle commits from ROB (sets data and marks as valid)
             // No conflicts since ROB guarantees different addresses
@@ -84,24 +84,24 @@ module multi_port_register_file #(
     
     // todo think smaller logic
     // todo forwarding from higher ports to lower ports????
-    assign inst_0_read_addr_a_equal_commit_addr_0 = (commit_addr_0 == inst_0_read_addr_a) && (commit_addr_0 != 0);
-    assign inst_0_read_addr_a_equal_commit_addr_1 = (commit_addr_1 == inst_0_read_addr_a) && (commit_addr_1 != 0);
-    assign inst_0_read_addr_a_equal_commit_addr_2 = (commit_addr_2 == inst_0_read_addr_a) && (commit_addr_2 != 0);
-    assign inst_0_read_addr_b_equal_commit_addr_0 = (commit_addr_0 == inst_0_read_addr_b) && (commit_addr_0 != 0);
-    assign inst_0_read_addr_b_equal_commit_addr_1 = (commit_addr_1 == inst_0_read_addr_b) && (commit_addr_1 != 0);
-    assign inst_0_read_addr_b_equal_commit_addr_2 = (commit_addr_2 == inst_0_read_addr_b) && (commit_addr_2 != 0);
-    assign inst_1_read_addr_a_equal_commit_addr_0 = (commit_addr_0 == inst_1_read_addr_a) && (commit_addr_0 != 0);
-    assign inst_1_read_addr_a_equal_commit_addr_1 = (commit_addr_1 == inst_1_read_addr_a) && (commit_addr_1 != 0);
-    assign inst_1_read_addr_a_equal_commit_addr_2 = (commit_addr_2 == inst_1_read_addr_a) && (commit_addr_2 != 0);
-    assign inst_1_read_addr_b_equal_commit_addr_0 = (commit_addr_0 == inst_1_read_addr_b) && (commit_addr_0 != 0);
-    assign inst_1_read_addr_b_equal_commit_addr_1 = (commit_addr_1 == inst_1_read_addr_b) && (commit_addr_1 != 0);
-    assign inst_1_read_addr_b_equal_commit_addr_2 = (commit_addr_2 == inst_1_read_addr_b) && (commit_addr_2 != 0);
-    assign inst_2_read_addr_a_equal_commit_addr_0 = (commit_addr_0 == inst_2_read_addr_a) && (commit_addr_0 != 0);
-    assign inst_2_read_addr_a_equal_commit_addr_1 = (commit_addr_1 == inst_2_read_addr_a) && (commit_addr_1 != 0);
-    assign inst_2_read_addr_a_equal_commit_addr_2 = (commit_addr_2 == inst_2_read_addr_a) && (commit_addr_2 != 0);
-    assign inst_2_read_addr_b_equal_commit_addr_0 = (commit_addr_0 == inst_2_read_addr_b) && (commit_addr_0 != 0);
-    assign inst_2_read_addr_b_equal_commit_addr_1 = (commit_addr_1 == inst_2_read_addr_b) && (commit_addr_1 != 0);
-    assign inst_2_read_addr_b_equal_commit_addr_2 = (commit_addr_2 == inst_2_read_addr_b) && (commit_addr_2 != 0);
+    assign inst_0_read_addr_a_equal_commit_addr_0 = (commit_addr_0 == inst_0_read_addr_a) && (commit_addr_0 != 0) && commit_enable_0;
+    assign inst_0_read_addr_a_equal_commit_addr_1 = (commit_addr_1 == inst_0_read_addr_a) && (commit_addr_1 != 0) && commit_enable_1;
+    assign inst_0_read_addr_a_equal_commit_addr_2 = (commit_addr_2 == inst_0_read_addr_a) && (commit_addr_2 != 0) && commit_enable_2;
+    assign inst_0_read_addr_b_equal_commit_addr_0 = (commit_addr_0 == inst_0_read_addr_b) && (commit_addr_0 != 0) && commit_enable_0;
+    assign inst_0_read_addr_b_equal_commit_addr_1 = (commit_addr_1 == inst_0_read_addr_b) && (commit_addr_1 != 0) && commit_enable_1;
+    assign inst_0_read_addr_b_equal_commit_addr_2 = (commit_addr_2 == inst_0_read_addr_b) && (commit_addr_2 != 0) && commit_enable_2;
+    assign inst_1_read_addr_a_equal_commit_addr_0 = (commit_addr_0 == inst_1_read_addr_a) && (commit_addr_0 != 0) && commit_enable_0;
+    assign inst_1_read_addr_a_equal_commit_addr_1 = (commit_addr_1 == inst_1_read_addr_a) && (commit_addr_1 != 0) && commit_enable_1;
+    assign inst_1_read_addr_a_equal_commit_addr_2 = (commit_addr_2 == inst_1_read_addr_a) && (commit_addr_2 != 0) && commit_enable_2;
+    assign inst_1_read_addr_b_equal_commit_addr_0 = (commit_addr_0 == inst_1_read_addr_b) && (commit_addr_0 != 0) && commit_enable_0;
+    assign inst_1_read_addr_b_equal_commit_addr_1 = (commit_addr_1 == inst_1_read_addr_b) && (commit_addr_1 != 0) && commit_enable_1;
+    assign inst_1_read_addr_b_equal_commit_addr_2 = (commit_addr_2 == inst_1_read_addr_b) && (commit_addr_2 != 0) && commit_enable_2;
+    assign inst_2_read_addr_a_equal_commit_addr_0 = (commit_addr_0 == inst_2_read_addr_a) && (commit_addr_0 != 0) && commit_enable_0;
+    assign inst_2_read_addr_a_equal_commit_addr_1 = (commit_addr_1 == inst_2_read_addr_a) && (commit_addr_1 != 0) && commit_enable_1;
+    assign inst_2_read_addr_a_equal_commit_addr_2 = (commit_addr_2 == inst_2_read_addr_a) && (commit_addr_2 != 0) && commit_enable_2;
+    assign inst_2_read_addr_b_equal_commit_addr_0 = (commit_addr_0 == inst_2_read_addr_b) && (commit_addr_0 != 0) && commit_enable_0;
+    assign inst_2_read_addr_b_equal_commit_addr_1 = (commit_addr_1 == inst_2_read_addr_b) && (commit_addr_1 != 0) && commit_enable_1;
+    assign inst_2_read_addr_b_equal_commit_addr_2 = (commit_addr_2 == inst_2_read_addr_b) && (commit_addr_2 != 0) && commit_enable_2;
     
     // Read port 0: can forward from commit 2, 1, or 0 
     always_comb begin

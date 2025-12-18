@@ -1,217 +1,215 @@
-# RISC-V RV32I Pipelined Processor
+# RV32I 3-Way Superscalar Processor
 
-A complete implementation of a 32-bit RISC-V processor targeting the RV32I base integer instruction set architecture. This project implements a 5-stage pipelined design with comprehensive hazard detection, data forwarding mechanisms, and extensive verification infrastructure.
+## Overview
 
-[![SystemVerilog](https://img.shields.io/badge/SystemVerilog-IEEE%201800-blue.svg)](https://en.wikipedia.org/wiki/SystemVerilog)
-[![RISC-V](https://img.shields.io/badge/RISC--V-RV32I-green.svg)](https://riscv.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+A high-performance **3-way superscalar RISC-V RV32I processor** with out-of-order execution using the **Tomasulo algorithm** with physical register renaming.
 
-## Architecture Overview
+## Key Features
 
-This RISC-V processor implements a classic 5-stage pipeline architecture:
+| Feature | Specification |
+|---------|---------------|
+| **ISA** | RV32I Base Integer |
+| **Execution Model** | 3-Way Superscalar, Out-of-Order |
+| **Pipeline** | Fetch → Issue → Dispatch → Execute |
+| **Register Renaming** | 32 Architectural → 64 Physical |
+| **ROB** | 32 entries |
+| **BRAT** | 16-entry circular buffer |
+| **Instruction Buffer** | 16 entries (5 in / 3 out per cycle) |
+| **LSQ** | 32 entries with store-to-load forwarding |
+| **Branch Predictor** | 2-bit saturating counter (32 entries) |
 
-1. **Instruction Fetch (IF)** - Program counter management and instruction memory interface
-2. **Instruction Decode (ID)** - Instruction decoding, register file access, and control signal generation
-3. **Execute (EX)** - ALU operations, branch condition evaluation, and address calculation
-4. **Memory Access (MEM)** - Data memory interface and load/store operations
-5. **Write Back (WB)** - Register file write-back and result selection
+## Architecture
 
-### Key Features
-
-- **Complete RV32I ISA Implementation** - Full support for the RISC-V base integer instruction set
-- **5-Stage Pipeline Architecture** - Classic pipeline design with hazard handling mechanisms
-- **Data Forwarding Unit** - Hardware-based data hazard resolution
-- **Branch Prediction Support** - Infrastructure for branch prediction implementation
-- **Comprehensive Hazard Detection** - Pipeline hazard detection and stall management
-- **Modular SystemVerilog Design** - Well-organized module hierarchy for maintainability
-- **Extensive Test Infrastructure** - Comprehensive test suite for verification and validation
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         FETCH STAGE                                 │
+│  ┌─────────┐   ┌────────────┐   ┌─────────────────────────────────┐│
+│  │ PC Ctrl │──▶│ Multi-Fetch│──▶│ Instruction Buffer (16 entries) ││
+│  │         │   │  (5 ports) │   │       5 in / 3 out              ││
+│  └─────────┘   └────────────┘   └─────────────────────────────────┘│
+│       ▲ Branch Predictor (32-entry, 2-bit)                         │
+└───────│────────────────────────────────────────────────────────────┘
+        │ Misprediction Redirect              │ 3 instructions/cycle
+        │                                     ▼
+┌───────│────────────────────────────────────────────────────────────┐
+│       │                    ISSUE STAGE                             │
+│  ┌────┴────────────────────────────────────────────────────────┐   │
+│  │            Register Alias Table (RAT)                        │   │
+│  │          32 Arch → 64 Physical Register Mapping             │   │
+│  │              Circular buffer free list                       │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                              │                                      │
+│  ┌───────────────────────────┴──────────────────────────────────┐   │
+│  │                 BRAT (16-entry circular buffer)              │   │
+│  │         RAT snapshot per branch for misprediction recovery   │   │
+│  │              In-order branch resolution outputs              │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                               │ 3 instructions/cycle
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        DISPATCH STAGE                               │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              Reorder Buffer (ROB) - 32 entries               │   │
+│  │   3 allocation ports, 6 CDB update ports, 3 commit ports     │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                              │                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │             3× Reservation Stations (single-entry each)      │   │
+│  │          Tag-based dependency (3-bit: 111 = ready)           │   │
+│  │               CDB monitoring for operand wakeup              │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                              │                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                 LSQ - 32 entries (FIFO)                      │   │
+│  │   Store-to-load forwarding, eager misprediction flush        │   │
+│  │              3 parallel memory ports                         │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        EXECUTE STAGE                                │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐                    │
+│  │   ALU 0    │  │   ALU 1    │  │   ALU 2    │                    │
+│  │  (R/I ops) │  │  (R/I ops) │  │(R/I/Branch)│                    │
+│  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘                    │
+│        │               │               │                            │
+│        ▼               ▼               ▼                            │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │        Common Data Bus (CDB) - 3 ALU + 3 LSQ channels        │   │
+│  │   cdb_valid_0/1/2 (ALU), cdb_valid_3_0/3_1/3_2 (LSQ)        │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      WRITEBACK & COMMIT                             │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │       Physical Register File (64 × 32-bit)                   │   │
+│  │   6 read ports (3 inst × 2 operands), 3 commit write ports   │   │
+│  │        Write-through for same-cycle read/write               │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │              In-Order Commit (3 per cycle)                   │   │
+│  │         ROB head → Register File → Free old physical reg     │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ## Project Structure
 
 ```
 RV32I/
-├── digital/                    # Core processor implementation
-│   ├── modules/               # SystemVerilog modules organized by functionality
-│   │   ├── common/           # Reusable building blocks (mux, adders, etc.)
-│   │   ├── fetch_stage/      # IF stage: PC control, branch predictor
-│   │   ├── decode_stage/     # ID stage: decoder, register file
-│   │   ├── execute/          # EX stage: ALU, branch controller
-│   │   ├── mem/              # MEM stage: memory interface
-│   │   ├── write_back/       # WB stage: writeback logic
-│   │   ├── pipeline_register/ # Pipeline registers (IF/ID, ID/EX, etc.)
-│   │   ├── hazard/           # Hazard detection and data forwarding
-│   │   └── digital_top/      # Top-level processor integration
-│   ├── sim/                  # Simulation environment and scripts
-│   └── testbench/            # Comprehensive test suite
-│       ├── tests/            # SystemVerilog testbenches
-│       └── hex/              # Test programs in hexadecimal format
-├── doc/                      # Documentation and design notes
-│   ├── changelogs/          # Development history and changes
-│   ├── Processor_Datasheet.pdf # Complete technical specification
-│   └── Schematic.pdf        # Processor block diagrams
-└── README.md                # This file
+├── digital/
+│   ├── modules/
+│   │   ├── common/                    # Shared packages (rv32i_pkg.sv)
+│   │   ├── fetch_stage/src/           # PC ctrl, branch predictor, jump controller
+│   │   ├── decode_stage/              # Instruction decoder, control
+│   │   ├── execute/                   # ALU, ALU control
+│   │   ├── mem/                       # Data memory controller
+│   │   ├── write_back/                # (Legacy)
+│   │   ├── hazard/                    # Hazard unit
+│   │   │
+│   │   └── superscalar_spesific_modules/
+│   │       ├── common/
+│   │       │   ├── brat_circular_buffer.sv   # BRAT (16-entry)
+│   │       │   └── priority_encoder.sv
+│   │       ├── fetch_stage/
+│   │       │   ├── instruction_buffer_new.sv # 16-entry FIFO
+│   │       │   ├── branch_predictor_super.sv # 32-entry 2-bit predictor
+│   │       │   ├── multi_fetch.sv            # 5-port fetch
+│   │       │   └── pc_ctrl_super.sv
+│   │       ├── issue_stage/
+│   │       │   ├── register_alias_table.sv   # RAT with free list
+│   │       │   └── issue_stage.sv
+│   │       ├── dispatch_stage/
+│   │       │   ├── reorder_buffer.sv         # 32-entry ROB
+│   │       │   ├── reservation_station.sv    # Single-entry RS
+│   │       │   ├── multi_port_register_file.sv # 64-reg, 6R/3W
+│   │       │   └── dispatch_stage.sv
+│   │       ├── execute_stage/
+│   │       │   └── execute_stage.sv
+│   │       ├── load_store_queue/
+│   │       │   ├── lsq_simple_top.sv         # 32-entry LSQ
+│   │       │   └── lsq_package.sv
+│   │       └── top/
+│   │           └── rv32i_superscalar_core.sv # Processor top
+│   │
+│   ├── sim/                           # Simulation files
+│   │   ├── superscalar_new.f          # Main file list
+│   │   ├── hex/                       # Test programs
+│   │   └── run/                       # Simulation outputs
+│   │
+│   ├── testbench/                     # Verification
+│   └── tests/                         # Test programs (C/ASM)
+│
+├── doc/                               # Documentation
+├── scripts/                           # Utility scripts
+└── tools/riscv-dv/                    # RISC-V DV verification
 ```
 
-## Quick Start
-
-### Prerequisites
-
-- **SystemVerilog Simulator**: ModelSim, VCS, or similar tools
-- **Design Vision Tools (DVT)**: Recommended for SystemVerilog development
-- **Git**: For version control
-
-### Clone and Setup
-
-```bash
-git clone https://github.com/ensariskin/Zero-RISC-V.git
-cd RV32I
-```
-
-### Running Simulations
-
-1. **Navigate to simulation directory:**
-   ```bash
-   cd digital/sim
-   ```
-
-2. **Run the processor simulation:**
-   ```bash
-   # Using the provided simulation environment
-   source dsim.env
-   ```
-
-3. **View waveforms:**
-   ```bash
-   # Waveforms are generated in digital/sim/waves/waves.vcd
-   ```
-
-### Test Programs
-
-The project includes test programs in `digital/testbench/hex/` for various scenarios:
-
-- `init_ins.hex` - Basic instruction testing
-- `init_ins_branches.hex` - Branch instruction validation
-- `init_ins_jump.hex` - Jump instruction testing
-- `init_ins_load_use_hazard.hex` - Load-use hazard scenarios
-- `init_ins_jalr.hex` - JALR instruction testing
-- Additional specialized test cases for development
-
-## Module Overview
-
-### Core Modules
+## Module Summary
 
 | Module | Location | Description |
 |--------|----------|-------------|
-| `rv32i_core` | `digital/modules/digital_top/` | Top-level processor integration |
-| `fetch_stage` | `digital/modules/fetch_stage/` | Instruction fetch and PC management |
-| `decode_stage` | `digital/modules/decode_stage/` | Instruction decode and register file |
-| `execute_stage` | `digital/modules/execute/` | ALU and execution logic |
-| `mem_stage` | `digital/modules/mem/` | Memory access stage |
-| `write_back_stage` | `digital/modules/write_back/` | Register writeback stage |
+| `rv32i_superscalar_core` | top/ | Processor top module |
+| `register_alias_table` | issue_stage/ | RAT with circular buffer free list |
+| `brat_circular_buffer` | common/ | 16-entry BRAT for branch recovery |
+| `reorder_buffer` | dispatch_stage/ | 32-entry ROB |
+| `reservation_station` | dispatch_stage/ | Single-entry RS with CDB monitoring |
+| `multi_port_register_file` | dispatch_stage/ | 64×32-bit, 6R/3W ports |
+| `instruction_buffer_new` | fetch_stage/ | 16-entry FIFO (5in/3out) |
+| `lsq_simple_top` | load_store_queue/ | 32-entry LSQ with forwarding |
+| `branch_predictor_super` | fetch_stage/ | 32-entry 2-bit predictor |
 
-### Support Modules
+## Tomasulo Implementation
 
-| Module | Location | Description |
-|--------|----------|-------------|
-| `rv32i_decoder` | `digital/modules/decode_stage/` | RV32I instruction decoder |
-| `register_file` | `digital/modules/decode_stage/` | 32-register register file |
-| `ALU` | `digital/modules/execute/` | Arithmetic Logic Unit |
-| `Data_Forward` | `digital/modules/hazard/` | Data forwarding unit |
-| `hazard_detection_unit` | `digital/modules/hazard/` | Pipeline hazard detection |
+1. **Issue**: Decode → RAT lookup → Allocate ROB entry → Dispatch to RS
+2. **Execute**: RS operands ready → Issue to ALU → Broadcast on CDB
+3. **Writeback**: CDB updates ROB, RS, LSQ operands
+4. **Commit**: ROB head ready → Update register file → Free old physical reg
 
-## Instruction Implementation Status
+### Tag Encoding
+- `3'b000` - `3'b110`: Waiting for producer (ROB index / physical reg)
+- `3'b111`: Operand ready/valid
 
-### RV32I Base Integer Instruction Set
+### Branch Misprediction Recovery
+1. Branch executes → Result stored in BRAT entry
+2. BRAT outputs in-order resolution (oldest first)
+3. On misprediction: Restore RAT from BRAT snapshot, flush pipeline
+4. BRAT ensures correct ordering even with out-of-order execution
 
-| Category | Instructions | Implementation Status |
-|----------|--------------|----------------------|
-| **Arithmetic** | ADD, ADDI, SUB | Implemented |
-| **Logical** | AND, ANDI, OR, ORI, XOR, XORI | Implemented |
-| **Shift** | SLL, SLLI, SRL, SRLI, SRA, SRAI | Implemented |
-| **Compare** | SLT, SLTI, SLTU, SLTIU | Implemented |
-| **Branch** | BEQ, BNE, BLT, BGE, BLTU, BGEU | Implemented |
-| **Jump** | JAL, JALR | Implemented |
-| **Load** | LB, LH, LW, LBU, LHU | Implemented |
-| **Store** | SB, SH, SW | Implemented |
-| **Upper** | LUI, AUIPC | Implemented |
+## Supported Instructions
 
-*Note: Implementation status reflects current development progress and may require additional testing and validation.*
+| Type | Instructions |
+|------|--------------|
+| **R-Type** | ADD, SUB, AND, OR, XOR, SLL, SRL, SRA, SLT, SLTU |
+| **I-Type** | ADDI, ANDI, ORI, XORI, SLTI, SLTIU, SLLI, SRLI, SRAI |
+| **Load** | LW, LH, LHU, LB, LBU |
+| **Store** | SW, SH, SB |
+| **Branch** | BEQ, BNE, BLT, BGE, BLTU, BGEU |
+| **Jump** | JAL, JALR |
+| **Upper** | LUI, AUIPC |
 
-## Testing and Verification
-
-### Test Suite Components
-
-- **Pipeline Testing** - Verification of pipeline functionality
-- **Hazard Testing** - Testing of data hazards, control hazards, and structural hazards
-- **Instruction Testing** - Individual instruction validation
-- **Integration Testing** - System-level integration verification
-- **Edge Case Testing** - Boundary conditions and error scenarios
-
-### Running Tests
+## Simulation
 
 ```bash
-cd digital/testbench
-# Individual module tests available in tests/ directory
-# Test programs in hex/ directory for instruction memory loading
+cd digital/sim/run
+dsim -f ../superscalar_new.f -top tb_top +HEX_FILE=../hex/test.hex
 ```
 
-*Note: Test coverage and validation are ongoing development efforts.*
+## Performance Counters
 
-## Design Characteristics
+The processor tracks:
+- `perf_cycles` - Total clock cycles
+- `perf_instructions_fetched` - Instructions fetched
+- `perf_instructions_executed` - Instructions committed
+- `perf_branch_mispredictions` - Branch misprediction count
+- `perf_buffer_stalls` - Instruction buffer stall cycles
 
-- **Pipeline Depth**: 5 stages
-- **Target Clock Frequency**: Design-dependent (not yet characterized)
-- **Expected CPI**: Approaching 1.0 (with effective hazard handling)
-- **Memory Interface**: Configurable width and timing
-- **Hazard Handling**: Designed for 1-cycle stall on load-use hazards
+## Author
 
-*Note: Performance metrics are theoretical and require further characterization through synthesis and testing.*
-
-## Recent Development
-
-See `doc/changelogs/` for detailed development history. Recent work includes:
-
-- Improved JALR instruction handling in decoder
-- Enhanced memory width selection for load/store operations
-- Refined control signal consistency
-- Updated file format standardization
-
-## Documentation
-
-- **[Processor Datasheet](doc/Processor_Datasheet.pdf)** - Complete technical specification
-- **[Schematic Diagrams](doc/Schematic.pdf)** - Visual processor architecture
-- **[Design Notes](doc/)** - Additional design documentation and notes
-- **[Module READMEs](digital/)** - Individual module documentation
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Commit your changes (`git commit -m 'Add new feature'`)
-4. Push to the branch (`git push origin feature/new-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-
-- Follow SystemVerilog coding standards and best practices
-- Include testbenches for new modules when possible
-- Update documentation for significant changes
-- Conduct thorough testing before major commits
-
-## License
-
-This project is available under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- RISC-V Foundation for the open instruction set architecture specification
-- SystemVerilog and digital design community for resources and best practices
-- Academic references and industry publications on processor design
-
-## Contact
-
-For questions, suggestions, or contributions, please open an issue on GitHub or contact the project maintainer.
-
----
-
-**Note**: This processor is primarily designed for educational and research purposes. Additional verification, optimization, and validation would be needed for any production or commercial use.
+**Ensar Işkın**  
+Graduate Research - RV32I Superscalar Processor Design
