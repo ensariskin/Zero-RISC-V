@@ -128,7 +128,7 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 	logic              jalr;
 	logic              jump;
 
-	assign increment_value = secure_mode ? 5'd20 : 5'd4;
+	assign increment_value = !secure_mode ? 5'd20 : 5'd4;
 	assign jalr = jalr_0 | (!jump_0 & jalr_1) | (!jump_0 & !jump_1 & jalr_2) | (!jump_0 & !jump_1 & !jump_2 & jalr_3) | (!jump_0 & !jump_1 & !jump_2 & !jump_3 & jalr_4);
 	assign jump = jump_0 | jump_1 | jump_2 | jump_3 | jump_4;
 
@@ -197,6 +197,7 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 		end else if (secure_mode && mismatch_detected) begin
 			// Case: Bubble is present (pipeline stalled), but we detected a mismatch.
 			// We MUST correct the registers to match the voted output to prevent latent faults.
+			// todo remove unnecessary logic
 			if (error_0) pc_current_val_0 <= #D correct_pc_voted;
 			if (error_1) pc_current_val_1 <= #D correct_pc_voted;
 			if (error_2) pc_current_val_2 <= #D correct_pc_voted;
@@ -204,10 +205,10 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 	end
 
 	assign pc_plus_four_0 = pc_current_val + 32'd4;
-	assign pc_plus_four_1 = secure_mode ? pc_current_val + 32'd8 : pc_plus_four_0;
-	assign pc_plus_four_2 = secure_mode ? pc_current_val + 32'd12 : pc_plus_four_0;
-	assign pc_plus_four_3 = secure_mode ? pc_current_val + 32'd16 : pc_plus_four_0;
-	assign pc_plus_four_4 = secure_mode ? pc_current_val + 32'd20 : pc_plus_four_0;
+	assign pc_plus_four_1 = !secure_mode ? pc_current_val + 32'd8 : pc_plus_four_0;
+	assign pc_plus_four_2 = !secure_mode ? pc_current_val + 32'd12 : pc_plus_four_0;
+	assign pc_plus_four_3 = !secure_mode ? pc_current_val + 32'd16 : pc_plus_four_0;
+	assign pc_plus_four_4 = !secure_mode ? pc_current_val + 32'd20 : pc_plus_four_0;
 
 	assign pc_plus_incr   = pc_current_val + increment_value;
 	assign pc_plus_imm_0  = current_pc_0 + {imm_i_0[31:2], 2'b00}; // prevent misalignment issues, don't use 2 LSBs
@@ -260,15 +261,15 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 		.data_out(pc_save_4));
 
 	assign inst_addr_0 = reset ? (misprediction? pc_new_val : buble? pc_current_val : pc_new_val) : RESET_PC;
-	assign inst_addr_1 = secure_mode ? inst_addr_0 + 32'd4 : inst_addr_0;
-	assign inst_addr_2 = secure_mode ? inst_addr_0 + 32'd8 : inst_addr_0;
-	assign inst_addr_3 = secure_mode ? inst_addr_0 + 32'd12 : inst_addr_0;
-	assign inst_addr_4 = secure_mode ? inst_addr_0 + 32'd16 : inst_addr_0;
+	assign inst_addr_1 = !secure_mode ? inst_addr_0 + 32'd4 : inst_addr_0;
+	assign inst_addr_2 = !secure_mode ? inst_addr_0 + 32'd8 : inst_addr_0;
+	assign inst_addr_3 = !secure_mode ? inst_addr_0 + 32'd12 : inst_addr_0;
+	assign inst_addr_4 = !secure_mode ? inst_addr_0 + 32'd16 : inst_addr_0;
 	assign current_pc_0 = pc_current_val;
-	assign current_pc_1 = secure_mode ? pc_current_val + 32'd4 : current_pc_0;
-	assign current_pc_2 = secure_mode ? pc_current_val + 32'd8 : current_pc_0;
-	assign current_pc_3 = secure_mode ? pc_current_val + 32'd12 : current_pc_0;
-	assign current_pc_4 = secure_mode ? pc_current_val + 32'd16 : current_pc_0;
+	assign current_pc_1 = !secure_mode ? pc_current_val + 32'd4 : current_pc_0;
+	assign current_pc_2 = !secure_mode ? pc_current_val + 32'd8 : current_pc_0;
+	assign current_pc_3 = !secure_mode ? pc_current_val + 32'd12 : current_pc_0;
+	assign current_pc_4 = !secure_mode ? pc_current_val + 32'd16 : current_pc_0;
 
 	// TODO : We can store some pc values in case of JAL, JALR instruction then we can use them in case of new JALR calculation
 
