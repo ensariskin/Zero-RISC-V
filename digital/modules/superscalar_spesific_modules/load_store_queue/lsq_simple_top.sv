@@ -32,7 +32,6 @@ module lsq_simple_top
    (
       input  logic clk,
       input  logic rst_n,
-      input  logic single_pipe_mode_i,
 
       input  logic store_can_issue_0, // signal from ROB that store at head can be issued
       input  logic [PHYS_REG_WIDTH-1:0] allowed_store_address_0, // allowed store address from ROB
@@ -474,7 +473,7 @@ module lsq_simple_top
       head_0_should_wait_unaligned_store = 0;
       `endif
 
-      if(lsq_buffer[head_idx].valid && !lsq_buffer[head_idx].is_store && lsq_buffer[head_idx].addr_valid && !single_pipe_mode_i) begin // If it is load
+      if(lsq_buffer[head_idx].valid && !lsq_buffer[head_idx].is_store && lsq_buffer[head_idx].addr_valid) begin // If it is load
          if(head_0_newer_than_head_1 && lsq_buffer[head_idx_1].is_store &&
                head_0_newer_than_head_2 && lsq_buffer[head_idx_2].is_store ) begin // If head is the newest
             if(head_1_newer_than_head_2) begin // give priority to head 1
@@ -696,8 +695,8 @@ module lsq_simple_top
    logic effective_dealloc_2;
 
    assign effective_dealloc_0 = (deallocate_head | fwd_head_0) && !(lsq_flush_valid_o && modify_head_0);
-   assign effective_dealloc_1 = (deallocate_head_1 | fwd_head_1) && !(lsq_flush_valid_o && modify_head_1) && !single_pipe_mode_i;
-   assign effective_dealloc_2 = (deallocate_head_2 | fwd_head_2) && !(lsq_flush_valid_o && modify_head_2) && !single_pipe_mode_i;
+   assign effective_dealloc_1 = (deallocate_head_1 | fwd_head_1) && !(lsq_flush_valid_o && modify_head_1);
+   assign effective_dealloc_2 = (deallocate_head_2 | fwd_head_2) && !(lsq_flush_valid_o && modify_head_2);
 
    //----------------------------------------------------------------------
    // Head pointer next-state calculation
@@ -736,7 +735,7 @@ module lsq_simple_top
       age_dist_2 = (tail_ptr_age_ref + 3) - head_ptr_eff_2;
 
       // Newest head is the one with the smallest distance
-      if (((age_dist_0 <= age_dist_1) && (age_dist_0 <= age_dist_2)) | single_pipe_mode_i) begin
+      if ((age_dist_0 <= age_dist_1) && (age_dist_0 <= age_dist_2)) begin
          newest_ptr_eff = head_ptr_eff_0;
       end else if (age_dist_1 <= age_dist_2) begin
          newest_ptr_eff = head_ptr_eff_1;
@@ -1083,7 +1082,7 @@ module lsq_simple_top
       `ifdef SECURE_UNALIGN_LSQ
          if (!lsq_empty_o && lsq_buffer[head_idx_1].valid && !lsq_buffer[head_idx_1].mem_issued && !(fwd_head_1 | head_1_should_wait | head_1_should_wait_unaligned_store)) begin
       `else
-            if (!lsq_empty_o && lsq_buffer[head_idx_1].valid && !lsq_buffer[head_idx_1].mem_issued && !(fwd_head_1 | head_1_should_wait) && !single_pipe_mode_i) begin
+            if (!lsq_empty_o && lsq_buffer[head_idx_1].valid && !lsq_buffer[head_idx_1].mem_issued && !(fwd_head_1 | head_1_should_wait)) begin
       `endif
                // Head entry is ready if address is valid
                // For stores, also need data to be valid
@@ -1111,7 +1110,7 @@ module lsq_simple_top
       `ifdef SECURE_UNALIGN_LSQ
             if (!lsq_empty_o && lsq_buffer[head_idx_2].valid && !lsq_buffer[head_idx_2].mem_issued && !(fwd_head_2 | head_2_should_wait | head_2_should_wait_unaligned_store)) begin
       `else
-               if (!lsq_empty_o && lsq_buffer[head_idx_2].valid && !lsq_buffer[head_idx_2].mem_issued && !(fwd_head_2 | head_2_should_wait) && !single_pipe_mode_i) begin
+               if (!lsq_empty_o && lsq_buffer[head_idx_2].valid && !lsq_buffer[head_idx_2].mem_issued && !(fwd_head_2 | head_2_should_wait)) begin
       `endif
                   // Head entry is ready if address is valid
                   // For stores, also need data to be valid
@@ -1220,12 +1219,12 @@ module lsq_simple_top
             assign cdb_interface.cdb_data_3_0 =  load_0_data; //lsq_buffer[head_idx].data;
             assign cdb_interface.cdb_dest_reg_3_0 = lsq_buffer[head_idx].phys_reg;
 
-            assign cdb_interface.cdb_valid_3_1 = (mem_1_resp_valid_i | fwd_head_1) && !single_pipe_mode_i; //lsq_buffer[head_idx_1].mem_complete;
+            assign cdb_interface.cdb_valid_3_1 = mem_1_resp_valid_i | fwd_head_1; //lsq_buffer[head_idx_1].mem_complete;
             assign cdb_interface.cdb_tag_3_1 = 3'b011;
             assign cdb_interface.cdb_data_3_1 =  load_1_data; //lsq_buffer[head_idx_1].data;
             assign cdb_interface.cdb_dest_reg_3_1 = lsq_buffer[head_idx_1].phys_reg;
 
-            assign cdb_interface.cdb_valid_3_2 = (mem_2_resp_valid_i | fwd_head_2) && !single_pipe_mode_i; //lsq_buffer[head_idx_2].mem_complete;
+            assign cdb_interface.cdb_valid_3_2 = mem_2_resp_valid_i | fwd_head_2; //lsq_buffer[head_idx_2].mem_complete;
             assign cdb_interface.cdb_tag_3_2 = 3'b011;
             assign cdb_interface.cdb_data_3_2 =  load_2_data; //we nedd mask here
             assign cdb_interface.cdb_dest_reg_3_2 = lsq_buffer[head_idx_2].phys_reg;
