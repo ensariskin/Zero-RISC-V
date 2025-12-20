@@ -27,6 +27,7 @@ module issue_stage #(
         // Clock and Reset
         input logic clk,
         input logic reset,
+        input logic secure_mode,
 
         // Input from Fetch/Buffer Stage
         input logic [2:0] decode_valid_i,
@@ -108,7 +109,11 @@ module issue_stage #(
         // Dispatch Stage Interfaces
         issue_to_dispatch_if.issue issue_to_dispatch_0,
         issue_to_dispatch_if.issue issue_to_dispatch_1,
-        issue_to_dispatch_if.issue issue_to_dispatch_2
+        issue_to_dispatch_if.issue issue_to_dispatch_2,
+
+        // TMR Fatal Error Outputs (from BRAT)
+        output logic brat_head_ptr_fatal_o,
+        output logic brat_tail_ptr_fatal_o
     );
 
     localparam D = 1; // Delay for simulation
@@ -240,6 +245,7 @@ module issue_stage #(
         .clk(clk),
         .reset(reset),
         .flush(1'b0),
+        .secure_mode(secure_mode),
 
         // Execute stage inputs (raw branch results - go into BRAT)
         .exec_branch_valid_i(exec_branch_valid_i),
@@ -327,7 +333,11 @@ module issue_stage #(
 
         // Eager misprediction flush interface (for LSQ circular buffer)
         .lsq_flush_valid_i(lsq_flush_valid_i),
-        .first_invalid_lsq_idx_i(first_invalid_lsq_idx_i)
+        .first_invalid_lsq_idx_i(first_invalid_lsq_idx_i),
+
+        // TMR Fatal Error Outputs
+        .brat_head_ptr_fatal_o(brat_head_ptr_fatal_o),
+        .brat_tail_ptr_fatal_o(brat_tail_ptr_fatal_o)
     );
 
     //==========================================================================

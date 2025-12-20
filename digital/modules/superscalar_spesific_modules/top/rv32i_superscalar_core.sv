@@ -27,6 +27,7 @@ module rv32i_superscalar_core #(
         // Clock and Reset
         input  logic clk,
         input  logic reset,
+        input  logic secure_mode,
 
         // Instruction Memory Interface (3-port for parallel fetch)
         output logic [DATA_WIDTH-1:0] inst_addr_0, inst_addr_1, inst_addr_2, inst_addr_3, inst_addr_4,
@@ -72,6 +73,13 @@ module rv32i_superscalar_core #(
         input  logic software_interrupt
 
     );
+
+    // TMR Fatal Error Signals (internal - for recovery logic)
+    logic brat_head_ptr_fatal;
+    logic brat_tail_ptr_fatal;
+    logic tmr_fatal_error;  // Combined fatal error signal
+    assign tmr_fatal_error = brat_head_ptr_fatal | brat_tail_ptr_fatal;
+
     // Fetch Buffer Interface
     logic [2:0] decode_valid;
     logic [DATA_WIDTH-1:0] fetch_instruction_0, fetch_instruction_1, fetch_instruction_2;
@@ -152,8 +160,7 @@ module rv32i_superscalar_core #(
     logic ex2_is_jalr;
 
     logic eager_flush;
-    logic secure_mode;
-    assign secure_mode = 0;
+    // secure_mode is now an input port
 
     cdb_if #(
         .DATA_WIDTH(DATA_WIDTH),
@@ -284,6 +291,7 @@ module rv32i_superscalar_core #(
     ) issue_stage_unit (
         .clk(clk),
         .reset(reset),
+        .secure_mode(secure_mode),
 
         // Input from fetch/buffer stage
         .decode_valid_i(decode_valid),
@@ -377,7 +385,11 @@ module rv32i_superscalar_core #(
 
         // Eager misprediction flush interface (from dispatch/LSQ)
         .lsq_flush_valid_i(lsq_flush_valid),
-        .first_invalid_lsq_idx_i(first_invalid_lsq_idx)
+        .first_invalid_lsq_idx_i(first_invalid_lsq_idx),
+
+        // TMR Fatal Error Outputs
+        .brat_head_ptr_fatal_o(brat_head_ptr_fatal),
+        .brat_tail_ptr_fatal_o(brat_tail_ptr_fatal)
 
     );
 

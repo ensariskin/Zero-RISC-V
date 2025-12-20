@@ -34,6 +34,7 @@ module register_alias_table #(
         input logic clk,
         input logic reset,
         input logic flush,
+        input logic secure_mode,
 
         // 3-way decode interface (architectural register addresses from decoders)
         input logic [ARCH_ADDR_WIDTH-1:0] rs1_arch_0, rs1_arch_1, rs1_arch_2,
@@ -118,8 +119,11 @@ module register_alias_table #(
 
         input logic [2:0] push_ras_tos_i,
         output logic ras_restore_valid_o,
-        output logic [2:0] ras_restore_tos_o
+        output logic [2:0] ras_restore_tos_o,
 
+        // TMR Fatal Error Outputs (from BRAT)
+        output logic brat_head_ptr_fatal_o,
+        output logic brat_tail_ptr_fatal_o
 
     );
 
@@ -219,8 +223,7 @@ module register_alias_table #(
         end
     end
 
-    logic secure_mode;
-    assign secure_mode = 0; //todo make it port.
+    // secure_mode is now an input port
 
     circular_buffer_3port free_address_buffer(
         .clk(clk),
@@ -249,7 +252,7 @@ module register_alias_table #(
     circular_buffer_3port #(.BUFFER_DEPTH(32)) lsq_address_buffer(
         .clk(clk),
         .rst_n(reset),
-        .secure_mode(secure_mod),
+        .secure_mode(secure_mode),
         .redo_last_alloc(|branch_mispredicted_o),
         .read_en_0(need_lsq_alloc_0),
         .read_en_1(need_lsq_alloc_1),
@@ -376,6 +379,7 @@ module register_alias_table #(
     ) brat_buffer (
         .clk(clk),
         .rst_n(reset),
+        .secure_mode(secure_mode),
 
         // Push interface (from decode/rename)
         .push_en_0(brat_push_en[0]),
@@ -467,7 +471,11 @@ module register_alias_table #(
         // Status
         .buffer_empty(brat_empty),
         .buffer_full(brat_full),
-        .buffer_count()
+        .buffer_count(),
+
+        // TMR Fatal Error Outputs
+        .head_ptr_fatal_o(brat_head_ptr_fatal_o),
+        .tail_ptr_fatal_o(brat_tail_ptr_fatal_o)
     );
 
     //==========================================================================

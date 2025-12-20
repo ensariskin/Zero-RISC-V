@@ -30,6 +30,7 @@ module brat_circular_buffer #(
     )(
         input logic clk,
         input logic rst_n,
+        input logic secure_mode,
 
         //==========================================================================
         // Push interface (3-way parallel) - from decode/rename stage
@@ -144,7 +145,13 @@ module brat_circular_buffer #(
         //==========================================================================
         output logic buffer_empty,
         output logic buffer_full,
-        output logic [$clog2(BUFFER_DEPTH):0] buffer_count
+        output logic [$clog2(BUFFER_DEPTH):0] buffer_count,
+
+        //==========================================================================
+        // TMR Error Outputs
+        //==========================================================================
+        output logic head_ptr_fatal_o,
+        output logic tail_ptr_fatal_o
     );
 
     localparam PTR_WIDTH = $clog2(BUFFER_DEPTH) + 1; // Extra bit for full/empty detection
@@ -173,10 +180,48 @@ module brat_circular_buffer #(
     logic [RAS_PTR_WIDTH-1:0] ras_tos_mem [BUFFER_DEPTH-1:0];
 
     //==========================================================================
-    // Pointers
+    // Pointers - TMR Protected
     //==========================================================================
-    logic [PTR_WIDTH-1:0] head_ptr;  // Points to oldest entry
-    logic [PTR_WIDTH-1:0] tail_ptr;  // Points to next free slot
+    // TMR: Triplicated pointer registers
+    logic [PTR_WIDTH-1:0] head_ptr_0, head_ptr_1, head_ptr_2;
+    logic [PTR_WIDTH-1:0] tail_ptr_0, tail_ptr_1, tail_ptr_2;
+
+    // TMR: Voted outputs (used in logic)
+    logic [PTR_WIDTH-1:0] head_ptr;
+    logic [PTR_WIDTH-1:0] tail_ptr;
+
+    // TMR: Error signals from voters
+    logic head_ptr_mismatch;
+    logic head_ptr_err_0, head_ptr_err_1, head_ptr_err_2;
+    logic tail_ptr_mismatch;
+    logic tail_ptr_err_0, tail_ptr_err_1, tail_ptr_err_2;
+
+    // TMR: Voter instances
+    tmr_voter #(.DATA_WIDTH(PTR_WIDTH)) head_ptr_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (head_ptr_0),
+        .data_1_i           (head_ptr_1),
+        .data_2_i           (head_ptr_2),
+        .data_o             (head_ptr),
+        .mismatch_detected_o(head_ptr_mismatch),
+        .error_0_o          (head_ptr_err_0),
+        .error_1_o          (head_ptr_err_1),
+        .error_2_o          (head_ptr_err_2),
+        .fatal_error_o      (head_ptr_fatal_o)
+    );
+
+    tmr_voter #(.DATA_WIDTH(PTR_WIDTH)) tail_ptr_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (tail_ptr_0),
+        .data_1_i           (tail_ptr_1),
+        .data_2_i           (tail_ptr_2),
+        .data_o             (tail_ptr),
+        .mismatch_detected_o(tail_ptr_mismatch),
+        .error_0_o          (tail_ptr_err_0),
+        .error_1_o          (tail_ptr_err_1),
+        .error_2_o          (tail_ptr_err_2),
+        .fatal_error_o      (tail_ptr_fatal_o)
+    );
 
     // Internal signals
     logic [PTR_WIDTH-1:0] next_head_ptr;
@@ -490,8 +535,13 @@ module brat_circular_buffer #(
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            head_ptr <= #D '0;
-            tail_ptr <= #D '0;
+            // Reset all three copies of pointers
+            head_ptr_0 <= #D '0;
+            head_ptr_1 <= #D '0;
+            head_ptr_2 <= #D '0;
+            tail_ptr_0 <= #D '0;
+            tail_ptr_1 <= #D '0;
+            tail_ptr_2 <= #D '0;
             resolved_mem <= #D '0;
             mispredicted_mem <= #D '0;
             is_jalr_mem <= #D '0;
@@ -508,9 +558,13 @@ module brat_circular_buffer #(
                 end
             end
         end else begin
-            // Update pointers
-            head_ptr <= #D next_head_ptr;
-            tail_ptr <= #D next_tail_ptr;
+            // Update all three copies of pointers (TMR healing)
+            head_ptr_0 <= #D next_head_ptr;
+            head_ptr_1 <= #D next_head_ptr;
+            head_ptr_2 <= #D next_head_ptr;
+            tail_ptr_0 <= #D next_tail_ptr;
+            tail_ptr_1 <= #D next_tail_ptr;
+            tail_ptr_2 <= #D next_tail_ptr;
 
             // Clear resolved/mispredicted on flush
             if (do_restore || restore_en) begin
