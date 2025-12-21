@@ -218,9 +218,10 @@ module dispatch_stage #(
       .reset(reset),
       .secure_mode(secure_mode),
 
+      // In secure mode, only channel 0 allocates (channels 1/2 process same instruction)
       .alloc_enable_0(issue_to_dispatch_0.dispatch_valid),
-      .alloc_enable_1(issue_to_dispatch_1.dispatch_valid),
-      .alloc_enable_2(issue_to_dispatch_2.dispatch_valid),
+      .alloc_enable_1(secure_mode ? 1'b0 : issue_to_dispatch_1.dispatch_valid),
+      .alloc_enable_2(secure_mode ? 1'b0 : issue_to_dispatch_2.dispatch_valid),
       .alloc_addr_0(issue_to_dispatch_0.rd_arch_addr),
       .alloc_addr_1(issue_to_dispatch_1.rd_arch_addr),
       .alloc_addr_2(issue_to_dispatch_2.rd_arch_addr),
@@ -625,8 +626,8 @@ module dispatch_stage #(
       .alloc_data_tag_0_i(inst_0_read_tag_b),
       .alloc_size_0_i(issue_to_dispatch_0.control_signals[1:0]),
       .alloc_sign_extend_0_i(issue_to_dispatch_0.control_signals[2]),
-      // Allocation 1
-      .alloc_valid_1_i(issue_to_dispatch_1.lsq_alloc_valid & issue_to_dispatch_1.dispatch_valid ),
+      // Allocation 1 - masked in secure mode (same instruction in all 3 channels)
+      .alloc_valid_1_i(secure_mode ? 1'b0 : (issue_to_dispatch_1.lsq_alloc_valid & issue_to_dispatch_1.dispatch_valid) ),
       .alloc_is_store_1_i(alloc_1_is_store),
       .alloc_phys_reg_1_i(issue_to_dispatch_1.rd_phys_addr),
       .alloc_addr_tag_1_i(3'b001),
@@ -634,8 +635,8 @@ module dispatch_stage #(
       .alloc_data_tag_1_i(inst_1_read_tag_b),
       .alloc_size_1_i(issue_to_dispatch_1.control_signals[1:0]),
       .alloc_sign_extend_1_i(issue_to_dispatch_1.control_signals[2]),
-      // Allocation 2
-      .alloc_valid_2_i(issue_to_dispatch_2.lsq_alloc_valid & issue_to_dispatch_2.dispatch_valid ),
+      // Allocation 2 - masked in secure mode (same instruction in all 3 channels)
+      .alloc_valid_2_i(secure_mode ? 1'b0 : (issue_to_dispatch_2.lsq_alloc_valid & issue_to_dispatch_2.dispatch_valid) ),
       .alloc_is_store_2_i(alloc_2_is_store),
       .alloc_phys_reg_2_i(issue_to_dispatch_2.rd_phys_addr),
       .alloc_addr_tag_2_i(3'b010),

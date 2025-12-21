@@ -302,8 +302,8 @@ module rs_validator #(
    assign exec_out_0.branch_prediction = secure_mode ? voted_exec_branch_pred : exec_in_0.branch_prediction;
    assign exec_out_0.store_data      = secure_mode ? voted_exec_store_data  : exec_in_0.store_data;
 
-   // Output 1
-   assign exec_out_1.issue_valid     = secure_mode ? voted_issue_valid      : exec_in_1.issue_valid;
+   // Output 1 - in secure mode, issue_valid=0 so only RS0 executes and writes to CDB
+   assign exec_out_1.issue_valid     = secure_mode ? 1'b0                   : exec_in_1.issue_valid;
    assign exec_out_1.data_a          = secure_mode ? voted_data_a           : exec_in_1.data_a;
    assign exec_out_1.data_b          = secure_mode ? voted_data_b           : exec_in_1.data_b;
    assign exec_out_1.control_signals = secure_mode ? voted_exec_ctrl        : exec_in_1.control_signals;
@@ -314,8 +314,8 @@ module rs_validator #(
    assign exec_out_1.branch_prediction = secure_mode ? voted_exec_branch_pred : exec_in_1.branch_prediction;
    assign exec_out_1.store_data      = secure_mode ? voted_exec_store_data  : exec_in_1.store_data;
 
-   // Output 2
-   assign exec_out_2.issue_valid     = secure_mode ? voted_issue_valid      : exec_in_2.issue_valid;
+   // Output 2 - in secure mode, issue_valid=0 so only RS0 executes and writes to CDB
+   assign exec_out_2.issue_valid     = secure_mode ? 1'b0                   : exec_in_2.issue_valid;
    assign exec_out_2.data_a          = secure_mode ? voted_data_a           : exec_in_2.data_a;
    assign exec_out_2.data_b          = secure_mode ? voted_data_b           : exec_in_2.data_b;
    assign exec_out_2.control_signals = secure_mode ? voted_exec_ctrl        : exec_in_2.control_signals;
