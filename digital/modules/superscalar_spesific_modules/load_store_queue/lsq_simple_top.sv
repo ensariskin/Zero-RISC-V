@@ -32,6 +32,7 @@ module lsq_simple_top
    (
       input  logic clk,
       input  logic rst_n,
+      input  logic secure_mode,
 
       input  logic store_can_issue_0, // signal from ROB that store at head can be issued
       input  logic [PHYS_REG_WIDTH-1:0] allowed_store_address_0, // allowed store address from ROB
@@ -133,7 +134,18 @@ module lsq_simple_top
       // Status outputs
       output logic [LSQ_ADDR_WIDTH:0]         lsq_count_o,
       output logic                            lsq_full_o,
-      output logic                            lsq_empty_o
+      output logic                            lsq_empty_o,
+
+      //==========================================================================
+      // TMR ERROR OUTPUTS
+      //==========================================================================
+      output logic                            head_ptr_0_fatal_o,
+      output logic                            head_ptr_1_fatal_o,
+      output logic                            head_ptr_2_fatal_o,
+      output logic                            tail_ptr_fatal_o,
+      output logic                            last_commit_ptr_0_fatal_o,
+      output logic                            last_commit_ptr_1_fatal_o,
+      output logic                            last_commit_ptr_2_fatal_o
    );
 
    localparam D = 1;  // Delay for simulation
@@ -186,12 +198,93 @@ module lsq_simple_top
    lsq_simple_entry_t [LSQ_DEPTH-1:0] lsq_buffer;
 
    //==========================================================================
-   // HEAD AND TAIL POINTERS (Circular Buffer)
+   // HEAD AND TAIL POINTERS (Circular Buffer) - TMR Protected
    //==========================================================================
 
-   logic [LSQ_ADDR_WIDTH:0] head_ptr;  // Points to oldest entry
-   logic [LSQ_ADDR_WIDTH:0] head_ptr_1;
-   logic [LSQ_ADDR_WIDTH:0] head_ptr_2;
+   // TMR: Triplicated head_ptr (first head pointer)
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_0_0, head_ptr_0_1, head_ptr_0_2;
+   logic [LSQ_ADDR_WIDTH:0] head_ptr;  // Voted output
+   logic head_ptr_0_mismatch;
+   logic head_ptr_0_err_0, head_ptr_0_err_1, head_ptr_0_err_2;
+
+   tmr_voter #(.DATA_WIDTH(LSQ_ADDR_WIDTH+1)) head_ptr_0_voter (
+      .secure_mode_i      (secure_mode),
+      .data_0_i           (head_ptr_0_0),
+      .data_1_i           (head_ptr_0_1),
+      .data_2_i           (head_ptr_0_2),
+      .data_o             (head_ptr),
+      .mismatch_detected_o(head_ptr_0_mismatch),
+      .error_0_o          (head_ptr_0_err_0),
+      .error_1_o          (head_ptr_0_err_1),
+      .error_2_o          (head_ptr_0_err_2),
+      .fatal_error_o      (head_ptr_0_fatal_o)
+   );
+
+   // TMR: Triplicated head_ptr_1 (second head pointer)
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_1_0, head_ptr_1_1, head_ptr_1_2;
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_1;  // Voted output
+   logic head_ptr_1_mismatch;
+   logic head_ptr_1_err_0, head_ptr_1_err_1, head_ptr_1_err_2;
+
+   tmr_voter #(.DATA_WIDTH(LSQ_ADDR_WIDTH+1)) head_ptr_1_voter (
+      .secure_mode_i      (secure_mode),
+      .data_0_i           (head_ptr_1_0),
+      .data_1_i           (head_ptr_1_1),
+      .data_2_i           (head_ptr_1_2),
+      .data_o             (head_ptr_1),
+      .mismatch_detected_o(head_ptr_1_mismatch),
+      .error_0_o          (head_ptr_1_err_0),
+      .error_1_o          (head_ptr_1_err_1),
+      .error_2_o          (head_ptr_1_err_2),
+      .fatal_error_o      (head_ptr_1_fatal_o)
+   );
+
+   // TMR: Triplicated head_ptr_2 (third head pointer)
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_2_0, head_ptr_2_1, head_ptr_2_2;
+   logic [LSQ_ADDR_WIDTH:0] head_ptr_2;  // Voted output
+   logic head_ptr_2_mismatch;
+   logic head_ptr_2_err_0, head_ptr_2_err_1, head_ptr_2_err_2;
+
+   tmr_voter #(.DATA_WIDTH(LSQ_ADDR_WIDTH+1)) head_ptr_2_voter (
+      .secure_mode_i      (secure_mode),
+      .data_0_i           (head_ptr_2_0),
+      .data_1_i           (head_ptr_2_1),
+      .data_2_i           (head_ptr_2_2),
+      .data_o             (head_ptr_2),
+      .mismatch_detected_o(head_ptr_2_mismatch),
+      .error_0_o          (head_ptr_2_err_0),
+      .error_1_o          (head_ptr_2_err_1),
+      .error_2_o          (head_ptr_2_err_2),
+      .fatal_error_o      (head_ptr_2_fatal_o)
+   );
+
+   // TMR: Triplicated tail_ptr
+   logic [LSQ_ADDR_WIDTH:0] tail_ptr_0, tail_ptr_1, tail_ptr_2;
+   logic [LSQ_ADDR_WIDTH:0] tail_ptr;  // Voted output
+   logic tail_ptr_mismatch;
+   logic tail_ptr_err_0, tail_ptr_err_1, tail_ptr_err_2;
+
+   tmr_voter #(.DATA_WIDTH(LSQ_ADDR_WIDTH+1)) tail_ptr_voter (
+      .secure_mode_i      (secure_mode),
+      .data_0_i           (tail_ptr_0),
+      .data_1_i           (tail_ptr_1),
+      .data_2_i           (tail_ptr_2),
+      .data_o             (tail_ptr),
+      .mismatch_detected_o(tail_ptr_mismatch),
+      .error_0_o          (tail_ptr_err_0),
+      .error_1_o          (tail_ptr_err_1),
+      .error_2_o          (tail_ptr_err_2),
+      .fatal_error_o      (tail_ptr_fatal_o)
+   );
+
+   logic [LSQ_ADDR_WIDTH:0] tail_plus_3;  // Points to next free entry
+   logic [LSQ_ADDR_WIDTH-1:0] alloc_0_ptr;  // Points to next free entry
+   logic [LSQ_ADDR_WIDTH-1:0] alloc_1_ptr;  // Points to next free entry
+   logic [LSQ_ADDR_WIDTH-1:0] alloc_2_ptr;  // Points to next free entry
+   logic [LSQ_ADDR_WIDTH:0] count, count_2;
+   logic [LSQ_ADDR_WIDTH-1:0] head_idx;
+   logic [LSQ_ADDR_WIDTH-1:0] head_idx_1;
+   logic [LSQ_ADDR_WIDTH-1:0] head_idx_2;
 
    // Next-state head pointers (needed to avoid flush/dealloc races)
    logic [LSQ_ADDR_WIDTH:0] head_ptr_n;
@@ -208,22 +301,68 @@ module lsq_simple_top
    logic [LSQ_ADDR_WIDTH+1:0] age_dist_2;
    logic [LSQ_ADDR_WIDTH:0] newest_ptr_eff;
 
-   logic [LSQ_ADDR_WIDTH:0] last_commit_ptr_0, last_commit_ptr_1, last_commit_ptr_2;
+   // TMR: Triplicated last_commit_ptr_0
+   logic [LSQ_ADDR_WIDTH:0] last_commit_ptr_0_0, last_commit_ptr_0_1, last_commit_ptr_0_2;
+   logic [LSQ_ADDR_WIDTH:0] last_commit_ptr_0;  // Voted output
+   logic last_commit_ptr_0_mismatch;
+   logic last_commit_ptr_0_err_0, last_commit_ptr_0_err_1, last_commit_ptr_0_err_2;
+
+   tmr_voter #(.DATA_WIDTH(LSQ_ADDR_WIDTH+1)) last_commit_ptr_0_voter (
+      .secure_mode_i      (secure_mode),
+      .data_0_i           (last_commit_ptr_0_0),
+      .data_1_i           (last_commit_ptr_0_1),
+      .data_2_i           (last_commit_ptr_0_2),
+      .data_o             (last_commit_ptr_0),
+      .mismatch_detected_o(last_commit_ptr_0_mismatch),
+      .error_0_o          (last_commit_ptr_0_err_0),
+      .error_1_o          (last_commit_ptr_0_err_1),
+      .error_2_o          (last_commit_ptr_0_err_2),
+      .fatal_error_o      (last_commit_ptr_0_fatal_o)
+   );
+
+   // TMR: Triplicated last_commit_ptr_1
+   logic [LSQ_ADDR_WIDTH:0] last_commit_ptr_1_0, last_commit_ptr_1_1, last_commit_ptr_1_2;
+   logic [LSQ_ADDR_WIDTH:0] last_commit_ptr_1;  // Voted output
+   logic last_commit_ptr_1_mismatch;
+   logic last_commit_ptr_1_err_0, last_commit_ptr_1_err_1, last_commit_ptr_1_err_2;
+
+   tmr_voter #(.DATA_WIDTH(LSQ_ADDR_WIDTH+1)) last_commit_ptr_1_voter (
+      .secure_mode_i      (secure_mode),
+      .data_0_i           (last_commit_ptr_1_0),
+      .data_1_i           (last_commit_ptr_1_1),
+      .data_2_i           (last_commit_ptr_1_2),
+      .data_o             (last_commit_ptr_1),
+      .mismatch_detected_o(last_commit_ptr_1_mismatch),
+      .error_0_o          (last_commit_ptr_1_err_0),
+      .error_1_o          (last_commit_ptr_1_err_1),
+      .error_2_o          (last_commit_ptr_1_err_2),
+      .fatal_error_o      (last_commit_ptr_1_fatal_o)
+   );
+
+   // TMR: Triplicated last_commit_ptr_2
+   logic [LSQ_ADDR_WIDTH:0] last_commit_ptr_2_0, last_commit_ptr_2_1, last_commit_ptr_2_2;
+   logic [LSQ_ADDR_WIDTH:0] last_commit_ptr_2;  // Voted output
+   logic last_commit_ptr_2_mismatch;
+   logic last_commit_ptr_2_err_0, last_commit_ptr_2_err_1, last_commit_ptr_2_err_2;
+
+   tmr_voter #(.DATA_WIDTH(LSQ_ADDR_WIDTH+1)) last_commit_ptr_2_voter (
+      .secure_mode_i      (secure_mode),
+      .data_0_i           (last_commit_ptr_2_0),
+      .data_1_i           (last_commit_ptr_2_1),
+      .data_2_i           (last_commit_ptr_2_2),
+      .data_o             (last_commit_ptr_2),
+      .mismatch_detected_o(last_commit_ptr_2_mismatch),
+      .error_0_o          (last_commit_ptr_2_err_0),
+      .error_1_o          (last_commit_ptr_2_err_1),
+      .error_2_o          (last_commit_ptr_2_err_2),
+      .fatal_error_o      (last_commit_ptr_2_fatal_o)
+   );
+
    logic [1:0] commit_cnt;
 
    logic [LSQ_ADDR_WIDTH+1:0] distance_0;  // Points to oldest entry
    logic [LSQ_ADDR_WIDTH+1:0] distance_1;
    logic [LSQ_ADDR_WIDTH+1:0] distance_2;
-
-   logic [LSQ_ADDR_WIDTH:0] tail_ptr, tail_plus_3;  // Points to next free entry
-   logic [LSQ_ADDR_WIDTH-1:0] alloc_0_ptr;  // Points to next free entry
-   logic [LSQ_ADDR_WIDTH-1:0] alloc_1_ptr;  // Points to next free entry
-   logic [LSQ_ADDR_WIDTH-1:0] alloc_2_ptr;  // Points to next free entry
-   logic [LSQ_ADDR_WIDTH:0] count, count_2;
-   logic [LSQ_ADDR_WIDTH-1:0] head_idx;
-   logic [LSQ_ADDR_WIDTH-1:0] head_idx_1;
-   logic [LSQ_ADDR_WIDTH-1:0] head_idx_2;
-
 
    logic actual_alloc_0, actual_alloc_1, actual_alloc_2;
    logic [LSQ_ADDR_WIDTH:0] new_tail;
@@ -264,14 +403,30 @@ module lsq_simple_top
 
    always_ff @(posedge clk or negedge rst_n) begin
       if(!rst_n) begin
-         last_commit_ptr_0 <= #D 0;
-         last_commit_ptr_1 <= #D 1;
-         last_commit_ptr_2 <= #D 2;
+         // TMR: Reset all 3 copies of last_commit_ptr_0
+         last_commit_ptr_0_0 <= #D 0;
+         last_commit_ptr_0_1 <= #D 0;
+         last_commit_ptr_0_2 <= #D 0;
+         // TMR: Reset all 3 copies of last_commit_ptr_1
+         last_commit_ptr_1_0 <= #D 1;
+         last_commit_ptr_1_1 <= #D 1;
+         last_commit_ptr_1_2 <= #D 1;
+         // TMR: Reset all 3 copies of last_commit_ptr_2
+         last_commit_ptr_2_0 <= #D 2;
+         last_commit_ptr_2_1 <= #D 2;
+         last_commit_ptr_2_2 <= #D 2;
       end
       else begin
-         last_commit_ptr_0 <= #D last_commit_ptr_0 + commit_cnt;
-         last_commit_ptr_1 <= #D last_commit_ptr_1 + commit_cnt;
-         last_commit_ptr_2 <= #D last_commit_ptr_2 + commit_cnt;
+         // TMR: Update all 3 copies - self-healing
+         last_commit_ptr_0_0 <= #D last_commit_ptr_0 + commit_cnt;
+         last_commit_ptr_0_1 <= #D last_commit_ptr_0 + commit_cnt;
+         last_commit_ptr_0_2 <= #D last_commit_ptr_0 + commit_cnt;
+         last_commit_ptr_1_0 <= #D last_commit_ptr_1 + commit_cnt;
+         last_commit_ptr_1_1 <= #D last_commit_ptr_1 + commit_cnt;
+         last_commit_ptr_1_2 <= #D last_commit_ptr_1 + commit_cnt;
+         last_commit_ptr_2_0 <= #D last_commit_ptr_2 + commit_cnt;
+         last_commit_ptr_2_1 <= #D last_commit_ptr_2 + commit_cnt;
+         last_commit_ptr_2_2 <= #D last_commit_ptr_2 + commit_cnt;
       end
 
    end
@@ -791,10 +946,22 @@ module lsq_simple_top
    // Allocate entries
    always_ff @(posedge clk or negedge rst_n) begin
       if (!rst_n) begin
-         tail_ptr <= #D 6'd0;
-         head_ptr <= #D 6'd0;
-         head_ptr_1 <= #D 6'd1;
-         head_ptr_2 <= #D 6'd2;
+         // TMR: Reset all 3 copies of tail pointer
+         tail_ptr_0 <= #D 6'd0;
+         tail_ptr_1 <= #D 6'd0;
+         tail_ptr_2 <= #D 6'd0;
+         // TMR: Reset all 3 copies of head_ptr (first head pointer)
+         head_ptr_0_0 <= #D 6'd0;
+         head_ptr_0_1 <= #D 6'd0;
+         head_ptr_0_2 <= #D 6'd0;
+         // TMR: Reset all 3 copies of head_ptr_1 (second head pointer)
+         head_ptr_1_0 <= #D 6'd1;
+         head_ptr_1_1 <= #D 6'd1;
+         head_ptr_1_2 <= #D 6'd1;
+         // TMR: Reset all 3 copies of head_ptr_2 (third head pointer)
+         head_ptr_2_0 <= #D 6'd2;
+         head_ptr_2_1 <= #D 6'd2;
+         head_ptr_2_2 <= #D 6'd2;
          for (int i = 0; i < LSQ_DEPTH; i++) begin
             lsq_buffer[i] <= #D '0;
          end
@@ -898,13 +1065,22 @@ module lsq_simple_top
             end
          end
 
-         tail_ptr <= #D new_tail;
+         // TMR: Update all 3 copies of tail pointer - self-healing
+         tail_ptr_0 <= #D new_tail;
+         tail_ptr_1 <= #D new_tail;
+         tail_ptr_2 <= #D new_tail;
 
-         // Update head pointers from the unified next-state calculation.
-         // This avoids flush/dealloc races (see "Head pointer next-state" block).
-         head_ptr   <= #D head_ptr_n;
-         head_ptr_1 <= #D head_ptr_1_n;
-         head_ptr_2 <= #D head_ptr_2_n;
+         // TMR: Update all 3 copies of head pointers from the unified next-state calculation.
+         // Self-healing: write voted value back to all copies
+         head_ptr_0_0 <= #D head_ptr_n;
+         head_ptr_0_1 <= #D head_ptr_n;
+         head_ptr_0_2 <= #D head_ptr_n;
+         head_ptr_1_0 <= #D head_ptr_1_n;
+         head_ptr_1_1 <= #D head_ptr_1_n;
+         head_ptr_1_2 <= #D head_ptr_1_n;
+         head_ptr_2_0 <= #D head_ptr_2_n;
+         head_ptr_2_1 <= #D head_ptr_2_n;
+         head_ptr_2_2 <= #D head_ptr_2_n;
 
          //==================================================================
          // EAGER MISPREDICTION FLUSH - Invalidate speculative entries

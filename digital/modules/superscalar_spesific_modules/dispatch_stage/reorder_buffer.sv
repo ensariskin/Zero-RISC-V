@@ -29,6 +29,7 @@ module reorder_buffer #(
     )(
         input  logic clk,
         input  logic reset,
+        input  logic secure_mode,
 
         //==========================================================================
         // ALLOCATION INTERFACE (from Register Alias Table)
@@ -177,7 +178,13 @@ module reorder_buffer #(
         //==========================================================================
         input  logic branch_misprediction_i,
         input  logic [ADDR_WIDTH-1:0] branch_mispredicted_rob_idx_i,
-        output logic [ADDR_WIDTH-1:0] rob_head_ptr_o
+        output logic [ADDR_WIDTH-1:0] rob_head_ptr_o,
+
+        //==========================================================================
+        // TMR ERROR OUTPUTS
+        //==========================================================================
+        output logic head_ptr_fatal_o,
+        output logic tail_ptr_fatal_o
     );
 
     localparam D = 1;  // Delay for simulation
@@ -220,10 +227,48 @@ module reorder_buffer #(
     tracer_entry_t [BUFFER_DEPTH-1:0] tracer_buffer;
     `endif
 
-    // Head and tail pointers (extra bit for full/empty detection)
+    //==========================================================================
+    // TMR: Triplicated Head/Tail Pointer Registers
+    //==========================================================================
+    logic [ADDR_WIDTH:0] head_ptr_reg_0, head_ptr_reg_1, head_ptr_reg_2;
+    logic [ADDR_WIDTH:0] tail_ptr_reg_0, tail_ptr_reg_1, tail_ptr_reg_2;
+
+    // TMR: Voted outputs (used in logic)
     logic [ADDR_WIDTH:0] head_ptr_reg;
     logic [ADDR_WIDTH:0] tail_ptr_reg;
 
+    // TMR: Error signals from voters
+    logic head_ptr_mismatch;
+    logic head_ptr_err_0, head_ptr_err_1, head_ptr_err_2;
+    logic tail_ptr_mismatch;
+    logic tail_ptr_err_0, tail_ptr_err_1, tail_ptr_err_2;
+
+    // TMR: Voter instances
+    tmr_voter #(.DATA_WIDTH(ADDR_WIDTH+1)) head_ptr_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (head_ptr_reg_0),
+        .data_1_i           (head_ptr_reg_1),
+        .data_2_i           (head_ptr_reg_2),
+        .data_o             (head_ptr_reg),
+        .mismatch_detected_o(head_ptr_mismatch),
+        .error_0_o          (head_ptr_err_0),
+        .error_1_o          (head_ptr_err_1),
+        .error_2_o          (head_ptr_err_2),
+        .fatal_error_o      (head_ptr_fatal_o)
+    );
+
+    tmr_voter #(.DATA_WIDTH(ADDR_WIDTH+1)) tail_ptr_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (tail_ptr_reg_0),
+        .data_1_i           (tail_ptr_reg_1),
+        .data_2_i           (tail_ptr_reg_2),
+        .data_o             (tail_ptr_reg),
+        .mismatch_detected_o(tail_ptr_mismatch),
+        .error_0_o          (tail_ptr_err_0),
+        .error_1_o          (tail_ptr_err_1),
+        .error_2_o          (tail_ptr_err_2),
+        .fatal_error_o      (tail_ptr_fatal_o)
+    );
 
     // Assign outputs
     assign head_ptr = head_ptr_reg[ADDR_WIDTH-1:0];
@@ -258,7 +303,63 @@ module reorder_buffer #(
 
 
     logic [ADDR_WIDTH-1:0] head_idx, head_plus_1_idx, head_plus_2_idx;
+
+    //==========================================================================
+    // TMR: Triplicated Delayed Head Index Registers
+    //==========================================================================
+    logic [ADDR_WIDTH-1:0] head_idx_d1_0, head_idx_d1_1, head_idx_d1_2;
+    logic [ADDR_WIDTH-1:0] head_plus_1_idx_d1_0, head_plus_1_idx_d1_1, head_plus_1_idx_d1_2;
+    logic [ADDR_WIDTH-1:0] head_plus_2_idx_d1_0, head_plus_2_idx_d1_1, head_plus_2_idx_d1_2;
+
+    // TMR: Voted outputs (used in logic)
     logic [ADDR_WIDTH-1:0] head_idx_d1, head_plus_1_idx_d1, head_plus_2_idx_d1;
+
+    // TMR: Error signals from voters
+    logic head_idx_d1_mismatch, head_plus_1_idx_d1_mismatch, head_plus_2_idx_d1_mismatch;
+    logic head_idx_d1_err_0, head_idx_d1_err_1, head_idx_d1_err_2, head_idx_d1_fatal;
+    logic head_plus_1_idx_d1_err_0, head_plus_1_idx_d1_err_1, head_plus_1_idx_d1_err_2, head_plus_1_idx_d1_fatal;
+    logic head_plus_2_idx_d1_err_0, head_plus_2_idx_d1_err_1, head_plus_2_idx_d1_err_2, head_plus_2_idx_d1_fatal;
+
+    // TMR: Voter instances for delayed head indices
+    tmr_voter #(.DATA_WIDTH(ADDR_WIDTH)) head_idx_d1_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (head_idx_d1_0),
+        .data_1_i           (head_idx_d1_1),
+        .data_2_i           (head_idx_d1_2),
+        .data_o             (head_idx_d1),
+        .mismatch_detected_o(head_idx_d1_mismatch),
+        .error_0_o          (head_idx_d1_err_0),
+        .error_1_o          (head_idx_d1_err_1),
+        .error_2_o          (head_idx_d1_err_2),
+        .fatal_error_o      (head_idx_d1_fatal)
+    );
+
+    tmr_voter #(.DATA_WIDTH(ADDR_WIDTH)) head_plus_1_idx_d1_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (head_plus_1_idx_d1_0),
+        .data_1_i           (head_plus_1_idx_d1_1),
+        .data_2_i           (head_plus_1_idx_d1_2),
+        .data_o             (head_plus_1_idx_d1),
+        .mismatch_detected_o(head_plus_1_idx_d1_mismatch),
+        .error_0_o          (head_plus_1_idx_d1_err_0),
+        .error_1_o          (head_plus_1_idx_d1_err_1),
+        .error_2_o          (head_plus_1_idx_d1_err_2),
+        .fatal_error_o      (head_plus_1_idx_d1_fatal)
+    );
+
+    tmr_voter #(.DATA_WIDTH(ADDR_WIDTH)) head_plus_2_idx_d1_voter (
+        .secure_mode_i      (secure_mode),
+        .data_0_i           (head_plus_2_idx_d1_0),
+        .data_1_i           (head_plus_2_idx_d1_1),
+        .data_2_i           (head_plus_2_idx_d1_2),
+        .data_o             (head_plus_2_idx_d1),
+        .mismatch_detected_o(head_plus_2_idx_d1_mismatch),
+        .error_0_o          (head_plus_2_idx_d1_err_0),
+        .error_1_o          (head_plus_2_idx_d1_err_1),
+        .error_2_o          (head_plus_2_idx_d1_err_2),
+        .fatal_error_o      (head_plus_2_idx_d1_fatal)
+    );
+
     logic [1:0] num_commits;
     logic [ADDR_WIDTH:0] next_head_ptr;
 
@@ -683,25 +784,46 @@ module reorder_buffer #(
                 tracer_buffer <= #D '0;
             end
 
-            // Reset pointers
-            head_ptr_reg <= #D '0;
-            tail_ptr_reg <= #D '0;
+            // Reset all three TMR copies of pointers
+            head_ptr_reg_0 <= #D '0;
+            head_ptr_reg_1 <= #D '0;
+            head_ptr_reg_2 <= #D '0;
+            tail_ptr_reg_0 <= #D '0;
+            tail_ptr_reg_1 <= #D '0;
+            tail_ptr_reg_2 <= #D '0;
 
-            head_idx_d1 <= #D 5'd0;
-            head_plus_1_idx_d1 <= #D 5'd1;
-            head_plus_2_idx_d1 <= #D 5'd2;
+            // Reset all three TMR copies of delayed head indices
+            head_idx_d1_0 <= #D 5'd0;
+            head_idx_d1_1 <= #D 5'd0;
+            head_idx_d1_2 <= #D 5'd0;
+            head_plus_1_idx_d1_0 <= #D 5'd1;
+            head_plus_1_idx_d1_1 <= #D 5'd1;
+            head_plus_1_idx_d1_2 <= #D 5'd1;
+            head_plus_2_idx_d1_0 <= #D 5'd2;
+            head_plus_2_idx_d1_1 <= #D 5'd2;
+            head_plus_2_idx_d1_2 <= #D 5'd2;
 
         end else begin
             // Normal operation - eager misprediction handled via tail truncation in next_tail_ptr
-            // Update head pointer (commits)
-            head_ptr_reg <= #D next_head_ptr;
-            // Update tail pointer (allocations)
-            tail_ptr_reg <= #D next_tail_ptr;
+            // Update all three TMR copies of head pointer (commits) - self-healing writes voted value to all
+            head_ptr_reg_0 <= #D next_head_ptr;
+            head_ptr_reg_1 <= #D next_head_ptr;
+            head_ptr_reg_2 <= #D next_head_ptr;
+            // Update all three TMR copies of tail pointer (allocations)
+            tail_ptr_reg_0 <= #D next_tail_ptr;
+            tail_ptr_reg_1 <= #D next_tail_ptr;
+            tail_ptr_reg_2 <= #D next_tail_ptr;
 
-            // Update delayed head indices
-            head_idx_d1 <= #D head_idx;
-            head_plus_1_idx_d1 <= #D head_plus_1_idx;
-            head_plus_2_idx_d1 <= #D head_plus_2_idx;
+            // Update all three TMR copies of delayed head indices - self-healing
+            head_idx_d1_0 <= #D head_idx;
+            head_idx_d1_1 <= #D head_idx;
+            head_idx_d1_2 <= #D head_idx;
+            head_plus_1_idx_d1_0 <= #D head_plus_1_idx;
+            head_plus_1_idx_d1_1 <= #D head_plus_1_idx;
+            head_plus_1_idx_d1_2 <= #D head_plus_1_idx;
+            head_plus_2_idx_d1_0 <= #D head_plus_2_idx;
+            head_plus_2_idx_d1_1 <= #D head_plus_2_idx;
+            head_plus_2_idx_d1_2 <= #D head_plus_2_idx;
 
             //==================================================================
             // ALLOCATION - Initialize new entries

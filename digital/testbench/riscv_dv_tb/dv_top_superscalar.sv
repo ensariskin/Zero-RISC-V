@@ -222,6 +222,7 @@ module dv_top_superscalar;
     ) dut (
         .clk(clk),
         .reset(rst_n),
+        .secure_mode(1'b0), // todo change
 
         // Instruction Memory Interface (3-port for parallel fetch)
         .inst_addr_0(inst_addr_0),

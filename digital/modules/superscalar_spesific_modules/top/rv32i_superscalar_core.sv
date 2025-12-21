@@ -77,8 +77,11 @@ module rv32i_superscalar_core #(
     // TMR Fatal Error Signals (internal - for recovery logic)
     logic brat_head_ptr_fatal;
     logic brat_tail_ptr_fatal;
+    logic rob_head_ptr_fatal;
+    logic rob_tail_ptr_fatal;
     logic tmr_fatal_error;  // Combined fatal error signal
-    assign tmr_fatal_error = brat_head_ptr_fatal | brat_tail_ptr_fatal;
+    assign tmr_fatal_error = brat_head_ptr_fatal | brat_tail_ptr_fatal |
+        rob_head_ptr_fatal | rob_tail_ptr_fatal;
 
     // Fetch Buffer Interface
     logic [2:0] decode_valid;
@@ -408,6 +411,7 @@ module rv32i_superscalar_core #(
     ) dispatch_stage_unit (
         .clk(clk),
         .reset(reset),
+        .secure_mode(secure_mode),
 
         // BRAT in-order branch resolution inputs (for RS/LSQ eager flush)
         .brat_branch_resolved_i(brat_branch_resolved),
@@ -476,7 +480,11 @@ module rv32i_superscalar_core #(
 
         // Eager misprediction flush outputs (for issue stage LSQ circular buffer)
         .lsq_flush_valid_o(lsq_flush_valid),
-        .first_invalid_lsq_idx_o(first_invalid_lsq_idx)
+        .first_invalid_lsq_idx_o(first_invalid_lsq_idx),
+
+        // TMR error outputs
+        .rob_head_ptr_fatal_o(rob_head_ptr_fatal),
+        .rob_tail_ptr_fatal_o(rob_tail_ptr_fatal)
     );
 
     //==========================================================================

@@ -28,6 +28,7 @@ module dispatch_stage #(
       // Clock and Reset
       input logic clk,
       input logic reset,
+      input logic secure_mode,
 
       // Pipeline Control
       //input logic flush,
@@ -111,7 +112,13 @@ module dispatch_stage #(
       input logic [2:0] brat_branch_mispredicted_i,       // In-order misprediction flags
       input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_0_i,  // ROB ID of oldest resolved
       input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_1_i,  // ROB ID of 2nd oldest resolved
-      input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_2_i   // ROB ID of 3rd oldest resolved
+      input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_2_i,  // ROB ID of 3rd oldest resolved
+
+      //==========================================================================
+      // TMR ERROR OUTPUTS (from ROB)
+      //==========================================================================
+      output logic rob_head_ptr_fatal_o,
+      output logic rob_tail_ptr_fatal_o
    );
 
    //==========================================================================
@@ -209,6 +216,7 @@ module dispatch_stage #(
    reorder_buffer rob (
       .clk(clk),
       .reset(reset),
+      .secure_mode(secure_mode),
 
       .alloc_enable_0(issue_to_dispatch_0.dispatch_valid),
       .alloc_enable_1(issue_to_dispatch_1.dispatch_valid),
@@ -325,7 +333,9 @@ module dispatch_stage #(
       // Eager misprediction outputs (for LSQ flush)
       .branch_misprediction_i(brat_eager_misprediction),
       .branch_mispredicted_rob_idx_i(brat_mispredicted_phys_reg[4:0]),
-      .rob_head_ptr_o(rob_head_ptr)
+      .rob_head_ptr_o(rob_head_ptr),
+      .head_ptr_fatal_o(rob_head_ptr_fatal_o),
+      .tail_ptr_fatal_o(rob_tail_ptr_fatal_o)
    );
 
    multi_port_register_file #(
@@ -437,6 +447,57 @@ module dispatch_stage #(
    assign internal_rs_if_2.branch_prediction = issue_to_dispatch_2.branch_prediction;
 
    //==========================================================================
+   // RS TMR VALIDATION - INTERNAL REGISTER INTERFACES
+   //==========================================================================
+   rs_internal_if #(
+      .DATA_WIDTH(DATA_WIDTH),
+      .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH)
+   ) rs_0_internal_if();
+
+   rs_internal_if #(
+      .DATA_WIDTH(DATA_WIDTH),
+      .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH)
+   ) rs_1_internal_if();
+
+   rs_internal_if #(
+      .DATA_WIDTH(DATA_WIDTH),
+      .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH)
+   ) rs_2_internal_if();
+
+   // RS Validator error outputs
+   logic rs_exec_mismatch, rs_exec_fatal;
+   logic rs_internal_mismatch, rs_internal_fatal;
+
+   //==========================================================================
+   // RS VALIDATOR (TMR voting for internal registers)
+   //==========================================================================
+   rs_validator #(
+      .DATA_WIDTH(DATA_WIDTH),
+      .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH)
+   ) rs_tmr_validator (
+      .secure_mode(secure_mode),
+
+      // Exec interfaces (passthrough - RS directly connected to exec)
+      .exec_in_0(dispatch_to_alu_0),
+      .exec_in_1(dispatch_to_alu_1),
+      .exec_in_2(dispatch_to_alu_2),
+      .exec_out_0(dispatch_to_alu_0),
+      .exec_out_1(dispatch_to_alu_1),
+      .exec_out_2(dispatch_to_alu_2),
+
+      // Internal register interfaces
+      .rs_0_internal(rs_0_internal_if.validator),
+      .rs_1_internal(rs_1_internal_if.validator),
+      .rs_2_internal(rs_2_internal_if.validator),
+
+      // Error flags
+      .exec_mismatch_o(rs_exec_mismatch),
+      .exec_fatal_o(rs_exec_fatal),
+      .internal_mismatch_o(rs_internal_mismatch),
+      .internal_fatal_o(rs_internal_fatal)
+   );
+
+   //==========================================================================
    // RESERVATION STATION 0 (ALU0)
    //==========================================================================
 
@@ -447,6 +508,7 @@ module dispatch_stage #(
    ) rs_0 (
       .clk(clk),
       .reset(reset),
+      .secure_mode(secure_mode),
 
       // Eager misprediction flush interface (from BRAT in-order resolution)
       .eager_misprediction_i(brat_eager_misprediction),
@@ -460,7 +522,10 @@ module dispatch_stage #(
       .cdb_if_port(cdb_interface.rs0),  // Use rs0 modport
 
       // Interface to functional unit
-      .exec_if(dispatch_to_alu_0)
+      .exec_if(dispatch_to_alu_0),
+
+      // TMR validation interface
+      .internal_if(rs_0_internal_if.reservation_station)
    );
 
    //==========================================================================
@@ -474,6 +539,7 @@ module dispatch_stage #(
    ) rs_1 (
       .clk(clk),
       .reset(reset),
+      .secure_mode(secure_mode),
 
       // Eager misprediction flush interface (from BRAT in-order resolution)
       .eager_misprediction_i(brat_eager_misprediction),
@@ -487,7 +553,10 @@ module dispatch_stage #(
       .cdb_if_port(cdb_interface.rs1),  // Use rs1 modport
 
       // Interface to functional unit
-      .exec_if(dispatch_to_alu_1)
+      .exec_if(dispatch_to_alu_1),
+
+      // TMR validation interface
+      .internal_if(rs_1_internal_if.reservation_station)
    );
 
    //==========================================================================
@@ -501,6 +570,7 @@ module dispatch_stage #(
    ) rs_2 (
       .clk(clk),
       .reset(reset),
+      .secure_mode(secure_mode),
 
       // Eager misprediction flush interface (from BRAT in-order resolution)
       .eager_misprediction_i(brat_eager_misprediction),
@@ -514,7 +584,10 @@ module dispatch_stage #(
       .cdb_if_port(cdb_interface.rs2),  // Use rs2 modport
 
       // Interface to functional unit
-      .exec_if(dispatch_to_alu_2)
+      .exec_if(dispatch_to_alu_2),
+
+      // TMR validation interface
+      .internal_if(rs_2_internal_if.reservation_station)
    );
 
    // LSQ instance (simple, all ports explicit, connections skipped)
@@ -613,7 +686,17 @@ module dispatch_stage #(
 
       // Eager misprediction flush outputs (connect to dispatch outputs for issue stage)
       .first_invalid_lsq_idx_o(first_invalid_lsq_idx_o),
-      .lsq_flush_valid_o(lsq_flush_valid_o)
+      .lsq_flush_valid_o(lsq_flush_valid_o),
+
+      // TMR ports
+      .secure_mode(secure_mode),
+      .head_ptr_0_fatal_o(),  // LSQ head_ptr fatal - can be aggregated later
+      .head_ptr_1_fatal_o(),  // LSQ head_ptr_1 fatal
+      .head_ptr_2_fatal_o(),  // LSQ head_ptr_2 fatal
+      .tail_ptr_fatal_o(),    // LSQ tail_ptr fatal
+      .last_commit_ptr_0_fatal_o(),  // LSQ last_commit_ptr_0 fatal
+      .last_commit_ptr_1_fatal_o(),  // LSQ last_commit_ptr_1 fatal
+      .last_commit_ptr_2_fatal_o()   // LSQ last_commit_ptr_2 fatal
    );
 
    logic [1:0] active_rs_number;
