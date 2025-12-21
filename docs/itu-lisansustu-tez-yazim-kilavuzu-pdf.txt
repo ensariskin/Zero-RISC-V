@@ -1,0 +1,719 @@
+İSTANBUL TEKNİK ÜNİVERSİTESİ
+
+LİSANSÜSTÜ TEZ YAZIM KILAVUZU
+
+İTÜ Senatosunun 18.11.2021 tarihli 788 sayılı toplantısında kabul edilerek yürürlüğe
+girmiştir.
+
+KASIM 2021
+
+i
+
+ii
+
+ÖNSÖZ
+İTÜ Lisansüstü Enstitüsü’ne teslim edilecek yüksek lisans, doktora ve sanatta
+yeterlik tezleri bu kılavuzda belirtilen esaslara uygun olarak yazılır. Türkçe ve
+İngilizce olarak hazırlanmış olan tez yazım kılavuzu, İTÜ Kütüphane
+Dokümantasyon Daire Başkanlığı ve Lisansüstü Eğitim Enstitüsü internet
+sayfasından (www.kutuphane.itu.edu.tr ve www.lee.itu.edu.tr) temin edilebilir. Bu
+tez yazım kılavuzu İTÜ’de yazılacak tezlerin biçimini düzenler, tez yazımı için örnek
+ya da şablon değildir. Bu kılavuza göre Türkçe ve İngilizce hazırlanmış örnek tez
+şablonları ve ilgili yardımcı dokümanlar Lisansüstü Eğitim Enstitüsü’nün internet
+sayfasından temin edilebilir.
+Bu kılavuz, İTÜ’deki var olan deneyimin yanısıra uluslararası kabul görmüş yazım
+kurallarından biri olan; APA (American Psychological Association) kurallarından
+yararlanılarak hazırlanmıştır. Bu kılavuzda yer almayan konularda APA kuralları
+referans alınır. APA kuralları için detaylı bilgi ilgili internet sayfası
+(www.apastyle.org, www.apa.org) ve basılı halde İTÜ, Mustafa İnan
+Kütüphanesinde mevcut olan Publication Manual of the American Psychological
+Association, Washington, 2010 el kitabından yararlanılabilir.
+
+iii
+
+iv
+
+İÇİNDEKİLER
+Sayfa
+ÖNSÖZ ....................................................................................................................... iii
+İÇİNDEKİLER .......................................................................................................... v
+ŞEKİL LİSTESİ ....................................................................................................... vii
+1. TEZ BÖLÜMLERİNİN SUNUŞ SIRASI ............................................................ 1
+2. GENEL BİÇİMSEL KURALLAR ....................................................................... 3
+2.1 Kâğıt ve Çoğaltma Sistemi................................................................................. 3
+2.2 Sayfa Düzeni ...................................................................................................... 3
+2.2.1 Yazım şekli ................................................................................................. 3
+2.2.2 Kenar boşlukları .......................................................................................... 3
+2.3 Yazı Karakteri .................................................................................................... 4
+2.4 Satır Aralıkları ve Paragraf Düzeni .................................................................... 5
+2.5 Sayfa Numaralama ............................................................................................. 6
+2.6 Çizelge ve Şekiller ............................................................................................. 6
+2.7 Denklemler ......................................................................................................... 7
+2.8 Kapaklar ve Ciltleme.......................................................................................... 8
+2.8.1 Karton cilt dış ve iç kapak........................................................................... 8
+2.8.1.1 Karton cilt dış kapak ............................................................................ 8
+2.8.1.2 Karton cilt iç kapak .............................................................................. 9
+2.8.2 Bez cilt dış ve iç kapak ............................................................................. 10
+2.8.2.1 Bez cilt dış kapak ............................................................................... 10
+2.8.2.2 Bez cilt dış kapak sırt yazısı ............................................................... 10
+2.8.2.3 Bez cilt iç kapak ................................................................................. 11
+2.9 Onay Sayfası .................................................................................................... 11
+3. TEZİN YAZIMI VE BÖLÜM İÇERİKLERİ ................................................... 13
+3.1 Başlıklar ........................................................................................................... 13
+3.2 Önsöz................................................................................................................ 14
+3.3 İçindekiler ........................................................................................................ 14
+3.4 Kısaltmalar, Semboller, Çizelge ve Şekil Listesi ............................................. 14
+3.5 Türkçe ve İngilizce Özetler .............................................................................. 15
+3.6 Metin Bölümü .................................................................................................. 15
+3.7 Kaynaklar ......................................................................................................... 15
+3.7.1 Alıntılar ..................................................................................................... 16
+3.7.2 Atıflar (kaynakların metin içinde gösterimi) ............................................ 17
+3.7.2.1 Yazar soyadına göre atıf verme.......................................................... 17
+3.7.2.2 Numara ile atıf verme......................................................................... 18
+3.7.3 Kaynakların listelenmesi ........................................................................... 19
+3.8 Dipnotlar .......................................................................................................... 19
+3.9 Ekler Bölümü ................................................................................................... 20
+3.10 Özgeçmiş Bölümü .......................................................................................... 20
+4. BİLİMSEL MAKALELERDEN HAZIRLANAN DOKTORA TEZLERİ ... 23
+
+v
+
+5. BİLİMSEL ARAŞTIRMA PROJELERİ KOORDİNASYON BİRİMİ
+TARAFINDAN DESTEKLENEN LİSANSÜSTÜ TEZLER .............................. 23
+
+vi
+
+ŞEKİL LİSTESİ
+Sayfa
+Şekil 2.1a : Sağ ilk sayfa kenar boşlukları. ............................................................3
+Şekil 2.1b : Sol ve sağ iç sayfalar kenar boşlukları. ...............................................4
+Şekil 2.2 : Yatay sayfa düzeni. ...............................................................................4
+Şekil 2.3 : Bez cilt dış kapak sırtının düzeni ve boyutları. ...................................10
+
+vii
+
+viii
+
+1. TEZ BÖLÜMLERİNİN SUNUŞ SIRASI
+Tezde yer alacak bölümlerin sunuş sırası aşağıdaki düzende olmalıdır;
+1. Dış kapak
+2. İç kapak
+3. Onay sayfası
+4. İthaf sayfası (varsa)
+5. Önsöz
+6. İçindekiler
+7. Kısaltmalar
+8. Semboller
+9. Çizelge listesi
+10. Şekil listesi
+11. Özet (Türkçe/İngilizce) (tezin yazım dilindeki önce)
+12. Giriş
+13. Diğer bölümler (Malzeme ve Yöntem, Bulgular ve Tartışma, ...)
+14. Sonuçlar ve Öneriler
+15. Kaynaklar
+16. Ekler
+17. Özgeçmiş
+
+1
+
+2
+
+2. GENEL BİÇİMSEL KURALLAR
+2.1 Kâğıt ve Çoğaltma Sistemi
+Tezler A4 (21x29,7 cm) boyutunda 80 g/m2 beyaz, birinci hamur kâğıda özellikleri
+bozulmadan çoğaltılmalı, kopyalar net ve okunaklı olmalıdır.
+2.2 Sayfa Düzeni
+2.2.1 Yazım şekli
+Karton kapaklı (beyaz) ve bez (YL civit mavisi, DR siyah) ciltli tezler, kâğıdın her
+iki yüzüne basılmış şekilde teslim edilmelidir. Arkalı önlü baskılarda, her bölümün
+ilk sayfasının (birinci derece başlıkların) okuma yönünde sağdaki sayfada (tek
+numaralı sayfa) olmalıdır.
+2.2.2 Kenar boşlukları
+Yazı bloğunun kâğıt üzerindeki yerleşiminde kenar boşlukları Şekil 2.1a ve 2.1b’de
+belirtildiği gibi olmalıdır;
+
+Şekil 2.1a : Sağ ilk sayfa kenar boşlukları.
+
+3
+
+Şekil 2.1b : Sol ve sağ iç sayfalar kenar boşlukları.
+Şekil 2.2’de gösterildiği gibi, yatay olarak kullanılan sayfalar, tezin sağa çevrilerek
+okunabileceği şekilde düzenlenmelidir.
+
+Şekil 2.2 : Yatay sayfa düzeni.
+2.3 Yazı Karakteri
+Tüm tezde, 12 yazı boyutunda Times New Roman (veya istenirse tüm tez boyunca
+11 yazı boyutunda Arial) yazı karakteri kullanılır. Harf büyüklüğü zorunlu hallerde 1
+yazı boyutu azaltılabilir.
+
+4
+
+Metin içindeki bir düşünceyi açıklayan kısa notlar 8 punto olarak sayfa altında yer
+alabilir. 10 satırı aşan notlar ek olarak verilir.
+Çizelge ve şekil içlerinde gerekli ise 8 yazı boyutuna kadar küçültülebilir.
+Çizelgeler tezde kullanılan yazı karakteriyle yazılır, şekillerde kullanılan yazı
+karakteri tez boyunca kendi içerisinde tutarlı olmalıdır.
+Sol kenardan çekilerek yazılan uzun alıntılarda da yine genel yazı puntosu (12 yazı
+boyutu) geçerlidir.
+Metin dik ve normal harflerle yazılır, koyu (bold) harfler başlıklarda kullanılır. İtalik
+yazı karakteri, sadece gerekli hallerde (isim, kısaltmalar, teori/tanım vb.)
+kullanılabilir.
+Virgülden ve noktadan sonra bir karakter boşluk bırakılır.
+2.4 Satır Aralıkları ve Paragraf Düzeni
+Kılavuz içinde geçen ‘aralık’ terimi, bir satır alt kenarından diğer satır alt kenarına
+olan mesafedir. Punto ise yazı yüksekliği birimi olup 1/72 inç (0,376 mm) olarak
+alınır.
+Tez metni 1,5 satır aralıklı yazılır. Paragraflar, “iki yana yaslanmış” olarak
+ayarlanmalıdır. Paragraflardan önce ve sonra 6 punto aralık bırakılır. Paragraflar
+arasına boş satır konmaz.
+Önsöz, içindekiler, çizelge ve şekil listeleri, kısaltmalar, sembol listesi, özetler, metin
+içindeki çizelge ve şekillerin isim ve açıklamaları ve dipnotlar, kaynaklar, ekler ve
+özgeçmiş 1 satır aralıklı yazılır.
+Birinci derece başlıklardan önce 72 punto, sonra 18 punto aralık bırakılır.
+İkinci derece başlıklardan önce 18 punto, sonra 12 punto aralık bırakılır.
+Üçüncü ve dördüncü derece başlıklardan önce ise 12 punto, sonra 6 punto aralık
+bırakılır.
+Başlıklar sayfanın son satırı olarak yazılamaz, başlık sonrası 2 satır metin
+yazılamıyorsa başlık da sonraki sayfada yer alır. Bir paragrafın ilk satırı sayfanın son
+satırı, paragrafın son satırı da sayfanın ilk satırı olarak (matbaacılıkta “dul ve yetim”
+olarak tanımlanan şekilde) yazılamaz.
+
+5
+
+2.5 Sayfa Numaralama
+Dış ve iç kapaklar ve onların arka sayfaları dışında tezin tüm sayfaları numaralanır.
+İç kapak (i), arkası (ii) sayılır ancak sayfa numarası yazılmaz. İç kapakların ardından
+gelen onay sayfasından başlanarak tezin metin bölümüne kadar sayfalar aralıksız
+olarak Romen rakamıyla numaralanır. Tezin metin bölümü (Giriş, diğer bölümler,
+Sonuçlar ve/veya Tartışma, Kaynaklar, Ekler ve Özgeçmiş bölümleri) Arap
+rakamları ile (1, 2, …) numaralandırılır.
+Sayfa numaraları metnin okuma yönünde sayfanın alt-ortasına gelecek ve 1,5 cm
+yukarıda olacak biçimde yerleştirilir.
+Sayfa numaraları metin için kullanılan yazı karakteri ile yazılmalı, yazı boyutu
+Times New Roman için 11 punto, Arial için ise 10 punto olmalıdır.
+2.6 Çizelge ve Şekiller
+Çizelgeler ve şekiller sayfa düzeni esaslarına uymak şartı ile metinde ilk söz
+edildikleri yerden hemen sonraya mümkün olduğu kadar yakın yerleştirilmelidir.
+Çizelge ve şekillerden önce, ilgili çizelge ya da şekle atıfta bulunulmalıdır.
+Tüm şekil ve çizelgeler ile bunların açıklamaları yazı bloğuna göre ortalı olarak
+yerleştirilmelidir.
+Çizelge ve şekillere, ilk rakam bölüm numarası (eklerde harf), ikinci rakam
+çizelgenin (veya şeklin) bölüm içindeki sıra numarası olmak üzere numara verilir.
+(Örnek: Çizelge 1.2, Şekil 3.5, Çizelge A.1, Şekil B.5). Örnekte olduğu gibi çizelge,
+şekil kelimeleri ve numaralar koyu harflerle yazılır.
+Her şeklin numarası ve açıklaması şeklin altına, her çizelgenin numarası ve
+açıklaması çizelgenin üstüne tüm satırları ortalı biçimde yazılır.
+Çizelge numarası ve üst yazısı, bir satır aralığı kullanılarak ve yazıdan önce 12
+punto, sonra 6 punto aralık bırakılarak yazılmalı ve çizelge üst yazısı nokta ile
+bitirilmelidir. Çizelge üst yazısı ile çizelgenin tamamı aynı sayfa içinde yer almalıdır.
+Birden fazla çizelge veya şekil aynı sayfaya yerleştirilebilir. Ancak 4 sayfadan daha
+fazla süren çizelge veya şekiller ek olarak verilmelidir.
+
+6
+
+Çizelgeden sonra gelen metin bölümündeki ilk paragraf üstten 12 alttan 6 punto
+aralık bırakılarak yazılmalıdır. Çizelgelerden hemen sonra gelecek başlıklar,
+belirtilen başlık formatlarında değişiklik yapılmadan aynen kullanılmalıdır.
+Çizelgelerin ilk (üst) çizgisi çift çizgi olmalıdır.
+Çizelgelerde dipnot kullanılması gerekiyorsa 1 satır aralıklı ve metinden 2 yazı
+boyutu küçük yazılmalıdır.
+Şekil numarası ve alt yazısı bir aralık boşlukla yazılır. Şekil alt yazısının aralık ayarı,
+önce 6 punto, sonra 12 punto olmalı ve şekil açıklamaları nokta ile bitirilmelidir.
+Şekil alt yazısı ve şeklin tamamı aynı sayfa içinde yer almalıdır. Şekilden önce gelen
+metin bölümündeki son paragraf üstten 6, alttan 12 punto aralık bırakılarak
+yazılmalıdır.
+Bir sayfayı aşan büyüklükteki çizelge ve şekillerde 2. sayfada aynı çizelge/şekil
+numarası ve açıklaması yazılarak, çizelge/şekil numarası ile açıklaması arasına,
+parantez içinde (devam) yazılmalıdır. (Örneğin; Çizelge 1.1 (devam) : Atıklardaki
+metal içerikleri, Şekil 1.1 (devam) : İstanbul’un su şebekesi).
+Çizelgelerin devam eden bölümlerinde sütun isimleri tekrar belirtilmelidir.
+Tezde verilen grafik, resim ve notalar şekil kabul edilerek numaralandırılmalı ve
+açıklamaları yapılmalıdır.
+Katlı sayfa ve sayfa üzerine iliştirilmiş görsel malzeme gibi sayfa kalınlığını
+arttırarak tezin açılma düzenini bozan sayfalar ekler bölümünde verilmelidir.
+2.7 Denklemler
+Denklemler denklem editörüyle ve aşağıdaki kurallara uygun olarak yazılır.
+Denklemler 1,5 satır aralıkla yazılır.
+Denklemlerden önce ve sonra 6 punto aralık bırakılır.
+Denklemlerden önce ve sonra boş satır konmaz. Bu durumda denklemler ile metin
+arasında üstte 12 punto, altta 12 punto aralık bırakılmış olur.
+Denklemler metin bloğuna ortalı olarak hizalandırılır.
+Denklemlere, ilgili bölüm içinde bölüm numarası ilk numara olmak koşuluyla 1’den
+başlayarak sıra ile numara verilir. Bu numaralar normal olarak (koyu ‘bold’ değil) ve
+7
+
+örnek olarak birinci bölümde (1.1), (1.2), ikinci bölümde (2.1), (2.2) şeklinde,
+gerekiyorsa aynı denklemin alt ifadeleri (1.1a) ve (1.1b) şeklinde denklemin
+bulunduğu satırın en sağına yazılır.
+Ekler bölümünde verilen denklemler, verildikleri bölüm belirtilerek numaralandırılır.
+(Örnek: A.1.1, A.1.2).
+2.8 Kapaklar ve Ciltleme
+Türkçe tezler için İngilizce iç kapak, İngilizce tezler için de Türkçe iç kapak
+hazırlanmalıdır. Karton ve bez cilt kapaklar ile ilgili kurallar aşağıda ayrı ayrı
+verilmiştir;
+2.8.1 Karton cilt dış ve iç kapak
+2.8.1.1 Karton cilt dış kapak
+Dış kapakta yazı karakteri olarak Times New Roman, 12 yazı boyutu kullanılır. Dış
+kapak üzerindeki yazılar aşağıdaki kurallara göre yerleştirilmelidir;
+Karton kapağın üst kenarından 3 cm aşağıya
+İSTANBUL TEKNİK ÜNİVERSİTESİ  LİSANSÜSTÜ EĞİTİM ENSTİTÜSÜ
+
+yazılır, ayraç yıldızı beş ışınlı ve içi dolu olmalıdır.
+Tezin adı, üst kenardan 8–10 cm arasına, en fazla üç satıra sığacak şekilde yazılır.
+Harf büyüklüğü 12 puntodur. Üç satıra sığmayan başlıklarda harf büyüklüğü 10
+puntoya kadar küçültülebilir.
+Üst kenardan 15 cm aşağıya, YÜKSEK LİSANS TEZİ, DOKTORA TEZİ veya
+SANATTA YETERLİLİK TEZİ,
+Üst kenardan 16 cm aşağıya, yazarın Adı SOYADI
+Üst kenardan 20 cm aşağıya .....….. Anabilim Dalı
+Üst kenardan 21 cm aşağıya .....….. Programı
+Anabilim dalları ve programlar, Liisnasüstü Eğitim Enstitüsü tarafından kabul
+edilmiş resmi isimleri ile yazılır (Örnek: İnşaat Mühendisliği Anabilim Dalı, Yapı
+Mühendisliği Programı).
+Üst kenardan 23 cm aşağıya Tez Danışmanı : ...... unvanı ile birlikte adı soyadı,
+8
+
+Üst kenardan 26 cm aşağıya ay ve yıl olarak tezin Lisansüstü Eğitim Enstitüsü’nee
+teslim tarihi büyük harflerle (örnek: OCAK 2021) yazılır.
+Kapaktaki bütün satırlar, kapağın dış kenar ölçülerine göre ortalanarak yazılır.
+Karton cilt dış kapak görünüşü ve boyutları tez şablonunda verilmiştir.
+2.8.1.2 Karton cilt iç kapak
+İç kapakta yazı karakteri olarak Times New Roman, 12 yazı boyutu kullanılır.
+Karton kapağın üst kenarından 3 cm aşağıya
+İSTANBUL TEKNİK ÜNİVERSİTESİ  LİSANSÜSTÜ EĞİTİM ENSTİTÜSÜ
+
+yazılır, ayraç yıldızı beş ışınlı ve içi dolu olmalıdır.
+Tezin adı, üst kenardan 8–10 cm arasına, en fazla üç satıra sığacak şekilde yazılır.
+Harf büyüklüğü 12 puntodur. Üç satıra sığmayan başlıklarda harf büyüklüğü 10
+puntoya kadar küçültülebilir.
+Üst kenardan 15 cm aşağıya, YÜKSEK LİSANS TEZİ, DOKTORA TEZİ veya
+SANATTA YETERLİLİK TEZİ,
+Üst kenardan 16 cm aşağıya, yazarın Adı SOYADI
+Bir alt satıra öğrenci numarası Örnek: (501092205)
+Üst kenardan 20 cm aşağıya .....….. Anabilim Dalı
+Üst kenardan 21 cm aşağıya .....….. Programı
+Anabilim dalları ve programlar, Lisansüstü Eğitim Enstitüsü tarafından kabul edilmiş
+resmi isimleri ile yazılır (Örnek: İnşaat Mühendisliği Anabilim Dalı, Yapı
+Mühendisliği Programı).
+Üst kenardan 23 cm aşağıya Tez Danışmanı : ...... unvanı ile birlikte Adı SOYADI
+Üst kenardan 26 cm aşağıya, teslim tarihi ay ve yıl olarak (Örnek: OCAK 2021)
+yazılır.
+İç kapaktaki bütün satırlar yazı bloğuna göre ortalanarak yazılır.
+Karton cilt iç kapak görünüşü ve boyutları tez şablonunda verilmiştir.
+
+9
+
+2.8.2 Bez cilt dış ve iç kapak
+2.8.2.1 Bez cilt dış kapak
+Doktora tezlerinde siyah, yüksek lisans tezlerinde civit mavisi renginde olarak
+hazırlanacak olan bez cilt dış kapakta yazı karakteri olarak Times New Roman, 12
+yazı boyutu kullanılır.
+Kapağın üst kenarından 3 cm aşağıya üniversite ve Enstitü adı tek satırda yazılır.
+Tezin adı, üst kenardan 8–10 cm arasına, en fazla üç satıra sığacak şekilde yazılır.
+Harf büyüklüğü tezin adı uzunluğu ile orantılı olacak şekilde seçilir.
+Üst kenardan 15 cm aşağıya, YÜKSEK LİSANS TEZİ, DOKTORA TEZİ veya
+SANATTA YETERLİLİK TEZİ,
+Üst kenardan 16 cm aşağıya, yazarın Adı SOYADI
+Üst kenardan 20 cm aşağıya .....….. Anabilim Dalı
+Üst kenardan 21 cm aşağıya .....….. Programı
+Anabilim dalları ve programlar, Lisansüstü Eğitim Enstitüsü kuruluş şemasındaki
+tam isimleri ile yazılır (Örnek: İnşaat Mühendisliği Anabilim Dalı, Yapı
+Mühendisliği Programı).
+Üst kenardan 26 cm aşağıya ay ve yıl olarak tezin savunma tarihi ay ve yıl olarak
+büyük harflerle (Örnek: OCAK 2021) yazılır.
+Kapaktaki bütün satırlar kapağın dış kenar ölçülerine göre ortalanarak yazılır.
+Bez cilt dış kapak görünüşü ve boyutları tez şablonunda verilmiştir.
+2.8.2.2 Bez cilt dış kapak sırt yazısı
+Tez sırtında yazı karakteri olarak Times New Roman, 12 yazı boyutu kullanılır. Tez
+sırtında, yazarın adının ilk harfi ve soyadı, tezin adı ve tezin kabul yılı yer alır.
+Yazılar, ilgili bölümler içinde yatay ve dikey olarak ortalanmalıdır (Şekil 2.3).
+Tez başlığı ayrılan bölüme sığmıyorsa yazı boyutu küçültülerek başlığın tamamı
+sığdırılmalıdır.
+
+10
+
+Şekil 2.3: Bez cilt dış kapak sırtının düzeni ve boyutları.
+2.8.2.3 Bez cilt iç kapak
+İç kapakta yazı karakteri olarak Times New Roman, 12 yazı boyutu kullanılır. Tezin
+adı, kâğıdın üst kenarından 8–10 cm arasına, en fazla üç satıra sığacak şekilde
+yazılır. Harf boyutu tez adının uzunluğu ile orantılı olacak şekilde seçilir.
+Üst kenardan 15 cm aşağıya, YÜKSEK LİSANS TEZİ, DOKTORA TEZİ veya
+SANATTA YETERLİLİK TEZİ,
+Üst kenardan 16 cm aşağıya, yazarın Adı SOYADI
+Bir alt satıra öğrenci numarası (Örnek: 501092205)
+Üst kenardan 20 cm aşağıya ....….. Anabilim Dalı
+Üst kenardan 21 cm aşağıya .....….. Programı
+Üst kenardan 23 cm aşağıya Tez Danışmanı : ...... unvanı ile birlikte adı soyadı,
+Üst kenardan 26 cm aşağıya, savunma tarihi ay ve yıl olarak (Örnek: OCAK 2021)
+yazılır.
+İç kapaktaki bütün satırlar yazı bloğuna göre ortalanarak yazılır.
+Bez cilt iç kapak görünüşü ve boyutları tez şablonunda verilmiştir.
+2.9 Onay Sayfası
+Sayfa üst kenarından 5 cm aşağıya;
+İTÜ, Lisansüstü Eğitim Enstitüsü’nün …. numaralı Yüksek Lisans/Doktora
+öğrencisi, “Adı SOYADI”, ilgili yönetmeliklerin belirlediği gerekli tüm şartları
+yerine getirdikten sonra hazırladığı “TEZ BAŞLIĞI” başlıklı tezini, aşağıda imzaları
+olan jüri önünde başarı ile sunmuştur.
+Sayfa üst kenarından 10 cm aşağıya;
+
+11
+
+Tez Danışmanı :
+
+Prof. Dr. Adı SOYADI
+
+....……………….
+
+Kurum Adı
+Sayfa üst kenarından 12 cm aşağıya Eş Danışman (varsa);
+Eş Danışman :
+
+Prof. Dr. Adı SOYADI
+
+....……………….
+
+Kurum Adı
+Sayfa üst kenarından 14 cm aşağıya jüri üyeleri;
+Jüri Üyeleri :
+
+Prof. Dr. Adı SOYADI
+
+.............................
+
+Kurum Adı
+2’şer cm arayla diğer jüri üyeleri yazılır.
+Sayfanın en alt iki satırına sola dayalı olarak;
+Tezin Lisansüstü Eğitim Enstitüsü’ne teslim tarihi gün ay yıl olarak Teslim Tarihi:
+22 Ocak 2021 biçiminde ve bir alt satıra da tezin başarılı olduğu savunma sınavı
+tarihi gün ay yıl olarak Savunma Tarihi : 21 Şubat 2021 biçiminde yazılır.
+Bez ciltli her bir tez kopyasında jüri üyelerinin isimlerinin hizasında ıslak imzalarının
+bulunması gerekir. Tez, jüri üyelerinin ortak görüşü ile (oy birliği ya da oy çokluğu)
+kabul edileceğinden, jüri üyelerinin kişisel görüşleri (KABUL ya da RED) bu
+sayfada yer almaz.
+Yüksek lisans ve doktora tezleri için hazırlanmış onay sayfası örnekleri tez
+şablonunda verilmiştir.
+
+12
+
+3. TEZİN YAZIMI VE BÖLÜM İÇERİKLERİ
+Tezlerde yazım (imlâ) ve noktalamalarında Türk Dil Kurumu’nun İmlâ Kılavuzu
+ve Türkçe Sözlük’te belirtilen kurallara uyulacaktır. Söz konusu sözlükte
+bulunmayan kelime ve deyimlerin kullanılması gerekirse anlamı açıklanmalıdır.
+Tezlerde SI birimleri kullanılacaktır, gerekiyorsa MKS birimleri cinsinden eşdeğeri
+de parantez içinde verilir.
+Her sembol, metinde ilk geçtiği yerde tanımlanır.
+Tezlerde, önsöz ve dipnotlar dışında birinci şahıs anlatım kullanılmaz.
+Tezler bilgisayar ortamında hazırlanır ve çıktıları lazer ya da mürekkep püskürtmeli
+yazıcılardan alınır. Daktilo ile tez yazımı ve nokta vuruşlu yazıcı çıktıları kabul
+edilmez.
+Tezin hiçbir bölümünde, elle ya da daktilo ile sonradan yapılan düzeltmeler,
+silintiler, kazıntılar kabul edilmez.
+Tezde geçen çizelgeler, şekiller ve formüller bilgisayar ortamında oluşturulur. Bu tür
+şekillerde elle düzeltme yapılmaz.
+10 sayfadan uzun ekler istenildiği takdirde CD veya DVD halinde tezin eki olarak
+verilebilir. Diskler tezin arka karton kapağının iç kısmına yapılacak bir cep (CD
+zarfı) içine yerleştirilir. Söz konusu disklerin üzerine CD kalemi ile ad, SOYAD,
+öğrenci no, tez adı ve “Doktora tezi eki” notu yazılmalıdır.
+3.1 Başlıklar
+Tezde yer alan bütün başlıklar metin içerisinde koyu (bold) yazılır.
+Türkçe ve İngilizce özetlerin başlıkları ortalanmış, diğer başlıklar ise “iki yana
+yaslanmış” olarak ayarlanmalıdır.
+Birinci dereceden başlıklar okuma yönünde, sağ sayfadan başlamalı, büyük ve koyu
+harflerle yazılmalıdır. (Örnek: 1. GİRİŞ)
+
+13
+
+İkinci dereceden başlıklar koyu ve başlığı oluşturan kelimelerin ilk harfleri büyük
+yazılır. (Örnek: 2.1 Süreç Yeterlik Analizi)
+Üçüncü ve dördüncü dereceden başlıklar koyu ve sadece ilk harfi büyük yazılır.
+(Örnek: 2.1.1 Histogram kullanarak süreç analizi, 3.1.2.2 Süreç analizinin
+adımları)
+Beşinci ve daha alt dereceden başlıklar numaralanmaz, içindekiler listesinde yer
+almaz.
+3.2 Önsöz
+Önsöz bölümünün içerisindeki metinler 1 satır aralıklı yazılır. Tezin ilk sayfası
+niteliğinde yazılan önsöz iki sayfayı geçmez.
+Tezi destekleyen kurumlara ve yardımcı olan kişilere bu kısımda teşekkür edilir.
+Önsöz metninin altında sağa dayalı olarak adı-soyadı, sola dayalı olarak ay, yıl
+biçiminde tarih yazılır. Bu iki unsur aynı hizada olur.
+Önsöz metninde kişi soyadlarının tamamı büyük harflerle yazılır (Örnek: Adı
+SOYADI). Ad SOYAD bilgisinin altına parantez içerisinde meslek bilgisi yazılır.
+3.3 İçindekiler
+İçindekiler listesi önsöz sayfası ile başlar ve 1 satır aralıklı yazılır.
+İçindekiler listesindeki birinci dereceden başlıklar büyük harf koyu ve ikinci
+dereceden başlıklarda her bir kelimenin ilk harfi büyük harf olarak, üçüncü ve
+dördüncü dereceden başlıklarda ise sadece ilk harf büyük yazılır.
+Tüm başlıklarla sayfa numaraları arası nokta ile doldurulur. Başlıkların sayfa no.
+alanına taşması engellenmelidir, uygun bir yerde başlık kesilip alt satıra alınmalıdır..
+3.4 Kısaltmalar, Semboller, Çizelge ve Şekil Listesi
+Metin içinde kısaltmalar, semboller, çizelge ve şekil var ise ilgili listeler
+oluşturulmalıdır. Bu listeler önce 6, sonra 6 punto aralık bırakılarak 1 satır aralıklı
+olarak hazırlanmalıdır.
+
+14
+
+Kataloglar listesi, süreli yayınlar listesi, elektronik ortamdaki kaynaklar listesi,
+kişisel görüşmeler listesi gibi listeler, kaynaklar kısmında yer alacaklarından, tez
+içinde ayrı bir liste halinde verilemez.
+3.5 Türkçe ve İngilizce Özetler
+Türkçe tezlerde, Türkçe özet 300 kelimeden az olmamak kaydıyla 1-3 sayfa,
+İngilizce genişletilmiş özet de 3-5 sayfa arasında olmalıdır.
+İngilizce tezlerde ise, İngilizce özet 300 kelimeden az olmamak kaydıyla 1-3 sayfa,
+Türkçe genişletilmiş özet de 3-5 sayfa arasında olmalıdır.
+Özetlerde tezde ele alınan konu kısaca tanıtılarak, kullanılan yöntemler ve ulaşılan
+sonuçlar belirtilir.
+Özetlerde kaynak, şekil, çizelge verilmez.
+Özetlerin başında, birinci dereceden başlık formatında tezin adı (önce 72, sonra 18
+punto aralık bırakılarak ve 1 satır aralıklı olarak) yazılacaktır. Başlığın altına büyük
+harflerle sayfa ortalanarak (Türkçe özet için) ÖZET ve (İngilizce özet için)
+SUMMARY yazılmalıdır.
+3.6 Metin Bölümü
+Metin bölümü;
+Giriş,
+Diğer bölümler (Malzeme ve Yöntem, Bulgular ve Tartışma, ...),
+Sonuçlar ve Öneriler
+bölümlerini içerir ve sayfa sınırlaması olmadan yazılır.
+Dizin, sözlük gibi ekler varsa ekler bölümünde verilmelidir.
+3.7 Kaynaklar
+Tezde mevcut literatürden yararlanırken aşağıdaki kurallara uyulmalıdır. Kaynaklar
+hakkında detaylı bilgiler Lisansüstü Eğitim Enstitüsü’nün internet sitesinden ve ilgili
+bağlantılardan bulunabilir.
+
+15
+
+3.7.1 Alıntılar
+Genel olarak alıntılar kelime, imla ve noktalama bakımından aslına uygun olarak
+yapılır. Alıntı yapılan parçada bir yanlış varsa, doğrusu köşeli parantez içerisinde
+belirtilmek koşuluyla metin aynen nakledilir.
+Kırk kelimeden daha az uzunluktaki kısa alıntılar çift tırnak içerisinde verilir.
+Alıntının sonunda ilgili kaynağa atıf yapılıp atıftan sonra nokta koyulur.
+Kırk kelimeden fazla olan uzun alıntılar tırnak içerisinde gösterilmezler. Uzun
+alıntılar soldan 1 sekme (1,27 cm) içerden verilir. İçerden verilen uzun alıntılar,
+metnin genelinde kullanılan büyüklükte (12 punto) yazılır. Ancak, çok sık ve çok
+uzun alıntılardan kaçınılması tavsiye edilir. Kısa alıntılardan farklı olarak noktalama
+atıftan sonra değil de önce yapılır. Örneğin; .(s. 196) gibi.
+40 kelimeden fazla olan alıntı örneği;
+Ana metin ana metin ana metin ana metin ana metin ana metin ana metin ana metin
+ana metin ana metin Others have contradicted this view:
+Co-presence does not ensure intimate interaction among all group
+members.Consider large-scale social gatherings in which hundreds or
+thousands of people gather in a location to perform a ritual or celebrate an
+event. In these instances, participats are able to see the visible manifestation
+of the group, the physicsl gathering, yet their ability to make direct, intimate
+connections with those around them is limited by the sheer magnitude of the
+assembly (Purcell, 1997, ss. 111-112).
+Devam eden metin devam eden metin devam eden metin devam eden metin devam
+eden metin devam eden metin devam eden metin devam eden metin devam eden
+metin.
+Cümle başındaki alıntı örnekleri;
+According to Jones (1998), "Students often had difficulty using APA style,
+especially when it was their first time" (s. 199).
+“Critser (2003) noted that despite growing numbers of overweight Americans, many
+health care providers still “remain either in ignorance or outright denial about the
+health danger to the poor and the young” (s. 5).
+
+16
+
+Critser (2003) noted that despite growing numbers of overweight Americans, many
+health care providers still “remain either in ignorance or outright denial about the
+health danger to the poor and the young” (Critser, 2003, s. 5).
+Cümle arasındaki kısa alıntı örneği;
+Interpreting these results, Robbins et al. (2003) suggested that the “therapists in
+dropout cases may have inadvertently validated parental negativity about the
+adolescent without adequately responding to the adolescent’s needs or concerns” (s.
+541) contributing to an overall climate of negativity.
+Cümle sonundaki kısa alıntı örneği;
+Confusing this issue is the overlapping nature of roles in palliative care, whereby
+“medical needs are met by those in the medical disciplines; nonmedical needs may
+be addressed by anyone on the team” (Csikai & Chaitin, 2006, s. 112).
+Alıntılar hakkında detaylı bilgiler Lisansüstü Eğitim Enstitüsü’nün internet
+sitesinden ve ilgili bağlantılardan bulunabilir.
+3.7.2 Atıflar (kaynakların metin içinde gösterimi)
+3.7.2.1 Yazar soyadına göre atıf verme
+Kaynaklar metin içinde yazar soyadı ve tarih belirtilerek verilir. Kaynaklar
+sayfasında yazar soyadına göre alfabetik olarak sıralama yapılır.
+Metin içinde kaynak, cümlenin başlangıcında veya içinde verilecekse, Boran (2003)
+şeklinde, kaynak cümle sonunda verilecekse (Boran, 2003). şeklinde gösterilir. Nokta
+işareti kaynaktan hemen sonra konulur.
+Kaynak birden fazla yazara ait olduğunda, yazar sayısı iki ise, cümle başında veya
+içinde Yılmaz ve Johnson (2004) şeklinde, cümle sonunda ise (Yılmaz ve Johnson,
+2004). şeklinde yazılır.
+Yazar sayısı ikiden fazla ise cümle başında veya içinde Yılmaz ve diğ. (2004)
+şeklinde, cümle sonunda ise (Yılmaz ve diğ, 2004). şeklinde yazılır.
+Aynı yazara ait ve aynı yıl içinde yayınlanmış yayınlar Feray (2005a), Feray (2005b)
+şeklinde numaralandırılır.
+
+17
+
+Aynı parantez içerisinde aynı yazarın 2 ve daha fazla eserine atıfta bulunma; son
+yayınlanan eseri en son belirterek aynı parantez içerisinde gösterilebilirler. Örneğin;
+Past research (Gogel, 1990, 2006, in pres).
+Eserin belirli bir bölümüne atıfta bulunma; bir eserin sadece bir bölümüne, sayfasına,
+çizelgeye, şekle ya da eşitliğe atıfta bulunurken daima sayfa numarası
+gösterilmelidir. Sayfa ifadesinin kısaltılmış biçimi kullanılırken bir bölüme atıfta
+bulunurken “chapter” ya da “bölüm” ifadesinde kısaltmaya gidilmez. Örneğin;
+(Centers for Disease Control and Prevention, 2005, p. 10), (Shimamura, 1989, Bölüm
+3).
+Aynı parantez içerisinde 2 ya da daha fazla esere atıf; (Berndt, 2002 ; Harlow, 1983).
+Metinde kişisel görüşmeye atıfta bulunma; (V.–G. Nguyen, kişisel görüşme, 28 Eylül
+1998), (J. Smith, kişisel görüşme, 15 Ağustos 2009).
+Kaynaklar bölümünde künyeler yazar soyadına göre URL künyeleri de “URL”
+harflerine göre alfabetik olarak sıralanır.
+İkincil kaynak (atıf yapılan kaynak başka bir kaynağa atıfta bulunuyorsa) metinde
+orijinal kaynağa atıfta bulunulur ve parantez içerisinde orijinal kaynağa atıfta
+bulunan yazara gönderme yapılır. Referans listesinde sadece orjinal kaynağa atıfta
+bulunan kaynak için giriş yapılır; orijinal kaynak için referans girişi yapılmaz.
+Örnek: In his e-mails, Smith argued that asynchronous line dancing would be the
+next Internet meme (Jones, 2010’da atıfta bulunulduğu gibi).
+3.7.2.2 Numara ile atıf verme
+Metin içinde [ ] köşeli parantez içinde numaralandırılır. Tezde ilk verilen kaynak [1]
+numara ile başlar ve veriliş sırasına göre numaralandırılır.
+Kaynaklara metin içerisinde aşağıdaki biçimlerde atıf yapılır.
+[1]
+
+1 nolu kaynak,
+
+[1-3]
+
+1 ve 3 arası (1, 2 ve 3 nolu ) kaynaklar,
+
+[1,3]
+
+1 ve 3 nolu kaynaklar,
+
+[1,3,8] 1, 3 ve 8 nolu kaynaklar,
+[1,3-8] 1 ve 3 ile 8 nolu kaynaklar arasındaki kaynaklar.
+
+18
+
+Aynı isimli birden fazla cildi olan kaynakların, kullanılan her bir cildine ayrı kaynak
+numarası verilmelidir.
+3.7.3 Kaynakların listelenmesi
+Tezde atıf yapılan bütün kaynaklar ‘KAYNAKLAR’ bölümünde listelenmelidir.
+Yazar soyadına göre atıf yapılan tezlerde kaynaklar listesi alfabetik olarak sıralanır.
+Numaralandırma yöntemine göre atıf yapılan tezlerde kaynaklar tezde veriliş sırasına
+göre numaralanır ve sıralanır.
+Kaynaklar bölümünde aynı yazarın birden çok yapıtı yer alıyorsa, yapıtlar, yayın
+yılına göre eskiden yeniye doğru sıralanır. Aynı yazarın iki farklı yapıtının yayın
+tarihleri aynıysa, kaynaklar listesindeki sıralama, künyede bir sonraki öğe olan yapıt
+adına göre yapılır. Atıflarda ayrımı sağlamak için tarih bilgisinin yanına a’dan
+başlayan harfler eklenir.
+Aynı yazarın tek yazarlı yapıtları çok yazarlı yapıtlarından önce sıralanır. Çok yazarlı
+iki yapıtın ilk yazarları aynıysa, ikinci yazarın soyadı, ikinci yazarlar da aynıysa
+üçüncü yazarın soyadı alfabetik düzende belirleyicidir.
+Aynı soyadını taşıyan iki farklı yazarın yapıtları adlarına göre alfabetik sıraya girer.
+Yazar bir tüzel kuruluşsa, yapıt, yazar konumundaki tüzel kuruluşun adıyla alfabetik
+listeye girer.
+Bir yapıtın yazarı veya editörü yoksa künye yapıt adına hazırlanacağı için, kaynak,
+yapıt adından alfabetik listeye girer. Yapıt adı rakamla başlıyorsa sıralamada rakamın
+okunuşu dikkate alınır.
+KAYNAKLAR başlığı, birinci derece başlıktır ve bölüm numarası almaz. 1 satır
+aralığı kullanılarak önce 72, sonra 18 punto boşluk bırakılarak yazılır.
+3.8 Dipnotlar
+Tezlerde içeriği genişletici, güçlendirici veya ilave nitelikteki bilgiler (içerik dipnotu)
+kullanılabilir. Fakat kaynak gösterimi için dipnot kullanılmamalıdır.
+Dipnot numaraları alıntının hemen sonuna koyulur. Alıntı paragrafsa dipnot
+numarası paragrafın son kelimesinin üzerine, alıntı bir kavram veya isimse, bu defa
+kavram veya ismin hemen üzerine yazılır.
+
+19
+
+Metin içerisindeki dipnot numarası; satır hizasının üzerinde1 şeklinde görünür
+olmalıdır. Numara sonrasında herhangi bir noktalama işareti konmamalıdır.
+Dipnot, ilgili sayfanın altına metinden 2 karakter küçük yazı ile yazılmalıdır.
+Dipnot çizgisi ile dipnot numarası arasında bir aralık; dipnot numarası ile dipnotun
+ilk satırı arasında ise yarım aralık bırakılmalıdır. Dipnotlar metinden ince yatay bir
+çizgi ile ayrılmalıdır.
+Dipnotlarla ilgili ayrıntılı bilgiler Lisansüstü Eğitim Enstitüsü’nün internet sitesinden
+ve ilgili bağlantılarından bulunabilir.
+3.9 Ekler Bölümü
+Ekler alfabe harfleri kullanılarak verilir. (Örnek: Ek A, Ek B, Ek C). Eklerin alt
+bölümleri için Ek A1, Ek A2, Ek B1, Ek B2 gibi bölümlemeler yapılabilir.
+Ekler bölümünün ilk kısmına EKLER başlığı ile bir kapak sayfası hazırlanarak
+içeriğindeki eklerin numaraları ve adlarıyla listelenir.
+Her ek bölümü, o ekin numarası ve adıyla başlar. Ek A : Ekin adı…………. gibi.
+Ekler bölümünde verilen çizelge ve şekiller, bulundukları bölümün adı altında
+numaralandırılır. (Örnek: Çizelge A.1, Çizelge A.2, Şekil A.1, Şekil A.2)
+Ekler
+
+bölümünde
+
+verilen
+
+denklemler
+
+bulundukları
+
+bölümün
+
+adı
+
+altında
+
+numaralandırılır. (Örnek: (A 1.1), (A 1.2) )
+A4 boyutundan büyük harita ve benzeri ekler metin içerisinde değil bu bölümde
+verilmelidir.
+İndeks, sözlük gibi ekler varsa bu bölümde verilmelidir.
+CD ekleri cildin arka iç kapağına yapıştırılacak bir cep içine yerleştirilmeli ve
+üzerine tez sahibinin adı, SOYADI, tezin adı ve “Yüksek lisans tezi eki” veya
+“Doktora tezi eki” notu yazılarak ekler için hazırlanacak kapak sayfasına da ek
+olarak eklenmelidir. (Örnek: Ek C Bilgisayar programı CD’si, EK D : Haritalar
+(CD_Rom’da) gibi)
+3.10 Özgeçmiş Bölümü
+Adı Soyadı, lisans ve yüksek lisans (tarihli) bilgileri belirtilmelidir.
+20
+
+Fotoğraf, doğum yeri ve tarihi, adres, e-posta adresi gibi kişisel verilere yer
+verilmemelidir. Mesleki deneyim, ödüller, yayınlar, patentler isteğe bağlı olarak
+verilebilir.
+Özgeçmişin devamında yer alan, koyu harflerle yazılmış TEZDEN TÜRETİLEN
+YAYINLAR/SUNUMLAR başlığı altında tez çalışmasından türetilen yayın ve
+sunumların listesi de kaynakların yazım kurallarına göre yazılıp listelenmelidir. Bu
+listede yer alan yayın ve sunumlar, yazarın genel yayın listesinde yer almaz.
+Özgeçmiş
+
+bölümü
+
+tez
+
+şablonunda
+
+21
+
+verilen
+
+biçime
+
+göre
+
+hazırlanır.
+
+22
+
+4. BİLİMSEL MAKALELERDEN HAZIRLANAN DOKTORA TEZLERİ
+Doktora Tezlerinin Bilimsel Makalelerden Hazırlanmasına İlişkin Yönergeye göre
+yazılacak olan tezler İTÜ Tez Yazım Kılavuzu esaslarına uygun olarak
+hazırlanmalıdır.
+
+5. BİLİMSEL
+
+ARAŞTIRMA
+
+PROJELERİ
+
+KOORDİNASYON
+
+BİRİMİ
+
+TARAFINDAN DESTEKLENEN LİSANSÜSTÜ TEZLER (09.05.2019/702
+ÜNİVERSİTE SENATOSU KARARI):
+BAP Uygulama Yönergesinin ilgili maddesi uyarınca; BAP Koordinasyon Birimi
+tarafından desteklenen projeler kapsamında tamamlanan tezlerde “Bu çalışma; İTÜ
+Bilimsel Araştırma Projeleri Birimince desteklenmiştir. Proje numarası: ……. (This
+work was supported by the Research Fund of Istanbul Technical University. Project
+Number:……..)” şeklinde veya benzer anlama gelecek bir ibareye tezin Önsöz
+bölümünde yer verilmesi zorunludur.
+
+23
+
+

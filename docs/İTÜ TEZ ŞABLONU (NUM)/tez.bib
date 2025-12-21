@@ -1,0 +1,179 @@
+% RISC-V Tez Kaynakları
+% Numaralı referans sistemi kullanılacak
+
+% ================================================================
+% TEMEL SPESİFİKASYONLAR
+% ================================================================
+
+@misc{riscv_spec,
+  author = {{RISC-V Foundation}},
+  title = {The RISC-V Instruction Set Manual, Volume I: User-Level ISA},
+  howpublished = {\url{https://riscv.org/specifications/}},
+  year = {2019},
+  note = {Version 2.2}
+}
+
+@misc{riscv_priv,
+  author = {Andrew Waterman and Krste Asanović},
+  title = {The RISC-V Instruction Set Manual, Volume II: Privileged Architecture},
+  howpublished = {\url{https://riscv.org/specifications/}},
+  year = {2021},
+  note = {Version 1.12}
+}
+
+% ================================================================
+% BİLGİSAYAR MİMARİSİ TEMELLERİ
+% ================================================================
+
+@book{patterson_hennessy,
+  author = {David A. Patterson and John L. Hennessy},
+  title = {Computer Organization and Design: The Hardware/Software Interface},
+  publisher = {Morgan Kaufmann},
+  year = {2014},
+  edition = {5th}
+}
+
+@book{shen_lipasti,
+  author = {John Paul Shen and Mikko H. Lipasti},
+  title = {Modern Processor Design: Fundamentals of Superscalar Processors},
+  publisher = {McGraw-Hill},
+  year = {2005}
+}
+
+@article{tomasulo,
+  author = {Robert M. Tomasulo},
+  title = {An Efficient Algorithm for Exploiting Multiple Arithmetic Units},
+  journal = {IBM Journal of Research and Development},
+  volume = {11},
+  number = {1},
+  pages = {25--33},
+  year = {1967}
+}
+
+@article{keller,
+  author = {Robert M. Keller},
+  title = {Look-Ahead Processors},
+  journal = {ACM Computing Surveys},
+  volume = {7},
+  number = {4},
+  pages = {177--195},
+  year = {1975}
+}
+
+@inproceedings{smith_branch,
+  author = {James E. Smith},
+  title = {A Study of Branch Prediction Strategies},
+  booktitle = {Proc. 8th Annual Symposium on Computer Architecture},
+  pages = {135--148},
+  year = {1981}
+}
+
+% ================================================================
+% HATA TOLERANSI
+% ================================================================
+
+@article{baumann,
+  author = {Robert C. Baumann},
+  title = {Radiation-Induced Soft Errors in Advanced Semiconductor Technologies},
+  journal = {IEEE Transactions on Device and Materials Reliability},
+  volume = {5},
+  number = {3},
+  pages = {305--316},
+  year = {2005}
+}
+
+@article{lyons_tmr,
+  author = {R. E. Lyons and W. Vanderkulk},
+  title = {The Use of Triple-Modular Redundancy to Improve Computer Reliability},
+  journal = {IBM Journal of Research and Development},
+  volume = {6},
+  number = {2},
+  pages = {200--209},
+  year = {1962}
+}
+
+@article{hamming,
+  author = {Richard W. Hamming},
+  title = {Error Detecting and Error Correcting Codes},
+  journal = {Bell System Technical Journal},
+  volume = {29},
+  number = {2},
+  pages = {147--160},
+  year = {1950}
+}
+
+% ================================================================
+% RISC-V SUPERSCALAR IMPLEMENTASYONLAR
+% ================================================================
+
+@techreport{boom,
+  author = {Christopher Celio and David A. Patterson and Krste Asanović},
+  title = {The Berkeley Out-of-Order Machine (BOOM): An Industry-Competitive, Synthesizable, Parameterized RISC-V Processor},
+  institution = {UC Berkeley},
+  number = {UCB/EECS-2015-167},
+  year = {2015}
+}
+
+@inproceedings{rsd,
+  author = {Susumu Suzuki and others},
+  title = {RSD: An Open Source FPGA-Optimized Out-of-Order RISC-V Soft Processor},
+  booktitle = {Proc. IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS)},
+  year = {2023}
+}
+
+% ================================================================
+% BRANCH PREDICTION
+% ================================================================
+
+@techreport{mcfarling,
+  author = {Scott McFarling},
+  title = {Combining Branch Predictors},
+  institution = {Western Research Laboratory, Digital Equipment Corporation},
+  number = {TN-36},
+  year = {1993}
+}
+
+@inproceedings{yeh_patt,
+  author = {Tse-Yu Yeh and Yale N. Patt},
+  title = {Two-Level Adaptive Training Branch Prediction},
+  booktitle = {Proc. 24th Annual International Symposium on Microarchitecture},
+  pages = {51--61},
+  year = {1991}
+}
+
+% ================================================================
+% OUT-OF-ORDER EXECUTION
+% ================================================================
+
+@book{johnson,
+  author = {Mike Johnson},
+  title = {Superscalar Microprocessor Design},
+  publisher = {Prentice Hall},
+  year = {1991}
+}
+
+% ================================================================
+% TMR VE RISC-V
+% ================================================================
+
+@inproceedings{quinn,
+  author = {H. Quinn and others},
+  title = {Using Benchmarks for Radiation Testing of Microprocessors and FPGAs},
+  booktitle = {IEEE Transactions on Nuclear Science},
+  year = {2015}
+}
+
+@inproceedings{rezzak_tmr,
+  author = {N. Rezzak and others},
+  title = {TMR RISC-V Soft Processors Reliability Improvement},
+  booktitle = {IEEE International Symposium on Defect and Fault Tolerance in VLSI and Nanotechnology Systems},
+  year = {2022}
+}
+
+% ================================================================
+% EK KAYNAKLAR (Kullanıcı tarafından eklenecek)
+% ================================================================
+
+% TODO: Tez danışmanının önerdiği kaynaklar
+% TODO: İlgili konferans makaleleri
+% TODO: Diğer RISC-V implementasyonları

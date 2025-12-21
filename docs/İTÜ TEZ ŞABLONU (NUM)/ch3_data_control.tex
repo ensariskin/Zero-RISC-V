@@ -1,0 +1,183 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.4 DATA CONTROL AŞAMASI
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Data Control A\c{s}amas{\i}}\label{sec:data_control}
+
+Data Control a\c{s}amas{\i}, s{\i}ra d{\i}\c{s}{\i} y\"ur\"utmenin merkezi kontrol noktas{\i}d{\i}r. Bu a\c{s}ama, komutlar{\i}n operandlar{\i} haz{\i}r olana kadar bekletilmesini, haz{\i}r komutlar{\i}n y\"ur\"utme birimlerine g\"onderilmesini ve sonu\c{c}lar{\i}n s{\i}ral{\i} olarak kesinle\c{s}tirilmesini y\"onetir.
+
+Tasarlanan sistemde Data Control a\c{s}amas{\i}, \"u\c{c} ana bile\c{s}enden olu\c{s}maktad{\i}r: Yeniden S{\i}ralama Arabelle\u{g}i (ROB), Rezervasyon \.Istasyonlar{\i} (RS) ve Fiziksel Yazma\c{c} Dosyas{\i} (PRF).
+
+\subsection{Yeniden S{\i}ralama Arabelle\u{g}i (ROB)}\label{subsec:rob}
+
+Yeniden S{\i}ralama Arabelle\u{g}i (\texttt{reorder\_buffer}), s{\i}ra d{\i}\c{s}{\i} y\"ur\"utmenin temel yap{\i} ta\c{s}{\i}d{\i}r \cite{johnson}. ROB, komutlar{\i}n program s{\i}ras{\i}nda kesinle\c{s}tirilmesini (\textit{in-order commit}) sa\u{g}layarak hassas kesme (precise exception) deste\u{g}i sunar.
+
+\subsubsection{ROB yap{\i}s{\i} ve alanlar{\i}}\label{subsubsec:rob_fields}
+
+ROB, 32 giri\c{s}lik bir dairesel tampon olarak ger\c{c}eklenmi\c{s}tir. Her ROB giri\c{s}i a\c{s}a\u{g}{\i}daki alanlar{\i} i\c{c}ermektedir:
+
+\begin{itemize}
+    \item \textbf{destination:} Hedef fiziksel yazma\c{c} adresi
+    \item \textbf{value:} Hesaplanm{\i}\c{s} sonu\c{c} de\u{g}eri (32-bit)
+    \item \textbf{tag:} Operand haz{\i}rl{\i}k durumu (3-bit etiket)
+    \item \textbf{executed:} Komutun y\"ur\"ut\"ul\"up y\"ur\"ut\"ulmedi\u{g}i
+    \item \textbf{exception:} \.Istisna veya yanl{\i}\c{s} tahmin bayra\u{g}{\i}
+    \item \textbf{is\_store:} Saklama i\c{s}lemi bayra\u{g}{\i}
+    \item \textbf{is\_branch:} Dallanma komutu bayra\u{g}{\i}
+\end{itemize}
+
+ROB, \"u\c{c} paralel tahsis portunu destekleyerek her \c{c}evrimde \"u\c{c} yeni komutun eklenmesine olanak tan{\i}r:
+
+\begin{equation}\label{eq:rob_alloc}
+alloc\_idx_n = (tail\_ptr + n) \mod BUFFER\_DEPTH
+\end{equation}
+
+\subsubsection{S{\i}ral{\i} kesinle\c{s}tirme mant{\i}\u{g}{\i}}\label{subsubsec:retirement}
+
+ROB, ba\c{s} i\c{s}aret\c{c}isinden (head pointer) ba\c{s}layarak s{\i}ral{\i} kesinle\c{s}tirme ger\c{c}ekle\c{s}tirir. Bir komutun kesinle\c{s}tirilebilmesi i\c{c}in a\c{s}a\u{g}{\i}daki ko\c{s}ullar{\i}n sa\u{g}lanmas{\i} gerekir:
+
+\begin{enumerate}
+    \item Komut y\"ur\"ut\"ulm\"u\c{s} olmal{\i} (\texttt{executed = 1})
+    \item \.Istisna bayra\u{g}{\i} aktif olmamal{\i} (\texttt{exception = 0})
+    \item Saklama i\c{s}lemleri i\c{c}in LSQ'dan onay al{\i}nm{\i}\c{s} olmal{\i}
+\end{enumerate}
+
+Her \c{c}evrimde en fazla \"u\c{c} komut kesinle\c{s}tirilebilir:
+
+\begin{equation}\label{eq:commit_valid}
+commit\_valid_n = executed[head+n] \land \lnot exception[head+n] \land commit\_valid_{n-1}
+\end{equation}
+
+Kesinle\c{s}tirme s{\i}ras{\i}nda, hesaplanan de\u{g}erler Fiziksel Yazma\c{c} Dosyas{\i}na yaz{\i}l{\i}r ve eski fiziksel yazma\c{c}lar serbest listeye geri eklenir.
+
+\subsubsection{\.Istisna ve yanl{\i}\c{s} tahmin y\"onetimi}\label{subsubsec:exception}
+
+Bir komutta istisna veya yanl{\i}\c{s} tahmin tespit edildi\u{g}inde, ROB a\c{s}a\u{g}{\i}daki i\c{s}lemleri ger\c{c}ekle\c{s}tirir:
+
+\begin{enumerate}
+    \item \.Istisnadan sonraki t\"um k\"uyruk giri\c{s}leri ge\c{c}ersiz k{\i}l{\i}n{\i}r (flush)
+    \item BRAT'tan uygun RAT snapshot geri y\"uklenir
+    \item Serbest liste i\c{s}aret\c{c}isi geri al{\i}n{\i}r
+    \item Fetch a\c{s}amas{\i}na do\u{g}ru PC g\"onderilir
+\end{enumerate}
+
+ROB, Common Data Bus (CDB) \"uzerinden gelen \c{c}\"oz\"umleme sinyallerini dinleyerek \texttt{executed} ve \texttt{exception} alanlar{\i}n{\i} g\"unceller.
+
+\subsubsection{TMR korumal{\i} i\c{s}aret\c{c}iler}\label{subsubsec:rob_tmr}
+
+ROB, kritik i\c{s}aret\c{c}iler i\c{c}in TMR korumas{\i} uygular. Ba\c{s} ve kuyruk i\c{s}aret\c{c}ileri \"u\c{c}er kopya olarak tutulur:
+
+\begin{itemize}
+    \item \texttt{head\_ptr\_reg\_0/1/2}: Ba\c{s} i\c{s}aret\c{c}isi kopyalar{\i}
+    \item \texttt{tail\_ptr\_reg\_0/1/2}: Kuyruk i\c{s}aret\c{c}isi kopyalar{\i}
+\end{itemize}
+
+Ayr{\i}ca kesinle\c{s}tirme i\c{c}in kullan{\i}lan gecikmeli indeksler de TMR ile korunmaktad{\i}r. \texttt{tmr\_voter} mod\"ulleri, \c{c}o\u{g}unluk oylamas{\i} ile do\u{g}ru de\u{g}eri belirler.
+
+%------------------------------------------------------------------------
+
+\subsection{Rezervasyon \.Istasyonu (RS)}\label{subsec:rs}
+
+Rezervasyon \.Istasyonlar{\i}, Tomasulo algoritmas{\i}n{\i}n temelini olu\c{s}turur \cite{tomasulo}. Her RS, bir komutu ve operandlar{\i}n{\i} saklar, operandlar haz{\i}r olana kadar bekler ve haz{\i}r oldu\u{g}unda komutu y\"ur\"utme birimine g\"onderir.
+
+\subsubsection{RS yap{\i}s{\i}}\label{subsubsec:rs_struct}
+
+Tasarlanan sistemde \"u\c{c} ayr{\i} rezervasyon istasyonu bulunmaktad{\i}r, her biri tek bir y\"ur\"utme birimine ba\u{g}l{\i}d{\i}r. Her RS a\c{s}a\u{g}{\i}daki bilgileri saklar:
+
+\begin{itemize}
+    \item \textbf{occupied:} RS dolu mu bayra\u{g}{\i}
+    \item \textbf{control\_signals:} Komut kontrol sinyalleri (11-bit)
+    \item \textbf{pc:} Komutun PC de\u{g}eri
+    \item \textbf{immediate:} Acil de\u{g}er
+    \item \textbf{rd\_phys\_addr:} Hedef fiziksel yazma\c{c} adresi
+    \item \textbf{operand\_a\_data/tag:} Birinci operand verisi ve etiketi
+    \item \textbf{operand\_b\_data/tag:} \.Ikinci operand verisi ve etiketi
+    \item \textbf{branch\_sel/prediction:} Dal tahmin bilgileri
+    \item \textbf{alloc\_tag:} LSQ tahsis etiketi
+\end{itemize}
+
+Operand etiketleri (\texttt{tag}), operand{\i}n nereden gelece\u{g}ini belirtir:
+
+\begin{itemize}
+    \item \texttt{TAG\_READY (3'b111):} Operand haz{\i}r, de\u{g}er do\u{g}rudan kullan{\i}labilir
+    \item \texttt{3'b000-3'b010:} Y\"ur\"utme birimi 0-2'den CDB \"uzerinden gelecek
+    \item \texttt{3'b011:} LSQ'dan gelecek (y\"ukleme sonucu)
+\end{itemize}
+
+\subsubsection{Operand iletimi (CDB)}\label{subsubsec:cdb}
+
+Common Data Bus (CDB), y\"ur\"utme birimlerinden \c{c}{\i}kan sonu\c{c}lar{\i} t\"um rezervasyon istasyonlar{\i}na ve ROB'a yay{\i}nlar. Her RS, CDB'yi s\"urekli olarak dinler ve bekleyen operandlar{\i} yakalar:
+
+\begin{equation}\label{eq:operand_capture}
+operand\_ready = (tag = \text{TAG\_READY}) \lor (cdb\_valid \land cdb\_tag = operand\_tag)
+\end{equation}
+
+CDB yap{\i}s{\i}, 4 farkl{\i} kaynak destekler:
+
+\begin{enumerate}
+    \item \textbf{cdb\_0, cdb\_1, cdb\_2:} \"U\c{c} y\"ur\"utme biriminden ALU/shifter sonu\c{c}lar{\i}
+    \item \textbf{cdb\_3:} LSQ'dan gelen y\"ukleme sonu\c{c}lar{\i} (3 alt port)
+\end{enumerate}
+
+\subsubsection{Komut g\"onderme politikas{\i}}\label{subsubsec:issue_policy}
+
+Bir komutun y\"ur\"utme birimine g\"onderilebilmesi i\c{c}in her iki operand{\i}n da haz{\i}r olmas{\i} gerekir:
+
+\begin{equation}\label{eq:issue_ready}
+should\_issue = occupied \land operand\_a\_ready \land operand\_b\_ready
+\end{equation}
+
+RS, iki farkl{\i} g\"onderme senaryosunu destekler:
+
+\begin{enumerate}
+    \item \textbf{Do\u{g}rudan g\"onderme:} Decode'dan gelen komut, operandlar haz{\i}rsa ayn{\i} \c{c}evrimde g\"onderilir
+    \item \textbf{Bekletme ve g\"onderme:} Operandlar haz{\i}r de\u{g}ilse komut saklan{\i}r, CDB'den operandlar gelince g\"onderilir
+\end{enumerate}
+
+\subsubsection{RS do\u{g}rulay{\i}c{\i}}\label{subsubsec:rs_validator}
+
+G\"uvenli modda, RS i\c{c}indeki kritik alanlar \texttt{rs\_validator} mod\"ul\"u taraf{\i}ndan do\u{g}rulan{\i}r. Bu mod\"ul, \"u\c{c} y\"ur\"utme birimi aras{\i}nda kar\c{s}{\i}la\c{s}t{\i}rma yaparak tutarl{\i}l{\i}\u{g}{\i} kontrol eder.
+
+%------------------------------------------------------------------------
+
+\subsection{Fiziksel Yazma\c{c} Dosyas{\i} (PRF)}\label{subsec:prf}
+
+Fiziksel Yazma\c{c} Dosyas{\i} (\texttt{multi\_port\_register\_file}), 64 adet 32-bit fiziksel yazma\c{c} i\c{c}eren \c{c}ok portlu bir yap{\i}d{\i}r.
+
+\subsubsection{\c{C}ok portlu yap{\i}}\label{subsubsec:multiport}
+
+PRF, a\c{s}a\u{g}{\i}daki port yap{\i}land{\i}rmas{\i}na sahiptir:
+
+\begin{itemize}
+    \item \textbf{6 okuma portu:} Her komut i\c{c}in 2 kaynak operand (3 komut $\times$ 2 = 6)
+    \item \textbf{3 yazma portu:} Kesinle\c{s}tirme s{\i}ras{\i}nda 3 e\c{s} zamanl{\i} yazma
+\end{itemize}
+
+Okuma portlar{\i} kombinasyonel olarak \c{c}al{\i}\c{s}{\i}r ve ayn{\i} \c{c}evrimde veri d\"ond\"ur\"ur. Yazma i\c{s}lemleri saat y\"ukselen kenar{\i}nda ger\c{c}ekle\c{s}ir.
+
+\subsubsection{Okuma-s{\i}ras{\i}nda-yazma davran{\i}\c{s}{\i}}\label{subsubsec:rdw}
+
+Ayn{\i} \c{c}evrimde bir adrese hem okuma hem yazma yap{\i}ld{\i}\u{g}{\i}nda, bypass mant{\i}\u{g}{\i} yeni de\u{g}erin okunmas{\i}n{\i} sa\u{g}lar:
+
+\begin{equation}\label{eq:bypass}
+read\_data = \begin{cases}
+write\_data & \text{e\u{g}er } read\_addr = write\_addr \land write\_en \\
+register[read\_addr] & \text{aksi halde}
+\end{cases}
+\end{equation}
+
+\"U\c{c} yazma portunun tamam{\i} i\c{c}in bypass kontrol\"u uygulan{\i}r. En y\"uksek \"oncelik, \texttt{commit\_addr\_2}'ye (en son kesinle\c{s}en) verilir:
+
+\begin{equation}\label{eq:bypass_priority}
+priority: commit\_2 > commit\_1 > commit\_0 > stored\_value
+\end{equation}
+
+\subsubsection{S{\i}f{\i}r yazma\c{c}{\i} y\"onetimi}\label{subsubsec:zero_reg}
+
+RISC-V mimarisinde \texttt{x0} yazma\c{c}{\i} her zaman s{\i}f{\i}r de\u{g}erini ta\c{s}{\i}r. PRF'de fiziksel yazma\c{c} 0, her saat \c{c}evriminde s{\i}f{\i}ra zorlan{\i}r:
+
+\begin{verbatim}
+register_data[0] <= '0;
+\end{verbatim}
+
+Bu sayede herhangi bir komut \texttt{x0}'a yazma yapmaya \c{c}al{\i}\c{s}sa bile de\u{g}er de\u{g}i\c{s}mez.

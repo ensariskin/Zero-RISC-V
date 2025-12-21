@@ -1,0 +1,164 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.3 DECODE & RENAME AŞAMASI
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Decode \& Rename A\c{s}amas{\i}}\label{sec:decode_rename}
+
+Decode \& Rename a\c{s}amas{\i}, komut arabelle\u{g}inden al{\i}nan komutlar{\i}n \c{c}\"oz\"umlenmesi ve yazma\c{c} yeniden adland{\i}rma i\c{s}lemlerinin ger\c{c}ekle\c{s}tirilmesinden sorumludur. Bu a\c{s}ama, s{\i}ra d{\i}\c{s}{\i} y\"ur\"utme i\c{c}in gerekli olan yalanc{\i} ba\u{g}{\i}ml{\i}l{\i}klar{\i}n (WAW ve WAR) ortadan kald{\i}r{\i}lmas{\i}n{\i} sa\u{g}lar \cite{keller,tomasulo}.
+
+Tasarlanan sistemde Decode \& Rename a\c{s}amas{\i}, \"u\c{c} ana bile\c{s}enden olu\c{s}maktad{\i}r: paralel komut \c{c}\"oz\"umleyiciler, yazma\c{c} takma ad tablosu (RAT) ve dal \c{c}\"oz\"umleme takma ad tablosu (BRAT).
+
+\subsection{Komut \c{C}\"oz\"umleme}\label{subsec:decoding}
+
+\subsubsection{Paralel \c{c}\"oz\"umleyici yap{\i}s{\i}}\label{subsubsec:parallel_decode}
+
+Komut \c{c}\"oz\"umleme birimi (\texttt{issue\_stage}), \"u\c{c} ayr{\i} \texttt{rv32i\_decoder} mod\"ul\"un\"un paralel \c{c}al{\i}\c{s}mas{\i}yla ger\c{c}eklenmi\c{s}tir. Her \c{c}evrimde \"u\c{c} komut e\c{s} zamanl{\i} olarak \c{c}\"oz\"umlenir ve kontrol sinyalleri \"uretilir.
+
+Her \c{c}\"oz\"umleyici, 32-bit RISC-V komutunu analiz ederek a\c{s}a\u{g}{\i}daki bilgileri \"uretir:
+
+\begin{itemize}
+    \item \textbf{Mimari yazma\c{c} adresleri:} \texttt{rs1}, \texttt{rs2} (kaynak) ve \texttt{rd} (hedef)
+    \item \textbf{Kontrol sinyalleri:} ALU i\c{s}lemi, bellek eri\c{s}imi, dallanma tipi
+    \item \textbf{Acil de\u{g}er:} Komut format{\i}na g\"ore \c{c}{\i}kar{\i}l{\i}p i\c{s}aret geni\c{s}letilmi\c{s} de\u{g}er
+\end{itemize}
+
+\subsubsection{Kontrol sinyali \"uretimi}\label{subsubsec:control_signals}
+
+Kontrol kelimesi (\texttt{control\_word}), komutun t\"ur\"un\"u ve gerekli i\c{s}lemleri kodlayan bir bit vekt\"or\"ud\"ur. Bu sinyal, sonraki pipeline a\c{s}amalar{\i}nda veri yolu kontrol\"u i\c{c}in kullan{\i}l{\i}r.
+
+RV32I komut seti i\c{c}in \c{c}\"oz\"umleyici, alt{\i} temel komut format{\i}n{\i} tan{\i}r \cite{riscv_spec}:
+
+\begin{enumerate}
+    \item \textbf{R-tipi:} Yazma\c{c}-yazma\c{c} aritmetik/mant{\i}ksal i\c{s}lemler
+    \item \textbf{I-tipi:} Acil de\u{g}erli i\c{s}lemler ve y\"uklemeler
+    \item \textbf{S-tipi:} Saklama i\c{s}lemleri
+    \item \textbf{B-tipi:} Ko\c{s}ullu dallanma
+    \item \textbf{U-tipi:} \"Ust acil de\u{g}er i\c{s}lemleri
+    \item \textbf{J-tipi:} Ko\c{s}ulsuz atlama
+\end{enumerate}
+
+Ek olarak, her komut i\c{c}in bellek eri\c{s}im gereksinimi (load/store) ve dallanma tipi belirlenir:
+
+\begin{equation}\label{eq:load_store}
+load\_store = mem\_read \lor (mem\_write \land \lnot branch)
+\end{equation}
+
+%------------------------------------------------------------------------
+
+\subsection{Yazma\c{c} Yeniden Adland{\i}rma}\label{subsec:reg_rename}
+
+Yazma\c{c} yeniden adland{\i}rma, s{\i}ra d{\i}\c{s}{\i} y\"ur\"utmenin temelini olu\c{s}turan kritik bir mekanizmad{\i}r. Bu teknik, mimari yazma\c{c}lar{\i} daha b\"uy\"uk bir fiziksel yazma\c{c} havuzuna e\c{s}leyerek ger\c{c}ek veri ba\u{g}{\i}ml{\i}l{\i}klar{\i} (RAW) d{\i}\c{s}{\i}ndaki t\"um sahte ba\u{g}{\i}ml{\i}l{\i}klar{\i} ortadan kald{\i}r{\i}r \cite{johnson}.
+
+\subsubsection{Yazma\c{c} Takma Ad Tablosu (RAT)}\label{subsubsec:rat}
+
+Yazma\c{c} Takma Ad Tablosu (\texttt{register\_alias\_table}), 32 mimari yazma\c{c}{\i}n her birinin hangi fiziksel yazma\c{c}a e\c{s}lendi\u{g}ini takip eder. Tasarlanan sistemde 64 fiziksel yazma\c{c} bulunmaktad{\i}r, bu da 32 mimari yazma\c{c}a ek olarak 32 geçici fiziksel yazma\c{c} sa\u{g}lar.
+
+RAT, a\c{s}a\u{g}{\i}daki aray\"uzleri desteklemektedir:
+
+\begin{itemize}
+    \item \textbf{Okuma (6 port):} Her komut i\c{c}in iki kaynak yazma\c{c}{\i} (3 komut $\times$ 2 kaynak = 6 okuma)
+    \item \textbf{Yazma (3 port):} Her komut i\c{c}in bir hedef yazma\c{c}{\i} g\"uncellemesi
+    \item \textbf{Commit (3 port):} ROB'dan gelen kesinle\c{s}tirme bilgileri
+\end{itemize}
+
+\"U\c{c} paralel komut i\c{c}in yeniden adland{\i}rma i\c{s}lemi, komutlar aras{\i}ndaki ba\u{g}{\i}ml{\i}l{\i}klar dikkate al{\i}narak ger\c{c}ekle\c{s}tirilir. E\u{g}er ard{\i}\c{s}{\i}k komutlar ayn{\i} mimari yazma\c{c}{\i} hedef al{\i}yorsa, yeniden adland{\i}rma s{\i}ras{\i}yla uygulan{\i}r:
+
+\begin{equation}\label{eq:rename_chain}
+rd\_phys_n = \begin{cases}
+rd\_phys_{n-1} & \text{e\u{g}er } rd\_arch_n = rd\_arch_{n-1} \\
+allocated\_phys_n & \text{aksi halde}
+\end{cases}
+\end{equation}
+
+\subsubsection{Serbest liste y\"onetimi}\label{subsubsec:free_list}
+
+Serbest liste (\texttt{circular\_buffer\_3port}), kullan{\i}labilir fiziksel yazma\c{c}lar{\i}n adreslerini tutan bir dairesel tampondur. Yeni bir hedef yazma\c{c}{\i} gerekti\u{g}inde, serbest listeden bir adres ayr{\i}l{\i}r; bir komut kesinle\c{s}tirildi\u{g}inde eski fiziksel yazma\c{c} adresi serbest listeye geri eklenir.
+
+Serbest liste, \"u\c{c} paralel okuma ve \"u\c{c} paralel yazma portuna sahiptir:
+
+\begin{itemize}
+    \item \textbf{Okuma (tahsis):} Her \c{c}evrimde en fazla 3 yeni fiziksel yazma\c{c} adr{\i}l{\i}r
+    \item \textbf{Yazma (serbest b{\i}rakma):} Kesinle\c{s}tirme s{\i}ras{\i}nda eski fiziksel yazma\c{c}lar geri eklenir
+\end{itemize}
+
+Serbest liste doluluk durumu, yeniden adland{\i}rma a\c{s}amas{\i}n{\i}n beklemesine neden olabilir. \texttt{rename\_ready} sinyali, yeterli serbest fiziksel yazma\c{c} oldu\u{g}unda aktif hale gelir:
+
+\begin{equation}\label{eq:rename_ready}
+rename\_ready = (free\_count \geq 3)
+\end{equation}
+
+\subsubsection{WAW/WAR eliminasyonu}\label{subsubsec:waw_war}
+
+Yazma\c{c} yeniden adland{\i}rma, iki t\"ur sahte ba\u{g}{\i}ml{\i}l{\i}\u{g}{\i} ortadan kald{\i}r{\i}r:
+
+\begin{enumerate}
+    \item \textbf{Write-After-Write (WAW):} Ayn{\i} mimari yazma\c{c}a yaz{\i}m yapan iki komut, farkl{\i} fiziksel yazma\c{c}lara e\c{s}lenerek ba\u{g}{\i}ms{\i}z hale getirilir.
+    \item \textbf{Write-After-Read (WAR):} Kaynak olarak okunan bir yazma\c{c}a daha sonra yaz{\i}lacak olsa bile, okuma eski fiziksel yazma\c{c}tan, yazma yeni fiziksel yazma\c{c}a yap{\i}l{\i}r.
+\end{enumerate}
+
+Bu eliminasyon sayesinde, yaln{\i}zca ger\c{c}ek veri ba\u{g}{\i}ml{\i}l{\i}klar{\i} (Read-After-Write, RAW) kalmaktad{\i}r. RAW ba\u{g}{\i}ml{\i}l{\i}klar{\i}, Reservation Station'larda operand haz{\i}r olana kadar bekletilerek \c{c}\"oz\"umlenir.
+
+%------------------------------------------------------------------------
+
+\subsection{Dal Spek\"ulasyon Deste\u{g}i (BRAT)}\label{subsec:brat}
+
+S{\i}ra d{\i}\c{s}{\i} y\"ur\"utme s{\i}ras{\i}nda, dallanma komutlar{\i} hen\"uz \c{c}\"oz\"umlenmeden spek\"ulatif olarak y\"ur\"ut\"ul\"ur. Yanl{\i}\c{s} tahmin durumunda, i\c{s}lemcinin tutarl{\i} bir duruma geri d\"onebilmesi i\c{c}in checkpoint mekanizmas{\i} gereklidir.
+
+Dal \c{C}\"oz\"umleme Takma Ad Tablosu (Branch Resolution Alias Table - BRAT), her spek\"ulatif dal i\c{c}in RAT'{\i}n bir anlık görüntüsünü saklar ve dal \c{c}\"oz\"umlemesi s{\i}ras{\i}nda gerekli bilgileri s{\i}ral{\i} olarak sa\u{g}lar \cite{johnson}.
+
+\subsubsection{RAT anl{\i}k g\"or\"unt\"u mekanizmas{\i}}\label{subsubsec:snapshot}
+
+BRAT (\texttt{brat\_circular\_buffer}), 16 giri\c{s}lik bir dairesel tampon olarak ger\c{c}eklenmi\c{s}tir. Her dal komutu decode edildi\u{g}inde, a\c{s}a\u{g}{\i}daki bilgiler BRAT'a kaydedilir:
+
+\begin{itemize}
+    \item 32 mimari yazma\c{c}{\i}n fiziksel e\c{s}lemesi (RAT snapshot)
+    \item Dal komutunun fiziksel yazma\c{c} adresi (ROB ID olarak kullan{\i}l{\i}r)
+    \item Tahmin an{\i}ndaki PC de\u{g}eri
+    \item Global dal ge\c{c}mi\c{s}i (GHR)
+    \item JALR bayra\u{g}{\i} (do\u{g}rudan olmayan atlama ise)
+    \item RAS TOS (Return Address Stack Top of Stack) de\u{g}eri
+\end{itemize}
+
+\"U\c{c} paralel push aray\"uz\"u ile her \c{c}evrimde en fazla \"u\c{c} dal komutu i\c{c}in checkpoint al{\i}nabilir.
+
+\subsubsection{Yanl{\i}\c{s} tahmin toparlanmas{\i}}\label{subsubsec:recovery}
+
+Dal \c{c}\"oz\"umlemesi Execute a\c{s}amas{\i}nda ger\c{c}ekle\c{s}ir. BRAT, Execute a\c{s}amas{\i}ndan gelen \c{c}\"oz\"umleme sinyallerini al{\i}r ve bunlar{\i} s{\i}ral{\i} (in-order) bir \c{s}ekilde i\c{s}ler. Her dal i\c{c}in:
+
+\begin{enumerate}
+    \item \textbf{Do\u{g}ru tahmin:} BRAT giri\c{s}i serbest b{\i}rak{\i}l{\i}r, toparlanma yap{\i}lmaz.
+    \item \textbf{Yanl{\i}\c{s} tahmin:} BRAT giri\c{s}indeki snapshot RAT'a geri y\"uklenir, serbest liste geri al{\i}n{\i}r ve fetch a\c{s}amas{\i}na do\u{g}ru PC g\"onderilir.
+\end{enumerate}
+
+S{\i}ral{\i} \c{c}\"oz\"umleme, birden fazla spek\"ulatif dal{\i}n ayn{\i} anda \c{c}\"oz\"umlenmesi durumunda do\u{g}ru toparlanmay{\i} garanti eder. En eski dal\"{\i}n yanl{\i}\c{s} tahmini, daha yeni t\"um dallar{\i}n da iptal edilmesini gerektirir.
+
+Toparlanma s{\i}ras{\i}nda a\c{s}a\u{g}{\i}daki i\c{s}lemler ger\c{c}ekle\c{s}tirilir:
+
+\begin{equation}\label{eq:recovery}
+\begin{aligned}
+RAT &\leftarrow BRAT\_snapshot \\
+free\_list\_ptr &\leftarrow resolved\_phys\_reg + 1 \\
+PC &\leftarrow correct\_pc \\
+GHR &\leftarrow stored\_global\_history \\
+RAS\_TOS &\leftarrow stored\_ras\_tos
+\end{aligned}
+\end{equation}
+
+\subsubsection{\c{C}oklu spek\"ulasyon deste\u{g}i}\label{subsubsec:multi_spec}
+
+BRAT'{\i}n 16 giri\c{s}lik kapasitesi, e\c{s} zamanl{\i} olarak 16 spek\"ulatif dal{\i}n takip edilmesine olanak tan{\i}r. Bu, derin spek\"ulatif y\"ur\"utme zincirlerinin desteklenmesini sa\u{g}lar.
+
+BRAT doluluk durumu, dal komutlar{\i}n{\i}n bekletilmesine neden olabilir. \texttt{brat\_full} sinyali aktif oldu\u{g}unda, yeni dal komutlar{\i} i\c{c}in checkpoint al{\i}namaz ve pipeline durdurulur.
+
+\subsubsection{TMR korumal{\i} i\c{s}aret\c{c}iler}\label{subsubsec:tmr_brat}
+
+BRAT, kritik i\c{s}aret\c{c}iler i\c{c}in TMR korumas{\i} uygulamaktad{\i}r. Ba\c{s} ve kuyruk i\c{s}aret\c{c}ileri \c{c}o\u{g}alt{\i}larak korunmaktad{\i}r:
+
+\begin{itemize}
+    \item \texttt{head\_ptr\_0}, \texttt{head\_ptr\_1}, \texttt{head\_ptr\_2}: \"U\c{c} kopya ba\c{s} i\c{s}aret\c{c}isi
+    \item \texttt{tail\_ptr\_0}, \texttt{tail\_ptr\_1}, \texttt{tail\_ptr\_2}: \"U\c{c} kopya kuyruk i\c{s}aret\c{c}isi
+\end{itemize}
+
+Her i\c{s}aret\c{c}i grubu i\c{c}in \texttt{tmr\_voter} mod\"ul\"u kullan{\i}lmaktad{\i}r. \c{C}o\u{g}unluk oylamas{\i} ile tek bit hatalar{\i} tolere edilir ve \texttt{fatal\_error} sinyali, t\"um kopyalar{\i}n farkl{\i} oldu\u{g}u durumda aktif hale gelir.
+
+G\"uvenli mod (\texttt{secure\_mode}) aktif de\u{g}ilken, TMR oylamas{\i} devre d{\i}\c{s}{\i} b{\i}rak{\i}l{\i}r ve enerji tasarrufu sa\u{g}lan{\i}r.

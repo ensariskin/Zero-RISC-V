@@ -1,0 +1,151 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.6 MEMORY AŞAMASI
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Memory A\c{s}amas{\i}}\label{sec:memory}
+
+Memory a\c{s}amas{\i}, y\"ukleme (load) ve saklama (store) i\c{s}lemlerinin y\"onetildi\u{g}i pipeline a\c{s}amas{\i}d{\i}r. S{\i}ra d{\i}\c{s}{\i} y\"ur\"utme ortam{\i}nda, bellek i\c{s}lemlerinin tutarl{\i}l{\i}\u{g}{\i}n{\i} korumak ve ba\u{g}{\i}ml{\i}l{\i}klar{\i} do\u{g}ru y\"onetmek kritik \"oneme sahiptir.
+
+Tasarlanan sistemde Y\"ukleme/Saklama Kuyru\u{g}u (Load-Store Queue - LSQ), bellek i\c{s}lemlerinin s{\i}ralanmas{\i}n{\i} ve y\"ur\"ut\"ulmesini y\"onetir.
+
+\subsection{Y\"ukleme/Saklama Kuyru\u{g}u (LSQ) Yap{\i}s{\i}}\label{subsec:lsq}
+
+LSQ (\texttt{lsq\_simple\_top}), 32 giri\c{s}lik bir dairesel tampon olarak ger\c{c}eklenmi\c{s}tir. Bu yap{\i}, basitle\c{s}tirilmi\c{s} bir tasar{\i}m olup, g\"om\"ul\"u uygulamalar i\c{c}in yeterli performans{\i} sa\u{g}lamaktad{\i}r.
+
+\subsubsection{LSQ giri\c{s} format{\i}}\label{subsubsec:lsq_entry}
+
+Her LSQ giri\c{s}i (\texttt{lsq\_entry\_t}) a\c{s}a\u{g}{\i}daki alanlar{\i} i\c{c}ermektedir:
+
+\begin{itemize}
+    \item \textbf{valid:} Giri\c{s}in ge\c{c}erli olup olmad{\i}\u{g}{\i}
+    \item \textbf{is\_store:} Saklama i\c{s}lemi (1) veya y\"ukleme i\c{s}lemi (0)
+    \item \textbf{addr\_valid:} Adresin hesaplan{\i}p hesaplanmad{\i}\u{g}{\i}
+    \item \textbf{address:} Hesaplanm{\i}\c{s} bellek adresi (32-bit)
+    \item \textbf{addr\_tag:} Adres ba\u{g}{\i}ml{\i}l{\i}k etiketi
+    \item \textbf{data\_valid:} Verinin haz{\i}r olup olmad{\i}\u{g}{\i} (saklama i\c{c}in)
+    \item \textbf{data:} Saklanacak veri (32-bit)
+    \item \textbf{data\_tag:} Veri ba\u{g}{\i}ml{\i}l{\i}k etiketi
+    \item \textbf{rob\_idx:} ROB indeksi (s{\i}ralama i\c{c}in)
+    \item \textbf{phys\_reg:} Hedef fiziksel yazma\c{c} (y\"uklemeler i\c{c}in)
+    \item \textbf{size:} \.I\c{s}lem boyutu (byte/half/word)
+    \item \textbf{sign\_extend:} \.I\c{s}aret geni\c{s}letme bayra\u{g}{\i}
+    \item \textbf{executed:} Y\"ukleme y\"ur\"ut\"uld\"u bayra\u{g}{\i}
+    \item \textbf{committed:} Saklama kesinle\c{s}ti bayra\u{g}{\i}
+\end{itemize}
+
+Bellek i\c{s}lem boyutu, RISC-V'nin destekledi\u{g}i \"u\c{c} boyutu i\c{c}erir:
+
+\begin{equation}\label{eq:mem_size}
+\text{mem\_size} = \begin{cases}
+\text{SIZE\_BYTE} & \text{LB/LBU/SB i\c{c}in} \\
+\text{SIZE\_HALF} & \text{LH/LHU/SH i\c{c}in} \\
+\text{SIZE\_WORD} & \text{LW/SW i\c{c}in}
+\end{cases}
+\end{equation}
+
+\subsubsection{Y\"ukleme/Saklama s{\i}ralamas{\i}}\label{subsubsec:ordering}
+
+LSQ, bellek i\c{s}lemlerinin program s{\i}ras{\i}na uygun olarak y\"ur\"ut\"ulmesini sa\u{g}lar. \"U\c{c} ayr{\i} ba\c{s} i\c{s}aret\c{c}isi, \"u\c{c} paralel i\c{s}lem deste\u{g}i sunar:
+
+\begin{itemize}
+    \item \texttt{head\_ptr}:\\ En eski y\"ukleme/saklama i\c{s}lemi
+    \item \texttt{head\_ptr\_1}: \.Ikinci en eski i\c{s}lem
+    \item \texttt{head\_ptr\_2}: \"U\c{c}\"unc\"u en eski i\c{s}lem
+\end{itemize}
+
+Saklama i\c{s}lemleri yaln{\i}zca ROB'dan onay geldi\u{g}inde (\texttt{store\_can\_issue}) belle\u{g}e yaz{\i}l{\i}r. Bu, spek\"ulatif saklamalar{\i}n belle\u{g}i de\u{g}i\c{s}tirmesini engeller.
+
+%------------------------------------------------------------------------
+
+\subsection{Bellek Belirsizli\u{g}i \c{C}\"oz\"umleme}\label{subsec:disambiguation}
+
+Bellek belirsizli\u{g}i (\textit{memory disambiguation}), y\"ukleme ve saklama i\c{s}lemlerinin ayn{\i} bellek adresini hedefleyip hedeflemedi\u{g}inin belirlenmesi problemidir.
+
+\subsubsection{Saklama-y\"ukleme iletimi}\label{subsubsec:stl_fwd}
+
+E\u{g}er bir y\"ukleme i\c{s}lemi, daha \"once kuyrukta bekleyen bir saklama i\c{s}lemiyle ayn{\i} adresi hedefliyorsa, y\"ukleme verisi do\u{g}rudan saklamadan al{\i}nabilir. Bu mekanizma \textit{store-to-load forwarding} olarak adland{\i}r{\i}l{\i}r.
+
+\.Iletim ko\c{s}ullar{\i}:
+
+\begin{equation}\label{eq:stl_forward}
+forward\_valid = store\_valid \land addr\_match \land data\_valid \land (store\_idx < load\_idx)
+\end{equation}
+
+Adres e\c{s}le\c{s}mesi, tam adres kar\c{s}{\i}la\c{s}t{\i}rmas{\i} ile yap{\i}l{\i}r. K{\i}smi \"ort\"u\c{s}me durumlar{\i} (partial overlap) bu basitle\c{s}tirilmi\c{s} tasar{\i}mda desteklenmemektedir.
+
+\subsubsection{Adres kar\c{s}{\i}la\c{s}t{\i}rma mant{\i}\u{g}{\i}}\label{subsubsec:addr_compare}
+
+Adres kar\c{s}{\i}la\c{s}t{\i}rma, saklama iletimi ve ba\u{g}{\i}ml{\i}l{\i}k tespiti i\c{c}in kullan{\i}l{\i}r:
+
+\begin{equation}\label{eq:addr_match}
+addr\_match = (load\_addr[31:2] = store\_addr[31:2])
+\end{equation}
+
+Word hizal{\i} kar\c{s}{\i}la\c{s}t{\i}rma, byte adreslemeden ba\u{g}{\i}ms{\i}z olarak ayn{\i} word'\"u hedefleyen i\c{s}lemleri tespit eder.
+
+%------------------------------------------------------------------------
+
+\subsection{Spek\"ulatif Bellek \.I\c{s}lemleri}\label{subsec:spec_memory}
+
+S{\i}ra d{\i}\c{s}{\i} y\"ur\"utme ortam{\i}nda, y\"ukleme i\c{s}lemleri spek\"ulatif olarak y\"ur\"ut\"ulebilir. Ancak, saklama i\c{s}lemleri yaln{\i}zca kesinle\c{s}tirme sonras{\i} belle\u{g}e yaz{\i}l{\i}r.
+
+\subsubsection{H{\i}zl{\i} temizleme mekanizmas{\i}}\label{subsubsec:eager_flush}
+
+Yanl{\i}\c{s} tahmin veya istisna durumunda, spek\"ulatif y\"ukleme sonu\c{c}lar{\i} ge\c{c}ersiz k{\i}l{\i}nmal{\i}d{\i}r. LSQ, misprediction sinyalini ald{\i}\u{g}{\i}nda ilgili giri\c{s}leri temizler:
+
+\begin{equation}\label{eq:flush_condition}
+should\_flush = misprediction \land (entry\_idx > mispred\_rob\_idx)
+\end{equation}
+
+Temizleme, yanl{\i}\c{s} tahmin edilen daldan sonra tahsis edilen t\"um LSQ giri\c{s}lerini etkiler.
+
+\subsubsection{\"Oncelik kodlay{\i}c{\i} kullan{\i}m{\i}}\label{subsubsec:priority_enc}
+
+\"Oncelik kodlay{\i}c{\i} (priority encoder), kuyrukta ilk ge\c{c}ersiz veya bo\c{s} giri\c{s}i bulmak i\c{c}in kullan{\i}l{\i}r. Bu, tahsis ve temizleme s{\i}ras{\i}nda h{\i}zl{\i} indeks belirleme sa\u{g}lar.
+
+%------------------------------------------------------------------------
+
+\subsection{Bellek Aray\"uz\"u}\label{subsec:mem_interface}
+
+LSQ, \"u\c{c} ba\u{g}{\i}ms{\i}z bellek portu destekler:
+
+\begin{itemize}
+    \item \textbf{Port 0-2:} Her biri ay{\i}r okuma/yazma kanal{\i}
+\end{itemize}
+
+Her port a\c{s}a\u{g}{\i}daki sinyalleri i\c{c}erir:
+
+\begin{itemize}
+    \item \texttt{mem\_n\_req\_valid\_o}: \.Istek ge\c{c}erli
+    \item \texttt{mem\_n\_req\_we\_o}: Yazma etkinle\c{s}tirme
+    \item \texttt{mem\_n\_req\_addr\_o}: Bellek adresi
+    \item \texttt{mem\_n\_req\_data\_o}: Yazma verisi
+    \item \texttt{mem\_n\_req\_be\_o}: Byte etkinle\c{s}tirme (4-bit)
+    \item \texttt{mem\_n\_req\_ready\_i}: Bellek haz{\i}r sinyali
+    \item \texttt{mem\_n\_resp\_valid\_i}: Yan{\i}t ge\c{c}erli
+    \item \texttt{mem\_n\_resp\_data\_i}: Okuma verisi
+\end{itemize}
+
+Byte etkinle\c{s}tirme sinyali, farkl{\i} boyutlu i\c{s}lemler i\c{c}in hangi byte'lar{\i}n etkilenece\u{g}ini belirtir:
+
+\begin{equation}\label{eq:byte_enable}
+byte\_enable = \begin{cases}
+4'b0001 \ll offset & \text{SIZE\_BYTE} \\
+4'b0011 \ll (offset \land 2) & \text{SIZE\_HALF} \\
+4'b1111 & \text{SIZE\_WORD}
+\end{cases}
+\end{equation}
+
+%------------------------------------------------------------------------
+
+\subsection{TMR Korumal{\i} \.I\c{s}aret\c{c}iler}\label{subsec:lsq_tmr}
+
+LSQ, kritik i\c{s}aret\c{c}iler i\c{c}in TMR korumas{\i} uygular. A\c{s}a\u{g}{\i}daki i\c{s}aret\c{c}iler \"u\c{c}er kopya olarak tutulmaktad{\i}r:
+
+\begin{itemize}
+    \item \texttt{head\_ptr\_0/1/2}: Ba\c{s} i\c{s}aret\c{c}ileri (\"u\c{c} ba\u{g}{\i}ms{\i}z i\c{s}lem i\c{c}in)
+    \item \texttt{tail\_ptr}: Kuyruk i\c{s}aret\c{c}isi
+    \item \texttt{last\_commit\_ptr\_0/1/2}: Son kesinle\c{s}tirme i\c{s}aret\c{c}ileri
+\end{itemize}
+
+Her i\c{s}aret\c{c}i grubu i\c{c}in ayr{\i} \texttt{tmr\_voter} mod\"ul\"u kullan{\i}lmaktad{\i}r. Fatal error \c{c}{\i}k{\i}\c{s}lar{\i}, \"u\c{c} kopyan{\i}n tamamen farkl{\i} oldu\u{g}u durumda aktif hale gelir.
