@@ -20,6 +20,7 @@ interface rs_internal_if #(
    //==========================================================================
    // RS Internal Registers (RS → Validator for voting)
    //==========================================================================
+   logic        enable;
    logic        occupied;
    logic [10:0] control_signals;
    logic [DATA_WIDTH-1:0] pc;
@@ -36,6 +37,7 @@ interface rs_internal_if #(
    //==========================================================================
    // Validated Values (Validator → RS for secure mode)
    //==========================================================================
+   logic        validated_enable;
    logic        validated_occupied;
    logic [10:0] validated_control_signals;
    logic [DATA_WIDTH-1:0] validated_pc;
@@ -55,6 +57,7 @@ interface rs_internal_if #(
 
    // RS side: outputs raw values, receives validated values
    modport reservation_station (
+      output enable,
       output occupied,
       output control_signals,
       output pc,
@@ -67,6 +70,7 @@ interface rs_internal_if #(
       output operand_a_tag,
       output operand_b_data,
       output operand_b_tag,
+      input  validated_enable,
       input  validated_occupied,
       input  validated_control_signals,
       input  validated_pc,
@@ -83,6 +87,7 @@ interface rs_internal_if #(
 
    // Validator side: receives raw values, outputs validated values
    modport validator (
+      input  enable,
       input  occupied,
       input  control_signals,
       input  pc,
@@ -95,6 +100,7 @@ interface rs_internal_if #(
       input  operand_a_tag,
       input  operand_b_data,
       input  operand_b_tag,
+      output validated_enable,
       output validated_occupied,
       output validated_control_signals,
       output validated_pc,

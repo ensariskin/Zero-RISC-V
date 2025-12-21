@@ -43,7 +43,7 @@ module issue_stage #(
         // Ready signal to previous stage
         output logic [2:0] decode_ready_o,
 
-        // ROB commit interface (for freeing physical registers)
+        // ROB commit interface (for freeing physical registers) - not need tmr here
         input logic [2:0] commit_valid_i,
         input logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_0_i,
         input logic [PHYS_REG_ADDR_WIDTH-2:0] commit_addr_1_i,
@@ -59,7 +59,7 @@ module issue_stage #(
         input logic [4:0] first_invalid_lsq_idx_i,          // First invalid LSQ index (new tail)
 
         //==========================================================================
-        // Execute stage inputs (raw branch results - go into BRAT inside RAT)
+        // Execute stage inputs (raw branch results - go into BRAT inside RAT) - not need tmr here
         //==========================================================================
         input logic [2:0] exec_branch_valid_i,              // Branch executed on FU 0/1/2
         input logic [2:0] exec_mispredicted_i,              // Misprediction flag from FU 0/1/2
@@ -365,7 +365,9 @@ module issue_stage #(
     // giving priority to pipe 0, then pipe 1, then pipe 2
     always_comb begin
         decode_ready_o = 3'b000;
-        if(max_available_entries >= dispatch_request) begin
+        if(secure_mode) begin
+            decode_ready_o = 3'b001;
+        end else if(max_available_entries >= dispatch_request) begin
             decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready};
         end else begin
             case (max_available_entries)
@@ -508,43 +510,77 @@ module issue_stage #(
                     decode_valid_reg[0] <= #D 0;
                 // If dispatch_ready[0] is 0, channel 0 registers maintain their values (no update)
 
-                // Channel 1: Update only when dispatch_ready[1] is high
+                // Channel 1: In secure mode, replicate Channel 0 data for lockstep TMR
                 if (issue_to_dispatch_1.dispatch_ready) begin
-
-                    decode_valid_reg[1] <= #D decode_valid_i[1];
-                    pc_reg_1 <= #D decode_valid_i[1] ? pc_i_1 : {DATA_WIDTH{1'b0}};
-                    control_signal_reg_1 <= #D decode_valid_i[1] ? control_signal_internal_1 : 26'h0;
-                    pc_prediction_reg_1 <= #D decode_valid_i[1] ? pc_value_at_prediction_i_1 : {DATA_WIDTH{1'b0}};
-                    branch_sel_reg_1 <= #D decode_valid_i[1] ? branch_sel_internal_1 : 3'b000;
-                    branch_prediction_reg_1 <= #D decode_valid_i[1] ? branch_prediction_i_1 : 1'b0;
-                    immediate_reg_1 <= #D decode_valid_i[1] ? immediate_i_1 : {DATA_WIDTH{1'b0}};
-                    rd_phys_reg_1 <= #D decode_valid_i[1] ? rd_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                    rs1_phys_reg_1 <= #D decode_valid_i[1] ? rs1_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                    rs2_phys_reg_1 <= #D decode_valid_i[1] ? rs2_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                    alloc_tag_reg_1 <= #D decode_valid_i[1] ? alloc_tag_1 : 3'b000;
-                    rd_arch_reg_1 <= #D decode_valid_i[1] ? rd_arch_1 : {ARCH_REG_ADDR_WIDTH{1'b0}};
-                    lsq_alloc_1_valid_reg <= #D decode_valid_i[1] ? lsq_alloc_1_valid : 1'b0;
+                    if (secure_mode) begin
+                        // Secure mode: Use Channel 0 data for replication
+                        decode_valid_reg[1] <= #D decode_valid_i[0];
+                        pc_reg_1 <= #D decode_valid_i[0] ? pc_i_0 : {DATA_WIDTH{1'b0}};
+                        control_signal_reg_1 <= #D decode_valid_i[0] ? control_signal_internal_0 : 26'h0;
+                        pc_prediction_reg_1 <= #D decode_valid_i[0] ? pc_value_at_prediction_i_0 : {DATA_WIDTH{1'b0}};
+                        branch_sel_reg_1 <= #D decode_valid_i[0] ? branch_sel_internal_0 : 3'b000;
+                        branch_prediction_reg_1 <= #D decode_valid_i[0] ? branch_prediction_i_0 : 1'b0;
+                        immediate_reg_1 <= #D decode_valid_i[0] ? immediate_i_0 : {DATA_WIDTH{1'b0}};
+                        rd_phys_reg_1 <= #D decode_valid_i[0] ? rd_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        rs1_phys_reg_1 <= #D decode_valid_i[0] ? rs1_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        rs2_phys_reg_1 <= #D decode_valid_i[0] ? rs2_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        alloc_tag_reg_1 <= #D decode_valid_i[0] ? alloc_tag_0 : 3'b000;
+                        rd_arch_reg_1 <= #D decode_valid_i[0] ? rd_arch_0 : {ARCH_REG_ADDR_WIDTH{1'b0}};
+                        lsq_alloc_1_valid_reg <= #D decode_valid_i[0] ? lsq_alloc_0_valid : 1'b0;
+                    end else begin
+                        // Normal mode: Use Channel 1's own data
+                        decode_valid_reg[1] <= #D decode_valid_i[1];
+                        pc_reg_1 <= #D decode_valid_i[1] ? pc_i_1 : {DATA_WIDTH{1'b0}};
+                        control_signal_reg_1 <= #D decode_valid_i[1] ? control_signal_internal_1 : 26'h0;
+                        pc_prediction_reg_1 <= #D decode_valid_i[1] ? pc_value_at_prediction_i_1 : {DATA_WIDTH{1'b0}};
+                        branch_sel_reg_1 <= #D decode_valid_i[1] ? branch_sel_internal_1 : 3'b000;
+                        branch_prediction_reg_1 <= #D decode_valid_i[1] ? branch_prediction_i_1 : 1'b0;
+                        immediate_reg_1 <= #D decode_valid_i[1] ? immediate_i_1 : {DATA_WIDTH{1'b0}};
+                        rd_phys_reg_1 <= #D decode_valid_i[1] ? rd_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        rs1_phys_reg_1 <= #D decode_valid_i[1] ? rs1_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        rs2_phys_reg_1 <= #D decode_valid_i[1] ? rs2_phys_1 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        alloc_tag_reg_1 <= #D decode_valid_i[1] ? alloc_tag_1 : 3'b000;
+                        rd_arch_reg_1 <= #D decode_valid_i[1] ? rd_arch_1 : {ARCH_REG_ADDR_WIDTH{1'b0}};
+                        lsq_alloc_1_valid_reg <= #D decode_valid_i[1] ? lsq_alloc_1_valid : 1'b0;
+                    end
                 end
                 else
                     decode_valid_reg[1] <= #D 0;
                 // If dispatch_ready[1] is 0, channel 1 registers maintain their values (no update)
 
-                // Channel 2: Update only when dispatch_ready[2] is high
+                // Channel 2: In secure mode, replicate Channel 0 data for lockstep TMR
                 if (issue_to_dispatch_2.dispatch_ready) begin
-
-                    decode_valid_reg[2] <= #D decode_valid_i[2];
-                    pc_reg_2 <= #D decode_valid_i[2] ? pc_i_2 : {DATA_WIDTH{1'b0}};
-                    control_signal_reg_2 <= #D decode_valid_i[2] ? control_signal_internal_2 : 26'h0;
-                    pc_prediction_reg_2 <= #D decode_valid_i[2] ? pc_value_at_prediction_i_2 : {DATA_WIDTH{1'b0}};
-                    branch_sel_reg_2 <= #D decode_valid_i[2] ? branch_sel_internal_2 : 3'b000;
-                    branch_prediction_reg_2 <= #D decode_valid_i[2] ? branch_prediction_i_2 : 1'b0;
-                    immediate_reg_2 <= #D decode_valid_i[2] ? immediate_i_2 : {DATA_WIDTH{1'b0}};
-                    rd_phys_reg_2 <= #D decode_valid_i[2] ? rd_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                    rs1_phys_reg_2 <= #D decode_valid_i[2] ? rs1_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                    rs2_phys_reg_2 <= #D decode_valid_i[2] ? rs2_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
-                    alloc_tag_reg_2 <= #D decode_valid_i[2] ? alloc_tag_2 : 3'b000;
-                    rd_arch_reg_2 <= #D decode_valid_i[2] ? rd_arch_2 : {ARCH_REG_ADDR_WIDTH{1'b0}};
-                    lsq_alloc_2_valid_reg <= #D decode_valid_i[2] ? lsq_alloc_2_valid : 1'b0;
+                    if (secure_mode) begin
+                        // Secure mode: Use Channel 0 data for replication
+                        decode_valid_reg[2] <= #D decode_valid_i[0];
+                        pc_reg_2 <= #D decode_valid_i[0] ? pc_i_0 : {DATA_WIDTH{1'b0}};
+                        control_signal_reg_2 <= #D decode_valid_i[0] ? control_signal_internal_0 : 26'h0;
+                        pc_prediction_reg_2 <= #D decode_valid_i[0] ? pc_value_at_prediction_i_0 : {DATA_WIDTH{1'b0}};
+                        branch_sel_reg_2 <= #D decode_valid_i[0] ? branch_sel_internal_0 : 3'b000;
+                        branch_prediction_reg_2 <= #D decode_valid_i[0] ? branch_prediction_i_0 : 1'b0;
+                        immediate_reg_2 <= #D decode_valid_i[0] ? immediate_i_0 : {DATA_WIDTH{1'b0}};
+                        rd_phys_reg_2 <= #D decode_valid_i[0] ? rd_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        rs1_phys_reg_2 <= #D decode_valid_i[0] ? rs1_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        rs2_phys_reg_2 <= #D decode_valid_i[0] ? rs2_phys_0 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        alloc_tag_reg_2 <= #D decode_valid_i[0] ? alloc_tag_0 : 3'b000;
+                        rd_arch_reg_2 <= #D decode_valid_i[0] ? rd_arch_0 : {ARCH_REG_ADDR_WIDTH{1'b0}};
+                        lsq_alloc_2_valid_reg <= #D decode_valid_i[0] ? lsq_alloc_0_valid : 1'b0;
+                    end else begin
+                        // Normal mode: Use Channel 2's own data
+                        decode_valid_reg[2] <= #D decode_valid_i[2];
+                        pc_reg_2 <= #D decode_valid_i[2] ? pc_i_2 : {DATA_WIDTH{1'b0}};
+                        control_signal_reg_2 <= #D decode_valid_i[2] ? control_signal_internal_2 : 26'h0;
+                        pc_prediction_reg_2 <= #D decode_valid_i[2] ? pc_value_at_prediction_i_2 : {DATA_WIDTH{1'b0}};
+                        branch_sel_reg_2 <= #D decode_valid_i[2] ? branch_sel_internal_2 : 3'b000;
+                        branch_prediction_reg_2 <= #D decode_valid_i[2] ? branch_prediction_i_2 : 1'b0;
+                        immediate_reg_2 <= #D decode_valid_i[2] ? immediate_i_2 : {DATA_WIDTH{1'b0}};
+                        rd_phys_reg_2 <= #D decode_valid_i[2] ? rd_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        rs1_phys_reg_2 <= #D decode_valid_i[2] ? rs1_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        rs2_phys_reg_2 <= #D decode_valid_i[2] ? rs2_phys_2 : {PHYS_REG_ADDR_WIDTH{1'b0}};
+                        alloc_tag_reg_2 <= #D decode_valid_i[2] ? alloc_tag_2 : 3'b000;
+                        rd_arch_reg_2 <= #D decode_valid_i[2] ? rd_arch_2 : {ARCH_REG_ADDR_WIDTH{1'b0}};
+                        lsq_alloc_2_valid_reg <= #D decode_valid_i[2] ? lsq_alloc_2_valid : 1'b0;
+                    end
                 end
                 else
                     decode_valid_reg[2] <= #D 0;
@@ -554,55 +590,153 @@ module issue_stage #(
     end
 
     //==========================================================================
-    // RESERVATION STATION INTERFACE CONNECTIONS
+    // TMR VOTING FOR ISSUE TO DISPATCH OUTPUTS (secure mode only)
     //==========================================================================
+
+    // Voted output signals
+    logic        voted_dispatch_valid;
+    logic [10:0] voted_control_signals;
+    logic [DATA_WIDTH-1:0] voted_pc;
+    logic [DATA_WIDTH-1:0] voted_pc_prediction;
+    logic [DATA_WIDTH-1:0] voted_immediate;
+    logic [PHYS_REG_ADDR_WIDTH-1:0] voted_rs1_phys;
+    logic [PHYS_REG_ADDR_WIDTH-1:0] voted_rs2_phys;
+    logic [PHYS_REG_ADDR_WIDTH-1:0] voted_rd_phys;
+    logic [ARCH_REG_ADDR_WIDTH-1:0] voted_rd_arch;
+    logic [2:0] voted_alloc_tag;
+    logic [2:0] voted_branch_sel;
+    logic voted_branch_prediction;
+    logic voted_lsq_alloc_valid;
+
+    // TMR Voter instantiations (only active in secure_mode)
+    tmr_voter #(.DATA_WIDTH(1)) issue_valid_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(decode_valid_reg[0]), .data_1_i(decode_valid_reg[1]), .data_2_i(decode_valid_reg[2]),
+        .data_o(voted_dispatch_valid), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(11)) issue_ctrl_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(control_signal_reg_0[10:0]), .data_1_i(control_signal_reg_1[10:0]), .data_2_i(control_signal_reg_2[10:0]),
+        .data_o(voted_control_signals), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) issue_pc_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(pc_reg_0), .data_1_i(pc_reg_1), .data_2_i(pc_reg_2),
+        .data_o(voted_pc), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) issue_pc_pred_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(pc_prediction_reg_0), .data_1_i(pc_prediction_reg_1), .data_2_i(pc_prediction_reg_2),
+        .data_o(voted_pc_prediction), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) issue_imm_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(immediate_reg_0), .data_1_i(immediate_reg_1), .data_2_i(immediate_reg_2),
+        .data_o(voted_immediate), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(PHYS_REG_ADDR_WIDTH)) issue_rs1_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(rs1_phys_reg_0), .data_1_i(rs1_phys_reg_1), .data_2_i(rs1_phys_reg_2),
+        .data_o(voted_rs1_phys), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(PHYS_REG_ADDR_WIDTH)) issue_rs2_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(rs2_phys_reg_0), .data_1_i(rs2_phys_reg_1), .data_2_i(rs2_phys_reg_2),
+        .data_o(voted_rs2_phys), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(PHYS_REG_ADDR_WIDTH)) issue_rd_phys_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(rd_phys_reg_0), .data_1_i(rd_phys_reg_1), .data_2_i(rd_phys_reg_2),
+        .data_o(voted_rd_phys), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(ARCH_REG_ADDR_WIDTH)) issue_rd_arch_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(rd_arch_reg_0), .data_1_i(rd_arch_reg_1), .data_2_i(rd_arch_reg_2),
+        .data_o(voted_rd_arch), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(3)) issue_alloc_tag_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(alloc_tag_reg_0), .data_1_i(alloc_tag_reg_1), .data_2_i(alloc_tag_reg_2),
+        .data_o(voted_alloc_tag), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(3)) issue_branch_sel_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(branch_sel_reg_0), .data_1_i(branch_sel_reg_1), .data_2_i(branch_sel_reg_2),
+        .data_o(voted_branch_sel), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(1)) issue_branch_pred_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(branch_prediction_reg_0), .data_1_i(branch_prediction_reg_1), .data_2_i(branch_prediction_reg_2),
+        .data_o(voted_branch_prediction), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
+
+    tmr_voter #(.DATA_WIDTH(1)) issue_lsq_alloc_voter (
+        .secure_mode_i(secure_mode),
+        .data_0_i(lsq_alloc_0_valid_reg), .data_1_i(lsq_alloc_1_valid_reg), .data_2_i(lsq_alloc_2_valid_reg),
+        .data_o(voted_lsq_alloc_valid), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+    );
 
     //==========================================================================
     // OUTPUT ASSIGNMENTS TO NEW ISSUE_TO_DISPATCH INTERFACE
     //==========================================================================
+    // Secure mode: All 3 channels get voted values
+    // Normal mode: Each channel gets its own register values
 
-    // Issue to Dispatch Channel 0
-    assign issue_to_dispatch_0.dispatch_valid = !internal_flush & decode_valid_reg[0];
-    assign issue_to_dispatch_0.control_signals = control_signal_reg_0[10:0]; // Remove register addresses, use bits [10:0]
-    assign issue_to_dispatch_0.pc = pc_reg_0;
-    assign issue_to_dispatch_0.operand_a_phys_addr = rs1_phys_reg_0; // Use registered physical address
-    assign issue_to_dispatch_0.operand_b_phys_addr = rs2_phys_reg_0; // Use registered physical address
-    assign issue_to_dispatch_0.immediate_value = immediate_reg_0; // Immediate value for dispatch stage
-    assign issue_to_dispatch_0.rd_phys_addr = rd_phys_reg_0;
-    assign issue_to_dispatch_0.pc_value_at_prediction = pc_prediction_reg_0;
-    assign issue_to_dispatch_0.branch_sel = branch_sel_reg_0;
-    assign issue_to_dispatch_0.branch_prediction = branch_prediction_reg_0;
-    assign issue_to_dispatch_0.rd_arch_addr = rd_arch_reg_0;
-    assign issue_to_dispatch_0.alloc_tag = alloc_tag_reg_0;
-    assign issue_to_dispatch_0.lsq_alloc_valid = lsq_alloc_0_valid_reg;
-    // Issue to Dispatch Channel 1
-    assign issue_to_dispatch_1.dispatch_valid = !internal_flush & decode_valid_reg[1];
-    assign issue_to_dispatch_1.control_signals = control_signal_reg_1[10:0]; // Remove register addresses, use bits [10:0]
-    assign issue_to_dispatch_1.pc = pc_reg_1;
-    assign issue_to_dispatch_1.operand_a_phys_addr = rs1_phys_reg_1; // Use registered physical address
-    assign issue_to_dispatch_1.operand_b_phys_addr = rs2_phys_reg_1; // Use registered physical address
-    assign issue_to_dispatch_1.immediate_value = immediate_reg_1; // Immediate value for dispatch stage
-    assign issue_to_dispatch_1.rd_phys_addr = rd_phys_reg_1;
-    assign issue_to_dispatch_1.pc_value_at_prediction = pc_prediction_reg_1;
-    assign issue_to_dispatch_1.branch_sel = branch_sel_reg_1;
-    assign issue_to_dispatch_1.branch_prediction = branch_prediction_reg_1;
-    assign issue_to_dispatch_1.rd_arch_addr = rd_arch_reg_1;
-    assign issue_to_dispatch_1.alloc_tag = alloc_tag_reg_1;
-    assign issue_to_dispatch_1.lsq_alloc_valid = lsq_alloc_1_valid_reg;
-    // Issue to Dispatch Channel 2
-    assign issue_to_dispatch_2.dispatch_valid = !internal_flush & decode_valid_reg[2];
-    assign issue_to_dispatch_2.control_signals = control_signal_reg_2[10:0]; // Remove register addresses, use bits [10:0]
-    assign issue_to_dispatch_2.pc = pc_reg_2;
-    assign issue_to_dispatch_2.operand_a_phys_addr = rs1_phys_reg_2; // Use registered physical address
-    assign issue_to_dispatch_2.operand_b_phys_addr = rs2_phys_reg_2; // Use registered physical address
-    assign issue_to_dispatch_2.immediate_value = immediate_reg_2; // Immediate value for dispatch stage
-    assign issue_to_dispatch_2.rd_phys_addr = rd_phys_reg_2;
-    assign issue_to_dispatch_2.pc_value_at_prediction = pc_prediction_reg_2;
-    assign issue_to_dispatch_2.branch_sel = branch_sel_reg_2;
-    assign issue_to_dispatch_2.branch_prediction = branch_prediction_reg_2;
-    assign issue_to_dispatch_2.rd_arch_addr = rd_arch_reg_2;
-    assign issue_to_dispatch_2.alloc_tag = alloc_tag_reg_2;
-    assign issue_to_dispatch_2.lsq_alloc_valid = lsq_alloc_2_valid_reg;
+    // Issue to Dispatch Channel 0 - Always uses voted values (TMR voter bypasses in normal mode)
+    assign issue_to_dispatch_0.dispatch_valid = !internal_flush & voted_dispatch_valid;
+    assign issue_to_dispatch_0.control_signals = voted_control_signals;
+    assign issue_to_dispatch_0.pc = voted_pc;
+    assign issue_to_dispatch_0.operand_a_phys_addr = voted_rs1_phys;
+    assign issue_to_dispatch_0.operand_b_phys_addr = voted_rs2_phys;
+    assign issue_to_dispatch_0.immediate_value = voted_immediate;
+    assign issue_to_dispatch_0.rd_phys_addr = voted_rd_phys;
+    assign issue_to_dispatch_0.pc_value_at_prediction = voted_pc_prediction;
+    assign issue_to_dispatch_0.branch_sel = voted_branch_sel;
+    assign issue_to_dispatch_0.branch_prediction = voted_branch_prediction;
+    assign issue_to_dispatch_0.rd_arch_addr = voted_rd_arch;
+    assign issue_to_dispatch_0.alloc_tag = voted_alloc_tag;
+    assign issue_to_dispatch_0.lsq_alloc_valid = voted_lsq_alloc_valid;
+
+    // Issue to Dispatch Channel 1 - Secure mode uses voted, normal mode uses own regs
+    assign issue_to_dispatch_1.dispatch_valid = secure_mode ? (!internal_flush & voted_dispatch_valid) : (!internal_flush & decode_valid_reg[1]);
+    assign issue_to_dispatch_1.control_signals = secure_mode ? voted_control_signals : control_signal_reg_1[10:0];
+    assign issue_to_dispatch_1.pc = secure_mode ? voted_pc : pc_reg_1;
+    assign issue_to_dispatch_1.operand_a_phys_addr = secure_mode ? voted_rs1_phys : rs1_phys_reg_1;
+    assign issue_to_dispatch_1.operand_b_phys_addr = secure_mode ? voted_rs2_phys : rs2_phys_reg_1;
+    assign issue_to_dispatch_1.immediate_value = secure_mode ? voted_immediate : immediate_reg_1;
+    assign issue_to_dispatch_1.rd_phys_addr = secure_mode ? voted_rd_phys : rd_phys_reg_1;
+    assign issue_to_dispatch_1.pc_value_at_prediction = secure_mode ? voted_pc_prediction : pc_prediction_reg_1;
+    assign issue_to_dispatch_1.branch_sel = secure_mode ? voted_branch_sel : branch_sel_reg_1;
+    assign issue_to_dispatch_1.branch_prediction = secure_mode ? voted_branch_prediction : branch_prediction_reg_1;
+    assign issue_to_dispatch_1.rd_arch_addr = secure_mode ? voted_rd_arch : rd_arch_reg_1;
+    assign issue_to_dispatch_1.alloc_tag = secure_mode ? voted_alloc_tag : alloc_tag_reg_1;
+    assign issue_to_dispatch_1.lsq_alloc_valid = secure_mode ? voted_lsq_alloc_valid : lsq_alloc_1_valid_reg;
+
+    // Issue to Dispatch Channel 2 - Secure mode uses voted, normal mode uses own regs
+    assign issue_to_dispatch_2.dispatch_valid = secure_mode ? (!internal_flush & voted_dispatch_valid) : (!internal_flush & decode_valid_reg[2]);
+    assign issue_to_dispatch_2.control_signals = secure_mode ? voted_control_signals : control_signal_reg_2[10:0];
+    assign issue_to_dispatch_2.pc = secure_mode ? voted_pc : pc_reg_2;
+    assign issue_to_dispatch_2.operand_a_phys_addr = secure_mode ? voted_rs1_phys : rs1_phys_reg_2;
+    assign issue_to_dispatch_2.operand_b_phys_addr = secure_mode ? voted_rs2_phys : rs2_phys_reg_2;
+    assign issue_to_dispatch_2.immediate_value = secure_mode ? voted_immediate : immediate_reg_2;
+    assign issue_to_dispatch_2.rd_phys_addr = secure_mode ? voted_rd_phys : rd_phys_reg_2;
+    assign issue_to_dispatch_2.pc_value_at_prediction = secure_mode ? voted_pc_prediction : pc_prediction_reg_2;
+    assign issue_to_dispatch_2.branch_sel = secure_mode ? voted_branch_sel : branch_sel_reg_2;
+    assign issue_to_dispatch_2.branch_prediction = secure_mode ? voted_branch_prediction : branch_prediction_reg_2;
+    assign issue_to_dispatch_2.rd_arch_addr = secure_mode ? voted_rd_arch : rd_arch_reg_2;
+    assign issue_to_dispatch_2.alloc_tag = secure_mode ? voted_alloc_tag : alloc_tag_reg_2;
+    assign issue_to_dispatch_2.lsq_alloc_valid = secure_mode ? voted_lsq_alloc_valid : lsq_alloc_2_valid_reg;
    //==========================================================================
    // DUMMY TRACER INTERFACES (for future tracing support)
    //==========================================================================

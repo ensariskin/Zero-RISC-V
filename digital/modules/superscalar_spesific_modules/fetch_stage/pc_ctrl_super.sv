@@ -128,7 +128,7 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 	logic              jalr;
 	logic              jump;
 
-	assign increment_value = !secure_mode ? 5'd20 : 5'd4;
+	assign increment_value = 5'd20;
 	assign jalr = jalr_0 | (!jump_0 & jalr_1) | (!jump_0 & !jump_1 & jalr_2) | (!jump_0 & !jump_1 & !jump_2 & jalr_3) | (!jump_0 & !jump_1 & !jump_2 & !jump_3 & jalr_4);
 	assign jump = jump_0 | jump_1 | jump_2 | jump_3 | jump_4;
 
@@ -197,10 +197,9 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 		end else if (secure_mode && mismatch_detected) begin
 			// Case: Bubble is present (pipeline stalled), but we detected a mismatch.
 			// We MUST correct the registers to match the voted output to prevent latent faults.
-			// todo remove unnecessary logic
-			if (error_0) pc_current_val_0 <= #D correct_pc_voted;
-			if (error_1) pc_current_val_1 <= #D correct_pc_voted;
-			if (error_2) pc_current_val_2 <= #D correct_pc_voted;
+			pc_current_val_0 <= #D correct_pc_voted;
+			pc_current_val_1 <= #D correct_pc_voted;
+			pc_current_val_2 <= #D correct_pc_voted;
 		end
 	end
 
@@ -216,7 +215,7 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 	assign pc_plus_imm_2  = current_pc_2 + {imm_i_2[31:2], 2'b00}; // prevent misalignment issues, don't use 2 L
 	assign pc_plus_imm_3  = current_pc_3 + {imm_i_3[31:2], 2'b00}; // prevent misalignment issues, don't use 2 LSBs
 	assign pc_plus_imm_4  = current_pc_4 + {imm_i_4[31:2], 2'b00}; // prevent misalignment issues, don't use 2
-	// TODO : use rs1 value instead of pc_current_val, how can we predict rs1 value? or should we wait until execuete stage calculate correct result
+
 	assign rs1_plus_imm_prediction_0 = jalr_prediction_valid ? jalr_prediction_target : current_pc_0 + 4;
 	assign rs1_plus_imm_prediction_1 = jalr_prediction_valid ? jalr_prediction_target : current_pc_1 + 4;
 	assign rs1_plus_imm_prediction_2 = jalr_prediction_valid ? jalr_prediction_target : current_pc_2 + 4;

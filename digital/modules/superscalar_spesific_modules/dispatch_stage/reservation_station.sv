@@ -60,6 +60,9 @@ module reservation_station #(
     // RESERVATION STATION STORAGE REGISTERS
     //==========================================================================
 
+    // Enable signal for RS operation
+    logic enable;
+
     // Instruction storage (valid when occupied)
     logic occupied;
     logic [10:0] stored_control_signals;
@@ -81,6 +84,7 @@ module reservation_station #(
     //==========================================================================
     // TMR OUTPUT ASSIGNMENTS (all internal regs → validator via interface)
     //==========================================================================
+    assign internal_if.enable = enable;
     assign internal_if.occupied = occupied;
     assign internal_if.control_signals = stored_control_signals;
     assign internal_if.pc = stored_pc;
@@ -97,6 +101,7 @@ module reservation_station #(
     //==========================================================================
     // EFFECTIVE VALUES (secure mode: validated from interface, normal: internal regs)
     //==========================================================================
+    wire effective_enable = secure_mode ? internal_if.validated_enable : enable;
     wire effective_occupied = secure_mode ? internal_if.validated_occupied : occupied;
     wire [10:0] effective_control_signals = secure_mode ? internal_if.validated_control_signals : stored_control_signals;
     wire [DATA_WIDTH-1:0] effective_pc = secure_mode ? internal_if.validated_pc : stored_pc;
@@ -234,9 +239,9 @@ module reservation_station #(
     //==========================================================================
     // DECODE INTERFACE CONTROL
     //==========================================================================
-    logic enable;
     // Ready to accept new instruction when not occupied or when issuing from stored
-    assign decode_if.dispatch_ready = all_valid && exec_if.issue_ready && enable; //!occupied  && exec_if.issue_ready; //(occupied && operand_a_valid_from_stored && operand_b_valid_from_stored && exec_if.issue_ready);
+    // In secure mode, use voted effective_enable from TMR validator
+    assign decode_if.dispatch_ready = all_valid && exec_if.issue_ready && effective_enable;
 
     //==========================================================================
     // RESERVATION STATION STORAGE UPDATE

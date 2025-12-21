@@ -63,6 +63,7 @@ module rs_validator #(
    logic [DATA_WIDTH-1:0] voted_exec_store_data;
 
    // Voted internal register values (shared to all 3 RS)
+   logic        voted_enable;
    logic        voted_occupied;
    logic [10:0] voted_control_signals;
    logic [DATA_WIDTH-1:0] voted_pc;
@@ -82,6 +83,7 @@ module rs_validator #(
    logic pc_pred_mm, pc_pred_fatal, bs_mm, bs_fatal, bp_mm, bp_fatal, sd_mm, sd_fatal;
 
    // Mismatch flags for internal registers
+   logic en_mm, en_fatal;
    logic occ_mm, occ_fatal, ctrl_int_mm, ctrl_int_fatal, pc_int_mm, pc_int_fatal;
    logic rd_int_mm, rd_int_fatal, pc_pred_int_mm, pc_pred_int_fatal;
    logic bs_int_mm, bs_int_fatal, bp_int_mm, bp_int_fatal, sd_int_mm, sd_int_fatal;
@@ -155,6 +157,12 @@ module rs_validator #(
    //==========================================================================
    // TMR VOTERS FOR INTERNAL REGISTERS (using interface signals)
    //==========================================================================
+
+   tmr_voter #(.DATA_WIDTH(1)) enable_voter (
+      .secure_mode_i(secure_mode),
+      .data_0_i(rs_0_internal.enable), .data_1_i(rs_1_internal.enable), .data_2_i(rs_2_internal.enable),
+      .data_o(voted_enable), .mismatch_detected_o(en_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(en_fatal)
+   );
 
    tmr_voter #(.DATA_WIDTH(1)) occupied_voter (
       .secure_mode_i(secure_mode),
@@ -234,6 +242,7 @@ module rs_validator #(
    // All 3 RS get the same validated values
 
    // RS 0
+   assign rs_0_internal.validated_enable = voted_enable;
    assign rs_0_internal.validated_occupied = voted_occupied;
    assign rs_0_internal.validated_control_signals = voted_control_signals;
    assign rs_0_internal.validated_pc = voted_pc;
@@ -248,6 +257,7 @@ module rs_validator #(
    assign rs_0_internal.validated_operand_b_tag = voted_operand_b_tag;
 
    // RS 1
+   assign rs_1_internal.validated_enable = voted_enable;
    assign rs_1_internal.validated_occupied = voted_occupied;
    assign rs_1_internal.validated_control_signals = voted_control_signals;
    assign rs_1_internal.validated_pc = voted_pc;
@@ -262,6 +272,7 @@ module rs_validator #(
    assign rs_1_internal.validated_operand_b_tag = voted_operand_b_tag;
 
    // RS 2
+   assign rs_2_internal.validated_enable = voted_enable;
    assign rs_2_internal.validated_occupied = voted_occupied;
    assign rs_2_internal.validated_control_signals = voted_control_signals;
    assign rs_2_internal.validated_pc = voted_pc;
