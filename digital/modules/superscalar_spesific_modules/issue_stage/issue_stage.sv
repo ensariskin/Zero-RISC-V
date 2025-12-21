@@ -381,9 +381,22 @@ module issue_stage #(
                         decode_ready_o = 3'b000;
                 end
                 2'b10: begin
-                    decode_ready_o = 3'b011;
+                    // 2 entries available - select first 2 ready channels with priority
+                    if (issue_to_dispatch_0.dispatch_ready && issue_to_dispatch_1.dispatch_ready)
+                        decode_ready_o = 3'b011;  // Pipe 0 and 1
+                    else if (issue_to_dispatch_0.dispatch_ready && issue_to_dispatch_2.dispatch_ready)
+                        decode_ready_o = 3'b101;  // Pipe 0 and 2
+                    else if (issue_to_dispatch_1.dispatch_ready && issue_to_dispatch_2.dispatch_ready)
+                        decode_ready_o = 3'b110;  // Pipe 1 and 2
+                    else if (issue_to_dispatch_0.dispatch_ready)
+                        decode_ready_o = 3'b001;  // Only pipe 0
+                    else if (issue_to_dispatch_1.dispatch_ready)
+                        decode_ready_o = 3'b010;  // Only pipe 1
+                    else if (issue_to_dispatch_2.dispatch_ready)
+                        decode_ready_o = 3'b100;  // Only pipe 2
+                    else
+                        decode_ready_o = 3'b000;
                 end
-                default: decode_ready_o = 3'b000;
             endcase
         end
     end

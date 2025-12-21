@@ -3,6 +3,7 @@
 dispatch_stage/multi_port_register_file.sv
 dispatch_stage/reorder_buffer.sv
 dispatch_stage/reservation_station.sv
+dispatch_stage/rs_validator.sv
 dispatch_stage/dispatch_stage.sv
 
 load_store_queue/lsq_package.sv

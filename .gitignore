@@ -82,3 +82,6 @@ dvt_build.log
 *.pyc
 .github/copilot-instructions.md
 digital/sim/run/ss_risc_dv/*
+
+#ignaore thesis for now
+docs/İTÜ TEZ ŞABLONU (NUM)/

@@ -464,6 +464,10 @@ module dispatch_stage #(
       .PHYS_REG_ADDR_WIDTH(PHYS_REG_ADDR_WIDTH)
    ) rs_2_internal_if();
 
+   rs_to_exec_if dispatch_to_alu_internal_0();
+   rs_to_exec_if dispatch_to_alu_internal_1();
+   rs_to_exec_if dispatch_to_alu_internal_2();
+
    // RS Validator error outputs
    logic rs_exec_mismatch, rs_exec_fatal;
    logic rs_internal_mismatch, rs_internal_fatal;
@@ -478,9 +482,9 @@ module dispatch_stage #(
       .secure_mode(secure_mode),
 
       // Exec interfaces (passthrough - RS directly connected to exec)
-      .exec_in_0(dispatch_to_alu_0),
-      .exec_in_1(dispatch_to_alu_1),
-      .exec_in_2(dispatch_to_alu_2),
+      .exec_in_0(dispatch_to_alu_internal_0),
+      .exec_in_1(dispatch_to_alu_internal_1),
+      .exec_in_2(dispatch_to_alu_internal_2),
       .exec_out_0(dispatch_to_alu_0),
       .exec_out_1(dispatch_to_alu_1),
       .exec_out_2(dispatch_to_alu_2),
@@ -522,7 +526,7 @@ module dispatch_stage #(
       .cdb_if_port(cdb_interface.rs0),  // Use rs0 modport
 
       // Interface to functional unit
-      .exec_if(dispatch_to_alu_0),
+      .exec_if(dispatch_to_alu_internal_0),
 
       // TMR validation interface
       .internal_if(rs_0_internal_if.reservation_station)
@@ -553,7 +557,7 @@ module dispatch_stage #(
       .cdb_if_port(cdb_interface.rs1),  // Use rs1 modport
 
       // Interface to functional unit
-      .exec_if(dispatch_to_alu_1),
+      .exec_if(dispatch_to_alu_internal_1),
 
       // TMR validation interface
       .internal_if(rs_1_internal_if.reservation_station)
@@ -584,7 +588,7 @@ module dispatch_stage #(
       .cdb_if_port(cdb_interface.rs2),  // Use rs2 modport
 
       // Interface to functional unit
-      .exec_if(dispatch_to_alu_2),
+      .exec_if(dispatch_to_alu_internal_2),
 
       // TMR validation interface
       .internal_if(rs_2_internal_if.reservation_station)
