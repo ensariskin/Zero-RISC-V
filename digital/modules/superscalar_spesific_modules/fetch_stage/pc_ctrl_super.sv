@@ -204,10 +204,10 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 	end
 
 	assign pc_plus_four_0 = pc_current_val + 32'd4;
-	assign pc_plus_four_1 = !secure_mode ? pc_current_val + 32'd8 : pc_plus_four_0;
-	assign pc_plus_four_2 = !secure_mode ? pc_current_val + 32'd12 : pc_plus_four_0;
-	assign pc_plus_four_3 = !secure_mode ? pc_current_val + 32'd16 : pc_plus_four_0;
-	assign pc_plus_four_4 = !secure_mode ? pc_current_val + 32'd20 : pc_plus_four_0;
+	assign pc_plus_four_1 = pc_current_val + 32'd8;
+	assign pc_plus_four_2 = pc_current_val + 32'd12;
+	assign pc_plus_four_3 = pc_current_val + 32'd16;
+	assign pc_plus_four_4 = pc_current_val + 32'd20;
 
 	assign pc_plus_incr   = pc_current_val + increment_value;
 	assign pc_plus_imm_0  = current_pc_0 + {imm_i_0[31:2], 2'b00}; // prevent misalignment issues, don't use 2 LSBs
@@ -260,10 +260,10 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 		.data_out(pc_save_4));
 
 	assign inst_addr_0 = reset ? (misprediction? pc_new_val : buble? pc_current_val : pc_new_val) : RESET_PC;
-	assign inst_addr_1 = !secure_mode ? inst_addr_0 + 32'd4 : inst_addr_0;
-	assign inst_addr_2 = !secure_mode ? inst_addr_0 + 32'd8 : inst_addr_0;
-	assign inst_addr_3 = !secure_mode ? inst_addr_0 + 32'd12 : inst_addr_0;
-	assign inst_addr_4 = !secure_mode ? inst_addr_0 + 32'd16 : inst_addr_0;
+	assign inst_addr_1 = inst_addr_0 + 32'd4;
+	assign inst_addr_2 = inst_addr_0 + 32'd8;
+	assign inst_addr_3 = inst_addr_0 + 32'd12;
+	assign inst_addr_4 = inst_addr_0 + 32'd16;
 	assign current_pc_0 = pc_current_val;
 	assign current_pc_1 = !secure_mode ? pc_current_val + 32'd4 : current_pc_0;
 	assign current_pc_2 = !secure_mode ? pc_current_val + 32'd8 : current_pc_0;

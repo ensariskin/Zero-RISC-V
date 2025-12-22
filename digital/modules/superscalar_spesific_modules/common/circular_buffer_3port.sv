@@ -336,6 +336,8 @@ module circular_buffer_3port #(
             // Check for underflow
             if ((num_reads > 0) && buffer_empty) begin
                 $warning("[%t] Circular buffer read underflow attempt", $time);
+                #3ns;
+                $finish;
             end
 
             // Check for overflow

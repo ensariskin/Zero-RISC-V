@@ -365,9 +365,9 @@ module issue_stage #(
     // giving priority to pipe 0, then pipe 1, then pipe 2
     always_comb begin
         decode_ready_o = 3'b000;
-        if(secure_mode) begin
-            decode_ready_o = 3'b001;
-        end else if(max_available_entries >= dispatch_request) begin
+        if(secure_mode & max_available_entries != 0) begin
+            decode_ready_o = {2'b00, issue_to_dispatch_0.dispatch_ready};
+        end else if(max_available_entries == 3) begin
             decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready};
         end else begin
             case (max_available_entries)

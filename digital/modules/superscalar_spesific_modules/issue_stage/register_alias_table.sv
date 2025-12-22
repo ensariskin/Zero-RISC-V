@@ -284,14 +284,15 @@ module register_alias_table #(
         (lsq_free_count == 1) ? 3'b001 : 3'b000;
 
     // Pre-compute allocation requirements (separate combinational logic)
+    // In secure mode, only channel 0 allocates (channels 1/2 get replicated data)
     always_comb begin
         need_alloc_0 = decode_valid[0] && !brat_restore_en;
-        need_alloc_1 = decode_valid[1] && !brat_restore_en;
-        need_alloc_2 = decode_valid[2] && !brat_restore_en;
+        need_alloc_1 = secure_mode ? 1'b0 : (decode_valid[1] && !brat_restore_en);
+        need_alloc_2 = secure_mode ? 1'b0 : (decode_valid[2] && !brat_restore_en);
 
         need_lsq_alloc_0 = decode_valid[0] && load_store_0 && !brat_restore_en;
-        need_lsq_alloc_1 = decode_valid[1] && load_store_1 && !brat_restore_en;
-        need_lsq_alloc_2 = decode_valid[2] && load_store_2 && !brat_restore_en;
+        need_lsq_alloc_1 = secure_mode ? 1'b0 : (decode_valid[1] && load_store_1 && !brat_restore_en);
+        need_lsq_alloc_2 = secure_mode ? 1'b0 : (decode_valid[2] && load_store_2 && !brat_restore_en);
 
         alloc_tag_0 = need_lsq_alloc_0 ? 3'b011: 3'b000;
         alloc_tag_1 = need_lsq_alloc_1 ? 3'b011: 3'b001;
