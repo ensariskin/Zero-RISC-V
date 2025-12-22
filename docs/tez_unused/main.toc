@@ -1,0 +1,232 @@
+\babel@toc {turkish}{}\relax 
+\contentsline {chapter}{Kısaltmalar}{4}{chapter*.4}%
+\contentsline {chapter}{\numberline {1}Giriş}{5}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Motivasyon}{5}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Tezin Kapsamı}{5}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Tasarım Hedefleri}{6}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Tez Organizasyonu}{6}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Katkılar}{7}{section.1.5}%
+\contentsline {chapter}{\numberline {2}Mimari Genel Bakış}{8}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Superscalar İşlemci Kavramı}{8}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Skalar ve Superscalar İşlemciler}{8}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Komut Düzeyinde Paralellik (ILP)}{8}{subsection.2.1.2}%
+\contentsline {section}{\numberline {2.2}Pipeline Yapısı}{9}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Pipeline Aşamaları}{9}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}In-Order vs Out-of-Order Aşamalar}{10}{subsection.2.2.2}%
+\contentsline {section}{\numberline {2.3}Tomasulo Algoritması}{10}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Temel Kavramlar}{10}{subsection.2.3.1}%
+\contentsline {subsubsection}{Register Renaming}{10}{subsection.2.3.1}%
+\contentsline {subsubsection}{Reservation Station}{10}{lstnumber.2.1.9}%
+\contentsline {subsubsection}{Common Data Bus (CDB)}{11}{lstnumber.2.1.9}%
+\contentsline {subsection}{\numberline {2.3.2}Tomasulo Akışı}{11}{subsection.2.3.2}%
+\contentsline {section}{\numberline {2.4}Spekülatif Yürütme ve BRAT}{11}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Dal Tahmini}{11}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}Branch Resolution Alias Table (BRAT)}{11}{subsection.2.4.2}%
+\contentsline {section}{\numberline {2.5}Kaynak Yönetimi}{12}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Modül Hiyerarşisi}{12}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Veri Akışı}{12}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Kontrol Akışı}{13}{section.2.8}%
+\contentsline {subsection}{\numberline {2.8.1}Normal Operasyon}{13}{subsection.2.8.1}%
+\contentsline {subsection}{\numberline {2.8.2}Misprediction Recovery}{13}{subsection.2.8.2}%
+\contentsline {chapter}{\numberline {3}Fetch Stage}{14}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Genel Bakış}{14}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Fetch Stage Bileşenleri}{15}{subsection.3.1.1}%
+\contentsline {section}{\numberline {3.2}Multi Fetch Modülü}{15}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Tasarım Amacı}{15}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Komut Geçerlilik Mantığı}{15}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Misprediction İşleme}{16}{subsection.3.2.3}%
+\contentsline {section}{\numberline {3.3}Instruction Buffer}{17}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Tasarım Amacı}{17}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Buffer Yapısı}{17}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Backpressure Yönetimi}{18}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Forwarding Mantığı}{18}{subsection.3.3.4}%
+\contentsline {section}{\numberline {3.4}PC Controller}{18}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}PC Güncelleme Senaryoları}{19}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Paralel PC Hesaplama}{19}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Misprediction Recovery}{19}{subsection.3.4.3}%
+\contentsline {section}{\numberline {3.5}Dal Tahmini}{19}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Dal Tahmini Genel Bakış}{20}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Tahmin Mekanizmaları}{20}{subsection.3.5.2}%
+\contentsline {subsubsection}{2-Bit Sayaç (Bimodal Predictor)}{20}{table.3.4}%
+\contentsline {subsubsection}{GShare Predictor}{21}{figure.3.2}%
+\contentsline {paragraph}{Global History Register (GHR)}{21}{lstnumber.3.7.4}%
+\contentsline {subsubsection}{Tournament Predictor}{22}{lstnumber.3.8.5}%
+\contentsline {paragraph}{Chooser Güncelleme Kuralı}{22}{lstnumber.3.9.6}%
+\contentsline {paragraph}{History Packing}{22}{lstnumber.3.9.6}%
+\contentsline {subsection}{\numberline {3.5.3}JALR Predictor}{23}{subsection.3.5.3}%
+\contentsline {subsection}{\numberline {3.5.4}Return Address Stack (RAS)}{23}{subsection.3.5.4}%
+\contentsline {paragraph}{RAS Operasyonları}{23}{subsection.3.5.4}%
+\contentsline {paragraph}{Spekülatif RAS ve Checkpoint}{23}{subsection.3.5.4}%
+\contentsline {subsection}{\numberline {3.5.5}Predictor Güncelleme Akışı}{24}{subsection.3.5.5}%
+\contentsline {section}{\numberline {3.6}Fetch Stage Özeti}{24}{section.3.6}%
+\contentsline {chapter}{\numberline {4}Issue Stage}{25}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Genel Bakış}{25}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Issue Stage Bileşenleri}{26}{subsection.4.1.1}%
+\contentsline {section}{\numberline {4.2}RV32I Decoder}{26}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Decoder Çıkışları}{26}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}RV32I Komut Formatları}{26}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Paralel Decode}{27}{subsection.4.2.3}%
+\contentsline {section}{\numberline {4.3}Register Alias Table}{28}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Register Alias Table (RAT)}{28}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Tasarım Amacı}{28}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}RAT Yapısı}{29}{subsection.4.4.2}%
+\contentsline {paragraph}{Fiziksel Register Alanı}{29}{table.4.4}%
+\contentsline {subsection}{\numberline {4.4.3}RAT Operasyonları}{29}{subsection.4.4.3}%
+\contentsline {subsubsection}{Kaynak Register Lookup}{29}{subsection.4.4.3}%
+\contentsline {subsubsection}{Hedef Register Allocation}{30}{lstnumber.-2.2}%
+\contentsline {subsubsection}{RAT Güncelleme}{30}{lstnumber.4.3.19}%
+\contentsline {subsubsection}{Commit İşleme}{31}{lstnumber.4.4.12}%
+\contentsline {subsection}{\numberline {4.4.4}3-Way Paralel Renaming}{31}{subsection.4.4.4}%
+\contentsline {subsection}{\numberline {4.4.5}Kaynak Yönetimi}{32}{subsection.4.4.5}%
+\contentsline {subsection}{\numberline {4.4.6}3-Port Circular Buffer ile Kaynak Allocation}{32}{subsection.4.4.6}%
+\contentsline {subsubsection}{Problem: 3-Way Paralel Allocation}{32}{subsection.4.4.6}%
+\contentsline {subsubsection}{Çözüm: Index-as-Value Circular Buffer}{33}{subsection.4.4.6}%
+\contentsline {paragraph}{Temel Fikir}{33}{lstnumber.4.7.4}%
+\contentsline {paragraph}{Allocation (Okuma)}{33}{lstnumber.4.7.4}%
+\contentsline {paragraph}{Deallocation (Yazma)}{33}{lstnumber.4.8.10}%
+\contentsline {subsubsection}{Free List Yönetimi (ROB Allocation)}{34}{lstnumber.4.9.5}%
+\contentsline {paragraph}{ROB Allocation neden RAT'ta?}{34}{lstnumber.4.10.19}%
+\contentsline {subsubsection}{LSQ Index Allocation}{35}{lstnumber.4.10.19}%
+\contentsline {subsubsection}{Misprediction Recovery}{35}{lstnumber.4.11.13}%
+\contentsline {paragraph}{1. Pointer Reset (\texttt {set\_read\_ptr\_en})}{35}{lstnumber.4.11.13}%
+\contentsline {paragraph}{2. Redo Last Allocation (\texttt {redo\_last\_alloc})}{36}{lstnumber.4.12.9}%
+\contentsline {subsubsection}{Buffer Doluluk Kontrolü}{36}{lstnumber.4.13.5}%
+\contentsline {subsubsection}{Circular Buffer Özet Tablosu}{37}{lstnumber.4.14.9}%
+\contentsline {subsection}{\numberline {4.4.7}Branch Resolution Alias Table (BRAT)}{37}{subsection.4.4.7}%
+\contentsline {subsubsection}{Problem: Geleneksel Misprediction Recovery}{37}{subsection.4.4.7}%
+\contentsline {subsubsection}{Çözüm: BRAT ile Eager Recovery}{38}{figure.4.2}%
+\contentsline {subsubsection}{BRAT Entry Yapısı}{38}{figure.4.3}%
+\contentsline {subsubsection}{BRAT Operasyonları}{39}{table.4.6}%
+\contentsline {paragraph}{1. Push (Dal Issue Edildiğinde)}{39}{table.4.6}%
+\contentsline {paragraph}{2. Execute Result Yazma}{40}{lstnumber.4.15.10}%
+\contentsline {paragraph}{3. In-Order Resolution Output}{40}{lstnumber.4.16.5}%
+\contentsline {paragraph}{4. Combinational Bypass}{40}{lstnumber.4.17.3}%
+\contentsline {paragraph}{5. Commit Update}{41}{Item.43}%
+\contentsline {paragraph}{6. RAT Restore}{42}{lstnumber.4.19.6}%
+\contentsline {subsubsection}{RAS Checkpoint/Restore}{42}{lstnumber.4.20.13}%
+\contentsline {subsubsection}{BRAT Özet Tablosu}{43}{lstnumber.4.21.3}%
+\contentsline {subsection}{\numberline {4.4.8}RAT Özet Tablosu}{43}{subsection.4.4.8}%
+\contentsline {section}{\numberline {4.5}Issue Stage Akışı}{43}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Normal Operasyon}{43}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Misprediction Durumu}{44}{subsection.4.5.2}%
+\contentsline {section}{\numberline {4.6}Dispatch Interface}{44}{section.4.6}%
+\contentsline {section}{\numberline {4.7}Issue Stage Özeti}{45}{section.4.7}%
+\contentsline {chapter}{\numberline {5}Dispatch Stage}{46}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Genel Bakış}{46}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Dispatch Stage Bileşenleri}{47}{subsection.5.1.1}%
+\contentsline {section}{\numberline {5.2}Fiziksel Register Alanı}{47}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Reservation Station}{48}{section.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}RS Yapısı}{48}{subsection.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}Tag Sistemi}{48}{subsection.5.3.2}%
+\contentsline {subsection}{\numberline {5.3.3}CDB İzleme ve Operand Resolution}{49}{subsection.5.3.3}%
+\contentsline {subsection}{\numberline {5.3.4}Operand Seçimi}{50}{subsection.5.3.4}%
+\contentsline {subsection}{\numberline {5.3.5}Issue Koşulu}{50}{subsection.5.3.5}%
+\contentsline {subsection}{\numberline {5.3.6}Eager Misprediction Flush}{51}{subsection.5.3.6}%
+\contentsline {section}{\numberline {5.4}Reorder Buffer (ROB)}{51}{section.5.4}%
+\contentsline {subsection}{\numberline {5.4.1}ROB Entry Yapısı}{51}{subsection.5.4.1}%
+\contentsline {subsection}{\numberline {5.4.2}ROB Portları}{52}{subsection.5.4.2}%
+\contentsline {subsection}{\numberline {5.4.3}Allocation}{52}{subsection.5.4.3}%
+\contentsline {subsection}{\numberline {5.4.4}CDB Sonuç Yazma}{52}{subsection.5.4.4}%
+\contentsline {subsection}{\numberline {5.4.5}In-Order Commit}{53}{subsection.5.4.5}%
+\contentsline {subsection}{\numberline {5.4.6}Store Permission}{53}{subsection.5.4.6}%
+\contentsline {section}{\numberline {5.5}Common Data Bus (CDB)}{54}{section.5.5}%
+\contentsline {subsection}{\numberline {5.5.1}CDB Kanalları}{54}{subsection.5.5.1}%
+\contentsline {subsection}{\numberline {5.5.2}CDB Sinyalleri}{54}{subsection.5.5.2}%
+\contentsline {section}{\numberline {5.6}Dispatch Stage Özeti}{55}{section.5.6}%
+\contentsline {chapter}{\numberline {6}Execute Stage}{56}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Genel Bakış}{56}{section.6.1}%
+\contentsline {subsection}{\numberline {6.1.1}Execute Stage Bileşenleri}{57}{subsection.6.1.1}%
+\contentsline {section}{\numberline {6.2}Functional Unit Yapısı}{57}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Operand Bağlantısı}{57}{subsection.6.2.1}%
+\contentsline {section}{\numberline {6.3}ALU Operasyonları}{58}{section.6.3}%
+\contentsline {subsection}{\numberline {6.3.1}ALU Yapısı}{58}{subsection.6.3.1}%
+\contentsline {section}{\numberline {6.4}Dal Çözümleme}{59}{section.6.4}%
+\contentsline {subsection}{\numberline {6.4.1}Branch Condition Evaluation}{59}{subsection.6.4.1}%
+\contentsline {subsection}{\numberline {6.4.2}Misprediction Tespiti}{59}{subsection.6.4.2}%
+\contentsline {subsection}{\numberline {6.4.3}Correct PC Hesaplama}{60}{subsection.6.4.3}%
+\contentsline {section}{\numberline {6.5}Sonuç Seçimi}{60}{section.6.5}%
+\contentsline {section}{\numberline {6.6}Memory Address Calculation}{61}{section.6.6}%
+\contentsline {section}{\numberline {6.7}Branch Predictor Update}{61}{section.6.7}%
+\contentsline {section}{\numberline {6.8}JALR Handling}{62}{section.6.8}%
+\contentsline {section}{\numberline {6.9}CDB Broadcast}{62}{section.6.9}%
+\contentsline {section}{\numberline {6.10}Execute Stage Özeti}{62}{section.6.10}%
+\contentsline {chapter}{\numberline {7}Memory Stage ve Load Store Queue}{63}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Genel Bakış}{63}{section.7.1}%
+\contentsline {section}{\numberline {7.2}LSQ Tasarım Felsefesi}{63}{section.7.2}%
+\contentsline {section}{\numberline {7.3}LSQ Entry Yapısı}{64}{section.7.3}%
+\contentsline {section}{\numberline {7.4}3-Head Pointer Mimarisi}{65}{section.7.4}%
+\contentsline {subsection}{\numberline {7.4.1}Head Pointer Sliding Window}{66}{subsection.7.4.1}%
+\contentsline {section}{\numberline {7.5}LSQ Operasyonları}{66}{section.7.5}%
+\contentsline {subsection}{\numberline {7.5.1}Allocation}{66}{subsection.7.5.1}%
+\contentsline {subsection}{\numberline {7.5.2}Address Update (CDB'den)}{67}{subsection.7.5.2}%
+\contentsline {subsection}{\numberline {7.5.3}Store Data Update}{67}{subsection.7.5.3}%
+\contentsline {subsection}{\numberline {7.5.4}Memory Issue}{68}{subsection.7.5.4}%
+\contentsline {subsection}{\numberline {7.5.5}Memory Response}{69}{subsection.7.5.5}%
+\contentsline {subsection}{\numberline {7.5.6}CDB Broadcast (Load)}{69}{subsection.7.5.6}%
+\contentsline {section}{\numberline {7.6}Store Commit}{69}{section.7.6}%
+\contentsline {section}{\numberline {7.7}Eager Misprediction Flush}{70}{section.7.7}%
+\contentsline {section}{\numberline {7.8}Memory Interface}{70}{section.7.8}%
+\contentsline {subsection}{\numberline {7.8.1}Byte Enable Hesaplama}{71}{subsection.7.8.1}%
+\contentsline {subsection}{\numberline {7.8.2}Load Data İşleme}{71}{subsection.7.8.2}%
+\contentsline {section}{\numberline {7.9}Store-to-Load Forwarding}{72}{section.7.9}%
+\contentsline {subsection}{\numberline {7.9.1}Forwarding Koşulları}{72}{subsection.7.9.1}%
+\contentsline {subsection}{\numberline {7.9.2}Wait Koşulları}{73}{subsection.7.9.2}%
+\contentsline {subsection}{\numberline {7.9.3}Forwarding Data Path}{73}{subsection.7.9.3}%
+\contentsline {section}{\numberline {7.10}Single Pipe Mode}{74}{section.7.10}%
+\contentsline {section}{\numberline {7.11}LSQ Özeti}{74}{section.7.11}%
+\contentsline {chapter}{\numberline {8}Performans Analizi}{75}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Performans Metrikleri}{75}{section.8.1}%
+\contentsline {subsection}{\numberline {8.1.1}Instructions Per Cycle (IPC)}{75}{subsection.8.1.1}%
+\contentsline {subsection}{\numberline {8.1.2}Speedup}{75}{subsection.8.1.2}%
+\contentsline {section}{\numberline {8.2}Pipeline Stall Analizi}{76}{section.8.2}%
+\contentsline {subsection}{\numberline {8.2.1}Stall Kaynakları}{76}{subsection.8.2.1}%
+\contentsline {subsection}{\numberline {8.2.2}Occupancy Analizi}{76}{subsection.8.2.2}%
+\contentsline {section}{\numberline {8.3}Branch Prediction Performansı}{77}{section.8.3}%
+\contentsline {subsection}{\numberline {8.3.1}Misprediction Rate}{77}{subsection.8.3.1}%
+\contentsline {subsection}{\numberline {8.3.2}Misprediction Penalty}{77}{subsection.8.3.2}%
+\contentsline {subsection}{\numberline {8.3.3}Misprediction Etkisi}{77}{subsection.8.3.3}%
+\contentsline {section}{\numberline {8.4}Memory Performansı}{77}{section.8.4}%
+\contentsline {subsection}{\numberline {8.4.1}Memory Access Pattern}{77}{subsection.8.4.1}%
+\contentsline {subsection}{\numberline {8.4.2}LSQ Performans Etkisi}{78}{subsection.8.4.2}%
+\contentsline {section}{\numberline {8.5}Kaynak Kullanımı}{78}{section.8.5}%
+\contentsline {subsection}{\numberline {8.5.1}Kritik Kaynaklar}{78}{subsection.8.5.1}%
+\contentsline {section}{\numberline {8.6}Benchmark Sonuçları}{79}{section.8.6}%
+\contentsline {subsection}{\numberline {8.6.1}Test Programları}{79}{subsection.8.6.1}%
+\contentsline {subsection}{\numberline {8.6.2}Speedup Analizi}{79}{subsection.8.6.2}%
+\contentsline {section}{\numberline {8.7}Performans Optimizasyon Önerileri}{79}{section.8.7}%
+\contentsline {subsection}{\numberline {8.7.1}Kısa Vadeli İyileştirmeler}{79}{subsection.8.7.1}%
+\contentsline {subsection}{\numberline {8.7.2}Uzun Vadeli İyileştirmeler}{79}{subsection.8.7.2}%
+\contentsline {section}{\numberline {8.8}Performans Özeti}{80}{section.8.8}%
+\contentsline {chapter}{\numberline {9}Doğrulama ve Test}{81}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Doğrulama Metodolojisi}{81}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}Doğrulama Seviyeleri}{81}{subsection.9.1.1}%
+\contentsline {subsection}{\numberline {9.1.2}Test Ortamı}{81}{subsection.9.1.2}%
+\contentsline {section}{\numberline {9.2}Unit Test}{82}{section.9.2}%
+\contentsline {subsection}{\numberline {9.2.1}RAT Unit Test}{82}{subsection.9.2.1}%
+\contentsline {subsection}{\numberline {9.2.2}BRAT Unit Test}{83}{subsection.9.2.2}%
+\contentsline {subsection}{\numberline {9.2.3}Reservation Station Test}{83}{subsection.9.2.3}%
+\contentsline {section}{\numberline {9.3}Integration Test}{83}{section.9.3}%
+\contentsline {subsection}{\numberline {9.3.1}Pipeline Integration}{83}{subsection.9.3.1}%
+\contentsline {subsection}{\numberline {9.3.2}Hazard Integration}{84}{subsection.9.3.2}%
+\contentsline {section}{\numberline {9.4}System Test}{84}{section.9.4}%
+\contentsline {subsection}{\numberline {9.4.1}RISC-V Compliance Test}{84}{subsection.9.4.1}%
+\contentsline {subsection}{\numberline {9.4.2}Benchmark Testleri}{84}{subsection.9.4.2}%
+\contentsline {section}{\numberline {9.5}Misprediction Test}{84}{section.9.5}%
+\contentsline {section}{\numberline {9.6}Stress Test}{85}{section.9.6}%
+\contentsline {subsection}{\numberline {9.6.1}Resource Exhaustion}{85}{subsection.9.6.1}%
+\contentsline {subsection}{\numberline {9.6.2}Corner Case Test}{85}{subsection.9.6.2}%
+\contentsline {section}{\numberline {9.7}Tracer Altyapısı}{86}{section.9.7}%
+\contentsline {section}{\numberline {9.8}Regression Test}{86}{section.9.8}%
+\contentsline {section}{\numberline {9.9}Doğrulama Özeti}{86}{section.9.9}%
+\contentsline {chapter}{\numberline {10}Sonuç ve Gelecek Çalışmalar}{87}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Sonuç}{87}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}Başarılan Hedefler}{87}{subsection.10.1.1}%
+\contentsline {subsection}{\numberline {10.1.2}Teknik Katkılar}{88}{subsection.10.1.2}%
+\contentsline {subsection}{\numberline {10.1.3}Performans Sonuçları}{88}{subsection.10.1.3}%
+\contentsline {section}{\numberline {10.2}Karşılaşılan Zorluklar}{88}{section.10.2}%
+\contentsline {section}{\numberline {10.3}Gelecek Çalışmalar}{89}{section.10.3}%
+\contentsline {subsection}{\numberline {10.3.1}Kısa Vadeli İyileştirmeler}{89}{subsection.10.3.1}%
+\contentsline {subsection}{\numberline {10.3.2}Orta Vadeli İyileştirmeler}{89}{subsection.10.3.2}%
+\contentsline {subsection}{\numberline {10.3.3}Uzun Vadeli Hedefler}{89}{subsection.10.3.3}%
+\contentsline {section}{\numberline {10.4}Öğrenilen Dersler}{90}{section.10.4}%
+\contentsline {section}{\numberline {10.5}Son Söz}{90}{section.10.5}%

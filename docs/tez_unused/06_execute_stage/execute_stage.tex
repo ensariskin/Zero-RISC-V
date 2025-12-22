@@ -1,0 +1,348 @@
+% =============================================================================
+% BÖLÜM 6: EXECUTE STAGE
+% =============================================================================
+
+\chapter{Execute Stage}
+\label{chap:execute}
+
+Execute stage, komutların gerçek hesaplamalarının yapıldığı pipeline aşamasıdır.
+Bu bölümde, 3 paralel functional unit, ALU operasyonları, dal çözümleme ve
+misprediction tespiti detaylı olarak açıklanmaktadır.
+
+\section{Genel Bakış}
+\label{sec:execute_genel}
+
+Execute stage, reservation station'lardan gelen komutları alır ve:
+\begin{enumerate}
+    \item ALU/shifter operasyonlarını gerçekleştirir
+    \item Dal koşullarını değerlendirir
+    \item Misprediction tespit eder
+    \item Sonuçları CDB üzerinden yayınlar
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.9\textwidth}
+\centering
+\textbf{Execute Stage Veri Akışı}\\[1em]
+\begin{tabular}{ccccc}
+\fbox{RS 0} & $\rightarrow$ & \fbox{FU 0 (ALU+Branch)} & $\rightarrow$ & \fbox{CDB 0} \\[0.3em]
+\fbox{RS 1} & $\rightarrow$ & \fbox{FU 1 (ALU+Branch)} & $\rightarrow$ & \fbox{CDB 1} \\[0.3em]
+\fbox{RS 2} & $\rightarrow$ & \fbox{FU 2 (ALU+Branch)} & $\rightarrow$ & \fbox{CDB 2} \\[0.5em]
+ & & $\downarrow$ (branch results) & & \\
+ & & \fbox{BRAT Update} & & \\
+\end{tabular}
+\end{minipage}
+}
+\caption{Execute stage blok diyagramı}
+\label{fig:execute_block}
+\end{figure}
+
+\subsection{Execute Stage Bileşenleri}
+
+\begin{table}[H]
+\centering
+\caption{Execute stage modülleri}
+\label{tab:execute_modules}
+\begin{tabular}{llp{5cm}}
+\toprule
+\textbf{Modül} & \textbf{Dosya} & \textbf{Görev} \\
+\midrule
+Execute Stage & \texttt{execute\_stage.sv} & Üst seviye koordinasyon \\
+ALU & \texttt{alu.sv} & Aritmetik/mantık operasyonları \\
+Arithmetic Unit & \texttt{arithmetic\_unit.sv} & ADD, SUB, SLT, SLTU \\
+Logical Unit & \texttt{logical\_unit.sv} & XOR, OR, AND \\
+Shifter & \texttt{shifter.sv} & SLL, SRL, SRA \\
+Branch Unit & \texttt{functional\_unit.sv} & Dal koşulu değerlendirme \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Functional Unit Yapısı}
+\label{sec:fu_structure}
+
+Her functional unit (FU), tam RV32I ALU ve dal işleme kapasitesine sahiptir:
+
+\begin{lstlisting}[caption={FU sinyal tanımları}]
+// Functional unit signals for FU0
+logic [DATA_WIDTH-1:0] fu0_data_a, fu0_data_b;
+logic [3:0] fu0_func_sel;
+logic [DATA_WIDTH-1:0] fu0_result;
+logic fu0_carry_out, fu0_overflow, fu0_negative, fu0_zero;
+logic fu0_busy;
+
+// Branch control signals
+logic fu0_mpc, fu0_jalr;
+logic fu0_misprediction;
+logic [DATA_WIDTH-1:0] fu0_correct_pc;
+\end{lstlisting}
+
+\subsection{Operand Bağlantısı}
+
+\begin{lstlisting}[caption={RS'den FU'ya operand aktarımı}]
+// Operand assignment from RS to FU
+assign fu0_data_a = rs_to_exec_0.data_a;
+assign fu0_data_b = rs_to_exec_0.data_b;
+
+// Function select from control signals [10:7]
+assign fu0_func_sel = rs_to_exec_0.control_signals[10:7];
+\end{lstlisting}
+
+\section{ALU Operasyonları}
+\label{sec:alu_ops}
+
+ALU, aritmetik ve mantıksal operasyonları gerçekleştirir:
+
+\begin{table}[H]
+\centering
+\caption{ALU fonksiyon seçimi}
+\label{tab:alu_func}
+\begin{tabular}{clp{5cm}}
+\toprule
+\textbf{func\_sel} & \textbf{Operasyon} & \textbf{Açıklama} \\
+\midrule
+3'b000 & ADD & Toplama \\
+3'b001 & SUB & Çıkarma \\
+3'b010 & SLT & Set Less Than (signed) \\
+3'b011 & SLTU & Set Less Than (unsigned) \\
+3'b100 & XOR & Bitwise XOR \\
+3'b101 & OR & Bitwise OR \\
+3'b110 & AND & Bitwise AND \\
+3'b111 & Reserved & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{ALU Yapısı}
+
+ALU, aritmetik ve mantıksal birimlerden oluşur:
+
+\begin{lstlisting}[caption={ALU iç yapısı}]
+module alu #(parameter size = 32)(
+    input logic [size-1:0] data_a,
+    input logic [size-1:0] data_b,
+    input logic [2:0] func_sel,
+    output logic [size-1:0] data_result,
+    output logic carry_out, overflow, zero, negative
+);
+
+    logic [size-1:0] arithmetic_out;
+    logic [size-1:0] logical_out;
+
+    arithmetic_unit arithmetic(
+        .data_a(data_a), .data_b(data_b),
+        .func_sel(func_sel[1:0]),  // ADD, SUB, SLT, SLTU
+        .data_result(arithmetic_out),
+        ...
+    );
+
+    logical_unit logical(
+        .data_a(data_a), .data_b(data_b),
+        .func_sel(func_sel[1:0]),  // XOR, OR, AND
+        .data_result(logical_out)
+    );
+
+    // Select based on func_sel[2]
+    assign data_result = func_sel[2] ? logical_out : arithmetic_out;
+endmodule
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden ayrı arithmetic ve logical unit?}
+
+\begin{itemize}
+    \item Paralel hesaplama: Her iki sonuç aynı anda hesaplanır
+    \item Basit multiplexer: Sadece MSB ile seçim
+    \item Timing: Critical path kısaltılır
+    \item Modülerlik: Bağımsız test ve optimizasyon
+\end{itemize}
+\end{nedenbox}
+
+\section{Dal Çözümleme}
+\label{sec:branch_resolution}
+
+Execute stage, dal komutlarının sonuçlarını hesaplar ve tahminle karşılaştırır.
+
+\subsection{Branch Condition Evaluation}
+
+\begin{table}[H]
+\centering
+\caption{Branch koşulları}
+\label{tab:branch_conditions}
+\begin{tabular}{clp{4cm}}
+\toprule
+\textbf{branch\_sel} & \textbf{Komut} & \textbf{Koşul} \\
+\midrule
+3'b000 & NO\_BRANCH & Dallanma yok \\
+3'b001 & BEQ & rs1 == rs2 \\
+3'b010 & BNE & rs1 != rs2 \\
+3'b011 & BLT & rs1 < rs2 (signed) \\
+3'b100 & BGE & rs1 >= rs2 (signed) \\
+3'b101 & BLTU/BGEU & Unsigned karşılaştırma \\
+3'b110 & JAL & Koşulsuz atlama \\
+3'b111 & JALR & Register indirect atlama \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Misprediction Tespiti}
+
+\begin{lstlisting}[caption={Misprediction detection}]
+// Branch misprediction: actual outcome != prediction
+// mpc = branch condition result (taken/not-taken)
+assign fu0_misprediction = fu0_jalr ?
+    // JALR: target address mismatch
+    (fu0_result != rs_to_exec_0.pc_value_at_prediction) :
+    // Branch: direction mismatch
+    (fu0_mpc ^ rs_to_exec_0.branch_prediction);
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden JALR için özel kontrol?}
+
+Branch komutları için sadece yön (taken/not-taken) tahmini yapılır.
+JALR için hem yön hem de hedef adres tahmini yapılır.
+
+JALR misprediction:
+\begin{itemize}
+    \item Tahmin edilen hedef: \sig{pc\_value\_at\_prediction}
+    \item Gerçek hedef: \sig{fu0\_result} (rs1 + imm)
+    \item İkisi farklıysa → misprediction
+\end{itemize}
+\end{nedenbox}
+
+\subsection{Correct PC Hesaplama}
+
+\begin{lstlisting}[caption={Correct PC calculation}]
+// Correct PC for recovery
+assign fu0_correct_pc = fu0_jalr ?
+    // JALR: use calculated address (align to 4)
+    {fu0_result[31:2], 2'b00} :
+    // Branch: use current PC (next instruction)
+    {rs_to_exec_0.pc[31:2], 2'b00};
+\end{lstlisting}
+
+\section{Sonuç Seçimi}
+\label{sec:result_select}
+
+Execute stage, farklı komut tipleri için farklı sonuçlar üretir:
+
+\begin{lstlisting}[caption={Result selection}]
+// Result selection based on instruction type
+// control_signals[5] = save PC (JAL/JALR)
+assign fu0_corrected_result = rs_to_exec_0.control_signals[5] ?
+    {rs_to_exec_0.pc[31:2], 2'b00} :  // Link address
+    fu0_result;                        // ALU result
+
+// Final result: branch returns prediction PC, others return ALU
+assign rs_to_exec_0.data_result = rs_to_exec_0.is_branch ?
+    rs_to_exec_0.pc_value_at_prediction :
+    fu0_corrected_result;
+\end{lstlisting}
+
+\begin{table}[H]
+\centering
+\caption{Komut tipine göre sonuç}
+\label{tab:result_by_type}
+\begin{tabular}{lp{6cm}}
+\toprule
+\textbf{Komut Tipi} & \textbf{Sonuç} \\
+\midrule
+ALU (ADD, SUB, ...) & ALU hesaplama sonucu \\
+Load/Store & Adres hesaplama sonucu \\
+JAL/JALR & Link adresi (PC + 4) \\
+Branch (BEQ, ...) & Tahmin edilen PC \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Memory Address Calculation}
+\label{sec:mem_addr_calc}
+
+Load/Store komutları için adres hesaplaması:
+
+\begin{lstlisting}[caption={Memory address calculation flag}]
+// Memory address calculation detection
+// control_signals[4] = load, control_signals[3] = memory op
+assign rs_to_exec_0.mem_addr_calculation =
+    rs_to_exec_0.control_signals[4] ||
+    (rs_to_exec_0.control_signals[3] && !rs_to_exec_0.control_signals[6]);
+\end{lstlisting}
+
+Bu flag, LSQ'ya adres hesaplamasının tamamlandığını bildirir.
+
+\section{Branch Predictor Update}
+\label{sec:predictor_update}
+
+Execute stage, dal sonuçlarını branch predictor'a geri bildirir:
+
+\begin{lstlisting}[caption={Predictor update sinyalleri}]
+// Update predictor only for conditional branches
+assign update_predictor_0 = rs_to_exec_0.issue_valid &&
+    (rs_to_exec_0.branch_sel > 0 && rs_to_exec_0.branch_sel < 6);
+
+// Misprediction output for BRAT
+assign misprediction_0 = rs_to_exec_0.issue_valid ? fu0_misprediction : 0;
+
+// Correct PC for recovery
+assign correct_pc_0 = fu0_correct_pc;
+
+// PC for predictor table update
+assign update_pc_0 = rs_to_exec_0.data_result;
+
+// Physical register (ROB ID) for BRAT matching
+assign phys_reg_branch_0 = rs_to_exec_0.rd_phys_addr;
+\end{lstlisting}
+
+\section{JALR Handling}
+\label{sec:jalr_handling}
+
+JALR, özel işlem gerektirir çünkü hem hedef adres hem de dönüş adresi hesaplanır:
+
+\begin{lstlisting}[caption={JALR detection}]
+// JALR detection for special handling
+assign is_jalr_0 = rs_to_exec_0.issue_valid && fu0_jalr;
+\end{lstlisting}
+
+JALR için:
+\begin{itemize}
+    \item Hedef adres: rs1 + immediate
+    \item Dönüş adresi: PC + 4 (rd'ye yazılır)
+    \item Predictor: JALR predictor ayrı güncellenir
+\end{itemize}
+
+\section{CDB Broadcast}
+\label{sec:cdb_broadcast}
+
+Her FU, sonuçlarını CDB üzerinden yayınlar:
+
+\begin{lstlisting}[caption={CDB output assignment}]
+// RS to exec interface carries CDB signals
+assign rs_to_exec_0.data_result = fu0_corrected_result;
+assign rs_to_exec_0.misprediction = fu0_misprediction;
+assign rs_to_exec_0.is_branch = rs_to_exec_0.branch_sel > 0 &&
+    rs_to_exec_0.branch_sel < 6;
+assign rs_to_exec_0.correct_pc = fu0_correct_pc;
+\end{lstlisting}
+
+\section{Execute Stage Özeti}
+
+\begin{table}[H]
+\centering
+\caption{Execute stage özellikleri}
+\label{tab:execute_summary}
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{Özellik} & \textbf{Değer/Açıklama} \\
+\midrule
+FU Sayısı & 3 (paralel) \\
+ALU Operasyonları & 7 (ADD, SUB, SLT, SLTU, XOR, OR, AND) \\
+Shifter Operasyonları & 3 (SLL, SRL, SRA) \\
+Branch Koşulları & 6 (BEQ, BNE, BLT, BGE, BLTU, BGEU) \\
+Execute Latency & 1 cycle (combinational ALU) \\
+Misprediction Detection & Same-cycle \\
+CDB Channels & 3 (FU başına 1) \\
+\bottomrule
+\end{tabular}
+\end{table}

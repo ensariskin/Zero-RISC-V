@@ -1,0 +1,286 @@
+% =============================================================================
+% BÖLÜM 2: MİMARİ GENEL BAKIŞ
+% =============================================================================
+
+\chapter{Mimari Genel Bakış}
+\label{chap:mimari}
+
+Bu bölümde, RV32I 3-way superscalar işlemcinin genel mimarisi, pipeline yapısı ve
+temel tasarım prensipleri açıklanmaktadır.
+
+\section{Superscalar İşlemci Kavramı}
+\label{sec:superscalar_kavram}
+
+\subsection{Skalar ve Superscalar İşlemciler}
+
+Geleneksel \concept{skalar} işlemciler, her çevrimde en fazla bir komut işler. Bu
+yaklaşım basit ve öngörülebilir olmasına rağmen, modern uygulamaların performans
+gereksinimlerini karşılamakta yetersiz kalır.
+
+\concept{Superscalar} işlemciler, tek bir çevrimde birden fazla komutun paralel
+olarak işlenmesine olanak tanır. N-way superscalar bir işlemci, teorik olarak
+çevrim başına N komut (N IPC) işleyebilir.
+
+\begin{nedenbox}
+3-way superscalar tasarım seçilmesinin nedenleri:
+\begin{itemize}
+    \item \textbf{Donanım Karmaşıklığı:} 2-way'den belirgin performans artışı sağlarken,
+          4-way'e göre daha düşük alan ve güç tüketimi
+    \item \textbf{ILP Sınırları:} Tipik programlarda ortalama ILP 2-3 civarındadır;
+          daha geniş issue width marjinal kazanç sağlar
+    \item \textbf{Critical Path:} 3 paralel yol, kabul edilebilir clock period'u
+          korurken yeterli paralellik sunar
+\end{itemize}
+\end{nedenbox}
+
+\subsection{Komut Düzeyinde Paralellik (ILP)}
+
+Superscalar işlemcilerin performansı, programdaki \concept{Komut Düzeyinde Paralellik}
+(ILP) miktarına bağlıdır. ILP, aynı anda yürütülebilecek bağımsız komut sayısını ifade
+eder.
+
+ILP'yi sınırlayan faktörler:
+\begin{itemize}
+    \item \textbf{Veri Bağımlılıkları:} RAW, WAR, WAW hazard'ları
+    \item \textbf{Kontrol Bağımlılıkları:} Dal komutları ve belirsiz akış
+    \item \textbf{Kaynak Çekişmesi:} Sınırlı fonksiyonel birim sayısı
+\end{itemize}
+
+\section{Pipeline Yapısı}
+\label{sec:pipeline}
+
+İşlemci, 5 ana aşamadan oluşan bir pipeline yapısına sahiptir. Her aşama,
+belirli görevleri yerine getirir ve bir sonraki aşamaya veri aktarır.
+
+\subsection{Pipeline Aşamaları}
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.9\textwidth}
+\centering
+\textbf{Fetch} $\rightarrow$ \textbf{Issue} $\rightarrow$ \textbf{Dispatch} $\rightarrow$ \textbf{Execute} $\rightarrow$ \textbf{Commit}\\[0.5em]
+(5-wide) \hspace{1cm} (3-wide) \hspace{1cm} (3-wide) \hspace{1.2cm} (3 FU) \hspace{1.2cm} (3-wide)
+\end{minipage}
+}
+\caption{İşlemci pipeline aşamaları}
+\label{fig:pipeline}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Pipeline aşamaları ve genişlikleri}
+\label{tab:pipeline_stages}
+\begin{tabular}{llcp{6cm}}
+\toprule
+\textbf{Aşama} & \textbf{Görev} & \textbf{Genişlik} & \textbf{Açıklama} \\
+\midrule
+Fetch & Komut getirme & 5-wide & Bellekten 5 komut okuma, dal tahmini \\
+Issue & Decode + Rename & 3-wide & Komut çözümleme, register renaming \\
+Dispatch & ROB/RS yazma & 3-wide & Kaynak tahsisi, operand okuma \\
+Execute & Yürütme & 3 FU & ALU, shifter, branch işlemleri \\
+Commit & Retire & 3-wide & Sonuçların RF'e yazılması \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{nedenbox}
+\textbf{Neden 5-wide fetch, 3-wide issue?}
+
+Fetch aşaması 5 komut getirirken, issue aşaması 3 komut işler. Bu asimetri,
+instruction buffer'ın (IB) doldurulmasını sağlar:
+\begin{itemize}
+    \item Dal tahmini yanlışlığında IB boşalır
+    \item 5-wide fetch, IB'yi hızlıca yeniden doldurur
+    \item Issue aşaması, IB'den komut çekme hızından bağımsız çalışır
+    \item Fetch stall durumlarında (cache miss) IB tampon görevi görür
+\end{itemize}
+\end{nedenbox}
+
+\subsection{In-Order vs Out-of-Order Aşamalar}
+
+\begin{table}[H]
+\centering
+\caption{Aşamaların sıralama özellikleri}
+\label{tab:ordering}
+\begin{tabular}{lll}
+\toprule
+\textbf{Aşama} & \textbf{Sıralama} & \textbf{Açıklama} \\
+\midrule
+Fetch & In-Order & Program sırasında komut getirme \\
+Issue & In-Order & Program sırasında decode ve rename \\
+Dispatch & Out-of-Order & Hazır komutlar önce yürütülür \\
+Execute & Out-of-Order & Bağımsız yürütme \\
+Commit & In-Order & Program sırasında sonuç yazma \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Tomasulo Algoritması}
+\label{sec:tomasulo}
+
+Bu işlemci, sıra dışı yürütme için \concept{Tomasulo algoritmasını} kullanmaktadır.
+1967'de Robert Tomasulo tarafından IBM System/360 Model 91 için geliştirilen bu
+algoritma, veri bağımlılıklarını donanım seviyesinde dinamik olarak çözümler.
+
+\subsection{Temel Kavramlar}
+
+\subsubsection{Register Renaming}
+
+\concept{Register renaming}, WAW (Write-After-Write) ve WAR (Write-After-Read)
+hazard'larını ortadan kaldırır. Mimari register'lar (x0-x31) fiziksel register'lara
+(bu tasarımda 64 adet) eşlenir.
+
+\begin{lstlisting}[caption={Register renaming örneği}]
+// Orijinal kod (WAW hazard)
+ADD x1, x2, x3    // x1'e yaz
+SUB x4, x1, x5    // x1'i oku
+MUL x1, x6, x7    // x1'e yeniden yaz (WAW!)
+
+// Renaming sonrası
+ADD p32, p2, p3   // p32 <- x1'in yeni mapping'i
+SUB p33, p32, p5  // p32'yi oku (RAW - gerçek bağımlılık)
+MUL p34, p6, p7   // p34 <- x1'in en yeni mapping'i (WAW yok!)
+\end{lstlisting}
+
+\subsubsection{Reservation Station}
+
+\concept{Reservation Station} (RS), yürütülmeyi bekleyen komutları tutar. Her RS
+entry'si:
+\begin{itemize}
+    \item Operasyon türünü
+    \item Kaynak operand değerlerini veya üretici komut tag'lerini
+    \item Hedef register bilgisini
+    \item Hazır durumunu
+\end{itemize}
+saklar.
+
+\subsubsection{Common Data Bus (CDB)}
+
+Yürütme sonuçları, \concept{Common Data Bus} üzerinden yayınlanır. Bekleyen tüm
+RS entry'leri bu yayını izler ve eşleşen tag'leri yakaladığında operand değerini
+günceller.
+
+\subsection{Tomasulo Akışı}
+
+\begin{enumerate}
+    \item \textbf{Issue:} Komut decode edilir, register'lar rename edilir, RS'e yazılır
+    \item \textbf{Dispatch:} Operandlar hazır olduğunda komut yürütmeye gönderilir
+    \item \textbf{Execute:} Fonksiyonel birimde işlem yapılır
+    \item \textbf{Write Result:} Sonuç CDB üzerinden yayınlanır
+    \item \textbf{Commit:} ROB başındaki komut retire edilir, RF güncellenir
+\end{enumerate}
+
+\section{Spekülatif Yürütme ve BRAT}
+\label{sec:speculative}
+
+Dal komutları, program akışında belirsizlik yaratır. \concept{Spekülatif yürütme},
+dal sonucu belirlenmeden önce tahmine dayalı olarak komut yürütmeye devam eder.
+
+\subsection{Dal Tahmini}
+
+İşlemci, üç farklı dal tahmin mekanizması içerir:
+\begin{itemize}
+    \item \textbf{2-Bit Sayaç:} Basit, düşük maliyetli yerel tahmin
+    \item \textbf{GShare:} Global history ile PC XOR'lanarak indeksleme
+    \item \textbf{Tournament:} Yerel ve global tahminlerin kombinasyonu
+\end{itemize}
+
+\subsection{Branch Resolution Alias Table (BRAT)}
+
+Yanlış tahmin durumunda işlemci durumunun geri yüklenmesi gerekir. Geleneksel
+yaklaşımda, yanlış tahmin yapan dal ROB başına ulaşana kadar beklenir. Bu,
+onlarca çevrim gecikmeye neden olabilir.
+
+\concept{BRAT}, her dal komutu için RAT'ın anlık görüntüsünü (snapshot) saklar.
+Yanlış tahmin tespit edildiğinde, ROB başı beklenmeden anında geri yükleme yapılır.
+
+\begin{nedenbox}
+BRAT'ın temel avantajları:
+\begin{itemize}
+    \item \textbf{Sıfır Gecikmeli Recovery:} Dal yürütüldüğü çevrimde geri yükleme
+    \item \textbf{Combinational Bypass:} Aynı çevrimde tüm modüllere sinyal iletimi
+    \item \textbf{In-Order Resolution:} Program sırasında dal çözümleme garantisi
+\end{itemize}
+BRAT detayları \autoref{sec:brat}'te açıklanmaktadır.
+\end{nedenbox}
+
+\section{Kaynak Yönetimi}
+\label{sec:kaynak_yonetimi}
+
+3-way superscalar mimari, her çevrimde 3 komut için kaynak tahsisi gerektirir:
+\begin{itemize}
+    \item \textbf{ROB Entry:} Her komut için benzersiz bir ROB indeksi
+    \item \textbf{Physical Register:} Hedef register yazan komutlar için
+    \item \textbf{LSQ Entry:} Load/store komutları için
+\end{itemize}
+
+Bu tahsisler, \concept{3-Port Circular Buffer} yapısı ile yönetilir.
+Detaylar \autoref{sec:circular_buffer}'da açıklanmaktadır.
+
+\section{Modül Hiyerarşisi}
+\label{sec:hiyerarsi}
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.95\textwidth}
+\centering
+\textbf{rv32i\_superscalar\_core}\\[1em]
+\begin{tabular}{cccc}
+\fbox{fetch\_stage} & \fbox{issue\_stage} & \fbox{dispatch\_stage} & \fbox{execute\_stage} \\[0.5em]
+\scriptsize multi\_fetch & \scriptsize decoder x3 & \scriptsize ROB & \scriptsize ALU x3 \\
+\scriptsize instr\_buffer & \scriptsize RAT & \scriptsize RS x3 & \scriptsize LSQ \\
+\end{tabular}
+\end{minipage}
+}
+\caption{Üst düzey modül hiyerarşisi}
+\label{fig:hierarchy}
+\end{figure}
+
+\section{Veri Akışı}
+\label{sec:veri_akisi}
+
+\begin{enumerate}
+    \item \textbf{Fetch $\rightarrow$ Issue:}
+          5 komut + PC değerleri + dal tahmin bilgileri
+
+    \item \textbf{Issue $\rightarrow$ Dispatch:}
+          3 decoded komut + renamed operandlar + ROB/LSQ indeksleri
+
+    \item \textbf{Dispatch $\rightarrow$ Execute:}
+          Hazır komutlar + operand değerleri + kontrol sinyalleri
+
+    \item \textbf{Execute $\rightarrow$ Commit:}
+          Sonuç değerleri + dal çözümleme bilgileri
+
+    \item \textbf{Commit $\rightarrow$ RF:}
+          Retire edilen komutların sonuçları
+\end{enumerate}
+
+\section{Kontrol Akışı}
+\label{sec:kontrol_akisi}
+
+\subsection{Normal Operasyon}
+
+Normal çalışmada, her aşama bağımsız olarak ilerler. Stall sinyalleri, kaynak
+yetersizliğinde pipeline'ı durdurur:
+
+\begin{itemize}
+    \item \sig{rob\_full}: ROB dolu, issue durur
+    \item \sig{rs\_full}: RS dolu, dispatch durur
+    \item \sig{lsq\_full}: LSQ dolu, load/store issue durur
+\end{itemize}
+
+\subsection{Misprediction Recovery}
+
+Yanlış tahmin tespit edildiğinde:
+\begin{enumerate}
+    \item BRAT, RAT snapshot'ını geri yükler
+    \item Fetch, doğru PC'ye yönlendirilir
+    \item Pipeline flush sinyali gönderilir
+    \item ROB, spekülatif entry'leri temizler
+    \item RS, spekülatif komutları iptal eder
+\end{enumerate}
+
+Tüm bu işlemler tek çevrimde gerçekleşir (combinational bypass sayesinde).

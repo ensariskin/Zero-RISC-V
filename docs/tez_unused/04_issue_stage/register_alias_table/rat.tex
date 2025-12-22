@@ -1,0 +1,232 @@
+% =============================================================================
+% RAT - REGISTER ALIAS TABLE
+% =============================================================================
+
+\section{Register Alias Table (RAT)}
+\label{sec:rat}
+
+Bu bölümde, Tomasulo algoritmasının temel bileşeni olan Register Alias Table (RAT)
+yapısı detaylı olarak açıklanmaktadır.
+
+\subsection{Tasarım Amacı}
+
+\concept{Register renaming}, WAW (Write-After-Write) ve WAR (Write-After-Read)
+hazard'larını ortadan kaldırmak için kullanılır. RAT, mimari register'ları
+(x0-x31) fiziksel register'lara (0-63) eşler.
+
+\begin{nedenbox}
+\textbf{Neden register renaming gerekli?}
+
+Aşağıdaki kod parçasını düşünün:
+\begin{lstlisting}
+ADD x1, x2, x3    // I1: x1'e yaz
+SUB x4, x1, x5    // I2: x1'i oku (RAW - gerçek bağımlılık)
+MUL x1, x6, x7    // I3: x1'e yaz (WAW - I1 ile)
+AND x8, x1, x9    // I4: x1'i oku (RAW - I3 ile)
+\end{lstlisting}
+
+Renaming olmadan:
+\begin{itemize}
+    \item I3, I1 bitene kadar beklemeli (WAW)
+    \item I4, I3 bitene kadar beklemeli
+\end{itemize}
+
+Renaming ile:
+\begin{itemize}
+    \item I1 → p32, I3 → p33 (farklı fiziksel register)
+    \item I1 ve I3 paralel yürütülebilir
+    \item Sadece gerçek RAW bağımlılıkları kalır
+\end{itemize}
+\end{nedenbox}
+
+\subsection{RAT Yapısı}
+
+\begin{table}[H]
+\centering
+\caption{RAT parametreleri}
+\label{tab:rat_params}
+\begin{tabular}{lcp{6cm}}
+\toprule
+\textbf{Parametre} & \textbf{Değer} & \textbf{Açıklama} \\
+\midrule
+ARCH\_REGS & 32 & Mimari register sayısı (x0-x31) \\
+PHYS\_REGS & 64 & Fiziksel register sayısı \\
+PHYS\_ADDR\_WIDTH & 6 bit & Fiziksel register adresi genişliği \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Fiziksel Register Alanı}
+
+64 fiziksel register iki bölgeye ayrılır:
+\begin{itemize}
+    \item \textbf{0-31:} Register File (RF) - commit edilmiş değerler
+    \item \textbf{32-63:} Reorder Buffer (ROB) - in-flight değerler
+\end{itemize}
+
+\begin{nedenbox}
+\textbf{Neden 64 fiziksel register?}
+
+32 mimari register + 32 ROB entry = 64 fiziksel register.
+\begin{itemize}
+    \item Her in-flight komut için 1 ROB entry gerekli
+    \item 32 ROB entry, 32 komut paralel yürütme kapasitesi sağlar
+    \item 3-way superscalar için bu yeterli buffer derinliği
+\end{itemize}
+\end{nedenbox}
+
+\subsection{RAT Operasyonları}
+
+\subsubsection{Kaynak Register Lookup}
+
+Kaynak register'lar (rs1, rs2) için mevcut mapping okunur:
+
+\begin{lstlisting}[caption={Kaynak register lookup}]
+// Direct RAT lookup
+assign rs1_phys_0 = rat_table[rs1_arch_0];
+assign rs2_phys_0 = rat_table[rs2_arch_0];
+
+// Same-cycle forwarding for dependent instructions
+assign rs1_phys_1 = rs1_arch_1_equal_rd_arch_0 ? rd_phys_0 : rat_table[rs1_arch_1];
+assign rs2_phys_1 = rs2_arch_1_equal_rd_arch_0 ? rd_phys_0 : rat_table[rs2_arch_1];
+
+assign rs1_phys_2 = rs1_arch_2_equal_rd_arch_1 ? rd_phys_1 :
+                    rs1_arch_2_equal_rd_arch_0 ? rd_phys_0 : rat_table[rs1_arch_2];
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden same-cycle forwarding?}
+
+Aynı çevrimde issue edilen 3 komut arasında bağımlılık olabilir:
+\begin{lstlisting}
+ADD x1, x2, x3    // Inst 0: x1'e yaz
+SUB x4, x1, x5    // Inst 1: x1'i oku (Inst 0'a bağımlı)
+\end{lstlisting}
+
+RAT tablosu henüz güncellenmedi. Forwarding olmadan Inst 1, eski x1 mapping'ini
+görür. Same-cycle forwarding, Inst 0'ın yeni rd\_phys değerini Inst 1'e iletir.
+\end{nedenbox}
+
+\subsubsection{Hedef Register Allocation}
+
+Hedef register (rd) için yeni fiziksel register allocate edilir:
+
+\begin{lstlisting}[caption={Hedef register allocation}]
+always_comb begin
+    // Instruction 0
+    if (need_alloc_0 && found_first) begin
+        allocated_phys_reg[0] = first_free;
+        allocation_success[0] = 1'b1;
+    end
+
+    // Instruction 1
+    if (need_alloc_1 && found_second) begin
+        allocated_phys_reg[1] = second_free;
+        allocation_success[1] = 1'b1;
+    end
+
+    // Instruction 2
+    if (need_alloc_2 && found_third) begin
+        allocated_phys_reg[2] = third_free;
+        allocation_success[2] = 1'b1;
+    end
+end
+\end{lstlisting}
+
+\subsubsection{RAT Güncelleme}
+
+Başarılı allocation sonrası RAT tablosu güncellenir:
+
+\begin{lstlisting}[caption={RAT güncelleme}]
+always_ff @(posedge clk) begin
+    // Rename: Update RAT for new allocations
+    if (need_alloc_0 && rd_arch_0 != 0) begin
+        rat_table[rd_arch_0] <= allocated_phys_reg[0];
+    end
+    if (need_alloc_1 && rd_arch_1 != 0) begin
+        rat_table[rd_arch_1] <= allocated_phys_reg[1];
+    end
+    if (need_alloc_2 && rd_arch_2 != 0) begin
+        rat_table[rd_arch_2] <= allocated_phys_reg[2];
+    end
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden \texttt{rd\_arch != 0} kontrolü?}
+
+RISC-V'de x0 register'ı sabit sıfırdır ve yazılamaz. x0'a yapılan yazmalar
+görmezden gelinir. RAT'ta x0 her zaman fiziksel register 0'a map edilir.
+\end{nedenbox}
+
+\subsubsection{Commit İşleme}
+
+ROB commit olduğunda, değer RF'e yazılır ve RAT güncellenir:
+
+\begin{lstlisting}[caption={Commit işleme}]
+// Commit: Restore architectural register to RF mapping
+if (commit_valid[0] && commit_addr_0 != 0) begin
+    if (commit_rob_idx_0 == rat_table[commit_addr_0][4:0]) begin
+        rat_table[commit_addr_0] <= {1'b0, commit_addr_0};
+    end
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden ROB indeksi karşılaştırması?}
+
+Aynı mimari register için birden fazla in-flight yazma olabilir:
+\begin{lstlisting}
+ADD x1, x2, x3    // ROB[5]: x1'e yaz
+MUL x1, x4, x5    // ROB[8]: x1'e yaz
+\end{lstlisting}
+
+ADD commit olduğunda, x1 hâlâ MUL'un sonucuna (ROB[8]) bağlıdır.
+RAT'ı RF'e döndürmek yanlış olur. Karşılaştırma, sadece ``en son yazma''
+commit olduğunda RF mapping'e dönmeyi sağlar.
+\end{nedenbox}
+
+\subsection{3-Way Paralel Renaming}
+
+3 komut aynı anda rename edilir. Bu, karmaşık bağımlılık kontrolü gerektirir:
+
+\begin{lstlisting}[caption={3-way bağımlılık kontrolü}]
+// Instruction 1 depends on Instruction 0?
+assign rs1_arch_1_equal_rd_arch_0 = (rs1_arch_1 == rd_arch_0) &&
+    (rd_arch_0 != 5'h0) && decode_valid[0] && rd_write_enable_0;
+
+// Instruction 2 depends on Instruction 0 or 1?
+assign rs1_arch_2_equal_rd_arch_0 = (rs1_arch_2 == rd_arch_0) &&
+    (rd_arch_0 != 5'h0) && decode_valid[0] && rd_write_enable_0;
+assign rs1_arch_2_equal_rd_arch_1 = (rs1_arch_2 == rd_arch_1) &&
+    (rd_arch_1 != 5'h0) && decode_valid[1] && rd_write_enable_1;
+\end{lstlisting}
+
+\subsection{Kaynak Yönetimi}
+
+RAT, ROB ve LSQ kaynak tahsisini de yönetir. Bu mekanizmalar aşağıdaki alt
+bölümlerde detaylı olarak açıklanmaktadır.
+
+\input{04_issue_stage/register_alias_table/circular_buffer}
+
+\input{04_issue_stage/register_alias_table/brat}
+
+\subsection{RAT Özet Tablosu}
+
+\begin{table}[H]
+\centering
+\caption{RAT özellikleri}
+\label{tab:rat_summary}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Özellik} & \textbf{Değer/Açıklama} \\
+\midrule
+Mapping Genişliği & 32 arch → 64 phys \\
+Rename Genişliği & 3-wide (her cycle 3 komut) \\
+Lookup Genişliği & 6-wide (3×rs1 + 3×rs2) \\
+Same-Cycle Forwarding & Destekleniyor \\
+Misprediction Recovery & BRAT snapshot restore \\
+Commit Update & RF mapping restore \\
+\bottomrule
+\end{tabular}
+\end{table}

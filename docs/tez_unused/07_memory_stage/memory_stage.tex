@@ -1,0 +1,555 @@
+% =============================================================================
+% BÖLÜM 7: MEMORY STAGE - LOAD STORE QUEUE
+% =============================================================================
+
+\chapter{Memory Stage ve Load Store Queue}
+\label{chap:memory}
+
+Bu bölümde, memory operasyonlarının yönetildiği Load Store Queue (LSQ) yapısı
+ve memory subsystem ile etkileşimi detaylı olarak açıklanmaktadır.
+
+\section{Genel Bakış}
+\label{sec:memory_genel}
+
+Memory stage, load ve store komutlarının memory'ye erişimini yönetir. Out-of-order
+superscalar işlemcilerde memory operasyonları özel dikkat gerektirir:
+
+\begin{itemize}
+    \item \textbf{Memory consistency:} Store'lar program sırasında görünmeli
+    \item \textbf{Load-store dependency:} Load, önceki store'a bağımlı olabilir
+    \item \textbf{Spekülatif execution:} Misprediction durumunda store'lar geri alınmalı
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.9\textwidth}
+\centering
+\textbf{Memory Stage Veri Akışı}\\[1em]
+\begin{tabular}{ccccc}
+\fbox{Issue Stage} & $\xrightarrow{\text{Allocate}}$ & & & \\
+ & & \fbox{LSQ (3 Head)} & $\xleftrightarrow{\text{3 Port}}$ & \fbox{Memory System} \\
+\fbox{Execute (Addr)} & $\xrightarrow{\text{CDB}}$ & $\uparrow$ $\downarrow$ & & \\
+ & & \fbox{ROB (Commit)} & & \\
+ & $\xleftarrow{\text{Load Data + Fwd}}$ & & & \\
+\fbox{CDB (3 port)} & & & & \\
+\end{tabular}
+\end{minipage}
+}
+\caption{Memory stage blok diyagramı}
+\label{fig:memory_block}
+\end{figure}
+
+\section{LSQ Tasarım Felsefesi}
+\label{sec:lsq_philosophy}
+
+Bu tasarımda, yüksek throughput ve doğru memory ordering bir arada sağlanmaktadır:
+
+\begin{nedenbox}
+\textbf{LSQ Temel Özellikleri}
+
+Bu LSQ implementasyonu aşağıdaki gelişmiş özellikleri içerir:
+\begin{itemize}
+    \item \textbf{3 Paralel Memory Port:} Her çevrimde 3 load/store issue edilebilir
+    \item \textbf{3 Bağımsız Head Pointer:} Sliding window ile paralel operasyon
+    \item \textbf{Store-to-Load Forwarding:} Age-based forwarding ile memory bypass
+    \item \textbf{CDB Snooping:} Address ve data dependency çözümleme
+    \item \textbf{Eager Misprediction Flush:} ROB distance tabanlı anında temizleme
+    \item \textbf{ROB Koordinasyonlu Store Commit:} Spekülatif store koruması
+\end{itemize}
+\end{nedenbox}
+
+\section{LSQ Entry Yapısı}
+\label{sec:lsq_entry}
+
+\begin{lstlisting}[caption={LSQ entry yapısı}]
+typedef struct packed {
+    logic                       valid;
+    logic                       is_store;
+    logic [PHYS_REG_WIDTH-1:0]  phys_reg;    // ROB ID
+
+    // Address
+    logic                       addr_valid;
+    logic [DATA_WIDTH-1:0]      address;
+    logic [TAG_WIDTH-1:0]       addr_tag;
+
+    // Data (for stores)
+    logic                       data_valid;
+    logic [DATA_WIDTH-1:0]      data;
+    logic [TAG_WIDTH-1:0]       data_tag;
+
+    // Operation attributes
+    mem_size_t                  size;        // Byte, Half, Word
+    logic                       sign_extend;
+
+    // Execution state
+    logic                       mem_issued;   // Sent to memory
+    logic                       mem_complete; // Memory responded
+} lsq_simple_entry_t;
+\end{lstlisting}
+
+\begin{table}[H]
+\centering
+\caption{LSQ entry alanları}
+\label{tab:lsq_entry}
+\begin{tabular}{lcp{5cm}}
+\toprule
+\textbf{Alan} & \textbf{Boyut} & \textbf{Açıklama} \\
+\midrule
+\sig{valid} & 1 bit & Entry geçerli mi? \\
+\sig{is\_store} & 1 bit & Store mu load mu? \\
+\sig{phys\_reg} & 6 bit & Hedef ROB ID \\
+\sig{addr\_valid} & 1 bit & Adres hesaplandı mı? \\
+\sig{address} & 32 bit & Memory adresi \\
+\sig{data\_valid} & 1 bit & Store verisi hazır mı? \\
+\sig{data} & 32 bit & Store verisi \\
+\sig{size} & 2 bit & Byte/Half/Word \\
+\sig{sign\_extend} & 1 bit & Sign extension? \\
+\sig{mem\_issued} & 1 bit & Memory'ye gönderildi mi? \\
+\sig{mem\_complete} & 1 bit & Memory yanıt verdi mi? \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{3-Head Pointer Mimarisi}
+\label{sec:lsq_3head}
+
+LSQ, 3 bağımsız head pointer ile çalışır. Bu, her çevrimde 3 memory operasyonunun
+paralel olarak issue edilmesini sağlar:
+
+\begin{lstlisting}[caption={LSQ pointer yapısı}]
+logic [LSQ_ADDR_WIDTH:0] head_ptr;    // Head 0 - oldest tracked
+logic [LSQ_ADDR_WIDTH:0] head_ptr_1;  // Head 1
+logic [LSQ_ADDR_WIDTH:0] head_ptr_2;  // Head 2
+logic [LSQ_ADDR_WIDTH:0] tail_ptr;    // Next free entry
+
+// Age distance calculation (for ordering)
+assign distance_0 = (tail_plus_3 - head_ptr);
+assign distance_1 = (tail_plus_3 - head_ptr_1);
+assign distance_2 = (tail_plus_3 - head_ptr_2);
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden 3 bağımsız head pointer?}
+
+Geleneksel LSQ'larda tek head pointer vardır ve operasyonlar sırayla issue edilir.
+Bu tasarımda:
+\begin{itemize}
+    \item 3 head pointer, 3 farklı entry'yi aynı anda izler
+    \item Her head bağımsız olarak memory'ye issue edilebilir
+    \item Deallocation sonrası head'ler ``newest + 1'' konumuna kayar
+    \item Age-based ordering ile doğru sıralama korunur
+\end{itemize}
+
+Bu yaklaşım, 3-way superscalar pipeline ile uyumlu memory throughput sağlar.
+\end{nedenbox}
+
+\subsection{Head Pointer Sliding Window}
+
+Deallocate edilen head'ler, en yeni (newest) pointer'ın bir sonrasına atanır:
+
+\begin{lstlisting}[caption={Head pointer update mantığı}]
+// Find newest head (closest to tail)
+if ((age_dist_0 <= age_dist_1) && (age_dist_0 <= age_dist_2))
+    newest_ptr_eff = head_ptr_eff_0;
+else if (age_dist_1 <= age_dist_2)
+    newest_ptr_eff = head_ptr_eff_1;
+else
+    newest_ptr_eff = head_ptr_eff_2;
+
+// Refill deallocated slots after newest
+if (effective_dealloc_0)
+    head_ptr_n = newest_ptr_eff + 1;
+if (effective_dealloc_1)
+    head_ptr_1_n = newest_ptr_eff + 1 + effective_dealloc_0;
+if (effective_dealloc_2)
+    head_ptr_2_n = newest_ptr_eff + 1 + effective_dealloc_0 + effective_dealloc_1;
+\end{lstlisting}
+
+\section{LSQ Operasyonları}
+\label{sec:lsq_ops}
+
+\subsection{Allocation}
+
+Issue stage'den gelen load/store komutları için entry allocate edilir:
+
+\begin{lstlisting}[caption={LSQ allocation}]
+always_ff @(posedge clk) begin
+    if (alloc_valid_0_i && alloc_ready_o) begin
+        lsq_buffer[alloc_0_ptr].valid        <= 1'b1;
+        lsq_buffer[alloc_0_ptr].is_store     <= alloc_is_store_0_i;
+        lsq_buffer[alloc_0_ptr].phys_reg     <= alloc_phys_reg_0_i;
+        lsq_buffer[alloc_0_ptr].addr_valid   <= 1'b0;  // Wait for execute
+        lsq_buffer[alloc_0_ptr].data_tag     <= alloc_data_tag_0_i;
+        lsq_buffer[alloc_0_ptr].data         <= alloc_data_operand_0_i;
+        lsq_buffer[alloc_0_ptr].data_valid   <= (alloc_data_tag_0_i == TAG_READY);
+        lsq_buffer[alloc_0_ptr].size         <= mem_size_t'(alloc_size_0_i);
+        lsq_buffer[alloc_0_ptr].sign_extend  <= alloc_sign_extend_0_i;
+        lsq_buffer[alloc_0_ptr].mem_issued   <= 1'b0;
+        lsq_buffer[alloc_0_ptr].mem_complete <= 1'b0;
+    end
+end
+\end{lstlisting}
+
+\subsection{Address Update (CDB'den)}
+
+Execute stage adres hesapladığında, CDB üzerinden LSQ'ya bildirilir:
+
+\begin{lstlisting}[caption={CDB address update}]
+// CDB monitoring for address update
+always_ff @(posedge clk) begin
+    for (int i = 0; i < LSQ_DEPTH; i++) begin
+        if (lsq_buffer[i].valid && !lsq_buffer[i].addr_valid) begin
+            // Check CDB for address calculation result
+            if (cdb_valid_0 && cdb_mem_addr_calc_0 &&
+                lsq_buffer[i].phys_reg == cdb_dest_reg_0) begin
+                lsq_buffer[i].addr_valid <= 1'b1;
+                lsq_buffer[i].address <= cdb_data_0;
+            end
+            // Similar for CDB 1 and 2...
+        end
+    end
+end
+\end{lstlisting}
+
+\subsection{Store Data Update}
+
+Store için rs2 değeri hazır değilse, CDB'den beklenir:
+
+\begin{lstlisting}[caption={Store data CDB update}]
+// CDB monitoring for store data
+always_ff @(posedge clk) begin
+    for (int i = 0; i < LSQ_DEPTH; i++) begin
+        if (lsq_buffer[i].valid && lsq_buffer[i].is_store &&
+            !lsq_buffer[i].data_valid) begin
+            // Match store data tag with CDB
+            if (cdb_valid_0 && lsq_buffer[i].data_tag == 3'b000) begin
+                lsq_buffer[i].data_valid <= 1'b1;
+                lsq_buffer[i].data <= cdb_data_0;
+            end
+            // Similar for other CDB channels...
+        end
+    end
+end
+\end{lstlisting}
+
+\subsection{Memory Issue}
+
+Head'deki operasyon hazır olduğunda memory'ye gönderilir:
+
+\begin{lstlisting}[caption={Memory issue logic}]
+// Issue from head when ready
+wire head_ready = lsq_buffer[head_idx].valid &&
+    lsq_buffer[head_idx].addr_valid &&
+    (lsq_buffer[head_idx].is_store ? lsq_buffer[head_idx].data_valid : 1'b1);
+
+// For stores: also need ROB permission
+wire store_permitted = !lsq_buffer[head_idx].is_store ||
+    (store_can_issue_0 && allowed_store_address_0 == lsq_buffer[head_idx].phys_reg);
+
+assign mem_0_req_valid_o = head_ready && store_permitted &&
+    !lsq_buffer[head_idx].mem_issued;
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden store için ROB permission gerekli?}
+
+Store'lar spekülatif execute edilemez - memory'ye yazıldıktan sonra geri alınamaz.
+Bu yüzden:
+\begin{itemize}
+    \item Store, ROB head'e ulaşmalı
+    \item Commit kesinleşmeli
+    \item Ancak o zaman memory'ye yazılabilir
+\end{itemize}
+
+\sig{store\_can\_issue} sinyali, ROB'dan gelir ve ilgili store'un commit
+edilebileceğini gösterir.
+\end{nedenbox}
+
+\subsection{Memory Response}
+
+Memory yanıt verdiğinde:
+
+\begin{lstlisting}[caption={Memory response handling}]
+always_ff @(posedge clk) begin
+    if (mem_0_resp_valid_i) begin
+        lsq_buffer[head_idx].mem_complete <= 1'b1;
+
+        // For loads: capture data
+        if (!lsq_buffer[head_idx].is_store) begin
+            load_0_data <= process_load_data(
+                mem_0_resp_data_i,
+                lsq_buffer[head_idx].address[1:0],
+                lsq_buffer[head_idx].size,
+                lsq_buffer[head_idx].sign_extend
+            );
+        end
+    end
+end
+\end{lstlisting}
+
+\subsection{CDB Broadcast (Load)}
+
+Load tamamlandığında, sonuç CDB'ye yayınlanır:
+
+\begin{lstlisting}[caption={Load result CDB broadcast}]
+// CDB output for load results
+assign cdb_interface.cdb_valid_3_0 = mem_0_resp_valid_i &&
+    !lsq_buffer[head_idx].is_store;
+assign cdb_interface.cdb_data_3_0 = load_0_data;
+assign cdb_interface.cdb_dest_reg_3_0 = {1'b1, lsq_buffer[head_idx].phys_reg[4:0]};
+\end{lstlisting}
+
+\section{Store Commit}
+\label{sec:store_commit}
+
+Store operasyonları özel commit akışına sahiptir:
+
+\begin{enumerate}
+    \item ROB head'e ulaşır
+    \item \sig{store\_can\_issue} sinyali aktif olur
+    \item LSQ, store'u memory'ye gönderir
+    \item Memory yazma tamamlanır
+    \item LSQ entry deallocate edilir
+\end{enumerate}
+
+\begin{lstlisting}[caption={Store permission from ROB}]
+// ROB signals store can be committed
+input  logic store_can_issue_0,
+input  logic [PHYS_REG_WIDTH-1:0] allowed_store_address_0,
+
+// Only issue store if ROB permits
+wire can_issue_store_0 = store_can_issue_0 &&
+    (allowed_store_address_0 == lsq_buffer[head_idx].phys_reg[4:0]);
+\end{lstlisting}
+
+\section{Eager Misprediction Flush}
+\label{sec:lsq_flush}
+
+Misprediction durumunda spekülatif load/store entry'leri temizlenir:
+
+\begin{lstlisting}[caption={LSQ flush logic}]
+// Calculate distance of each entry from ROB head
+always_comb begin
+    for (int i = 0; i < LSQ_DEPTH; i++) begin
+        if (lsq_buffer[i].phys_reg[4:0] >= rob_head_ptr_i) begin
+            entry_distance[i] = lsq_buffer[i].phys_reg[4:0] - rob_head_ptr_i;
+        end else begin
+            entry_distance[i] = 32 - rob_head_ptr_i + lsq_buffer[i].phys_reg[4:0];
+        end
+
+        // Flush if after mispredicted branch
+        should_flush[i] = lsq_buffer[i].valid && eager_misprediction_i &&
+            (entry_distance[i] > mispredicted_distance_i);
+    end
+end
+
+// Apply flush
+always_ff @(posedge clk) begin
+    for (int i = 0; i < LSQ_DEPTH; i++) begin
+        if (should_flush[i]) begin
+            lsq_buffer[i].valid <= 1'b0;
+        end
+    end
+end
+\end{lstlisting}
+
+\section{Memory Interface}
+\label{sec:mem_interface}
+
+LSQ, 3 memory port'u üzerinden memory'ye erişir:
+
+\begin{table}[H]
+\centering
+\caption{Memory interface sinyalleri}
+\label{tab:mem_interface}
+\begin{tabular}{lcp{5cm}}
+\toprule
+\textbf{Sinyal} & \textbf{Yön} & \textbf{Açıklama} \\
+\midrule
+\sig{mem\_req\_valid\_o} & Out & İstek geçerli \\
+\sig{mem\_req\_is\_store\_o} & Out & Store mu? \\
+\sig{mem\_req\_addr\_o} & Out & Memory adresi \\
+\sig{mem\_req\_data\_o} & Out & Store verisi \\
+\sig{mem\_req\_be\_o} & Out & Byte enable \\
+\sig{mem\_req\_ready\_i} & In & Memory hazır \\
+\sig{mem\_resp\_valid\_i} & In & Yanıt geçerli \\
+\sig{mem\_resp\_data\_i} & In & Load verisi \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Byte Enable Hesaplama}
+
+\begin{lstlisting}[caption={Byte enable calculation}]
+always_comb begin
+    case (lsq_buffer[head_idx].size)
+        MEM_BYTE: mem_0_req_be_o = 4'b0001 << address[1:0];
+        MEM_HALF: mem_0_req_be_o = 4'b0011 << address[1:0];
+        MEM_WORD: mem_0_req_be_o = 4'b1111;
+        default:  mem_0_req_be_o = 4'b1111;
+    endcase
+end
+\end{lstlisting}
+
+\subsection{Load Data İşleme}
+
+Load verisi, boyut ve sign extension'a göre işlenir:
+
+\begin{lstlisting}[caption={Load data processing}]
+function automatic [DATA_WIDTH-1:0] process_load_data(
+    input [DATA_WIDTH-1:0] mem_data,
+    input [1:0] byte_offset,
+    input mem_size_t size,
+    input sign_extend
+);
+    logic [7:0] byte_val;
+    logic [15:0] half_val;
+
+    case (size)
+        MEM_BYTE: begin
+            byte_val = mem_data >> (byte_offset * 8);
+            return sign_extend ?
+                {{24{byte_val[7]}}, byte_val} :
+                {24'b0, byte_val};
+        end
+        MEM_HALF: begin
+            half_val = mem_data >> (byte_offset * 8);
+            return sign_extend ?
+                {{16{half_val[15]}}, half_val} :
+                {16'b0, half_val};
+        end
+        MEM_WORD: return mem_data;
+        default:  return mem_data;
+    endcase
+endfunction
+\end{lstlisting}
+
+\section{Store-to-Load Forwarding}
+\label{sec:stl_forward}
+
+LSQ, memory'ye gitmeden store verisini load'a iletebilir. Bu, memory latency'sini
+bypass ederek performansı önemli ölçüde artırır.
+
+\subsection{Forwarding Koşulları}
+
+Forwarding için aşağıdaki koşulların sağlanması gerekir:
+
+\begin{enumerate}
+    \item Load, store'dan program sırasında \textbf{sonra} gelmeli (newer)
+    \item Store'un adresi ve verisi \textbf{hazır} olmalı
+    \item Adresler \textbf{eşleşmeli}
+    \item Store boyutu, load boyutuna \textbf{eşit veya büyük} olmalı
+\end{enumerate}
+
+\begin{lstlisting}[caption={Forwarding koşul kontrolü}]
+// Age comparison: head_0 newer than head_1?
+head_0_newer_than_head_1 = (distance_0 < distance_1);
+
+// Address match
+head_0_head_1_addr_match = lsq_buffer[head_idx].addr_valid &&
+    lsq_buffer[head_idx_1].addr_valid &&
+    (lsq_buffer[head_idx].address == lsq_buffer[head_idx_1].address);
+
+// Size comparison: store size >= load size
+head_1_size_ge_head_0 = (lsq_buffer[head_idx_1].size >= lsq_buffer[head_idx].size);
+
+// Forwarding decision
+if (head_0_newer_than_head_1 && lsq_buffer[head_idx_1].is_store &&
+    head_0_head_1_addr_match && head_1_size_ge_head_0) begin
+    fwd_head_0 = 1'b1;
+    head_0_fwd_source = 2'b01;  // Forward from head_1
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden size kontrolü gerekli?}
+
+\begin{itemize}
+    \item SW (32-bit store) $\rightarrow$ LB (8-bit load): Forwarding mümkün
+    \item SB (8-bit store) $\rightarrow$ LW (32-bit load): Forwarding \textbf{mümkün değil}
+\end{itemize}
+
+Store, load'un ihtiyaç duyduğu tüm byte'ları içermelidir. Aksi halde load
+memory'den okumalıdır.
+\end{nedenbox}
+
+\subsection{Wait Koşulları}
+
+Forwarding yapılamıyorsa ancak potansiyel bir bağımlılık varsa, load beklemeli:
+
+\begin{lstlisting}[caption={Load wait mantığı}]
+// Load must wait if:
+// 1. Older store's data not ready, OR
+// 2. Address match but size insufficient and store not yet issued
+head_0_should_wait = !head_1_valids ||
+    (head_1_valids && head_0_head_1_addr_match &&
+     !head_1_size_ge_head_0 && !lsq_buffer[head_idx_1].mem_issued);
+\end{lstlisting}
+
+\subsection{Forwarding Data Path}
+
+Forwarding aktif olduğunda, load verisi store entry'sinden alınır:
+
+\begin{lstlisting}[caption={Forwarding veri yolu}]
+// Select data source based on forwarding
+assign load_0_src_data = fwd_head_0 ?
+    (head_0_fwd_source == 2) ? lsq_buffer[head_idx_2].data :
+                               lsq_buffer[head_idx_1].data :
+    mem_0_resp_data_i;
+
+// Data organizer applies size/sign extension
+data_organizer load_0_data_organizer (
+    .data_in(load_0_src_data),
+    .Type_sel(mem_0_type_sel),  // {sign_extend, size}
+    .data_out(load_0_data)
+);
+\end{lstlisting}
+
+\section{Single Pipe Mode}
+\label{sec:single_pipe}
+
+LSQ, tek port modunda da çalışabilir:
+
+\begin{lstlisting}[caption={Single pipe mode}]
+input logic single_pipe_mode_i,
+
+// In single pipe mode, only use port 0
+assign effective_dealloc_1 = ... && !single_pipe_mode_i;
+assign effective_dealloc_2 = ... && !single_pipe_mode_i;
+assign cdb_interface.cdb_valid_3_1 = ... && !single_pipe_mode_i;
+assign cdb_interface.cdb_valid_3_2 = ... && !single_pipe_mode_i;
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden single pipe mode?}
+
+\begin{itemize}
+    \item Tek portlu memory sistemleri için uyumluluk
+    \item Debug için basitleştirilmiş operasyon
+    \item Performance comparison (1-pipe vs 3-pipe benchmark)
+\end{itemize}
+\end{nedenbox}
+
+\section{LSQ Özeti}
+
+\begin{table}[H]
+\centering
+\caption{LSQ özellikleri}
+\label{tab:lsq_summary2}
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{Özellik} & \textbf{Değer/Açıklama} \\
+\midrule
+Buffer Derinliği & 32 entry \\
+Allocation Genişliği & 3 entry/çevrim \\
+Memory Port Sayısı & 3 paralel port (single pipe mode desteği) \\
+Head Pointer Sayısı & 3 bağımsız pointer \\
+Store-to-Load Forward & Age-based, size-aware forwarding \\
+Flush Mechanism & Eager (ROB distance tabanlı) \\
+CDB Integration & 3 load result port (cdb\_valid\_3\_0/1/2) \\
+Desteklenen Boyutlar & Byte, Half, Word \\
+Sign Extension & Destekleniyor \\
+\bottomrule
+\end{tabular}
+\end{table}

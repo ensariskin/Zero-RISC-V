@@ -1,0 +1,444 @@
+% =============================================================================
+% BÖLÜM 5: DISPATCH STAGE
+% =============================================================================
+
+\chapter{Dispatch Stage}
+\label{chap:dispatch}
+
+Dispatch stage, Tomasulo algoritmasının operand resolution ve instruction issue
+mekanizmalarını içerir. Bu bölümde, Reservation Station (RS), Reorder Buffer (ROB),
+Common Data Bus (CDB) ve Load Store Queue (LSQ) detaylı olarak açıklanmaktadır.
+
+\section{Genel Bakış}
+\label{sec:dispatch_genel}
+
+Dispatch stage, issue stage'den gelen rename edilmiş komutları alır ve:
+\begin{enumerate}
+    \item Fiziksel register file/ROB'dan operand değerlerini okur
+    \item Operandlar hazır değilse tag-based bekleme yapar
+    \item Tüm operandlar hazır olduğunda functional unit'e gönderir
+    \item CDB üzerinden sonuçları yayınlar ve ROB'u günceller
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.95\textwidth}
+\centering
+\textbf{Dispatch Stage Veri Akışı}\\[1em]
+\begin{tabular}{ccccc}
+ & \fbox{Register File} & & & \\
+\fbox{Issue Stage} $\rightarrow$ & $\downarrow$ & $\rightarrow$ \fbox{RS 0} $\rightarrow$ \fbox{ALU 0} & $\searrow$ & \\
+ & \fbox{ROB} & $\rightarrow$ \fbox{RS 1} $\rightarrow$ \fbox{ALU 1} & $\rightarrow$ & \fbox{CDB} \\
+ & & $\rightarrow$ \fbox{RS 2} $\rightarrow$ \fbox{ALU 2} & $\nearrow$ & $\downarrow$ \\
+ & & & & \fbox{LSQ} \\
+\end{tabular}
+\\[0.5em]
+\textit{CDB sonuçları RS'lere broadcast edilir (operand forwarding)}
+\end{minipage}
+}
+\caption{Dispatch stage blok diyagramı}
+\label{fig:dispatch_block}
+\end{figure}
+
+\subsection{Dispatch Stage Bileşenleri}
+
+\begin{table}[H]
+\centering
+\caption{Dispatch stage modülleri}
+\label{tab:dispatch_modules}
+\begin{tabular}{llp{5cm}}
+\toprule
+\textbf{Modül} & \textbf{Dosya} & \textbf{Görev} \\
+\midrule
+Dispatch Stage & \texttt{dispatch\_stage.sv} & Üst seviye koordinasyon \\
+Reservation Station & \texttt{reservation\_station.sv} & Operand bekleme ve issue (×3) \\
+Reorder Buffer & \texttt{reorder\_buffer.sv} & In-order commit, spekülatif değer \\
+Register File & \texttt{multi\_port\_register\_file.sv} & Commit edilmiş değerler \\
+LSQ & \texttt{lsq\_simple\_top.sv} & Memory operasyonu yönetimi \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Fiziksel Register Alanı}
+\label{sec:phys_reg_space}
+
+64 fiziksel register iki bölgeye ayrılır:
+
+\begin{table}[H]
+\centering
+\caption{Fiziksel register alanı}
+\label{tab:phys_reg_space}
+\begin{tabular}{ccp{6cm}}
+\toprule
+\textbf{Adres Aralığı} & \textbf{MSB} & \textbf{Kaynak} \\
+\midrule
+0-31 & 0 & Register File (commit edilmiş) \\
+32-63 & 1 & ROB (spekülatif, in-flight) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{lstlisting}[caption={Fiziksel adres decode}]
+// MSB determines source: RF (0) or ROB (1)
+assign inst_0_read_data_a = inst_0_read_addr_a[5] ?
+    rob_0_read_data_a : reg_file_read_data_a_0;
+
+// Tag from ROB (may not be ready), or ready if from RF
+assign inst_0_read_tag_a = inst_0_read_addr_a[5] ?
+    rob_0_read_tag_a : 3'b111;  // RF data always ready
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden iki ayrı kaynak?}
+
+Register File (RF), commit edilmiş değerleri tutar - garantili doğru.
+ROB, henüz execute edilmemiş komutların sonuçlarını tutacaktır.
+
+RAT, her register için ``en güncel'' kaynağı gösterir:
+\begin{itemize}
+    \item Değer commit edilmişse → RF'i gösterir (adres 0-31)
+    \item Değer in-flight ise → ROB'u gösterir (adres 32-63)
+\end{itemize}
+
+Bu sayede hem spekülatif hem de kesinleşmiş değerler tek sistemde yönetilir.
+\end{nedenbox}
+
+\section{Reservation Station}
+\label{sec:reservation_station}
+
+Her issue slot için bir Reservation Station (RS) bulunur. RS, operandlar
+hazır olana kadar komutu tutar ve CDB'yi izler.
+
+\subsection{RS Yapısı}
+
+\begin{table}[H]
+\centering
+\caption{Reservation Station entry alanları}
+\label{tab:rs_entry}
+\begin{tabular}{lcp{5cm}}
+\toprule
+\textbf{Alan} & \textbf{Boyut} & \textbf{Açıklama} \\
+\midrule
+\sig{occupied} & 1 bit & Entry dolu mu? \\
+\sig{control\_signals} & 11 bit & ALU/memory kontrol \\
+\sig{pc} & 32 bit & Komut adresi \\
+\sig{rd\_phys\_addr} & 6 bit & Hedef fiziksel register \\
+\sig{operand\_a\_data} & 32 bit & Operand A değeri veya tag \\
+\sig{operand\_a\_tag} & 3 bit & Operand A producer tag \\
+\sig{operand\_b\_data} & 32 bit & Operand B değeri veya tag \\
+\sig{operand\_b\_tag} & 3 bit & Operand B producer tag \\
+\sig{store\_data} & 32 bit & Store için rs2 değeri \\
+\sig{branch\_prediction} & 1 bit & Tahmin edilen yön \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Tag Sistemi}
+
+Tomasulo'nun temel mekanizması olan tag sistemi, producer-consumer ilişkisini izler:
+
+\begin{table}[H]
+\centering
+\caption{Tag değerleri ve anlamları}
+\label{tab:tag_values}
+\begin{tabular}{cl}
+\toprule
+\textbf{Tag} & \textbf{Anlam} \\
+\midrule
+3'b000 & ALU 0'dan bekliyor \\
+3'b001 & ALU 1'den bekliyor \\
+3'b010 & ALU 2'den bekliyor \\
+3'b011 & LSQ'dan bekliyor (ROB ID ile eşleşme) \\
+3'b111 & Hazır (değer geçerli) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{nedenbox}
+\textbf{Neden tag tabanlı bekleme?}
+
+Klasik yaklaşımda, bağımlı komut producer'ın bitmesini bekler (stall).
+Tag sistemiyle:
+\begin{itemize}
+    \item Producer henüz execute edilmemiş olsa bile, RS dolu olabilir
+    \item RS, CDB'yi izleyerek producer sonucunu yakalar
+    \item Producer bittiği çevrimde consumer da issue edilebilir
+\end{itemize}
+
+Bu, ``pipeline forwarding''in out-of-order versiyonudur.
+\end{nedenbox}
+
+\subsection{CDB İzleme ve Operand Resolution}
+
+RS, CDB'yi sürekli izler ve bekleyen operandları çözer:
+
+\begin{lstlisting}[caption={CDB izleme mantığı}]
+always_comb begin
+    // Check if stored operand A can be resolved from CDB
+    operand_a_valid_from_stored = occupied && (
+        (stored_operand_a_tag == TAG_READY) ||
+        (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 3'b000) ||
+        (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 3'b001) ||
+        (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 3'b010) ||
+        // LSQ matching: tag=011 AND data matches ROB ID
+        (cdb_if_port.cdb_valid_3_0 && stored_operand_a_tag == 3'b011 &&
+            stored_operand_a_data == cdb_if_port.cdb_dest_reg_3_0)
+    );
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden LSQ için özel eşleştirme?}
+
+ALU sonuçları tek bir CDB kanalından gelir (ALU başına 1).
+Ancak LSQ'dan 3 ayrı sonuç gelebilir. Tag=011 sadece ``LSQ bekliyor''
+demektir, hangi LSQ entry'sinden geleceğini belirtmez.
+
+Bu yüzden LSQ için ek ROB ID eşleştirmesi yapılır:
+\texttt{stored\_operand\_a\_data == cdb\_dest\_reg\_3\_x}
+\end{nedenbox}
+
+\subsection{Operand Seçimi}
+
+Operandlar birden fazla kaynaktan gelebilir:
+
+\begin{lstlisting}[caption={Operand veri seçimi}]
+always_comb begin
+    // Priority: 1) Stored ready, 2) CDB ALU0, 3) CDB ALU1, 4) CDB ALU2, 5) CDB LSQ
+    if (stored_operand_a_tag == TAG_READY) begin
+        final_operand_a_data = stored_operand_a_data;
+    end else if (cdb_if_port.cdb_valid_0 && stored_operand_a_tag == 3'b000) begin
+        final_operand_a_data = cdb_if_port.cdb_data_0;
+    end else if (cdb_if_port.cdb_valid_1 && stored_operand_a_tag == 3'b001) begin
+        final_operand_a_data = cdb_if_port.cdb_data_1;
+    end else if (cdb_if_port.cdb_valid_2 && stored_operand_a_tag == 3'b010) begin
+        final_operand_a_data = cdb_if_port.cdb_data_2;
+    end else begin
+        // LSQ data
+        final_operand_a_data = cdb_if_port.cdb_data_3_x;
+    end
+end
+\end{lstlisting}
+
+\subsection{Issue Koşulu}
+
+Komut ancak her iki operand da hazır olduğunda issue edilir:
+
+\begin{lstlisting}[caption={Issue koşulu}]
+assign should_issue = (occupied && operand_a_valid && operand_b_valid) ||
+    (decode_if.dispatch_valid && operand_a_ready && operand_b_ready);
+\end{lstlisting}
+
+İki durum vardır:
+\begin{enumerate}
+    \item \textbf{Stored issue:} RS'de bekleyen komut, CDB'den operand aldı
+    \item \textbf{Direct issue:} Yeni gelen komut, operandları zaten hazır
+\end{enumerate}
+
+\subsection{Eager Misprediction Flush}
+
+RS, misprediction durumunda spekülatif komutları temizler:
+
+\begin{lstlisting}[caption={RS flush mantığı}]
+always_comb begin
+    // Calculate ROB distance from head
+    if (stored_rob_idx >= rob_head_ptr_i) begin
+        stored_rob_distance = stored_rob_idx - rob_head_ptr_i;
+    end else begin
+        stored_rob_distance = 32 - rob_head_ptr_i + stored_rob_idx;
+    end
+
+    // Flush if: after mispredicted branch in program order
+    should_flush_rs = occupied && eager_misprediction_i &&
+        (stored_rob_distance > mispredicted_distance_i);
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden distance karşılaştırması?}
+
+ROB circular buffer olduğu için basit indeks karşılaştırması yetmez.
+Mispredicted branch ROB[25]'te, RS'deki komut ROB[3]'te olabilir.
+
+Distance hesabı:
+\begin{itemize}
+    \item Head = 20, Branch = 25 → Branch distance = 5
+    \item Head = 20, RS = 3 → RS distance = 32 - 20 + 3 = 15
+    \item 15 > 5 → RS komutu spekülatif, flush edilmeli
+\end{itemize}
+\end{nedenbox}
+
+\section{Reorder Buffer (ROB)}
+\label{sec:rob}
+
+ROB, out-of-order execution ile in-order commit arasındaki köprüdür.
+Spekülatif sonuçları tutar ve program sırasında commit eder.
+
+\subsection{ROB Entry Yapısı}
+
+\begin{lstlisting}[caption={ROB entry yapısı}]
+typedef struct packed {
+    logic [DATA_WIDTH-1:0] data;       // Result value
+    logic [TAG_WIDTH-1:0] tag;         // Producer tag (111 = ready)
+    logic [ADDR_WIDTH-1:0] addr;       // Architectural register address
+    logic executed;                     // Execution completed?
+    logic exception;                    // Misprediction/exception?
+    logic is_branch;                    // Branch instruction?
+    logic is_store;                     // Store instruction?
+} rob_entry_t;
+\end{lstlisting}
+
+\subsection{ROB Portları}
+
+\begin{table}[H]
+\centering
+\caption{ROB port sayıları}
+\label{tab:rob_ports}
+\begin{tabular}{lcp{5cm}}
+\toprule
+\textbf{Port Tipi} & \textbf{Sayı} & \textbf{Kullanım} \\
+\midrule
+Allocation & 3 & Issue stage'den gelen komutlar \\
+Read & 6 & RS operand okuması (3×2) \\
+CDB Write & 6 & ALU (3) + LSQ (3) sonuçları \\
+Commit & 3 & RF'e yazma ve serbest bırakma \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Allocation}
+
+Issue stage'den gelen her komut için ROB entry allocate edilir:
+
+\begin{lstlisting}[caption={ROB allocation}]
+always_ff @(posedge clk) begin
+    if (alloc_enable_0) begin
+        buffer[alloc_idx_0].addr <= alloc_addr_0;
+        buffer[alloc_idx_0].tag <= alloc_tag_0;  // Producer ALU tag
+        buffer[alloc_idx_0].executed <= 1'b0;
+        buffer[alloc_idx_0].exception <= 1'b0;
+        buffer[alloc_idx_0].is_store <= alloc_is_store_0;
+    end
+end
+\end{lstlisting}
+
+\subsection{CDB Sonuç Yazma}
+
+Execute tamamlandığında, sonuç ROB'a yazılır:
+
+\begin{lstlisting}[caption={CDB sonuç yazma}]
+always_ff @(posedge clk) begin
+    if (cdb_valid_0) begin
+        buffer[cdb_addr_0].data <= cdb_data_0;
+        buffer[cdb_addr_0].tag <= 3'b111;  // Mark as ready
+        buffer[cdb_addr_0].executed <= 1'b1;
+        buffer[cdb_addr_0].exception <= cdb_exception_0;
+        buffer[cdb_addr_0].is_branch <= cdb_is_branch_0;
+    end
+end
+\end{lstlisting}
+
+\subsection{In-Order Commit}
+
+ROB head'den itibaren, sırasıyla en fazla 3 komut commit edilir:
+
+\begin{lstlisting}[caption={Commit mantığı}]
+// Commit valid only if: executed AND not exception
+assign commit_valid_0 = buffer[head].executed && !flush_pending;
+assign commit_valid_1 = commit_valid_0 && buffer[head+1].executed;
+assign commit_valid_2 = commit_valid_1 && buffer[head+2].executed;
+
+// Commit data and address
+assign commit_data_0 = buffer[head].data;
+assign commit_addr_0 = buffer[head].addr;
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden in-order commit kritik?}
+
+Out-of-order execution, komutların farklı sırada bitmesine izin verir.
+Ancak:
+\begin{itemize}
+    \item Exception handling: Sadece ``önceki'' komutlar kesinleşmeli
+    \item Misprediction: Spekülatif komutlar geri alınabilmeli
+    \item Memory consistency: Store'lar program sırasında görünmeli
+\end{itemize}
+
+In-order commit, architectural state'in her zaman tutarlı olmasını sağlar.
+\end{nedenbox}
+
+\subsection{Store Permission}
+
+Store komutları, ROB head'e ulaşana kadar memory'ye yazamaz:
+
+\begin{lstlisting}[caption={Store permission}]
+assign store_can_issue_0 = buffer[head].is_store && buffer[head].executed;
+assign allowed_store_address_0 = head;
+\end{lstlisting}
+
+\section{Common Data Bus (CDB)}
+\label{sec:cdb}
+
+CDB, execution sonuçlarını tüm bekleme noktalarına yayınlar.
+
+\subsection{CDB Kanalları}
+
+\begin{table}[H]
+\centering
+\caption{CDB kanalları}
+\label{tab:cdb_channels}
+\begin{tabular}{lp{6cm}}
+\toprule
+\textbf{Kanal} & \textbf{Kaynak} \\
+\midrule
+CDB 0 & ALU 0 sonucu \\
+CDB 1 & ALU 1 sonucu \\
+CDB 2 & ALU 2 sonucu \\
+CDB 3\_0 & LSQ port 0 (load/store) \\
+CDB 3\_1 & LSQ port 1 \\
+CDB 3\_2 & LSQ port 2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{CDB Sinyalleri}
+
+Her CDB kanalı şu sinyalleri taşır:
+
+\begin{lstlisting}[caption={CDB interface}]
+interface cdb_if;
+    // ALU channels
+    logic cdb_valid_0, cdb_valid_1, cdb_valid_2;
+    logic [DATA_WIDTH-1:0] cdb_data_0, cdb_data_1, cdb_data_2;
+    logic [PHYS_ADDR_WIDTH-1:0] cdb_dest_reg_0, cdb_dest_reg_1, cdb_dest_reg_2;
+    logic cdb_misprediction_0, cdb_misprediction_1, cdb_misprediction_2;
+    logic cdb_is_branch_0, cdb_is_branch_1, cdb_is_branch_2;
+
+    // LSQ channels
+    logic cdb_valid_3_0, cdb_valid_3_1, cdb_valid_3_2;
+    logic [DATA_WIDTH-1:0] cdb_data_3_0, cdb_data_3_1, cdb_data_3_2;
+    logic [PHYS_ADDR_WIDTH-1:0] cdb_dest_reg_3_0, cdb_dest_reg_3_1, cdb_dest_reg_3_2;
+endinterface
+\end{lstlisting}
+
+\section{Dispatch Stage Özeti}
+
+\begin{table}[H]
+\centering
+\caption{Dispatch stage özellikleri}
+\label{tab:dispatch_summary}
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{Özellik} & \textbf{Değer/Açıklama} \\
+\midrule
+Dispatch Genişliği & 3 komut/çevrim \\
+RS Sayısı & 3 (her biri 1 entry) \\
+ROB Derinliği & 32 entry \\
+RF Boyutu & 32 × 32 bit \\
+CDB Kanalları & 6 (3 ALU + 3 LSQ) \\
+Commit Genişliği & 3 komut/çevrim \\
+Tag Genişliği & 3 bit \\
+\bottomrule
+\end{tabular}
+\end{table}

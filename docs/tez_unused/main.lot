@@ -1,0 +1,60 @@
+\babel@toc {turkish}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {2.1}{\ignorespaces Pipeline aşamaları ve genişlikleri}}{9}{table.2.1}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces Aşamaların sıralama özellikleri}}{10}{table.2.2}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Fetch stage modülleri}}{15}{table.3.1}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Instruction buffer parametreleri}}{17}{table.3.2}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces PC güncelleme öncelikleri}}{19}{table.3.3}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Dal tahmin mekanizmaları karşılaştırması}}{20}{table.3.4}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces JALR predictor özellikleri}}{23}{table.3.5}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces Fetch stage özellikleri}}{24}{table.3.6}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Issue stage modülleri}}{26}{table.4.1}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Decoder çıkış sinyalleri}}{26}{table.4.2}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces RV32I komut formatları}}{27}{table.4.3}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces RAT parametreleri}}{29}{table.4.4}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces Circular buffer özellikleri}}{37}{table.4.5}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces BRAT entry alanları}}{38}{table.4.6}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces BRAT özellikleri}}{43}{table.4.7}%
+\contentsline {table}{\numberline {4.8}{\ignorespaces RAT özellikleri}}{43}{table.4.8}%
+\contentsline {table}{\numberline {4.9}{\ignorespaces Issue stage özellikleri}}{45}{table.4.9}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {5.1}{\ignorespaces Dispatch stage modülleri}}{47}{table.5.1}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Fiziksel register alanı}}{47}{table.5.2}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces Reservation Station entry alanları}}{48}{table.5.3}%
+\contentsline {table}{\numberline {5.4}{\ignorespaces Tag değerleri ve anlamları}}{49}{table.5.4}%
+\contentsline {table}{\numberline {5.5}{\ignorespaces ROB port sayıları}}{52}{table.5.5}%
+\contentsline {table}{\numberline {5.6}{\ignorespaces CDB kanalları}}{54}{table.5.6}%
+\contentsline {table}{\numberline {5.7}{\ignorespaces Dispatch stage özellikleri}}{55}{table.5.7}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {6.1}{\ignorespaces Execute stage modülleri}}{57}{table.6.1}%
+\contentsline {table}{\numberline {6.2}{\ignorespaces ALU fonksiyon seçimi}}{58}{table.6.2}%
+\contentsline {table}{\numberline {6.3}{\ignorespaces Branch koşulları}}{59}{table.6.3}%
+\contentsline {table}{\numberline {6.4}{\ignorespaces Komut tipine göre sonuç}}{61}{table.6.4}%
+\contentsline {table}{\numberline {6.5}{\ignorespaces Execute stage özellikleri}}{62}{table.6.5}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {7.1}{\ignorespaces LSQ entry alanları}}{65}{table.7.1}%
+\contentsline {table}{\numberline {7.2}{\ignorespaces Memory interface sinyalleri}}{71}{table.7.2}%
+\contentsline {table}{\numberline {7.3}{\ignorespaces LSQ özellikleri}}{74}{table.7.3}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {8.1}{\ignorespaces Teorik vs gerçek IPC}}{75}{table.8.1}%
+\contentsline {table}{\numberline {8.2}{\ignorespaces Stall kaynakları ve etkileri}}{76}{table.8.2}%
+\contentsline {table}{\numberline {8.3}{\ignorespaces Predictor karşılaştırması}}{77}{table.8.3}%
+\contentsline {table}{\numberline {8.4}{\ignorespaces Memory access karakteristikleri}}{77}{table.8.4}%
+\contentsline {table}{\numberline {8.5}{\ignorespaces Kaynak boyutları ve kullanım}}{78}{table.8.5}%
+\contentsline {table}{\numberline {8.6}{\ignorespaces Benchmark karakteristikleri}}{79}{table.8.6}%
+\contentsline {table}{\numberline {8.7}{\ignorespaces Benchmark speedup sonuçları}}{79}{table.8.7}%
+\contentsline {table}{\numberline {8.8}{\ignorespaces Performans özeti}}{80}{table.8.8}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {9.1}{\ignorespaces Doğrulama seviyeleri}}{81}{table.9.1}%
+\contentsline {table}{\numberline {9.2}{\ignorespaces RAT test senaryoları}}{82}{table.9.2}%
+\contentsline {table}{\numberline {9.3}{\ignorespaces BRAT test senaryoları}}{83}{table.9.3}%
+\contentsline {table}{\numberline {9.4}{\ignorespaces RS test senaryoları}}{83}{table.9.4}%
+\contentsline {table}{\numberline {9.5}{\ignorespaces RISC-V test kategorileri}}{84}{table.9.5}%
+\contentsline {table}{\numberline {9.6}{\ignorespaces Benchmark test sonuçları}}{84}{table.9.6}%
+\contentsline {table}{\numberline {9.7}{\ignorespaces Resource exhaustion testleri}}{85}{table.9.7}%
+\contentsline {table}{\numberline {9.8}{\ignorespaces Doğrulama özeti}}{86}{table.9.8}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {10.1}{\ignorespaces Performans özeti}}{88}{table.10.1}%

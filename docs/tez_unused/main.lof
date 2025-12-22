@@ -1,0 +1,21 @@
+\babel@toc {turkish}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces İşlemci pipeline aşamaları}}{9}{figure.2.1}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Üst düzey modül hiyerarşisi}}{12}{figure.2.2}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Fetch stage blok diyagramı}}{14}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces 2-bit sayaç durum makinesi}}{21}{figure.3.2}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Issue stage blok diyagramı}}{25}{figure.4.1}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Geleneksel recovery: Dal ROB head'e ulaşmalı}}{37}{figure.4.2}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces BRAT: Snapshot tabanlı anında recovery}}{38}{figure.4.3}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Dispatch stage blok diyagramı}}{46}{figure.5.1}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Execute stage blok diyagramı}}{56}{figure.6.1}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {7.1}{\ignorespaces Memory stage blok diyagramı}}{63}{figure.7.1}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }

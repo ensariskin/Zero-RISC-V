@@ -1,0 +1,275 @@
+% =============================================================================
+% BÖLÜM 8: PERFORMANS ANALİZİ
+% =============================================================================
+
+\chapter{Performans Analizi}
+\label{chap:performans}
+
+Bu bölümde, 3-way superscalar işlemcinin performans karakteristikleri,
+darboğazlar ve optimizasyon stratejileri analiz edilmektedir.
+
+\section{Performans Metrikleri}
+\label{sec:metrics}
+
+\subsection{Instructions Per Cycle (IPC)}
+
+IPC, işlemci verimliliğinin temel ölçüsüdür:
+
+\begin{equation}
+IPC = \frac{\text{Toplam Komut Sayısı}}{\text{Toplam Çevrim Sayısı}}
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Teorik vs gerçek IPC}
+\label{tab:ipc}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Konfigürasyon} & \textbf{Teorik Maks} & \textbf{Tipik} \\
+\midrule
+Scalar (1-way) & 1.0 & 0.7-0.9 \\
+3-way Superscalar & 3.0 & 1.5-2.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Speedup}
+
+3-way superscalar'ın scalar'a göre hızlanması:
+
+\begin{equation}
+Speedup = \frac{IPC_{superscalar}}{IPC_{scalar}} = \frac{IPC_{3-way}}{IPC_{1-way}}
+\end{equation}
+
+Test sonuçlarına göre tipik speedup: \textbf{1.83x - 1.93x}
+
+\begin{nedenbox}
+\textbf{Neden teorik 3x'e ulaşılamıyor?}
+
+\begin{itemize}
+    \item \textbf{RAW hazards:} Gerçek veri bağımlılıkları parallelliği sınırlar
+    \item \textbf{Control hazards:} Branch misprediction'lar pipeline'ı boşaltır
+    \item \textbf{Memory latency:} Load/store sıralı çalışır
+    \item \textbf{Resource conflicts:} Sınırlı functional unit sayısı
+\end{itemize}
+\end{nedenbox}
+
+\section{Pipeline Stall Analizi}
+\label{sec:stall_analysis}
+
+\subsection{Stall Kaynakları}
+
+\begin{table}[H]
+\centering
+\caption{Stall kaynakları ve etkileri}
+\label{tab:stall_sources}
+\begin{tabular}{lp{5cm}c}
+\toprule
+\textbf{Kaynak} & \textbf{Açıklama} & \textbf{Tipik Etki} \\
+\midrule
+ROB Full & ROB doldu, yeni komut kabul edilemiyor & 5-10\% \\
+RS Full & Reservation station dolu & 3-5\% \\
+LSQ Full & Load/store queue dolu & 2-4\% \\
+BRAT Full & Maksimum in-flight branch sayısına ulaşıldı & 1-3\% \\
+Memory Latency & Memory yanıt bekleniyor & 10-20\% \\
+Branch Misprediction & Yanlış yol flush ediliyor & 5-15\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Occupancy Analizi}
+
+Pipeline occupancy, kaynakların ne kadar verimli kullanıldığını gösterir:
+
+\begin{lstlisting}[caption={Occupancy hesaplama}]
+// ROB Occupancy
+ROB_occupancy = (tail_ptr - head_ptr) / ROB_DEPTH;
+
+// RS Occupancy
+RS_occupancy = occupied_entries / TOTAL_RS_ENTRIES;
+
+// Average issue width
+avg_issue_width = committed_instructions / total_cycles;
+\end{lstlisting}
+
+\section{Branch Prediction Performansı}
+\label{sec:branch_perf}
+
+\subsection{Misprediction Rate}
+
+\begin{equation}
+Misprediction\_Rate = \frac{\text{Mispredicted Branches}}{\text{Total Branches}}
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Predictor karşılaştırması}
+\label{tab:predictor_comparison}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Predictor} & \textbf{Mispred Rate} & \textbf{Tablo Boyutu} \\
+\midrule
+2-bit Bimodal & 8-12\% & 1K entry \\
+Gshare & 6-10\% & 4K entry \\
+Tournament & 5-8\% & 4K + 4K entry \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Misprediction Penalty}
+
+\begin{equation}
+Misprediction\_Penalty = Pipeline\_Depth + Recovery\_Latency
+\end{equation}
+
+Bu tasarımda:
+\begin{itemize}
+    \item Pipeline depth: ~5 stages
+    \item Recovery latency: 0-1 cycle (eager recovery)
+    \item Total penalty: ~5-6 cycles
+\end{itemize}
+
+\subsection{Misprediction Etkisi}
+
+\begin{equation}
+IPC_{effective} = IPC_{ideal} \times (1 - Mispred\_Rate \times \frac{Penalty}{Avg\_Branch\_Distance})
+\end{equation}
+
+\section{Memory Performansı}
+\label{sec:memory_perf}
+
+\subsection{Memory Access Pattern}
+
+\begin{table}[H]
+\centering
+\caption{Memory access karakteristikleri}
+\label{tab:memory_chars}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metrik} & \textbf{Tipik Değer} \\
+\midrule
+Load oranı & 20-25\% \\
+Store oranı & 10-15\% \\
+Ortalama memory latency & 1-2 cycle \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{LSQ Performans Etkisi}
+
+3-port LSQ ve store-to-load forwarding'in performans etkisi:
+
+\begin{nedenbox}
+\textbf{LSQ Performans Özellikleri}
+
+\begin{itemize}
+    \item \textbf{3 Paralel Port:} Her çevrimde 3 memory operasyonu
+    \item \textbf{Store-to-Load Forwarding:} Memory bypass ile latency azalması
+    \item \textbf{Etki:} 3-pipe modunda \%83 performans artışı (1-pipe'a göre)
+\end{itemize}
+
+Gömülü sistemlerde bu trade-off kabul edilebilir.
+\end{nedenbox}
+
+\section{Kaynak Kullanımı}
+\label{sec:resource_util}
+
+\subsection{Kritik Kaynaklar}
+
+\begin{table}[H]
+\centering
+\caption{Kaynak boyutları ve kullanım}
+\label{tab:resource_sizes}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Kaynak} & \textbf{Boyut} & \textbf{Genişlik} & \textbf{Tipik Doluluk} \\
+\midrule
+ROB & 32 entry & 3 alloc/commit & 60-80\% \\
+RS & 3 entry & 3 issue & 40-60\% \\
+LSQ & 32 entry & 3 alloc, 3 head & 30-50\% \\
+BRAT & 16 entry & 3 push/pop & 20-40\% \\
+RAT & 32 entry & 3 lookup & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Benchmark Sonuçları}
+\label{sec:benchmarks}
+
+\subsection{Test Programları}
+
+\begin{table}[H]
+\centering
+\caption{Benchmark karakteristikleri}
+\label{tab:benchmarks}
+\begin{tabular}{lp{5cm}c}
+\toprule
+\textbf{Benchmark} & \textbf{Karakteristik} & \textbf{Speedup} \\
+\midrule
+Dhrystone & Integer, az branch & 1.9x \\
+Coremark & Mixed workload & 1.8x \\
+Sieve & Loop-intensive & 1.85x \\
+Quicksort & Branch-heavy & 1.7x \\
+Matmul & Memory-intensive & 1.75x \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Speedup Analizi}
+
+\begin{table}[H]
+\centering
+\caption{Benchmark speedup sonuçları}
+\label{fig:speedup_results}
+\begin{tabular}{lc}
+\toprule
+\textbf{Benchmark} & \textbf{Speedup (x)} \\
+\midrule
+Dhrystone & 1.90 \\
+Coremark & 1.80 \\
+Sieve & 1.85 \\
+Quicksort & 1.70 \\
+Matmul & 1.75 \\
+\midrule
+\textbf{Average} & \textbf{1.80} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Performans Optimizasyon Önerileri}
+\label{sec:optimization}
+
+\subsection{Kısa Vadeli İyileştirmeler}
+
+\begin{enumerate}
+    \item \textbf{RS Derinliği Artırma:} 1 → 2 entry per RS
+    \item \textbf{Daha İyi Predictor:} TAGE predictor
+    \item \textbf{Partial Forwarding:} Farklı boyutlu store-load arası kısmi forwarding
+\end{enumerate}
+
+\subsection{Uzun Vadeli İyileştirmeler}
+
+\begin{enumerate}
+    \item \textbf{Speculative Load Execution:} Address unknown store'ları bypass
+    \item \textbf{Daha Geniş Issue:} 4-way veya 6-way
+    \item \textbf{SMT:} Simultaneous Multi-Threading
+\end{enumerate}
+
+\section{Performans Özeti}
+
+\begin{table}[H]
+\centering
+\caption{Performans özeti}
+\label{tab:perf_summary}
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{Metrik} & \textbf{Değer} \\
+\midrule
+Ortalama Speedup & 1.83x (scalar'a göre) \\
+Tipik IPC & 1.5-2.0 \\
+Branch Mispred Rate & 5-10\% \\
+Mispred Penalty & 5-6 cycle \\
+Ortalama Memory Latency & 1-2 cycle \\
+\bottomrule
+\end{tabular}
+\end{table}

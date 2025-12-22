@@ -1,0 +1,286 @@
+% =============================================================================
+% BÖLÜM 3: FETCH STAGE
+% =============================================================================
+
+\chapter{Fetch Stage}
+\label{chap:fetch}
+
+Fetch stage, işlemcinin ilk pipeline aşamasıdır ve bellekten komutların getirilmesinden
+sorumludur. Bu bölümde, 5-wide fetch mimarisi, komut tamponu, dal tahmini mekanizmaları
+ve program sayacı yönetimi detaylı olarak açıklanmaktadır.
+
+\section{Genel Bakış}
+\label{sec:fetch_genel}
+
+Fetch stage, her çevrimde en fazla 5 komut getirerek instruction buffer'ı doldurur.
+Issue stage ise bu tampondan 3 komut çeker. Bu asimetrik tasarım, pipeline
+verimliliğini artırır.
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.9\textwidth}
+\centering
+\textbf{Fetch Stage Veri Akışı}\\[1em]
+\begin{tabular}{ccccc}
+\fbox{Inst Memory} & $\xrightarrow{\text{5 inst}}$ & \fbox{Multi Fetch} & $\xrightarrow{\text{5 inst}}$ & \fbox{Inst Buffer} \\[0.5em]
+ & & $\downarrow$ & & $\downarrow$ \\[0.5em]
+ & & \scriptsize PC Controller & & $\xrightarrow{\text{3 inst}}$ \fbox{Issue Stage} \\
+ & & \scriptsize Branch Predictor & & \\
+\end{tabular}
+\\[1em]
+\textit{Misprediction feedback: Issue Stage $\rightarrow$ Multi Fetch}
+\end{minipage}
+}
+\caption{Fetch stage blok diyagramı}
+\label{fig:fetch_block}
+\end{figure}
+
+\subsection{Fetch Stage Bileşenleri}
+
+\begin{table}[H]
+\centering
+\caption{Fetch stage modülleri}
+\label{tab:fetch_modules}
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Modül} & \textbf{Dosya} & \textbf{Görev} \\
+\midrule
+Multi Fetch & \texttt{multi\_fetch.sv} & 5 komut paralel getirme koordinasyonu \\
+Instruction Buffer & \texttt{instruction\_buffer\_new.sv} & Fetch-decode ayrıştırma tamponu \\
+PC Controller & \texttt{pc\_ctrl\_super.sv} & Program sayacı yönetimi \\
+Jump Controller & \texttt{jump\_controller\_super.sv} & Dal/atlama komut tespiti \\
+Tournament Predictor & \texttt{tournament\_predictor.sv} & Hibrit dal tahmini \\
+GShare Predictor & \texttt{gshare\_predictor\_super.sv} & Global history tabanlı tahmin \\
+JALR Predictor & \texttt{jalr\_predictor.sv} & Dolaylı atlama hedef tahmini \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Multi Fetch Modülü}
+\label{sec:multi_fetch}
+
+\module{multi\_fetch} modülü, fetch stage'in ana koordinasyon birimidir. Bellekten
+5 komut okur, dal tahminlerini yapar ve instruction buffer'a iletir.
+
+\subsection{Tasarım Amacı}
+
+\begin{nedenbox}
+\textbf{Neden 5-wide fetch?}
+
+3-way issue için 5-wide fetch seçilmesinin nedenleri:
+\begin{itemize}
+    \item \textbf{Buffer Doldurma:} Misprediction sonrası instruction buffer hızla
+          yeniden doldurulmalı. 5 > 3 olduğu için buffer birikir.
+    \item \textbf{Dal Kesilmesi:} Bir dal ``taken'' tahmin edilirse, sonraki komutlar
+          geçersiz olur. 5 komut getirerek, en az 1 geçerli komut garantilenir.
+    \item \textbf{Fetch Bandwidth:} Modern bellek sistemleri geniş bant genişliği sunar.
+          Bu kapasiteyi kullanmamak israftır.
+\end{itemize}
+\end{nedenbox}
+
+\subsection{Komut Geçerlilik Mantığı}
+
+Fetch edilen 5 komuttan bazıları geçersiz olabilir. Bir dal komutu ``taken'' tahmin
+edilirse, ondan sonraki komutlar program akışında yer almaz:
+
+\begin{lstlisting}[caption={Fetch geçerlilik sinyalleri}]
+// Branch prediction invalidation logic
+assign block_0 = jump_0 | jalr_0;
+assign block_1 = jump_1 | jalr_1;
+assign block_2 = jump_2 | jalr_2;
+assign block_3 = jump_3 | jalr_3;
+
+// Final fetch valid signals
+assign fetch_valid_o[0] = base_valid;
+assign fetch_valid_o[1] = base_valid & ~block_0;
+assign fetch_valid_o[2] = base_valid & ~block_0 & ~block_1;
+assign fetch_valid_o[3] = base_valid & ~block_0 & ~block_1 & ~block_2;
+assign fetch_valid_o[4] = base_valid & ~block_0 & ~block_1 & ~block_2 & ~block_3;
+\end{lstlisting}
+
+\subsection{Misprediction İşleme}
+
+BRAT'tan gelen misprediction sinyalleri, oldest-first öncelikle işlenir:
+
+\begin{lstlisting}[caption={Eager flush mantığı}]
+always_comb begin
+    if (misprediction_i_0) begin
+        eager_flush = 1'b1;
+        eager_flush_target_pc = correct_pc_i_0;
+    end else if (misprediction_i_1) begin
+        eager_flush = 1'b1;
+        eager_flush_target_pc = correct_pc_i_1;
+    end else if (misprediction_i_2) begin
+        eager_flush = 1'b1;
+        eager_flush_target_pc = correct_pc_i_2;
+    end else begin
+        eager_flush = 1'b0;
+        eager_flush_target_pc = {size{1'b0}};
+    end
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden oldest-first öncelik?}
+
+Aynı anda birden fazla dal çözümlenebilir. En yaşlı misprediction önceliklidir çünkü:
+\begin{itemize}
+    \item Genç dallar, yaşlı dalın spekülatif yolunda olabilir
+    \item Yaşlı misprediction düzeltildiğinde, genç dallar flush edilecek
+    \item Genç misprediction'ları işlemek gereksiz çalışma olur
+\end{itemize}
+\end{nedenbox}
+
+\section{Instruction Buffer}
+\label{sec:instruction_buffer}
+
+\module{instruction\_buffer\_new} modülü, fetch ve decode aşamalarını ayrıştıran
+bir FIFO tampondur.
+
+\subsection{Tasarım Amacı}
+
+\begin{nedenbox}
+\textbf{Neden instruction buffer gerekli?}
+\begin{itemize}
+    \item \textbf{Hız Uyumsuzluğu:} Fetch 5-wide, issue 3-wide. Buffer bu farkı dengeler.
+    \item \textbf{Stall İzolasyonu:} Issue stall olduğunda fetch devam edebilir (buffer dolana kadar).
+    \item \textbf{Misprediction Toleransı:} Buffer doluyken, recovery süresi kısalır.
+    \item \textbf{Latency Gizleme:} Bellek gecikmesi buffer tarafından emilir.
+\end{itemize}
+\end{nedenbox}
+
+\subsection{Buffer Yapısı}
+
+Buffer, circular buffer olarak implement edilmiştir:
+
+\begin{table}[H]
+\centering
+\caption{Instruction buffer parametreleri}
+\label{tab:ibuf_params}
+\begin{tabular}{lcp{6cm}}
+\toprule
+\textbf{Parametre} & \textbf{Değer} & \textbf{Açıklama} \\
+\midrule
+BUFFER\_DEPTH & 16 & Maksimum tamponlanabilir komut sayısı \\
+Giriş Genişliği & 5-wide & Her çevrimde yazılabilecek komut \\
+Çıkış Genişliği & 3-wide & Her çevrimde okunabilecek komut \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Her buffer entry'si şu alanları içerir:
+\begin{itemize}
+    \item \sig{instruction}: 32-bit komut kodu
+    \item \sig{pc}: Komutun program sayacı değeri
+    \item \sig{imm}: Önceden decode edilmiş immediate değeri
+    \item \sig{branch\_prediction}: Dal tahmini sonucu
+    \item \sig{pc\_at\_prediction}: Tahmin yapıldığındaki PC
+    \item \sig{global\_history}: Dal predictor için global history
+    \item \sig{ras\_tos\_checkpoint}: RAS checkpoint pointer
+\end{itemize}
+
+\subsection{Backpressure Yönetimi}
+
+Buffer dolduğunda, fetch stage'e backpressure uygulanır:
+
+\begin{lstlisting}[caption={Backpressure mantığı}]
+// Conservative: leave space for 5 instructions
+assign fetch_ready_o = !flush_i && !buffer_full_o && (space_available >= 5);
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden \texttt{space\_available >= 5}?}
+
+Fetch stage, mevcut çevrimde zaten 5 komut göndermiş olabilir. Bu komutlar henüz
+buffer'a yazılmamışken (kombinasyonel gecikme), yeni fetch başlatılmamalı.
+Konservatif yaklaşım deadlock'u önler.
+\end{nedenbox}
+
+\subsection{Forwarding Mantığı}
+
+Buffer boşken ve fetch valid ise, komutlar doğrudan çıkışa forward edilir:
+
+\begin{lstlisting}[caption={Direct forwarding}]
+assign use_fwd_0 = (count == 0) & (num_to_write >= 1) & read_en_0;
+assign use_fwd_1 = (count <= read_en_0) & (num_to_write >= (1 + use_fwd_0)) & read_en_1;
+assign use_fwd_2 = (count <= read_en_0 + read_en_1) &
+                   (num_to_write >= (1 + use_fwd_0 + use_fwd_1)) & read_en_2;
+\end{lstlisting}
+
+Bu mekanizma, buffer boşken bile zero-cycle forwarding sağlar, pipeline bubble'ları
+minimize eder.
+
+\section{PC Controller}
+\label{sec:pc_controller}
+
+\module{pc\_ctrl\_super} modülü, program sayacı yönetiminden sorumludur.
+
+\subsection{PC Güncelleme Senaryoları}
+
+\begin{table}[H]
+\centering
+\caption{PC güncelleme öncelikleri}
+\label{tab:pc_priority}
+\begin{tabular}{clp{6cm}}
+\toprule
+\textbf{Öncelik} & \textbf{Senaryo} & \textbf{Yeni PC Değeri} \\
+\midrule
+1 & Misprediction & \sig{correct\_pc} (BRAT'tan) \\
+2 & JALR (tahminli) & \sig{jalr\_prediction\_target} \\
+3 & Branch/JAL (taken) & \sig{PC + imm} \\
+4 & Normal akış & \sig{PC + 20} (5 komut) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Paralel PC Hesaplama}
+
+5 komut için PC değerleri paralel olarak hesaplanır:
+
+\begin{lstlisting}[caption={Paralel PC hesaplama}]
+assign current_pc_0 = pc_current_val;
+assign current_pc_1 = parallel_mode ? pc_current_val + 32'd4 : current_pc_0;
+assign current_pc_2 = parallel_mode ? pc_current_val + 32'd8 : current_pc_0;
+assign current_pc_3 = parallel_mode ? pc_current_val + 32'd12 : current_pc_0;
+assign current_pc_4 = parallel_mode ? pc_current_val + 32'd16 : current_pc_0;
+\end{lstlisting}
+
+\subsection{Misprediction Recovery}
+
+Misprediction durumunda PC, BRAT'tan gelen doğru değere ayarlanır:
+
+\begin{lstlisting}[caption={PC misprediction recovery}]
+parametric_mux #(.mem_width(size), .mem_depth(2)) correction_mux(
+    .addr(misprediction),
+    .data_in({correct_pc, pc_plus}),
+    .data_out(pc_new_val));
+\end{lstlisting}
+
+\section{Dal Tahmini}
+\label{sec:branch_prediction}
+
+İşlemci, üç farklı dal tahmin mekanizması içerir. Bu mekanizmalar, farklı dal
+davranış paternlerini hedefler.
+
+\input{03_fetch_stage/branch_prediction/branch_prediction}
+
+\section{Fetch Stage Özeti}
+
+\begin{table}[H]
+\centering
+\caption{Fetch stage özellikleri}
+\label{tab:fetch_summary}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Özellik} & \textbf{Değer/Açıklama} \\
+\midrule
+Fetch Genişliği & 5 komut/çevrim \\
+Buffer Derinliği & 16 entry \\
+Dal Tahmin Yöntemleri & Tournament, GShare, 2-bit sayaç \\
+JALR Tahmini & BTB tabanlı hedef tahmini \\
+Misprediction Kaynağı & BRAT (eager recovery) \\
+Backpressure & fetch\_ready\_o sinyali ile \\
+\bottomrule
+\end{tabular}
+\end{table}

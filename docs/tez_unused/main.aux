@@ -1,0 +1,698 @@
+\relax 
+\providecommand\babel@aux[2]{}
+\@nameuse{bbl@beforestart}
+\catcode `:\active 
+\catcode `!\active 
+\catcode `=\active 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\AC@reset@newl@bel
+\babel@aux{turkish}{}
+\@writefile{toc}{\contentsline {chapter}{Kısaltmalar}{4}{chapter*.4}\protected@file@percent }
+\newacro{ALU}[\AC@hyperlink{ALU}{ALU}]{Arithmetic Logic Unit -- Aritmetik Mantık Birimi}
+\newacro{BRAT}[\AC@hyperlink{BRAT}{BRAT}]{Branch Resolution Alias Table -- Dal Çözümleme Takma Ad Tablosu}
+\newacro{BTB}[\AC@hyperlink{BTB}{BTB}]{Branch Target Buffer -- Dal Hedef Tamponu}
+\newacro{CDB}[\AC@hyperlink{CDB}{CDB}]{Common Data Bus -- Ortak Veri Yolu}
+\newacro{FIFO}[\AC@hyperlink{FIFO}{FIFO}]{First In First Out -- İlk Giren İlk Çıkar}
+\newacro{FSM}[\AC@hyperlink{FSM}{FSM}]{Finite State Machine -- Sonlu Durum Makinesi}
+\newacro{GHR}[\AC@hyperlink{GHR}{GHR}]{Global History Register -- Küresel Geçmiş Kaydı}
+\newacro{IPC}[\AC@hyperlink{IPC}{IPC}]{Instructions Per Cycle -- Çevrim Başına Komut}
+\newacro{ISA}[\AC@hyperlink{ISA}{ISA}]{Instruction Set Architecture -- Komut Seti Mimarisi}
+\newacro{LSQ}[\AC@hyperlink{LSQ}{LSQ}]{Load Store Queue -- Yükleme/Saklama Kuyruğu}
+\newacro{PC}[\AC@hyperlink{PC}{PC}]{Program Counter -- Program Sayacı}
+\newacro{PHT}[\AC@hyperlink{PHT}{PHT}]{Pattern History Table -- Örüntü Geçmiş Tablosu}
+\newacro{RAT}[\AC@hyperlink{RAT}{RAT}]{Register Alias Table -- Kayıt Takma Ad Tablosu}
+\newacro{RAS}[\AC@hyperlink{RAS}{RAS}]{Return Address Stack -- Dönüş Adresi Yığını}
+\newacro{RF}[\AC@hyperlink{RF}{RF}]{Register File -- Kayıt Dosyası}
+\newacro{ROB}[\AC@hyperlink{ROB}{ROB}]{Reorder Buffer -- Yeniden Sıralama Tamponu}
+\newacro{RS}[\AC@hyperlink{RS}{RS}]{Reservation Station -- Rezervasyon İstasyonu}
+\newacro{WAR}[\AC@hyperlink{WAR}{WAR}]{Write After Read -- Okumadan Sonra Yazma}
+\newacro{WAW}[\AC@hyperlink{WAW}{WAW}]{Write After Write -- Yazmadan Sonra Yazma}
+\newacro{RAW}[\AC@hyperlink{RAW}{RAW}]{Read After Write -- Yazmadan Sonra Okuma}
+\@writefile{toc}{\contentsline {chapter}{\numberline {1}Giriş}{5}{chapter.1}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:giris}{{1}{5}{Giriş}{chapter.1}{}}
+\newlabel{chap:giris@cref}{{[chapter][1][]1}{[1][5][]5}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.1}Motivasyon}{5}{section.1.1}\protected@file@percent }
+\newlabel{sec:motivasyon}{{1.1}{5}{Motivasyon}{section.1.1}{}}
+\newlabel{sec:motivasyon@cref}{{[section][1][1]1.1}{[1][5][]5}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.2}Tezin Kapsamı}{5}{section.1.2}\protected@file@percent }
+\newlabel{sec:kapsam}{{1.2}{5}{Tezin Kapsamı}{section.1.2}{}}
+\newlabel{sec:kapsam@cref}{{[section][2][1]1.2}{[1][5][]5}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.3}Tasarım Hedefleri}{6}{section.1.3}\protected@file@percent }
+\newlabel{sec:hedefler}{{1.3}{6}{Tasarım Hedefleri}{section.1.3}{}}
+\newlabel{sec:hedefler@cref}{{[section][3][1]1.3}{[1][6][]6}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.4}Tez Organizasyonu}{6}{section.1.4}\protected@file@percent }
+\newlabel{sec:organizasyon}{{1.4}{6}{Tez Organizasyonu}{section.1.4}{}}
+\newlabel{sec:organizasyon@cref}{{[section][4][1]1.4}{[1][6][]6}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.5}Katkılar}{7}{section.1.5}\protected@file@percent }
+\newlabel{sec:katkilar}{{1.5}{7}{Katkılar}{section.1.5}{}}
+\newlabel{sec:katkilar@cref}{{[section][5][1]1.5}{[1][6][]7}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {2}Mimari Genel Bakış}{8}{chapter.2}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:mimari}{{2}{8}{Mimari Genel Bakış}{chapter.2}{}}
+\newlabel{chap:mimari@cref}{{[chapter][2][]2}{[1][8][]8}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.1}Superscalar İşlemci Kavramı}{8}{section.2.1}\protected@file@percent }
+\newlabel{sec:superscalar_kavram}{{2.1}{8}{Superscalar İşlemci Kavramı}{section.2.1}{}}
+\newlabel{sec:superscalar_kavram@cref}{{[section][1][2]2.1}{[1][8][]8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}Skalar ve Superscalar İşlemciler}{8}{subsection.2.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.2}Komut Düzeyinde Paralellik (ILP)}{8}{subsection.2.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}Pipeline Yapısı}{9}{section.2.2}\protected@file@percent }
+\newlabel{sec:pipeline}{{2.2}{9}{Pipeline Yapısı}{section.2.2}{}}
+\newlabel{sec:pipeline@cref}{{[section][2][2]2.2}{[1][9][]9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.1}Pipeline Aşamaları}{9}{subsection.2.2.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces İşlemci pipeline aşamaları}}{9}{figure.2.1}\protected@file@percent }
+\newlabel{fig:pipeline}{{2.1}{9}{İşlemci pipeline aşamaları}{figure.2.1}{}}
+\newlabel{fig:pipeline@cref}{{[figure][1][2]2.1}{[1][9][]9}}
+\@writefile{lot}{\contentsline {table}{\numberline {2.1}{\ignorespaces Pipeline aşamaları ve genişlikleri}}{9}{table.2.1}\protected@file@percent }
+\newlabel{tab:pipeline_stages}{{2.1}{9}{Pipeline aşamaları ve genişlikleri}{table.2.1}{}}
+\newlabel{tab:pipeline_stages@cref}{{[table][1][2]2.1}{[1][9][]9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.2}In-Order vs Out-of-Order Aşamalar}{10}{subsection.2.2.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2.2}{\ignorespaces Aşamaların sıralama özellikleri}}{10}{table.2.2}\protected@file@percent }
+\newlabel{tab:ordering}{{2.2}{10}{Aşamaların sıralama özellikleri}{table.2.2}{}}
+\newlabel{tab:ordering@cref}{{[table][2][2]2.2}{[1][9][]10}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}Tomasulo Algoritması}{10}{section.2.3}\protected@file@percent }
+\newlabel{sec:tomasulo}{{2.3}{10}{Tomasulo Algoritması}{section.2.3}{}}
+\newlabel{sec:tomasulo@cref}{{[section][3][2]2.3}{[1][10][]10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.1}Temel Kavramlar}{10}{subsection.2.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Register Renaming}{10}{subsection.2.3.1}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2.1}Register renaming örneği}{10}{lstlisting.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Reservation Station}{10}{lstnumber.2.1.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Common Data Bus (CDB)}{11}{lstnumber.2.1.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.2}Tomasulo Akışı}{11}{subsection.2.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}Spekülatif Yürütme ve BRAT}{11}{section.2.4}\protected@file@percent }
+\newlabel{sec:speculative}{{2.4}{11}{Spekülatif Yürütme ve BRAT}{section.2.4}{}}
+\newlabel{sec:speculative@cref}{{[section][4][2]2.4}{[1][11][]11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.1}Dal Tahmini}{11}{subsection.2.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.2}Branch Resolution Alias Table (BRAT)}{11}{subsection.2.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.5}Kaynak Yönetimi}{12}{section.2.5}\protected@file@percent }
+\newlabel{sec:kaynak_yonetimi}{{2.5}{12}{Kaynak Yönetimi}{section.2.5}{}}
+\newlabel{sec:kaynak_yonetimi@cref}{{[section][5][2]2.5}{[1][12][]12}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.6}Modül Hiyerarşisi}{12}{section.2.6}\protected@file@percent }
+\newlabel{sec:hiyerarsi}{{2.6}{12}{Modül Hiyerarşisi}{section.2.6}{}}
+\newlabel{sec:hiyerarsi@cref}{{[section][6][2]2.6}{[1][12][]12}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.2}{\ignorespaces Üst düzey modül hiyerarşisi}}{12}{figure.2.2}\protected@file@percent }
+\newlabel{fig:hierarchy}{{2.2}{12}{Üst düzey modül hiyerarşisi}{figure.2.2}{}}
+\newlabel{fig:hierarchy@cref}{{[figure][2][2]2.2}{[1][12][]12}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.7}Veri Akışı}{12}{section.2.7}\protected@file@percent }
+\newlabel{sec:veri_akisi}{{2.7}{12}{Veri Akışı}{section.2.7}{}}
+\newlabel{sec:veri_akisi@cref}{{[section][7][2]2.7}{[1][12][]12}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.8}Kontrol Akışı}{13}{section.2.8}\protected@file@percent }
+\newlabel{sec:kontrol_akisi}{{2.8}{13}{Kontrol Akışı}{section.2.8}{}}
+\newlabel{sec:kontrol_akisi@cref}{{[section][8][2]2.8}{[1][13][]13}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.8.1}Normal Operasyon}{13}{subsection.2.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.8.2}Misprediction Recovery}{13}{subsection.2.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}Fetch Stage}{14}{chapter.3}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:fetch}{{3}{14}{Fetch Stage}{chapter.3}{}}
+\newlabel{chap:fetch@cref}{{[chapter][3][]3}{[1][14][]14}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}Genel Bakış}{14}{section.3.1}\protected@file@percent }
+\newlabel{sec:fetch_genel}{{3.1}{14}{Genel Bakış}{section.3.1}{}}
+\newlabel{sec:fetch_genel@cref}{{[section][1][3]3.1}{[1][14][]14}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.1}{\ignorespaces Fetch stage blok diyagramı}}{14}{figure.3.1}\protected@file@percent }
+\newlabel{fig:fetch_block}{{3.1}{14}{Fetch stage blok diyagramı}{figure.3.1}{}}
+\newlabel{fig:fetch_block@cref}{{[figure][1][3]3.1}{[1][14][]14}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1.1}Fetch Stage Bileşenleri}{15}{subsection.3.1.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces Fetch stage modülleri}}{15}{table.3.1}\protected@file@percent }
+\newlabel{tab:fetch_modules}{{3.1}{15}{Fetch stage modülleri}{table.3.1}{}}
+\newlabel{tab:fetch_modules@cref}{{[table][1][3]3.1}{[1][14][]15}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Multi Fetch Modülü}{15}{section.3.2}\protected@file@percent }
+\newlabel{sec:multi_fetch}{{3.2}{15}{Multi Fetch Modülü}{section.3.2}{}}
+\newlabel{sec:multi_fetch@cref}{{[section][2][3]3.2}{[1][15][]15}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}Tasarım Amacı}{15}{subsection.3.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.2}Komut Geçerlilik Mantığı}{15}{subsection.3.2.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.1}Fetch geçerlilik sinyalleri}{15}{lstlisting.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.3}Misprediction İşleme}{16}{subsection.3.2.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.2}Eager flush mantığı}{16}{lstlisting.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}Instruction Buffer}{17}{section.3.3}\protected@file@percent }
+\newlabel{sec:instruction_buffer}{{3.3}{17}{Instruction Buffer}{section.3.3}{}}
+\newlabel{sec:instruction_buffer@cref}{{[section][3][3]3.3}{[1][16][]17}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.1}Tasarım Amacı}{17}{subsection.3.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.2}Buffer Yapısı}{17}{subsection.3.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.2}{\ignorespaces Instruction buffer parametreleri}}{17}{table.3.2}\protected@file@percent }
+\newlabel{tab:ibuf_params}{{3.2}{17}{Instruction buffer parametreleri}{table.3.2}{}}
+\newlabel{tab:ibuf_params@cref}{{[table][2][3]3.2}{[1][17][]17}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.3}Backpressure Yönetimi}{18}{subsection.3.3.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.3}Backpressure mantığı}{18}{lstlisting.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.4}Forwarding Mantığı}{18}{subsection.3.3.4}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.4}Direct forwarding}{18}{lstlisting.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}PC Controller}{18}{section.3.4}\protected@file@percent }
+\newlabel{sec:pc_controller}{{3.4}{18}{PC Controller}{section.3.4}{}}
+\newlabel{sec:pc_controller@cref}{{[section][4][3]3.4}{[1][18][]18}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4.1}PC Güncelleme Senaryoları}{19}{subsection.3.4.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.3}{\ignorespaces PC güncelleme öncelikleri}}{19}{table.3.3}\protected@file@percent }
+\newlabel{tab:pc_priority}{{3.3}{19}{PC güncelleme öncelikleri}{table.3.3}{}}
+\newlabel{tab:pc_priority@cref}{{[table][3][3]3.3}{[1][18][]19}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4.2}Paralel PC Hesaplama}{19}{subsection.3.4.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.5}Paralel PC hesaplama}{19}{lstlisting.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4.3}Misprediction Recovery}{19}{subsection.3.4.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.6}PC misprediction recovery}{19}{lstlisting.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.5}Dal Tahmini}{19}{section.3.5}\protected@file@percent }
+\newlabel{sec:branch_prediction}{{3.5}{19}{Dal Tahmini}{section.3.5}{}}
+\newlabel{sec:branch_prediction@cref}{{[section][5][3]3.5}{[1][19][]19}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.1}Dal Tahmini Genel Bakış}{20}{subsection.3.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.2}Tahmin Mekanizmaları}{20}{subsection.3.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.4}{\ignorespaces Dal tahmin mekanizmaları karşılaştırması}}{20}{table.3.4}\protected@file@percent }
+\newlabel{tab:predictors}{{3.4}{20}{Dal tahmin mekanizmaları karşılaştırması}{table.3.4}{}}
+\newlabel{tab:predictors@cref}{{[table][4][3]3.4}{[1][20][]20}}
+\@writefile{toc}{\contentsline {subsubsection}{2-Bit Sayaç (Bimodal Predictor)}{20}{table.3.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3.2}{\ignorespaces 2-bit sayaç durum makinesi}}{21}{figure.3.2}\protected@file@percent }
+\newlabel{fig:2bit_fsm}{{3.2}{21}{2-bit sayaç durum makinesi}{figure.3.2}{}}
+\newlabel{fig:2bit_fsm@cref}{{[figure][2][3]3.2}{[1][20][]21}}
+\@writefile{toc}{\contentsline {subsubsection}{GShare Predictor}{21}{figure.3.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.7}GShare indeks hesaplama}{21}{lstlisting.3.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Global History Register (GHR)}{21}{lstnumber.3.7.4}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.8}GHR güncelleme}{21}{lstlisting.3.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Tournament Predictor}{22}{lstnumber.3.8.5}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.9}Tournament chooser durumları}{22}{lstlisting.3.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Chooser Güncelleme Kuralı}{22}{lstnumber.3.9.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{History Packing}{22}{lstnumber.3.9.6}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.10}Tournament history packing}{22}{lstlisting.3.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.3}JALR Predictor}{23}{subsection.3.5.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.5}{\ignorespaces JALR predictor özellikleri}}{23}{table.3.5}\protected@file@percent }
+\newlabel{tab:jalr_predictor}{{3.5}{23}{JALR predictor özellikleri}{table.3.5}{}}
+\newlabel{tab:jalr_predictor@cref}{{[table][5][3]3.5}{[1][23][]23}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.4}Return Address Stack (RAS)}{23}{subsection.3.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{RAS Operasyonları}{23}{subsection.3.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Spekülatif RAS ve Checkpoint}{23}{subsection.3.5.4}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.11}RAS checkpoint}{24}{lstlisting.3.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.5}Predictor Güncelleme Akışı}{24}{subsection.3.5.5}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.12}Predictor güncelleme ayrımı}{24}{lstlisting.3.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.6}Fetch Stage Özeti}{24}{section.3.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.6}{\ignorespaces Fetch stage özellikleri}}{24}{table.3.6}\protected@file@percent }
+\newlabel{tab:fetch_summary}{{3.6}{24}{Fetch stage özellikleri}{table.3.6}{}}
+\newlabel{tab:fetch_summary@cref}{{[table][6][3]3.6}{[1][24][]24}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Issue Stage}{25}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:issue}{{4}{25}{Issue Stage}{chapter.4}{}}
+\newlabel{chap:issue@cref}{{[chapter][4][]4}{[1][25][]25}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Genel Bakış}{25}{section.4.1}\protected@file@percent }
+\newlabel{sec:issue_genel}{{4.1}{25}{Genel Bakış}{section.4.1}{}}
+\newlabel{sec:issue_genel@cref}{{[section][1][4]4.1}{[1][25][]25}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces Issue stage blok diyagramı}}{25}{figure.4.1}\protected@file@percent }
+\newlabel{fig:issue_block}{{4.1}{25}{Issue stage blok diyagramı}{figure.4.1}{}}
+\newlabel{fig:issue_block@cref}{{[figure][1][4]4.1}{[1][25][]25}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}Issue Stage Bileşenleri}{26}{subsection.4.1.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.1}{\ignorespaces Issue stage modülleri}}{26}{table.4.1}\protected@file@percent }
+\newlabel{tab:issue_modules}{{4.1}{26}{Issue stage modülleri}{table.4.1}{}}
+\newlabel{tab:issue_modules@cref}{{[table][1][4]4.1}{[1][25][]26}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}RV32I Decoder}{26}{section.4.2}\protected@file@percent }
+\newlabel{sec:decoder}{{4.2}{26}{RV32I Decoder}{section.4.2}{}}
+\newlabel{sec:decoder@cref}{{[section][2][4]4.2}{[1][26][]26}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Decoder Çıkışları}{26}{subsection.4.2.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.2}{\ignorespaces Decoder çıkış sinyalleri}}{26}{table.4.2}\protected@file@percent }
+\newlabel{tab:decoder_outputs}{{4.2}{26}{Decoder çıkış sinyalleri}{table.4.2}{}}
+\newlabel{tab:decoder_outputs@cref}{{[table][2][4]4.2}{[1][26][]26}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}RV32I Komut Formatları}{26}{subsection.4.2.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.3}{\ignorespaces RV32I komut formatları}}{27}{table.4.3}\protected@file@percent }
+\newlabel{tab:rv32i_formats}{{4.3}{27}{RV32I komut formatları}{table.4.3}{}}
+\newlabel{tab:rv32i_formats@cref}{{[table][3][4]4.3}{[1][26][]27}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}Paralel Decode}{27}{subsection.4.2.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.1}Paralel decoder instantiation}{27}{lstlisting.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Register Alias Table}{28}{section.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Register Alias Table (RAT)}{28}{section.4.4}\protected@file@percent }
+\newlabel{sec:rat}{{4.4}{28}{Register Alias Table (RAT)}{section.4.4}{}}
+\newlabel{sec:rat@cref}{{[section][4][4]4.4}{[1][28][]28}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}Tasarım Amacı}{28}{subsection.4.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}RAT Yapısı}{29}{subsection.4.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.4}{\ignorespaces RAT parametreleri}}{29}{table.4.4}\protected@file@percent }
+\newlabel{tab:rat_params}{{4.4}{29}{RAT parametreleri}{table.4.4}{}}
+\newlabel{tab:rat_params@cref}{{[table][4][4]4.4}{[1][28][]29}}
+\@writefile{toc}{\contentsline {paragraph}{Fiziksel Register Alanı}{29}{table.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}RAT Operasyonları}{29}{subsection.4.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Kaynak Register Lookup}{29}{subsection.4.4.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.2}Kaynak register lookup}{29}{lstlisting.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Hedef Register Allocation}{30}{lstnumber.-2.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.3}Hedef register allocation}{30}{lstlisting.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{RAT Güncelleme}{30}{lstnumber.4.3.19}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.4}RAT güncelleme}{30}{lstlisting.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Commit İşleme}{31}{lstnumber.4.4.12}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.5}Commit işleme}{31}{lstlisting.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.4}3-Way Paralel Renaming}{31}{subsection.4.4.4}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.6}3-way bağımlılık kontrolü}{31}{lstlisting.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.5}Kaynak Yönetimi}{32}{subsection.4.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.6}3-Port Circular Buffer ile Kaynak Allocation}{32}{subsection.4.4.6}\protected@file@percent }
+\newlabel{sec:circular_buffer}{{4.4.6}{32}{3-Port Circular Buffer ile Kaynak Allocation}{subsection.4.4.6}{}}
+\newlabel{sec:circular_buffer@cref}{{[subsection][6][4,4]4.4.6}{[1][32][]32}}
+\@writefile{toc}{\contentsline {subsubsection}{Problem: 3-Way Paralel Allocation}{32}{subsection.4.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Çözüm: Index-as-Value Circular Buffer}{33}{subsection.4.4.6}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.7}Index-as-value circular buffer yapısı}{33}{lstlisting.4.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Temel Fikir}{33}{lstnumber.4.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Allocation (Okuma)}{33}{lstnumber.4.7.4}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.8}3-port paralel allocation}{33}{lstlisting.4.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Deallocation (Yazma)}{33}{lstnumber.4.8.10}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.9}3-port paralel deallocation}{33}{lstlisting.4.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Free List Yönetimi (ROB Allocation)}{34}{lstnumber.4.9.5}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.10}Free address buffer instantiation}{34}{lstlisting.4.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{ROB Allocation neden RAT'ta?}{34}{lstnumber.4.10.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{LSQ Index Allocation}{35}{lstnumber.4.10.19}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.11}LSQ address buffer instantiation}{35}{lstlisting.4.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Misprediction Recovery}{35}{lstnumber.4.11.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{1. Pointer Reset (\texttt  {set\_read\_ptr\_en})}{35}{lstnumber.4.11.13}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.12}Misprediction pointer reset}{35}{lstlisting.4.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{2. Redo Last Allocation (\texttt  {redo\_last\_alloc})}{36}{lstnumber.4.12.9}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.13}Redo last allocation}{36}{lstlisting.4.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Buffer Doluluk Kontrolü}{36}{lstnumber.4.13.5}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.14}Rename ready sinyalleri}{36}{lstlisting.4.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Circular Buffer Özet Tablosu}{37}{lstnumber.4.14.9}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.5}{\ignorespaces Circular buffer özellikleri}}{37}{table.4.5}\protected@file@percent }
+\newlabel{tab:circular_buffer}{{4.5}{37}{Circular buffer özellikleri}{table.4.5}{}}
+\newlabel{tab:circular_buffer@cref}{{[table][5][4]4.5}{[1][36][]37}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.7}Branch Resolution Alias Table (BRAT)}{37}{subsection.4.4.7}\protected@file@percent }
+\newlabel{sec:brat}{{4.4.7}{37}{Branch Resolution Alias Table (BRAT)}{subsection.4.4.7}{}}
+\newlabel{sec:brat@cref}{{[subsection][7][4,4]4.4.7}{[1][37][]37}}
+\@writefile{toc}{\contentsline {subsubsection}{Problem: Geleneksel Misprediction Recovery}{37}{subsection.4.4.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces Geleneksel recovery: Dal ROB head'e ulaşmalı}}{37}{figure.4.2}\protected@file@percent }
+\newlabel{fig:traditional_recovery}{{4.2}{37}{Geleneksel recovery: Dal ROB head'e ulaşmalı}{figure.4.2}{}}
+\newlabel{fig:traditional_recovery@cref}{{[figure][2][4]4.2}{[1][37][]37}}
+\@writefile{toc}{\contentsline {subsubsection}{Çözüm: BRAT ile Eager Recovery}{38}{figure.4.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces BRAT: Snapshot tabanlı anında recovery}}{38}{figure.4.3}\protected@file@percent }
+\newlabel{fig:brat_recovery}{{4.3}{38}{BRAT: Snapshot tabanlı anında recovery}{figure.4.3}{}}
+\newlabel{fig:brat_recovery@cref}{{[figure][3][4]4.3}{[1][37][]38}}
+\@writefile{toc}{\contentsline {subsubsection}{BRAT Entry Yapısı}{38}{figure.4.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.6}{\ignorespaces BRAT entry alanları}}{38}{table.4.6}\protected@file@percent }
+\newlabel{tab:brat_entry}{{4.6}{38}{BRAT entry alanları}{table.4.6}{}}
+\newlabel{tab:brat_entry@cref}{{[table][6][4]4.6}{[1][38][]38}}
+\@writefile{toc}{\contentsline {subsubsection}{BRAT Operasyonları}{39}{table.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{1. Push (Dal Issue Edildiğinde)}{39}{table.4.6}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.15}BRAT push mantığı}{39}{lstlisting.4.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{2. Execute Result Yazma}{40}{lstnumber.4.15.10}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.16}Execute result matching}{40}{lstlisting.4.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{3. In-Order Resolution Output}{40}{lstnumber.4.16.5}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.17}In-order resolution çıkışı}{40}{lstlisting.4.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{4. Combinational Bypass}{40}{lstnumber.4.17.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.18}Combinational bypass}{40}{lstlisting.4.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{5. Commit Update}{41}{Item.43}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.19}Commit update mantığı}{41}{lstlisting.4.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{6. RAT Restore}{42}{lstnumber.4.19.6}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.20}RAT restore}{42}{lstlisting.4.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{RAS Checkpoint/Restore}{42}{lstnumber.4.20.13}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.21}RAS checkpoint}{42}{lstlisting.4.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{BRAT Özet Tablosu}{43}{lstnumber.4.21.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.7}{\ignorespaces BRAT özellikleri}}{43}{table.4.7}\protected@file@percent }
+\newlabel{tab:brat_summary}{{4.7}{43}{BRAT özellikleri}{table.4.7}{}}
+\newlabel{tab:brat_summary@cref}{{[table][7][4]4.7}{[1][42][]43}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.8}RAT Özet Tablosu}{43}{subsection.4.4.8}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.8}{\ignorespaces RAT özellikleri}}{43}{table.4.8}\protected@file@percent }
+\newlabel{tab:rat_summary}{{4.8}{43}{RAT özellikleri}{table.4.8}{}}
+\newlabel{tab:rat_summary@cref}{{[table][8][4]4.8}{[1][43][]43}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Issue Stage Akışı}{43}{section.4.5}\protected@file@percent }
+\newlabel{sec:issue_flow}{{4.5}{43}{Issue Stage Akışı}{section.4.5}{}}
+\newlabel{sec:issue_flow@cref}{{[section][5][4]4.5}{[1][43][]43}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.1}Normal Operasyon}{43}{subsection.4.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.2}Misprediction Durumu}{44}{subsection.4.5.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.22}Internal flush sinyali}{44}{lstlisting.4.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.6}Dispatch Interface}{44}{section.4.6}\protected@file@percent }
+\newlabel{sec:dispatch_interface}{{4.6}{44}{Dispatch Interface}{section.4.6}{}}
+\newlabel{sec:dispatch_interface@cref}{{[section][6][4]4.6}{[1][44][]44}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.23}Issue-to-Dispatch interface}{44}{lstlisting.4.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.7}Issue Stage Özeti}{45}{section.4.7}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.9}{\ignorespaces Issue stage özellikleri}}{45}{table.4.9}\protected@file@percent }
+\newlabel{tab:issue_summary}{{4.9}{45}{Issue stage özellikleri}{table.4.9}{}}
+\newlabel{tab:issue_summary@cref}{{[table][9][4]4.9}{[1][45][]45}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Dispatch Stage}{46}{chapter.5}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:dispatch}{{5}{46}{Dispatch Stage}{chapter.5}{}}
+\newlabel{chap:dispatch@cref}{{[chapter][5][]5}{[1][46][]46}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Genel Bakış}{46}{section.5.1}\protected@file@percent }
+\newlabel{sec:dispatch_genel}{{5.1}{46}{Genel Bakış}{section.5.1}{}}
+\newlabel{sec:dispatch_genel@cref}{{[section][1][5]5.1}{[1][46][]46}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.1}{\ignorespaces Dispatch stage blok diyagramı}}{46}{figure.5.1}\protected@file@percent }
+\newlabel{fig:dispatch_block}{{5.1}{46}{Dispatch stage blok diyagramı}{figure.5.1}{}}
+\newlabel{fig:dispatch_block@cref}{{[figure][1][5]5.1}{[1][46][]46}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}Dispatch Stage Bileşenleri}{47}{subsection.5.1.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5.1}{\ignorespaces Dispatch stage modülleri}}{47}{table.5.1}\protected@file@percent }
+\newlabel{tab:dispatch_modules}{{5.1}{47}{Dispatch stage modülleri}{table.5.1}{}}
+\newlabel{tab:dispatch_modules@cref}{{[table][1][5]5.1}{[1][46][]47}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}Fiziksel Register Alanı}{47}{section.5.2}\protected@file@percent }
+\newlabel{sec:phys_reg_space}{{5.2}{47}{Fiziksel Register Alanı}{section.5.2}{}}
+\newlabel{sec:phys_reg_space@cref}{{[section][2][5]5.2}{[1][47][]47}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.2}{\ignorespaces Fiziksel register alanı}}{47}{table.5.2}\protected@file@percent }
+\newlabel{tab:phys_reg_space}{{5.2}{47}{Fiziksel register alanı}{table.5.2}{}}
+\newlabel{tab:phys_reg_space@cref}{{[table][2][5]5.2}{[1][47][]47}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.1}Fiziksel adres decode}{47}{lstlisting.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}Reservation Station}{48}{section.5.3}\protected@file@percent }
+\newlabel{sec:reservation_station}{{5.3}{48}{Reservation Station}{section.5.3}{}}
+\newlabel{sec:reservation_station@cref}{{[section][3][5]5.3}{[1][48][]48}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.1}RS Yapısı}{48}{subsection.5.3.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5.3}{\ignorespaces Reservation Station entry alanları}}{48}{table.5.3}\protected@file@percent }
+\newlabel{tab:rs_entry}{{5.3}{48}{Reservation Station entry alanları}{table.5.3}{}}
+\newlabel{tab:rs_entry@cref}{{[table][3][5]5.3}{[1][48][]48}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.2}Tag Sistemi}{48}{subsection.5.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5.4}{\ignorespaces Tag değerleri ve anlamları}}{49}{table.5.4}\protected@file@percent }
+\newlabel{tab:tag_values}{{5.4}{49}{Tag değerleri ve anlamları}{table.5.4}{}}
+\newlabel{tab:tag_values@cref}{{[table][4][5]5.4}{[1][48][]49}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.3}CDB İzleme ve Operand Resolution}{49}{subsection.5.3.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.2}CDB izleme mantığı}{49}{lstlisting.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.4}Operand Seçimi}{50}{subsection.5.3.4}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.3}Operand veri seçimi}{50}{lstlisting.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.5}Issue Koşulu}{50}{subsection.5.3.5}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.4}Issue koşulu}{50}{lstlisting.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3.6}Eager Misprediction Flush}{51}{subsection.5.3.6}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.5}RS flush mantığı}{51}{lstlisting.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}Reorder Buffer (ROB)}{51}{section.5.4}\protected@file@percent }
+\newlabel{sec:rob}{{5.4}{51}{Reorder Buffer (ROB)}{section.5.4}{}}
+\newlabel{sec:rob@cref}{{[section][4][5]5.4}{[1][51][]51}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.1}ROB Entry Yapısı}{51}{subsection.5.4.1}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.6}ROB entry yapısı}{51}{lstlisting.5.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.2}ROB Portları}{52}{subsection.5.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5.5}{\ignorespaces ROB port sayıları}}{52}{table.5.5}\protected@file@percent }
+\newlabel{tab:rob_ports}{{5.5}{52}{ROB port sayıları}{table.5.5}{}}
+\newlabel{tab:rob_ports@cref}{{[table][5][5]5.5}{[1][52][]52}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.3}Allocation}{52}{subsection.5.4.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.7}ROB allocation}{52}{lstlisting.5.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.4}CDB Sonuç Yazma}{52}{subsection.5.4.4}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.8}CDB sonuç yazma}{52}{lstlisting.5.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.5}In-Order Commit}{53}{subsection.5.4.5}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.9}Commit mantığı}{53}{lstlisting.5.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.6}Store Permission}{53}{subsection.5.4.6}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.10}Store permission}{53}{lstlisting.5.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.5}Common Data Bus (CDB)}{54}{section.5.5}\protected@file@percent }
+\newlabel{sec:cdb}{{5.5}{54}{Common Data Bus (CDB)}{section.5.5}{}}
+\newlabel{sec:cdb@cref}{{[section][5][5]5.5}{[1][53][]54}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5.1}CDB Kanalları}{54}{subsection.5.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5.6}{\ignorespaces CDB kanalları}}{54}{table.5.6}\protected@file@percent }
+\newlabel{tab:cdb_channels}{{5.6}{54}{CDB kanalları}{table.5.6}{}}
+\newlabel{tab:cdb_channels@cref}{{[table][6][5]5.6}{[1][54][]54}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5.2}CDB Sinyalleri}{54}{subsection.5.5.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5.11}CDB interface}{54}{lstlisting.5.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.6}Dispatch Stage Özeti}{55}{section.5.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5.7}{\ignorespaces Dispatch stage özellikleri}}{55}{table.5.7}\protected@file@percent }
+\newlabel{tab:dispatch_summary}{{5.7}{55}{Dispatch stage özellikleri}{table.5.7}{}}
+\newlabel{tab:dispatch_summary@cref}{{[table][7][5]5.7}{[1][54][]55}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Execute Stage}{56}{chapter.6}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:execute}{{6}{56}{Execute Stage}{chapter.6}{}}
+\newlabel{chap:execute@cref}{{[chapter][6][]6}{[1][56][]56}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Genel Bakış}{56}{section.6.1}\protected@file@percent }
+\newlabel{sec:execute_genel}{{6.1}{56}{Genel Bakış}{section.6.1}{}}
+\newlabel{sec:execute_genel@cref}{{[section][1][6]6.1}{[1][56][]56}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.1}{\ignorespaces Execute stage blok diyagramı}}{56}{figure.6.1}\protected@file@percent }
+\newlabel{fig:execute_block}{{6.1}{56}{Execute stage blok diyagramı}{figure.6.1}{}}
+\newlabel{fig:execute_block@cref}{{[figure][1][6]6.1}{[1][56][]56}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.1}Execute Stage Bileşenleri}{57}{subsection.6.1.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6.1}{\ignorespaces Execute stage modülleri}}{57}{table.6.1}\protected@file@percent }
+\newlabel{tab:execute_modules}{{6.1}{57}{Execute stage modülleri}{table.6.1}{}}
+\newlabel{tab:execute_modules@cref}{{[table][1][6]6.1}{[1][56][]57}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}Functional Unit Yapısı}{57}{section.6.2}\protected@file@percent }
+\newlabel{sec:fu_structure}{{6.2}{57}{Functional Unit Yapısı}{section.6.2}{}}
+\newlabel{sec:fu_structure@cref}{{[section][2][6]6.2}{[1][57][]57}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.1}FU sinyal tanımları}{57}{lstlisting.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2.1}Operand Bağlantısı}{57}{subsection.6.2.1}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.2}RS'den FU'ya operand aktarımı}{57}{lstlisting.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.3}ALU Operasyonları}{58}{section.6.3}\protected@file@percent }
+\newlabel{sec:alu_ops}{{6.3}{58}{ALU Operasyonları}{section.6.3}{}}
+\newlabel{sec:alu_ops@cref}{{[section][3][6]6.3}{[1][57][]58}}
+\@writefile{lot}{\contentsline {table}{\numberline {6.2}{\ignorespaces ALU fonksiyon seçimi}}{58}{table.6.2}\protected@file@percent }
+\newlabel{tab:alu_func}{{6.2}{58}{ALU fonksiyon seçimi}{table.6.2}{}}
+\newlabel{tab:alu_func@cref}{{[table][2][6]6.2}{[1][57][]58}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3.1}ALU Yapısı}{58}{subsection.6.3.1}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.3}ALU iç yapısı}{58}{lstlisting.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.4}Dal Çözümleme}{59}{section.6.4}\protected@file@percent }
+\newlabel{sec:branch_resolution}{{6.4}{59}{Dal Çözümleme}{section.6.4}{}}
+\newlabel{sec:branch_resolution@cref}{{[section][4][6]6.4}{[1][59][]59}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4.1}Branch Condition Evaluation}{59}{subsection.6.4.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6.3}{\ignorespaces Branch koşulları}}{59}{table.6.3}\protected@file@percent }
+\newlabel{tab:branch_conditions}{{6.3}{59}{Branch koşulları}{table.6.3}{}}
+\newlabel{tab:branch_conditions@cref}{{[table][3][6]6.3}{[1][59][]59}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4.2}Misprediction Tespiti}{59}{subsection.6.4.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.4}Misprediction detection}{59}{lstlisting.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4.3}Correct PC Hesaplama}{60}{subsection.6.4.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.5}Correct PC calculation}{60}{lstlisting.6.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.5}Sonuç Seçimi}{60}{section.6.5}\protected@file@percent }
+\newlabel{sec:result_select}{{6.5}{60}{Sonuç Seçimi}{section.6.5}{}}
+\newlabel{sec:result_select@cref}{{[section][5][6]6.5}{[1][60][]60}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.6}Result selection}{60}{lstlisting.6.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6.4}{\ignorespaces Komut tipine göre sonuç}}{61}{table.6.4}\protected@file@percent }
+\newlabel{tab:result_by_type}{{6.4}{61}{Komut tipine göre sonuç}{table.6.4}{}}
+\newlabel{tab:result_by_type@cref}{{[table][4][6]6.4}{[1][60][]61}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.6}Memory Address Calculation}{61}{section.6.6}\protected@file@percent }
+\newlabel{sec:mem_addr_calc}{{6.6}{61}{Memory Address Calculation}{section.6.6}{}}
+\newlabel{sec:mem_addr_calc@cref}{{[section][6][6]6.6}{[1][61][]61}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.7}Memory address calculation flag}{61}{lstlisting.6.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.7}Branch Predictor Update}{61}{section.6.7}\protected@file@percent }
+\newlabel{sec:predictor_update}{{6.7}{61}{Branch Predictor Update}{section.6.7}{}}
+\newlabel{sec:predictor_update@cref}{{[section][7][6]6.7}{[1][61][]61}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.8}Predictor update sinyalleri}{61}{lstlisting.6.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.8}JALR Handling}{62}{section.6.8}\protected@file@percent }
+\newlabel{sec:jalr_handling}{{6.8}{62}{JALR Handling}{section.6.8}{}}
+\newlabel{sec:jalr_handling@cref}{{[section][8][6]6.8}{[1][61][]62}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.9}JALR detection}{62}{lstlisting.6.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.9}CDB Broadcast}{62}{section.6.9}\protected@file@percent }
+\newlabel{sec:cdb_broadcast}{{6.9}{62}{CDB Broadcast}{section.6.9}{}}
+\newlabel{sec:cdb_broadcast@cref}{{[section][9][6]6.9}{[1][62][]62}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.10}CDB output assignment}{62}{lstlisting.6.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.10}Execute Stage Özeti}{62}{section.6.10}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6.5}{\ignorespaces Execute stage özellikleri}}{62}{table.6.5}\protected@file@percent }
+\newlabel{tab:execute_summary}{{6.5}{62}{Execute stage özellikleri}{table.6.5}{}}
+\newlabel{tab:execute_summary@cref}{{[table][5][6]6.5}{[1][62][]62}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Memory Stage ve Load Store Queue}{63}{chapter.7}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:memory}{{7}{63}{Memory Stage ve Load Store Queue}{chapter.7}{}}
+\newlabel{chap:memory@cref}{{[chapter][7][]7}{[1][63][]63}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.1}Genel Bakış}{63}{section.7.1}\protected@file@percent }
+\newlabel{sec:memory_genel}{{7.1}{63}{Genel Bakış}{section.7.1}{}}
+\newlabel{sec:memory_genel@cref}{{[section][1][7]7.1}{[1][63][]63}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.1}{\ignorespaces Memory stage blok diyagramı}}{63}{figure.7.1}\protected@file@percent }
+\newlabel{fig:memory_block}{{7.1}{63}{Memory stage blok diyagramı}{figure.7.1}{}}
+\newlabel{fig:memory_block@cref}{{[figure][1][7]7.1}{[1][63][]63}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.2}LSQ Tasarım Felsefesi}{63}{section.7.2}\protected@file@percent }
+\newlabel{sec:lsq_philosophy}{{7.2}{63}{LSQ Tasarım Felsefesi}{section.7.2}{}}
+\newlabel{sec:lsq_philosophy@cref}{{[section][2][7]7.2}{[1][63][]63}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.3}LSQ Entry Yapısı}{64}{section.7.3}\protected@file@percent }
+\newlabel{sec:lsq_entry}{{7.3}{64}{LSQ Entry Yapısı}{section.7.3}{}}
+\newlabel{sec:lsq_entry@cref}{{[section][3][7]7.3}{[1][64][]64}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.1}LSQ entry yapısı}{64}{lstlisting.7.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7.1}{\ignorespaces LSQ entry alanları}}{65}{table.7.1}\protected@file@percent }
+\newlabel{tab:lsq_entry}{{7.1}{65}{LSQ entry alanları}{table.7.1}{}}
+\newlabel{tab:lsq_entry@cref}{{[table][1][7]7.1}{[1][64][]65}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.4}3-Head Pointer Mimarisi}{65}{section.7.4}\protected@file@percent }
+\newlabel{sec:lsq_3head}{{7.4}{65}{3-Head Pointer Mimarisi}{section.7.4}{}}
+\newlabel{sec:lsq_3head@cref}{{[section][4][7]7.4}{[1][65][]65}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.2}LSQ pointer yapısı}{65}{lstlisting.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4.1}Head Pointer Sliding Window}{66}{subsection.7.4.1}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.3}Head pointer update mantığı}{66}{lstlisting.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.5}LSQ Operasyonları}{66}{section.7.5}\protected@file@percent }
+\newlabel{sec:lsq_ops}{{7.5}{66}{LSQ Operasyonları}{section.7.5}{}}
+\newlabel{sec:lsq_ops@cref}{{[section][5][7]7.5}{[1][66][]66}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5.1}Allocation}{66}{subsection.7.5.1}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.4}LSQ allocation}{66}{lstlisting.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5.2}Address Update (CDB'den)}{67}{subsection.7.5.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.5}CDB address update}{67}{lstlisting.7.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5.3}Store Data Update}{67}{subsection.7.5.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.6}Store data CDB update}{67}{lstlisting.7.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5.4}Memory Issue}{68}{subsection.7.5.4}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.7}Memory issue logic}{68}{lstlisting.7.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5.5}Memory Response}{69}{subsection.7.5.5}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.8}Memory response handling}{69}{lstlisting.7.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5.6}CDB Broadcast (Load)}{69}{subsection.7.5.6}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.9}Load result CDB broadcast}{69}{lstlisting.7.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.6}Store Commit}{69}{section.7.6}\protected@file@percent }
+\newlabel{sec:store_commit}{{7.6}{69}{Store Commit}{section.7.6}{}}
+\newlabel{sec:store_commit@cref}{{[section][6][7]7.6}{[1][69][]69}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.10}Store permission from ROB}{70}{lstlisting.7.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.7}Eager Misprediction Flush}{70}{section.7.7}\protected@file@percent }
+\newlabel{sec:lsq_flush}{{7.7}{70}{Eager Misprediction Flush}{section.7.7}{}}
+\newlabel{sec:lsq_flush@cref}{{[section][7][7]7.7}{[1][70][]70}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.11}LSQ flush logic}{70}{lstlisting.7.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.8}Memory Interface}{70}{section.7.8}\protected@file@percent }
+\newlabel{sec:mem_interface}{{7.8}{70}{Memory Interface}{section.7.8}{}}
+\newlabel{sec:mem_interface@cref}{{[section][8][7]7.8}{[1][70][]70}}
+\@writefile{lot}{\contentsline {table}{\numberline {7.2}{\ignorespaces Memory interface sinyalleri}}{71}{table.7.2}\protected@file@percent }
+\newlabel{tab:mem_interface}{{7.2}{71}{Memory interface sinyalleri}{table.7.2}{}}
+\newlabel{tab:mem_interface@cref}{{[table][2][7]7.2}{[1][70][]71}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.8.1}Byte Enable Hesaplama}{71}{subsection.7.8.1}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.12}Byte enable calculation}{71}{lstlisting.7.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.8.2}Load Data İşleme}{71}{subsection.7.8.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.13}Load data processing}{71}{lstlisting.7.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.9}Store-to-Load Forwarding}{72}{section.7.9}\protected@file@percent }
+\newlabel{sec:stl_forward}{{7.9}{72}{Store-to-Load Forwarding}{section.7.9}{}}
+\newlabel{sec:stl_forward@cref}{{[section][9][7]7.9}{[1][72][]72}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.9.1}Forwarding Koşulları}{72}{subsection.7.9.1}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.14}Forwarding koşul kontrolü}{72}{lstlisting.7.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.9.2}Wait Koşulları}{73}{subsection.7.9.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.15}Load wait mantığı}{73}{lstlisting.7.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.9.3}Forwarding Data Path}{73}{subsection.7.9.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.16}Forwarding veri yolu}{73}{lstlisting.7.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.10}Single Pipe Mode}{74}{section.7.10}\protected@file@percent }
+\newlabel{sec:single_pipe}{{7.10}{74}{Single Pipe Mode}{section.7.10}{}}
+\newlabel{sec:single_pipe@cref}{{[section][10][7]7.10}{[1][73][]74}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7.17}Single pipe mode}{74}{lstlisting.7.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.11}LSQ Özeti}{74}{section.7.11}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7.3}{\ignorespaces LSQ özellikleri}}{74}{table.7.3}\protected@file@percent }
+\newlabel{tab:lsq_summary2}{{7.3}{74}{LSQ özellikleri}{table.7.3}{}}
+\newlabel{tab:lsq_summary2@cref}{{[table][3][7]7.3}{[1][74][]74}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {8}Performans Analizi}{75}{chapter.8}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:performans}{{8}{75}{Performans Analizi}{chapter.8}{}}
+\newlabel{chap:performans@cref}{{[chapter][8][]8}{[1][75][]75}}
+\@writefile{toc}{\contentsline {section}{\numberline {8.1}Performans Metrikleri}{75}{section.8.1}\protected@file@percent }
+\newlabel{sec:metrics}{{8.1}{75}{Performans Metrikleri}{section.8.1}{}}
+\newlabel{sec:metrics@cref}{{[section][1][8]8.1}{[1][75][]75}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1.1}Instructions Per Cycle (IPC)}{75}{subsection.8.1.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8.1}{\ignorespaces Teorik vs gerçek IPC}}{75}{table.8.1}\protected@file@percent }
+\newlabel{tab:ipc}{{8.1}{75}{Teorik vs gerçek IPC}{table.8.1}{}}
+\newlabel{tab:ipc@cref}{{[table][1][8]8.1}{[1][75][]75}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1.2}Speedup}{75}{subsection.8.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8.2}Pipeline Stall Analizi}{76}{section.8.2}\protected@file@percent }
+\newlabel{sec:stall_analysis}{{8.2}{76}{Pipeline Stall Analizi}{section.8.2}{}}
+\newlabel{sec:stall_analysis@cref}{{[section][2][8]8.2}{[1][76][]76}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2.1}Stall Kaynakları}{76}{subsection.8.2.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8.2}{\ignorespaces Stall kaynakları ve etkileri}}{76}{table.8.2}\protected@file@percent }
+\newlabel{tab:stall_sources}{{8.2}{76}{Stall kaynakları ve etkileri}{table.8.2}{}}
+\newlabel{tab:stall_sources@cref}{{[table][2][8]8.2}{[1][76][]76}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2.2}Occupancy Analizi}{76}{subsection.8.2.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {8.1}Occupancy hesaplama}{76}{lstlisting.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8.3}Branch Prediction Performansı}{77}{section.8.3}\protected@file@percent }
+\newlabel{sec:branch_perf}{{8.3}{77}{Branch Prediction Performansı}{section.8.3}{}}
+\newlabel{sec:branch_perf@cref}{{[section][3][8]8.3}{[1][76][]77}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3.1}Misprediction Rate}{77}{subsection.8.3.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8.3}{\ignorespaces Predictor karşılaştırması}}{77}{table.8.3}\protected@file@percent }
+\newlabel{tab:predictor_comparison}{{8.3}{77}{Predictor karşılaştırması}{table.8.3}{}}
+\newlabel{tab:predictor_comparison@cref}{{[table][3][8]8.3}{[1][77][]77}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3.2}Misprediction Penalty}{77}{subsection.8.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3.3}Misprediction Etkisi}{77}{subsection.8.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8.4}Memory Performansı}{77}{section.8.4}\protected@file@percent }
+\newlabel{sec:memory_perf}{{8.4}{77}{Memory Performansı}{section.8.4}{}}
+\newlabel{sec:memory_perf@cref}{{[section][4][8]8.4}{[1][77][]77}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4.1}Memory Access Pattern}{77}{subsection.8.4.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8.4}{\ignorespaces Memory access karakteristikleri}}{77}{table.8.4}\protected@file@percent }
+\newlabel{tab:memory_chars}{{8.4}{77}{Memory access karakteristikleri}{table.8.4}{}}
+\newlabel{tab:memory_chars@cref}{{[table][4][8]8.4}{[1][77][]77}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4.2}LSQ Performans Etkisi}{78}{subsection.8.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8.5}Kaynak Kullanımı}{78}{section.8.5}\protected@file@percent }
+\newlabel{sec:resource_util}{{8.5}{78}{Kaynak Kullanımı}{section.8.5}{}}
+\newlabel{sec:resource_util@cref}{{[section][5][8]8.5}{[1][78][]78}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5.1}Kritik Kaynaklar}{78}{subsection.8.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8.5}{\ignorespaces Kaynak boyutları ve kullanım}}{78}{table.8.5}\protected@file@percent }
+\newlabel{tab:resource_sizes}{{8.5}{78}{Kaynak boyutları ve kullanım}{table.8.5}{}}
+\newlabel{tab:resource_sizes@cref}{{[table][5][8]8.5}{[1][78][]78}}
+\@writefile{toc}{\contentsline {section}{\numberline {8.6}Benchmark Sonuçları}{79}{section.8.6}\protected@file@percent }
+\newlabel{sec:benchmarks}{{8.6}{79}{Benchmark Sonuçları}{section.8.6}{}}
+\newlabel{sec:benchmarks@cref}{{[section][6][8]8.6}{[1][78][]79}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.6.1}Test Programları}{79}{subsection.8.6.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8.6}{\ignorespaces Benchmark karakteristikleri}}{79}{table.8.6}\protected@file@percent }
+\newlabel{tab:benchmarks}{{8.6}{79}{Benchmark karakteristikleri}{table.8.6}{}}
+\newlabel{tab:benchmarks@cref}{{[table][6][8]8.6}{[1][78][]79}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.6.2}Speedup Analizi}{79}{subsection.8.6.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8.7}{\ignorespaces Benchmark speedup sonuçları}}{79}{table.8.7}\protected@file@percent }
+\newlabel{fig:speedup_results}{{8.7}{79}{Benchmark speedup sonuçları}{table.8.7}{}}
+\newlabel{fig:speedup_results@cref}{{[table][7][8]8.7}{[1][79][]79}}
+\@writefile{toc}{\contentsline {section}{\numberline {8.7}Performans Optimizasyon Önerileri}{79}{section.8.7}\protected@file@percent }
+\newlabel{sec:optimization}{{8.7}{79}{Performans Optimizasyon Önerileri}{section.8.7}{}}
+\newlabel{sec:optimization@cref}{{[section][7][8]8.7}{[1][79][]79}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.7.1}Kısa Vadeli İyileştirmeler}{79}{subsection.8.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.7.2}Uzun Vadeli İyileştirmeler}{79}{subsection.8.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8.8}Performans Özeti}{80}{section.8.8}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8.8}{\ignorespaces Performans özeti}}{80}{table.8.8}\protected@file@percent }
+\newlabel{tab:perf_summary}{{8.8}{80}{Performans özeti}{table.8.8}{}}
+\newlabel{tab:perf_summary@cref}{{[table][8][8]8.8}{[1][80][]80}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {9}Doğrulama ve Test}{81}{chapter.9}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:dogrulama}{{9}{81}{Doğrulama ve Test}{chapter.9}{}}
+\newlabel{chap:dogrulama@cref}{{[chapter][9][]9}{[1][81][]81}}
+\@writefile{toc}{\contentsline {section}{\numberline {9.1}Doğrulama Metodolojisi}{81}{section.9.1}\protected@file@percent }
+\newlabel{sec:verification_methodology}{{9.1}{81}{Doğrulama Metodolojisi}{section.9.1}{}}
+\newlabel{sec:verification_methodology@cref}{{[section][1][9]9.1}{[1][81][]81}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.1}Doğrulama Seviyeleri}{81}{subsection.9.1.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9.1}{\ignorespaces Doğrulama seviyeleri}}{81}{table.9.1}\protected@file@percent }
+\newlabel{tab:verification_levels}{{9.1}{81}{Doğrulama seviyeleri}{table.9.1}{}}
+\newlabel{tab:verification_levels@cref}{{[table][1][9]9.1}{[1][81][]81}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.2}Test Ortamı}{81}{subsection.9.1.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {9.1}Test bench yapısı}{81}{lstlisting.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9.2}Unit Test}{82}{section.9.2}\protected@file@percent }
+\newlabel{sec:unit_test}{{9.2}{82}{Unit Test}{section.9.2}{}}
+\newlabel{sec:unit_test@cref}{{[section][2][9]9.2}{[1][82][]82}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2.1}RAT Unit Test}{82}{subsection.9.2.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9.2}{\ignorespaces RAT test senaryoları}}{82}{table.9.2}\protected@file@percent }
+\newlabel{tab:rat_tests}{{9.2}{82}{RAT test senaryoları}{table.9.2}{}}
+\newlabel{tab:rat_tests@cref}{{[table][2][9]9.2}{[1][82][]82}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {9.2}RAT test örneği}{82}{lstlisting.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2.2}BRAT Unit Test}{83}{subsection.9.2.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9.3}{\ignorespaces BRAT test senaryoları}}{83}{table.9.3}\protected@file@percent }
+\newlabel{tab:brat_tests}{{9.3}{83}{BRAT test senaryoları}{table.9.3}{}}
+\newlabel{tab:brat_tests@cref}{{[table][3][9]9.3}{[1][83][]83}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2.3}Reservation Station Test}{83}{subsection.9.2.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9.4}{\ignorespaces RS test senaryoları}}{83}{table.9.4}\protected@file@percent }
+\newlabel{tab:rs_tests}{{9.4}{83}{RS test senaryoları}{table.9.4}{}}
+\newlabel{tab:rs_tests@cref}{{[table][4][9]9.4}{[1][83][]83}}
+\@writefile{toc}{\contentsline {section}{\numberline {9.3}Integration Test}{83}{section.9.3}\protected@file@percent }
+\newlabel{sec:integration_test}{{9.3}{83}{Integration Test}{section.9.3}{}}
+\newlabel{sec:integration_test@cref}{{[section][3][9]9.3}{[1][83][]83}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3.1}Pipeline Integration}{83}{subsection.9.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3.2}Hazard Integration}{84}{subsection.9.3.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {9.3}RAW hazard test}{84}{lstlisting.9.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9.4}System Test}{84}{section.9.4}\protected@file@percent }
+\newlabel{sec:system_test}{{9.4}{84}{System Test}{section.9.4}{}}
+\newlabel{sec:system_test@cref}{{[section][4][9]9.4}{[1][84][]84}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.4.1}RISC-V Compliance Test}{84}{subsection.9.4.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9.5}{\ignorespaces RISC-V test kategorileri}}{84}{table.9.5}\protected@file@percent }
+\newlabel{tab:riscv_tests}{{9.5}{84}{RISC-V test kategorileri}{table.9.5}{}}
+\newlabel{tab:riscv_tests@cref}{{[table][5][9]9.5}{[1][84][]84}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.4.2}Benchmark Testleri}{84}{subsection.9.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9.6}{\ignorespaces Benchmark test sonuçları}}{84}{table.9.6}\protected@file@percent }
+\newlabel{tab:benchmark_tests}{{9.6}{84}{Benchmark test sonuçları}{table.9.6}{}}
+\newlabel{tab:benchmark_tests@cref}{{[table][6][9]9.6}{[1][84][]84}}
+\@writefile{toc}{\contentsline {section}{\numberline {9.5}Misprediction Test}{84}{section.9.5}\protected@file@percent }
+\newlabel{sec:mispred_test}{{9.5}{84}{Misprediction Test}{section.9.5}{}}
+\newlabel{sec:mispred_test@cref}{{[section][5][9]9.5}{[1][84][]84}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {9.4}Misprediction test}{84}{lstlisting.9.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9.6}Stress Test}{85}{section.9.6}\protected@file@percent }
+\newlabel{sec:stress_test}{{9.6}{85}{Stress Test}{section.9.6}{}}
+\newlabel{sec:stress_test@cref}{{[section][6][9]9.6}{[1][85][]85}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.6.1}Resource Exhaustion}{85}{subsection.9.6.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9.7}{\ignorespaces Resource exhaustion testleri}}{85}{table.9.7}\protected@file@percent }
+\newlabel{tab:stress_tests}{{9.7}{85}{Resource exhaustion testleri}{table.9.7}{}}
+\newlabel{tab:stress_tests@cref}{{[table][7][9]9.7}{[1][85][]85}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.6.2}Corner Case Test}{85}{subsection.9.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9.7}Tracer Altyapısı}{86}{section.9.7}\protected@file@percent }
+\newlabel{sec:tracer}{{9.7}{86}{Tracer Altyapısı}{section.9.7}{}}
+\newlabel{sec:tracer@cref}{{[section][7][9]9.7}{[1][85][]86}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {9.5}Tracer output format}{86}{lstlisting.9.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9.8}Regression Test}{86}{section.9.8}\protected@file@percent }
+\newlabel{sec:regression}{{9.8}{86}{Regression Test}{section.9.8}{}}
+\newlabel{sec:regression@cref}{{[section][8][9]9.8}{[1][86][]86}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {9.6}Regression script}{86}{lstlisting.9.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9.9}Doğrulama Özeti}{86}{section.9.9}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9.8}{\ignorespaces Doğrulama özeti}}{86}{table.9.8}\protected@file@percent }
+\newlabel{tab:verification_summary}{{9.8}{86}{Doğrulama özeti}{table.9.8}{}}
+\newlabel{tab:verification_summary@cref}{{[table][8][9]9.8}{[1][86][]86}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {10}Sonuç ve Gelecek Çalışmalar}{87}{chapter.10}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:sonuc}{{10}{87}{Sonuç ve Gelecek Çalışmalar}{chapter.10}{}}
+\newlabel{chap:sonuc@cref}{{[chapter][10][]10}{[1][87][]87}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.1}Sonuç}{87}{section.10.1}\protected@file@percent }
+\newlabel{sec:sonuc}{{10.1}{87}{Sonuç}{section.10.1}{}}
+\newlabel{sec:sonuc@cref}{{[section][1][10]10.1}{[1][87][]87}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.1}Başarılan Hedefler}{87}{subsection.10.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.2}Teknik Katkılar}{88}{subsection.10.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.3}Performans Sonuçları}{88}{subsection.10.1.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {10.1}{\ignorespaces Performans özeti}}{88}{table.10.1}\protected@file@percent }
+\newlabel{tab:final_perf}{{10.1}{88}{Performans özeti}{table.10.1}{}}
+\newlabel{tab:final_perf@cref}{{[table][1][10]10.1}{[1][88][]88}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.2}Karşılaşılan Zorluklar}{88}{section.10.2}\protected@file@percent }
+\newlabel{sec:challenges}{{10.2}{88}{Karşılaşılan Zorluklar}{section.10.2}{}}
+\newlabel{sec:challenges@cref}{{[section][2][10]10.2}{[1][88][]88}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.3}Gelecek Çalışmalar}{89}{section.10.3}\protected@file@percent }
+\newlabel{sec:future_work}{{10.3}{89}{Gelecek Çalışmalar}{section.10.3}{}}
+\newlabel{sec:future_work@cref}{{[section][3][10]10.3}{[1][89][]89}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3.1}Kısa Vadeli İyileştirmeler}{89}{subsection.10.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3.2}Orta Vadeli İyileştirmeler}{89}{subsection.10.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3.3}Uzun Vadeli Hedefler}{89}{subsection.10.3.3}\protected@file@percent }
+\bibstyle{plain}
+\@writefile{toc}{\contentsline {section}{\numberline {10.4}Öğrenilen Dersler}{90}{section.10.4}\protected@file@percent }
+\newlabel{sec:lessons}{{10.4}{90}{Öğrenilen Dersler}{section.10.4}{}}
+\newlabel{sec:lessons@cref}{{[section][4][10]10.4}{[1][89][]90}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.5}Son Söz}{90}{section.10.5}\protected@file@percent }
+\gdef \@abspage@last{91}

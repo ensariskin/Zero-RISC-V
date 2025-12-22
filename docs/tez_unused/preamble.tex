@@ -1,0 +1,204 @@
+% =============================================================================
+% PREAMBLE - RV32I 3-Way Superscalar İşlemci Tez Dokümantasyonu
+% =============================================================================
+
+\documentclass[12pt,a4paper,oneside]{report}
+
+% -----------------------------------------------------------------------------
+% Temel Paketler
+% -----------------------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[turkish]{babel}
+\usepackage{lmodern}
+
+% -----------------------------------------------------------------------------
+% Sayfa Düzeni
+% -----------------------------------------------------------------------------
+\usepackage[
+    top=2.5cm,
+    bottom=2.5cm,
+    left=3cm,
+    right=2.5cm
+]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% -----------------------------------------------------------------------------
+% Grafik ve Şekiller
+% -----------------------------------------------------------------------------
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, backgrounds}
+
+% Fix TikZ + Turkish babel conflict
+\makeatletter
+\AtBeginDocument{%
+  \@ifpackageloaded{babel}{%
+    \addto\extrasturkish{\shorthandoff{=}<>}%
+  }{}%
+}
+\makeatother
+
+% -----------------------------------------------------------------------------
+% Tablolar
+% -----------------------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{tabularx}
+
+% -----------------------------------------------------------------------------
+% Kod Listeleme
+% -----------------------------------------------------------------------------
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{verilogstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=Verilog,
+    morekeywords={logic, always_ff, always_comb, posedge, negedge, module, endmodule,
+                  input, output, reg, wire, parameter, localparam, assign, begin, end,
+                  if, else, case, endcase, default, for, generate, endgenerate,
+                  typedef, enum, struct, packed, unpacked, interface, endinterface,
+                  modport, clocking, endclocking, assert, property, sequence},
+    literate={ı}{{\i}}1 {İ}{{\.I}}1 {ğ}{{\u{g}}}1 {Ğ}{{\u{G}}}1
+             {ş}{{\c{s}}}1 {Ş}{{\c{S}}}1 {ü}{{\"u}}1 {Ü}{{\"U}}1
+             {ö}{{\"o}}1 {Ö}{{\"O}}1 {ç}{{\c{c}}}1 {Ç}{{\c{C}}}1
+}
+
+\lstset{style=verilogstyle}
+
+% -----------------------------------------------------------------------------
+% Matematik
+% -----------------------------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+% -----------------------------------------------------------------------------
+% Referanslar ve Linkler
+% -----------------------------------------------------------------------------
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={RV32I 3-Way Superscalar İşlemci},
+    pdfauthor={},
+    bookmarks=true
+}
+\usepackage{cleveref}
+
+% -----------------------------------------------------------------------------
+% Başlık ve Alt Başlık Formatları
+% -----------------------------------------------------------------------------
+\usepackage{titlesec}
+
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{40pt}
+
+% -----------------------------------------------------------------------------
+% Üst Bilgi ve Alt Bilgi
+% -----------------------------------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% -----------------------------------------------------------------------------
+% Özel Komutlar
+% -----------------------------------------------------------------------------
+% Sinyal isimleri için
+\newcommand{\sig}[1]{\texttt{#1}}
+
+% Modül isimleri için
+\newcommand{\module}[1]{\textbf{\texttt{#1}}}
+
+% Kayıt isimleri için
+\newcommand{\reg}[1]{\texttt{#1}}
+
+% Bit aralığı için
+\newcommand{\bits}[2]{[#1:#2]}
+
+% Önemli kavramlar için
+\newcommand{\concept}[1]{\textit{#1}}
+
+% Neden kutusu
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+
+\newtcolorbox{nedenbox}[1][]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Neden Bu Tasarım?,
+    #1
+}
+
+\newtcolorbox{dikkatbox}[1][]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Dikkat,
+    #1
+}
+
+\newtcolorbox{ornekbox}[1][]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Örnek,
+    #1
+}
+
+% -----------------------------------------------------------------------------
+% Kısaltmalar
+% -----------------------------------------------------------------------------
+\usepackage{acronym}
+
+% -----------------------------------------------------------------------------
+% Float Kontrolü
+% -----------------------------------------------------------------------------
+\usepackage{float}
+\usepackage{placeins}
+
+% -----------------------------------------------------------------------------
+% Dipnot
+% -----------------------------------------------------------------------------
+\usepackage{footnote}
+
+% -----------------------------------------------------------------------------
+% Algoritma
+% -----------------------------------------------------------------------------
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\floatname{algorithm}{Algoritma}
+\renewcommand{\algorithmicrequire}{\textbf{Girdi:}}
+\renewcommand{\algorithmicensure}{\textbf{Çıktı:}}

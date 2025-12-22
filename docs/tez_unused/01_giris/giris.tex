@@ -1,0 +1,123 @@
+% =============================================================================
+% BÖLÜM 1: GİRİŞ
+% =============================================================================
+
+\chapter{Giriş}
+\label{chap:giris}
+
+\section{Motivasyon}
+\label{sec:motivasyon}
+
+Modern bilgisayar sistemlerinin performans gereksinimleri sürekli artmaktadır. Tek çevrimde
+tek komut işleyen geleneksel skalar işlemciler, bu artan talepleri karşılamakta yetersiz
+kalmaktadır. İşlemci frekansını artırmanın fiziksel sınırlarına (güç tüketimi, ısı dağılımı)
+ulaşılmasıyla birlikte, performans artışı için farklı yaklaşımlar gerekli hale gelmiştir.
+
+\concept{Superscalar} işlemciler, tek bir çevrimde birden fazla komutun paralel olarak
+işlenmesine olanak tanıyarak bu soruna çözüm sunar. Bu yaklaşım, \concept{Komut Düzeyinde
+Paralellik} (Instruction-Level Parallelism - ILP) kavramını kullanarak, programdaki
+bağımsız komutları eşzamanlı yürütür.
+
+Bu tez çalışmasında, RISC-V RV32I komut seti mimarisini destekleyen, 3 yollu (3-way)
+superscalar bir işlemci tasarımı ve gerçeklemesi sunulmaktadır. Tasarım, Tomasulo
+algoritmasını temel alarak sıra dışı (out-of-order) yürütme yeteneği sunarken,
+spekülatif dal tahmini ile performansı maksimize etmeyi hedeflemektedir.
+
+\section{Tezin Kapsamı}
+\label{sec:kapsam}
+
+Bu çalışma aşağıdaki konuları kapsamaktadır:
+
+\begin{itemize}
+    \item \textbf{RV32I Komut Seti Desteği:} RISC-V temel tamsayı komut setinin tam
+          gerçeklemesi (37 komut)
+
+    \item \textbf{3-Way Superscalar Mimari:} Her çevrimde en fazla 3 komutun paralel
+          olarak decode, issue, dispatch ve commit edilmesi
+
+    \item \textbf{Sıra Dışı Yürütme:} Tomasulo algoritması tabanlı dinamik zamanlama
+          ile veri bağımlılıklarının donanım seviyesinde çözümlenmesi
+
+    \item \textbf{Spekülatif Dal Tahmini:} Tournament, GShare ve 2-bit sayaç tabanlı
+          dal tahmin mekanizmaları ile JALR hedef tahmini
+
+    \item \textbf{Eager Misprediction Recovery:} Branch Resolution Alias Table (BRAT)
+          ile sıfır gecikmeli yanlış tahmin düzeltmesi
+
+    \item \textbf{Load/Store Queue:} Bellek operasyonlarının sıralı commit ile
+          sıra dışı yürütülmesi
+\end{itemize}
+
+\section{Tasarım Hedefleri}
+\label{sec:hedefler}
+
+İşlemci tasarımında aşağıdaki hedefler gözetilmiştir:
+
+\begin{enumerate}
+    \item \textbf{Yüksek IPC (Instructions Per Cycle):} Teorik maksimum 3.0 IPC hedefine
+          yaklaşmak için pipeline verimliliğinin maksimize edilmesi
+
+    \item \textbf{Düşük Dal Cezası:} Yanlış tahmin durumunda minimum çevrim kaybı
+          için eager recovery mekanizması
+
+    \item \textbf{Ölçeklenebilirlik:} Parametrik tasarım ile farklı konfigürasyonlara
+          kolayca uyarlanabilirlik
+
+    \item \textbf{Doğrulanabilirlik:} Modüler yapı ve kapsamlı assertion'lar ile
+          fonksiyonel doğrulama kolaylığı
+
+    \item \textbf{Sentezlenebilirlik:} FPGA ve ASIC hedefleri için uygun RTL tasarımı
+\end{enumerate}
+
+\section{Tez Organizasyonu}
+\label{sec:organizasyon}
+
+Bu tez aşağıdaki şekilde organize edilmiştir:
+
+\begin{description}
+    \item[Bölüm 2 - Mimari Genel Bakış:] İşlemcinin genel mimarisi, pipeline yapısı
+         ve temel tasarım prensipleri
+
+    \item[Bölüm 3 - Fetch Stage:] Komut getirme aşaması, çoklu komut fetch, dal
+         tahmini ve program sayacı yönetimi
+
+    \item[Bölüm 4 - Issue Stage:] Komut decode, register renaming, kaynak tahsisi
+         ve BRAT mekanizması
+
+    \item[Bölüm 5 - Dispatch Stage:] Reorder Buffer, Reservation Station ve
+         Register File yapıları
+
+    \item[Bölüm 6 - Execute Stage:] ALU, shifter ve dal çözümleme birimleri
+
+    \item[Bölüm 7 - Memory Stage:] Load/Store Queue ve bellek erişim yönetimi
+
+    \item[Bölüm 8 - Performans Analizi:] Benchmark sonuçları ve karşılaştırmalı
+         analiz
+
+    \item[Bölüm 9 - Doğrulama Stratejisi:] Test metodolojisi ve doğrulama
+         yaklaşımları
+
+    \item[Bölüm 10 - Sonuç:] Çalışmanın özeti ve gelecek çalışmalar
+\end{description}
+
+\section{Katkılar}
+\label{sec:katkilar}
+
+Bu tez çalışmasının başlıca katkıları şunlardır:
+
+\begin{enumerate}
+    \item \textbf{BRAT Mekanizması:} Spekülatif dallanma için düşük gecikmeli
+          recovery sağlayan yeni bir RAT snapshot yönetim yapısı
+
+    \item \textbf{3-Port Circular Buffer:} ROB ve LSQ kaynak tahsisi için verimli
+          bir paralel allocation/deallocation mekanizması
+
+    \item \textbf{Combinational Bypass:} Dal çözümleme sonuçlarının aynı çevrimde
+          tüm pipeline aşamalarına iletilmesi
+
+    \item \textbf{Tournament Predictor:} Yerel ve global dal geçmişini birleştiren
+          hibrit tahmin mekanizması
+
+    \item \textbf{Açık Kaynak Gerçekleme:} Eğitim ve araştırma amaçlı kullanılabilecek
+          tam dokümante edilmiş SystemVerilog kodu
+\end{enumerate}

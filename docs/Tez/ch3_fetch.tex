@@ -1,0 +1,155 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.2 KOMBİNASYONU GETİRME (FETCH) AŞAMASI
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Komut Getirme Aşaması}\label{sec:fetch}
+
+Komut getirme aşaması, süperölçekli işlemcinin boruhattındaki ilk aşamadır ve program akışını belirleyen kritik bir rol üstlenmektedir. Bu aşama, bellekten komutların paralel olarak getirilmesi, dal davranışlarının önceden tahmin edilmesi ve getirilen komutların sonraki aşamalar için tamponlanması görevlerini yerine getirmektedir. Tasarlanan işlemcide komut getirme aşaması üç temel bileşenden oluşmaktadır: çoklu getirme birimi, dal tahmin sistemi ve komut tamponu.
+
+\subsection{Çoklu Getirme Birimi}\label{subsec:multi_fetch}
+
+Çoklu getirme birimi, süperölçekli işlemcinin komut seviyesi paralelliğinden yararlanabilmesi için tasarlanmış merkezi koordinasyon birimidir. Bu modül, her saat çevriminde bellekten beş komut getirme kapasitesine sahiptir ve getirilen komutların geçerliliğini dal tahmin sonuçlarına göre dinamik olarak belirlemektedir.
+
+\subsubsection{Beş Genişlikli Getirme Tasarımının Gerekçesi}
+
+Tasarlanan işlemci üç yollu bir komut verme yapısına sahip olmasına rağmen, komut getirme genişliği beş olarak belirlenmiştir. Bu asimetrik tasarım kararının arkasında önemli bir gerekçe bulunmaktadır.
+
+İşlemcinin tüm bileşenleri, çevrim başına komut sayısını teorik sınır olan üçe yaklaştırmaya çalışmaktadır. Bu hedef doğrultusunda, komut getirme aşamasının da her saat çevriminde ortalama üç komutu boruhattının ileri bölümlerine beslemesi gerekmektedir. Ancak ``alınacak'' olarak tahmin edilen dallanma komutları ile doğrudan ve dolaylı atlama komutları nedeniyle, getirilen her komut boruhattının ileri kısımlarına iletilemeyebilmektedir. Bu durumda, tahmin edilen dallanma veya atlama komutunun ardından gelen komutlar geçersiz sayılmakta ve komut tamponuna yazılmamaktadır.
+
+Bu kayıpları telafi etmenin yolu, sonraki çevrimlerde üçten fazla komut getirmektir. Beş genişlikli getirme tasarımı sayesinde, dallanma ve atlama komutları nedeniyle bazı komutlar geçersiz olsa bile, komut tamponuna yazılan ortalama komut sayısının üç olması hedeflenmektedir. Bu yaklaşım, komut getirme aşamasının boruhattı için bir darboğaz oluşturmasını engellemektedir.
+
+\subsubsection{Paralel Komut Getirme Mekanizması}
+
+Paralel komut getirme mekanizması, ardışık beş bellek adresine eş zamanlı erişim sağlayarak yüksek verim elde edilmesini mümkün kılmaktadır. Her bir komut için ayrı adres çıkışları ve komut girişleri bulunmaktadır. Komut adresleri program sayacı değerinden başlayarak dörder bayt aralıklarla hesaplanmaktadır; bu durum RISC-V mimarisindeki 32 bitlik sabit komut uzunluğundan kaynaklanmaktadır.
+
+Getirilen komutların geçerliliği, dal tahmin sonuçlarına bağlı olarak belirlenmektedir. Herhangi bir komut için dallanma veya atlama tahmini ``alınacak'' sonucunu verdiğinde, bu komutun ardından gelen tüm komutlar otomatik olarak geçersiz işaretlenmektedir. Bu komutların sonraki aşamalara iletilmemesinin nedeni, bu komutların işlenmemesi gerektiğinin tahmin edilmesidir; eğer bu komutlar sonraki aşamalara iletilseydi, işlemci yanlış program akışını izleyerek hatalı çalışırdı.
+
+% TODO: Buraya görsel eklenecek - 5 komuttan 2. komut taken branch olacak, sonrakilerin geçersiz olduğunu gösterecek
+\begin{figure}[H]
+\centering
+\fbox{\textbf{[GÖRSEL PLACEHOLDER: 5 komuttan 2. komut taken branch, sonrakiler geçersiz]}}
+\caption{Dallanma komutu nedeniyle sonraki komutların geçersizleşmesi}
+\label{fig:fetch_invalidation}
+\end{figure}
+
+Geçersizleme mantığı kademeli olarak çalışmaktadır: birinci komut dallanır veya atlarsa ikinci, üçüncü, dördüncü ve beşinci komutlar geçersiz olmakta; ikinci komut dallanır veya atlarsa üçüncü, dördüncü ve beşinci komutlar geçersiz olmakta ve bu mantık beşinci komuta kadar devam etmektedir.
+
+\subsubsection{Erken Aşama Sabit Değer Çözümleyicisi}
+
+Dal hedef adreslerinin erken hesaplanabilmesi için her komuta bir erken aşama sabit değer çözümleyici modülü eklenmiştir. Bu modüller, tam komut çözümleme işlemi beklenmeden komut içindeki sabit değerleri çıkarmaktadır. RISC-V komut formatlarının düzenli yapısı, bu erken çözümleme işlemini kolaylaştırmaktadır.
+
+Dal komutlarının hedef adresi, mevcut program sayacı değeri ile komut içindeki sabit değerin toplanmasıyla hesaplanmaktadır. Bu hesaplamanın komut getirme aşamasında gerçekleştirilmesi, dal tahmininin doğru hedef adresini tek saat çevriminde belirlemesine olanak tanımaktadır. Sabit değer çözümleyici, B tipi dallanma komutları ve J tipi atlama komutları için farklı bit alanlarından değer çıkarmakta ve işaret genişletmesi uygulamaktadır.
+
+\subsubsection{Yanlış Tahmin İşleme}
+
+Bir dal veya atlama komutu yanlış tahmin edildiğinde, boruhattındaki tüm spekülatif durumun temizlenmesi ve doğru program akışına dönülmesi gerekmektedir. Tasarlanan işlemcide aynı anda üç komut işlenebildiğinden, aynı çevrimde birden fazla yanlış tahmin sonucu oluşabilmektedir. Bu sonuçlar sıra dışı hesaplanmış olsa bile, hızlıca sıraya konularak temizleme işlemine başlanmaktadır.
+
+Gelebilecek olan üç yanlış tahminden en eski olanı dikkate alınmalıdır. Bunun nedeni, daha genç dalların eski dalın spekülatif yolunda bulunabilmesidir. Eski yanlış tahmin düzeltildiğinde, genç dallar zaten temizlenecektir; dolayısıyla genç yanlış tahminleri ayrıca işlemek gereksiz hesaplama yapmak anlamına gelmektedir. Bu önceliklendirme, çoklu getirme birimindeki yanlış tahmin işleme mantığı tarafından gerçekleştirilmektedir: sıfırıncı kanaldan gelen yanlış tahmin birinci ve ikinci kanallara göre önceliklidir, birinci kanaldan gelen yanlış tahmin ise ikinci kanala göre önceliklidir.
+
+Temizleme sinyali etkinleştirildiğinde, program sayacı doğru hedef adresine yönlendirilmekte ve komut tamponu boşaltılmaktadır.
+
+%------------------------------------------------------------------------
+
+\subsection{Program Sayacı Denetleyicisi}\label{subsec:pc_ctrl}
+
+Program sayacı denetleyicisi, bir sonraki getirme adresini belirlemekten sorumlu olan kritik bir bileşendir. Bu birim, çeşitli kaynaklardan gelen bilgileri değerlendirerek program sayacı değerinin nasıl güncelleneceğine karar vermektedir.
+
+\subsubsection{Program Sayacı Güncelleme Senaryoları}
+
+Program sayacı güncellemesi, dört farklı senaryoya göre gerçekleşmektedir ve bu senaryolar belirli bir öncelik sırasına göre değerlendirilmektedir.
+
+En yüksek öncelikli senaryo, yanlış tahmin düzeltmesidir. Yürütme aşamasından bir yanlış tahmin sinyali geldiğinde, program sayacı dal kayıt tablosundan alınan doğru adrese yönlendirilmektedir. Bu durum, tüm diğer güncellemeleri geçersiz kılmaktadır çünkü doğru program akışının yeniden kurulması en kritik önceliğe sahiptir.
+
+İkinci öncelikli senaryo, dolaylı atlama tahminlerini içermektedir. JALR komutu için bir tahmin mevcut olduğunda, program sayacı bu tahmin edilen hedef adrese güncellenmektedir.
+
+Üçüncü öncelikli senaryo, doğrudan dallanma ve atlama komutlarını kapsamaktadır. Dallanma veya JAL komutu ``alınacak'' olarak tahmin edildiğinde, program sayacı mevcut değere sabit değerin eklenmesiyle hesaplanan hedef adrese güncellenmektedir.
+
+Dördüncü ve son senaryo, normal ardışık ilerlemedir. Hiçbir dallanma veya atlama komutu tahmin edilmediğinde, program sayacı beş komut için yirmi bayt ileri taşınmaktadır.
+
+\subsubsection{Paralel Program Sayacı Hesaplaması}
+
+Beş komut için program sayacı değerleri paralel olarak hesaplanmaktadır. Her komut için mevcut program sayacı değeri ile dört, sekiz, on iki ve on altı baytlık sabit ofsetler toplanarak ardışık adresler elde edilmektedir. Bu paralel hesaplama, komut getirme işleminin gecikmesini en aza indirmektedir.
+
+Ayrıca, atlama komutları için dönüş adresi değerleri de hesaplanmaktadır. JAL ve JALR komutları, bağlantı yazmacına mevcut komutun bir sonraki adresini kaydetmektedir. Bu değer, program sayacının dört bayt ötesine karşılık gelmektedir.
+
+%------------------------------------------------------------------------
+
+\subsection{Dal Tahmin Sistemi}\label{subsec:branch_pred}
+
+Dal tahmin sistemi, kontrol akışı değişikliklerinin erken tespit edilmesini ve yüksek doğrulukla öngörülmesini sağlamaktadır. Tipik programlarda dallanma ve atlama komutları yüzde on beş ile yüzde yirmi beş arasında bir orana sahiptir \cite{patterson_hennessy}. Etkili bir dal tahmini olmadan, her dal komutu boruhattında birkaç saat çevrimi gecikmeye neden olmaktadır; bu durum işlemci performansını önemli ölçüde düşürmektedir.
+
+Tasarlanan sistemde iki ana tahmin mekanizması bulunmaktadır: koşullu dallanma komutları için turnuva tahmincisi ve dolaylı atlama komutları için JALR tahmincisi.
+
+\subsubsection{Turnuva Tahmincisi}
+
+Turnuva tahmincisi, iki farklı tahmin mekanizmasını birleştirerek her birinin güçlü yönlerinden yararlanmaktadır. Bu hibrit yaklaşım, farklı dal davranış kalıplarına uyum sağlama kapasitesi sunmaktadır.
+
+\paragraph{GShare Tahmincisi}
+
+GShare tahmincisi, küresel dal geçmişini kullanarak dallar arasındaki korelasyonları yakalamaktadır. Bu yaklaşımın temelinde, bir dalın sonucunun önceki dalların sonuçlarıyla ilişkili olabileceği gözlemi yatmaktadır.
+
+Tahmin indeksi, program sayacı değeri ile küresel geçmiş kaydının XOR işlemine tabi tutulmasıyla hesaplanmaktadır. Bu indeks, iki bitlik doyurma sayaçlarından oluşan bir tabloya erişmek için kullanılmaktadır. Sayacın en anlamlı biti, dalın tahmin edilen yönünü belirlemektedir.
+
+Küresel geçmiş kaydı, son dalların sonuçlarını bir kaydırma yazmacında tutmaktadır. Her dal çözümlendiğinde, sonuç bu yazmaca kaydırılmaktadır. Spekülatif yürütme sırasında, küresel geçmiş kaydı tahmin anında güncellenmekte ve yanlış tahmin durumunda geri yüklenmektedir.
+
+\paragraph{İki Bitlik Sayaç Tahmincisi}
+
+İki bitlik sayaç tahmincisi, en temel dinamik dal tahmin yöntemidir ve her dal adresi için ayrı bir doyurma sayacı tutmaktadır. Sayaç dört durumdan birinde bulunabilmektedir: güçlü alınmayacak, zayıf alınmayacak, zayıf alınacak ve güçlü alınacak.
+
+İki bitlik sayaç kullanılmasının nedeni, tek bitlik sayacın tek bir yanlış sonuçta hemen tahmini değiştirmesidir. Döngü sonlarında bu durum sorunlu olmaktadır: bir döngü yüz kez ``alınacak'' olduktan sonra bir kez ``alınmayacak'' olmaktadır ve tek bitlik sayaç hemen ``alınmayacak'' tahmin etmeye başlamaktadır. İki bitlik sayaç, iki ardışık yanlış sonuç gerektirdiğinden bu tür anomali durumlarına karşı dayanıklılık sağlamaktadır.
+
+\paragraph{Seçici Tablosu}
+
+Seçici tablosu, her dal adresi için hangi tahmincinin daha başarılı olduğunu takip etmektedir. Bu tablo da iki bitlik doyurma sayaçlarından oluşmaktadır. Sayaç değeri iki veya üç olduğunda GShare tahmini, sıfır veya bir olduğunda iki bitlik sayaç tahmini tercih edilmektedir.
+
+Seçici tablosu yalnızca iki tahmincinin farklı tahminler ürettiği durumlarda güncellenmektedir. Her iki tahmincinin aynı tahmini yaptığı durumlarda seçici değişmemektedir. Güncelleme sırasında, doğru tahmin yapan tahmincinin yönünde sayaç artırılmakta veya azaltılmaktadır.
+
+Önemli bir tasarım kararı olarak, her iki tahmincinin de her dal çözümlemesinde eğitilmesi tercih edilmiştir. Alternatif olarak yalnızca seçilen tahmincinin eğitilmesi düşünülebilirdi, ancak bu durumda seçici yanlış tahminciye sabitlenirse diğer tahmincinin güncel kalması mümkün olmayacaktı.
+
+\paragraph{Tahmin Bilgisinin Paketlenmesi}
+
+Turnuva tahmincisi, hem GShare hem de iki bitlik sayaç bilgisini dal kayıt tablosuna kaydetmelidir. Bu bilgi, dalın çözümlenmesi sırasında tahmincinin güncellenmesi için gereklidir. Paketlenen bilgi küresel geçmiş kaydının tahmin anındaki değerini, GShare tahminini, iki bitlik sayaç tahminini ve seçici kararını içermektedir.
+
+\subsubsection{JALR Tahmincisi ve Dönüş Adresi Yığını}\label{subsubsec:jalr}
+
+Dolaylı atlama komutları, hedef adresini bir yazmaçtan okuduğundan derleme zamanında bilinmemektedir. Bu nedenle JALR komutları için ayrı bir tahmin mekanizması gerekmektedir.
+
+JALR tahmincisi iki temel bileşenden oluşmaktadır: JALR hedef tamponu ve dönüş adresi yığını.
+
+\paragraph{JALR Hedef Tamponu}
+
+JALR hedef tamponu, daha önce yürütülen JALR komutlarının hedef adreslerini saklayan bir önbellek yapısıdır. Bu yapı, program sayacı değerine göre indekslenmekte ve son kullanılan hedef adresi döndürmektedir. Birçok dolaylı atlama, özellikle sanal fonksiyon çağrıları ve anahtarlama ifadeleri, aynı hedef adrese tekrar tekrar atladığından bu yaklaşım yüksek doğruluk sağlamaktadır.
+
+Tasarlanan sistemde JALR hedef tamponu otuz iki giriş kapasitesine sahiptir. Her giriş geçerlilik biti, etiket değeri ve hedef adres içermektedir. Etiket karşılaştırması, farklı JALR komutlarını ayırt etmek için kullanılmaktadır.
+
+\paragraph{Dönüş Adresi Yığını}
+
+Dönüş adresi yığını, fonksiyon çağrısı ve dönüş kalıplarını tahmin etmek için özelleştirilmiş bir yapıdır. Fonksiyon çağrılarının çoğunluğu çağrı ve dönüş çiftleri şeklinde gerçekleşmektedir; bu durum son giren ilk çıkar yapısıyla doğal olarak eşleşmektedir.
+
+RISC-V mimarisinde çağrı ve dönüş komutları, hedef veya kaynak olarak x1 veya x5 yazmaçlarını kullanan JAL ve JALR komutları ile gerçekleştirilmektedir. Çağrı komutu tespit edildiğinde, dönüş adresi yığına itilmektedir; dönüş komutu tespit edildiğinde ise yığından çekilmekte ve hedef adres olarak kullanılmaktadır.
+
+Tasarlanan sistemde dönüş adresi yığını sekiz giriş derinliğindedir. Spekülatif yürütmeyi desteklemek için, her dal tahmini sırasında yığın tepe işaretçisi dal kayıt tablosuna kaydedilmekte ve yanlış tahmin durumunda geri yüklenmektedir.
+
+%------------------------------------------------------------------------
+
+\subsection{Komut Tamponu}\label{subsec:instr_buffer}
+
+Komut tamponu, komut getirme ve kod çözme aşamaları arasında ayrıştırma sağlayan bir ilk giren ilk çıkar yapısıdır. Bu ayrıştırma, her iki aşamanın farklı hızlarda çalışmasına olanak tanımakta ve boruhattı verimliliğini artırmaktadır.
+
+\subsubsection{Tampon Tasarımının Gerekçesi}
+
+Komut getirme aşaması dallanma ve atlama komutları nedeniyle, boruhattının ileri aşamaları ise veri bağımlılıkları, bellek işlemleri ve daha birçok sebeple farklı hızlarda çalışabilmektedir. Komut belleğinden komutları hızlıca alıp bunları boruhattının ileriki aşamalarının kullanabileceği şekilde bir tamponda toplamak, işlemcinin karmaşıklığını azaltmakla birlikte performansını da artırmaktadır.
+
+Ayrıca, komut verme aşaması duraklatıldığında komut getirme aşaması tampon dolana kadar çalışmaya devam edebilmektedir. Bu yalıtım, kısa süreli duraksamaların boruhattının tamamını etkilemesini engellemektedir.
+
+\subsubsection{Dairesel Tampon Yapısı}
+
+Komut tamponu, baş ve kuyruk işaretçileri ile yönetilen dairesel bir tampon olarak gerçeklenmiştir. Varsayılan tampon derinliği on altı giriştir ve bu değerin ikinin kuvveti olması zorunludur; bu gereksinim modüler aritmetik işlemlerini basitleştirmektedir.
+
+Her tampon girişi çeşitli bilgiler içermektedir: otuz iki bitlik komut verisi, otuz iki bitlik program sayacı değeri, otuz iki bitlik hesaplanmış sabit değer, dal tahmini sonucu, tahmin anındaki program sayacı değeri, küresel geçmiş kaydı ve dönüş adresi yığını tepe işaretçisi değeri. Bu bilgiler, komutun sonraki aşamalarda doğru bir şekilde işlenmesi için gereklidir.
+
+\subsubsection{Geri Baskı Mekanizması}
+
+Geri baskı mekanizması, tamponun dolması durumunda komut getirme aşamasını yavaşlatarak veri kaybını önlemektedir. Tamponda en az beş boş alan bulunduğunda, getirme hazır sinyali etkinleştirilmektedir. Beş alan gereksinimi, tek çevrimde gelebilecek maksimum komut sayısını karşılamak için belirlenmiştir.
+
+Eğer beşten az yer varken de komutları tampona koymaya çalışılsaydı, bir sonraki komut adresinin hesabı daha karmaşık hale gelecekti. Mevcut yapı ile gayet iyi sonuçlar alındığından, adres hesaplama mantığını basit tutmak daha mantıklı bulunmuştur.

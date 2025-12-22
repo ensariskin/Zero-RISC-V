@@ -1,0 +1,231 @@
+% =============================================================================
+% DAL TAHMİNİ ALT BÖLÜMLERİ
+% =============================================================================
+
+\subsection{Dal Tahmini Genel Bakış}
+
+Dal komutları, program akışında belirsizlik yaratır. Dal sonucu belirlenene kadar
+(execute aşaması) işlemci, hangi komutları getireceğini bilemez. Dal tahmini,
+bu belirsizliği spekülatif olarak çözerek pipeline verimliliğini artırır.
+
+\begin{nedenbox}
+\textbf{Neden dal tahmini kritik?}
+
+Dal komutları tipik programlarda \%15-25 oranında görülür. Tahminsiz bir işlemcide
+her dal 3+ çevrim gecikmeye neden olur. \%20 dal oranı ve 3 çevrim ceza ile:
+\[
+\text{Efektif IPC} = \frac{1}{1 + 0.20 \times 3} = 0.625
+\]
+Bu, teorik IPC'nin \%37.5 altındadır. Doğru tahmin bu kaybı minimize eder.
+\end{nedenbox}
+
+\subsection{Tahmin Mekanizmaları}
+
+İşlemci üç farklı dal tahmin mekanizması içerir:
+
+\begin{table}[H]
+\centering
+\caption{Dal tahmin mekanizmaları karşılaştırması}
+\label{tab:predictors}
+\begin{tabular}{lp{3cm}p{3cm}p{4cm}}
+\toprule
+\textbf{Mekanizma} & \textbf{Güçlü Yön} & \textbf{Zayıf Yön} & \textbf{En İyi Senaryo} \\
+\midrule
+2-Bit Sayaç & Basit, düşük maliyet & Korelasyon yakalayamaz & Tutarlı dallar (döngüler) \\
+GShare & Global korelasyon & Aliasing sorunları & Korele dallar \\
+Tournament & Adaptif seçim & Yüksek maliyet & Karışık iş yükleri \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{2-Bit Sayaç (Bimodal Predictor)}
+
+En basit dal tahmin mekanizmasıdır. Her dal adresi için 2-bit doyurulmuş sayaç tutulur:
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.85\textwidth}
+\centering
+\textbf{2-Bit Sayaç Durum Makinesi}\\[1em]
+\begin{tabular}{cccc}
+\fbox{SNT (00)} & $\xrightarrow{\text{taken}}$ & \fbox{WNT (01)} & $\xrightarrow{\text{taken}}$ \\[0.3em]
+$\circlearrowleft$ NT & & $\updownarrow$ not taken & \\[0.3em]
+& & \fbox{WT (10)} & $\xrightarrow{\text{taken}}$ \\[0.3em]
+& & $\updownarrow$ not taken & \\[0.3em]
+& & \fbox{ST (11)} & $\circlearrowleft$ T \\
+\end{tabular}
+\\[1em]
+\textit{SNT, WNT: Tahmin = Not Taken \quad|\quad WT, ST: Tahmin = Taken}
+\end{minipage}
+}
+\caption{2-bit sayaç durum makinesi}
+\label{fig:2bit_fsm}
+\end{figure}
+
+\begin{nedenbox}
+\textbf{Neden 2-bit (1-bit değil)?}
+
+1-bit sayaç, tek bir yanlış sonuçta hemen fikir değiştirir. Döngü sonlarında
+bu sorunlu olur: döngü 100 kez ``taken'' olduktan sonra 1 kez ``not taken''
+olur ve 1-bit sayaç hemen ``not taken'' tahmin etmeye başlar.
+
+2-bit sayaç, iki ardışık yanlış sonuç gerektirir. Bu, döngü sonu gibi
+``anomali'' durumlarına karşı dayanıklılık sağlar.
+\end{nedenbox}
+
+\subsubsection{GShare Predictor}
+
+GShare, \concept{global history} ile PC'yi XOR'layarak indeks oluşturur.
+Bu, farklı dallar arasındaki korelasyonu yakalar.
+
+\begin{lstlisting}[caption={GShare indeks hesaplama}]
+// GShare index = PC XOR Global History Register
+assign predict_index_0 = current_pc_0[INDEX_WIDTH+1:2] ^ ghm0;
+assign predict_index_1 = current_pc_1[INDEX_WIDTH+1:2] ^ ghm1;
+...
+\end{lstlisting}
+
+\paragraph{Global History Register (GHR)}
+
+GHR, son N dalın sonuçlarını (taken/not-taken) bir shift register'da tutar.
+Her dal çözümlendiğinde, sonuç GHR'a shift edilir.
+
+\begin{lstlisting}[caption={GHR güncelleme}]
+// Per-slot history advance uses predicted bits
+assign global_history_1 = slot_branch_0 ?
+    {global_history_0[INDEX_WIDTH-2:0], branch_taken_o_0} : global_history_0;
+assign global_history_2 = slot_branch_1 ?
+    {global_history_1[INDEX_WIDTH-2:0], branch_taken_o_1} : global_history_1;
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden spekülatif GHR güncellemesi?}
+
+Dal sonucu execute aşamasında belli olur, ancak tahmin fetch aşamasında yapılır.
+Eğer GHR güncellemesi commit'e kadar bekleseydi, ardışık dallar için yanlış
+history kullanılırdı.
+
+Spekülatif güncelleme, tahmin edilen sonucu GHR'a hemen ekler. Misprediction
+durumunda GHR, BRAT'tan restore edilir.
+\end{nedenbox}
+
+\subsubsection{Tournament Predictor}
+
+Tournament predictor, GShare ve bimodal predictor'ları birleştirir. Bir
+\concept{chooser table}, hangi predictor'ın kullanılacağına karar verir.
+
+\begin{lstlisting}[caption={Tournament chooser durumları}]
+typedef enum logic [1:0] {
+    STRONG_BIMODAL = 2'b00,
+    WEAK_BIMODAL   = 2'b01,
+    WEAK_GSHARE    = 2'b10,
+    STRONG_GSHARE  = 2'b11
+} chooser_state_e;
+\end{lstlisting}
+
+\paragraph{Chooser Güncelleme Kuralı}
+
+Chooser, yalnızca iki predictor farklı tahmin yaptığında güncellenir:
+\begin{itemize}
+    \item Her iki predictor aynı tahmini yaparsa: chooser değişmez
+    \item Predictor'lar farklı tahmin yaparsa: doğru olanın yönünde güncelle
+\end{itemize}
+
+\begin{nedenbox}
+\textbf{Neden her iki predictor'ı da eğitiyoruz?}
+
+Alternatif: Sadece seçilen predictor'ı eğitmek. Ancak bu yaklaşımda, chooser
+yanlış predictor'a sabitlenirse, diğer predictor güncellenemez ve ``öğrenemez.''
+
+Her iki predictor'ı eğitmek, chooser değiştiğinde diğer predictor'ın hazır
+olmasını sağlar.
+\end{nedenbox}
+
+\paragraph{History Packing}
+
+Tournament predictor, hem GShare hem de bimodal bilgisini BRAT'a kaydetmelidir.
+Bu bilgi, \sig{global\_history\_*\_o} sinyalinde paketlenir:
+
+\begin{lstlisting}[caption={Tournament history packing}]
+// Layout of global_history bus (MSB..LSB):
+//   [INDEX_WIDTH+2:3] = GHR_before   (INDEX_WIDTH bits, from gshare)
+//   [2]               = gshare_pred
+//   [1]               = bimodal_pred
+//   [0]               = chooser_sel  (1 => gshare, 0 => bimodal)
+\end{lstlisting}
+
+\subsection{JALR Predictor}
+
+JALR (Jump And Link Register) komutları, hedef adresi bir register'dan okur.
+Bu nedenle, hedef adres fetch aşamasında bilinmez.
+
+\module{jalr\_predictor} modülü, bir \concept{Branch Target Buffer} (BTB) kullanarak
+JALR hedeflerini tahmin eder.
+
+\begin{table}[H]
+\centering
+\caption{JALR predictor özellikleri}
+\label{tab:jalr_predictor}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Özellik} & \textbf{Değer/Açıklama} \\
+\midrule
+Tablo Boyutu & 32 entry (parametrik) \\
+İndeksleme & PC[INDEX\_WIDTH+1:2] \\
+Saklanan Veri & Hedef PC adresi \\
+Güncelleme & Execute aşamasından (gerçek hedef) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{nedenbox}
+\textbf{Neden ayrı JALR predictor?}
+
+Dal predictor'ları yön tahmini yapar (taken/not-taken). JALR için bu yeterli
+değildir; hedef adres de tahmin edilmelidir.
+
+JALR'lar genellikle fonksiyon dönüşleri (RET = JALR x0, ra, 0) veya dolaylı
+çağrılardır. BTB, son kullanılan hedefi saklar ve çoğu durumda doğru tahmin
+sağlar.
+\end{nedenbox}
+
+\subsection{Return Address Stack (RAS)}
+
+Fonksiyon dönüşleri (RET) için özel bir yapı olan \concept{Return Address Stack},
+CALL/RET çiftlerini takip eder.
+
+\paragraph{RAS Operasyonları}
+\begin{itemize}
+    \item \textbf{CALL (JAL/JALR with rd=ra):} Dönüş adresini (PC+4) stack'e push et
+    \item \textbf{RET (JALR x0, ra, 0):} Stack'ten pop et ve hedef olarak kullan
+\end{itemize}
+
+\paragraph{Spekülatif RAS ve Checkpoint}
+
+RAS, spekülatif olarak güncellenir. Misprediction durumunda geri alınabilmesi
+için, her dal komutu RAS top-of-stack pointer'ını BRAT'a kaydeder:
+
+\begin{lstlisting}[caption={RAS checkpoint}]
+output logic [2:0] ras_tos_checkpoint_o, // RAS TOS at fetch time
+input  logic ras_restore_en_i,
+input  logic [2:0] ras_restore_tos_i
+\end{lstlisting}
+
+\subsection{Predictor Güncelleme Akışı}
+
+\begin{enumerate}
+    \item \textbf{Fetch:} Tahmin yapılır, GHR spekülatif güncellenir
+    \item \textbf{Issue:} Tahmin bilgisi BRAT'a kaydedilir
+    \item \textbf{Execute:} Dal çözümlenir, gerçek sonuç belirlenir
+    \item \textbf{BRAT Resolution:} Sonuç in-order olarak çıkar
+    \item \textbf{Predictor Update:} Tablo güncellenir, GHR düzeltilir
+\end{enumerate}
+
+\begin{lstlisting}[caption={Predictor güncelleme ayrımı}]
+// Branch predictor: update when update_valid & !is_jalr
+assign branch_update_valid_0 = update_valid_i_0 & ~is_jalr_i_0;
+
+// JALR predictor: update when update_valid & is_jalr
+assign jalr_update_valid_0 = update_valid_i_0 & is_jalr_i_0;
+\end{lstlisting}

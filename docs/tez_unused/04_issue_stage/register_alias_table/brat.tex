@@ -1,0 +1,299 @@
+% =============================================================================
+% BRAT - BRANCH RESOLUTION ALIAS TABLE
+% =============================================================================
+
+\subsection{Branch Resolution Alias Table (BRAT)}
+\label{sec:brat}
+
+Bu bölümde, spekülatif dal tahmini recovery'si için kullanılan BRAT mekanizması
+detaylı olarak açıklanmaktadır.
+
+\subsubsection{Problem: Geleneksel Misprediction Recovery}
+
+Geleneksel Tomasulo tabanlı işlemcilerde, misprediction recovery şu şekilde çalışır:
+
+\begin{enumerate}
+    \item Dal komutu execute edilir, misprediction tespit edilir
+    \item Dal komutu ROB başına ulaşana kadar beklenir
+    \item ROB başında recovery başlar: RAT sıfırlanır, pipeline flush edilir
+    \item Doğru yoldan fetch yeniden başlar
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.85\textwidth}
+\centering
+\textbf{Geleneksel Recovery}\\[0.5em]
+ROB: \fbox{0 (Head)} \fbox{1} \fbox{\textcolor{red}{2 (Mispred)}} \fbox{3} \fbox{4} \fbox{5} \fbox{6} \fbox{7}\\[0.5em]
+\textit{Bekleme: Mispredicting branch (2) ROB head'e ulaşmalı $\rightarrow$ 2 commit bekle}
+\end{minipage}
+}
+\caption{Geleneksel recovery: Dal ROB head'e ulaşmalı}
+\label{fig:traditional_recovery}
+\end{figure}
+
+\begin{nedenbox}
+\textbf{Neden geleneksel yaklaşım yavaş?}
+
+Mispredicting dal ROB'un ortasındaysa, önündeki tüm komutların commit olması
+beklenir. 32 entry'lik ROB'da, dal 16. pozisyondaysa, 15 commit beklenir.
+Her commit 1 çevrimde 3 komut işlese bile, bu 5+ çevrim gecikme demektir.
+Spekülatif dallar için bu gecikme kabul edilemez.
+\end{nedenbox}
+
+\subsubsection{Çözüm: BRAT ile Eager Recovery}
+
+BRAT, her dal komutu için RAT'ın anlık görüntüsünü (snapshot) saklar. Misprediction
+tespit edildiğinde, ROB başı beklenmeden anında geri yükleme yapılır.
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.85\textwidth}
+\centering
+\textbf{BRAT: Snapshot Tabanlı Anında Recovery}\\[1em]
+\begin{tabular}{ccc}
+\fbox{Branch 0 Snapshot} & \fbox{Branch 1 Snapshot} & \fbox{Branch 2 Snapshot} \\
+\scriptsize (Head) & & \scriptsize (Tail) \\
+\end{tabular}
+\\[0.5em]
+$\uparrow$ Execute Result (Match?) \\[0.5em]
+$\downarrow$ Mispred $\rightarrow$ RAT Restore \\[0.5em]
+\textit{ROB head beklenmeden anında recovery}
+\end{minipage}
+}
+\caption{BRAT: Snapshot tabanlı anında recovery}
+\label{fig:brat_recovery}
+\end{figure}
+
+\subsubsection{BRAT Entry Yapısı}
+
+Her BRAT entry'si şu alanları saklar:
+
+\begin{table}[H]
+\centering
+\caption{BRAT entry alanları}
+\label{tab:brat_entry}
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Alan} & \textbf{Boyut} & \textbf{Açıklama} \\
+\midrule
+\sig{branch\_phys} & 6 bit & Branch'in fiziksel register ID'si (ROB ID) \\
+\sig{rat\_snapshot} & 32×6 bit & Tüm RAT mapping'inin kopyası \\
+\sig{resolved} & 1 bit & Branch execute edildi mi? \\
+\sig{mispredicted} & 1 bit & Tahmin yanlış mıydı? \\
+\sig{correct\_pc} & 32 bit & Doğru hedef PC \\
+\sig{is\_jalr} & 1 bit & Branch mi JALR mı? \\
+\sig{pc\_at\_prediction} & 32 bit & Predictor update için orijinal PC \\
+\sig{global\_history} & 8+ bit & Branch predictor history \\
+\sig{ras\_tos} & 3 bit & RAS checkpoint pointer \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{nedenbox}
+\textbf{Neden bu kadar veri saklanıyor?}
+
+Recovery sadece RAT restore değildir. Misprediction sonrası:
+\begin{itemize}
+    \item RAT restore edilmeli (snapshot)
+    \item Fetch doğru PC'ye yönlendirilmeli (correct\_pc)
+    \item Branch predictor güncellenmeli (pc\_at\_prediction, global\_history)
+    \item RAS restore edilmeli (ras\_tos)
+    \item JALR predictor güncellenmeli (is\_jalr)
+\end{itemize}
+Tüm bilgileri tek yerde tutmak, tek çevrimde recovery sağlar.
+\end{nedenbox}
+
+\subsubsection{BRAT Operasyonları}
+
+\paragraph{1. Push (Dal Issue Edildiğinde)}
+
+Yeni dal komutu issue edildiğinde, BRAT'a entry eklenir:
+
+\begin{lstlisting}[caption={BRAT push mantığı}]
+always_comb begin
+    brat_push_en[0] = decode_valid[0] && branch_0 && !brat_full && !brat_restore_en;
+    brat_push_en[1] = decode_valid[1] && branch_1 && !brat_full && !brat_restore_en;
+    brat_push_en[2] = decode_valid[2] && branch_2 && !brat_full && !brat_restore_en;
+
+    // Push snapshots - Store RAT state AFTER the branch instruction
+    brat_push_snapshot_0 = rat_after_inst0;
+    brat_push_snapshot_1 = rat_after_inst1;
+    brat_push_snapshot_2 = rat_after_inst2;
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden ``daldan sonraki'' RAT state saklanıyor?}
+
+Snapshot, dalın kendi allocation'ını içermelidir. Misprediction durumunda:
+\begin{itemize}
+    \item Dalın kendisi geçerlidir (doğru yolun parçası)
+    \item Daldan \textit{sonraki} komutlar geçersizdir
+\end{itemize}
+Bu yüzden snapshot, dalın allocation'ını içeren RAT state'i saklar.
+\end{nedenbox}
+
+\paragraph{2. Execute Result Yazma}
+
+Dal execute edildiğinde, sonuç BRAT'a yazılır:
+
+\begin{lstlisting}[caption={Execute result matching}]
+// Execute result write interface
+.exec_valid_0(exec_branch_valid_i[0]),
+.exec_rob_id_0(exec_rob_id_0_i),
+.exec_mispredicted_0(exec_mispredicted_i[0]),
+.exec_correct_pc_0(exec_correct_pc_0_i),
+\end{lstlisting}
+
+BRAT, gelen ROB ID'yi tüm entry'lerle karşılaştırır. Eşleşen entry'nin
+\sig{resolved} ve \sig{mispredicted} alanları güncellenir.
+
+\paragraph{3. In-Order Resolution Output}
+
+BRAT, dal sonuçlarını program sırasında çıkarır:
+
+\begin{lstlisting}[caption={In-order resolution çıkışı}]
+// BRAT ensures in-order branch resolution outputs
+assign branch_resolved_o = {brat_resolved_2, brat_resolved_1, brat_resolved_0};
+assign branch_mispredicted_o = {brat_mispredicted_2, brat_mispredicted_1, brat_mispredicted_0};
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden in-order resolution kritik?}
+
+Dallar out-of-order execute edilebilir. Ancak misprediction işleme sırası önemlidir:
+\begin{itemize}
+    \item Branch A (eski) ve Branch B (genç) aynı anda mispredicted olsun
+    \item B, A'nın spekülatif yolunda olabilir
+    \item A'nın misprediction'ı düzeltilirse, B zaten geçersiz
+    \item B'yi önce işlemek gereksiz çalışma olur
+\end{itemize}
+BRAT, circular buffer yapısıyla doğal olarak oldest-first sıralama sağlar.
+\end{nedenbox}
+
+\paragraph{4. Combinational Bypass}
+
+En düşük recovery latency için, dal execute edildiği çevrimde resolution çıkmalıdır:
+
+\begin{lstlisting}[caption={Combinational bypass}]
+// Same-cycle resolution using bypass
+always_comb begin
+    if (exec_valid_0 && (exec_rob_id_0 == head_branch_phys)) begin
+        // Bypass: use incoming execute result directly
+        branch_resolved_o_0 = 1'b1;
+        branch_mispredicted_o_0 = exec_mispredicted_0;
+        correct_pc_o_0 = exec_correct_pc_0;
+    end else begin
+        // Use stored value
+        branch_resolved_o_0 = head_resolved;
+        branch_mispredicted_o_0 = head_mispredicted;
+        correct_pc_o_0 = head_correct_pc;
+    end
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden combinational bypass?}
+
+Bypass olmadan akış:
+\begin{enumerate}
+    \item Cycle N: Execute sonucu gelir, BRAT'a yazılır
+    \item Cycle N+1: BRAT'tan okunur, diğer modüllere iletilir
+    \item Cycle N+2: Fetch yeni PC'den başlar
+\end{enumerate}
+
+Bypass ile:
+\begin{enumerate}
+    \item Cycle N: Execute sonucu gelir, AYNI ANDA çıkışa iletilir
+    \item Cycle N+1: Fetch yeni PC'den başlar
+\end{enumerate}
+
+1 çevrim kazanç, yüksek misprediction oranlarında önemli performans farkı yaratır.
+\end{nedenbox}
+
+\paragraph{5. Commit Update}
+
+ROB commit olduğunda, BRAT snapshot'ları güncellenir:
+
+\begin{lstlisting}[caption={Commit update mantığı}]
+// For each commit, update ALL snapshots that point to this ROB entry
+for (int i = 0; i < BRAT_DEPTH; i++) begin
+    if (commit_valid && snapshot[i][arch_addr] == rob_idx) begin
+        snapshot[i][arch_addr] <= rf_mapping;  // Point to RF instead of ROB
+    end
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden commit update gerekli?}
+
+Snapshot alındığında, bazı register'lar ROB'a işaret eder. ROB commit olduğunda:
+\begin{itemize}
+    \item Değer ROB'dan RF'e kopyalanır
+    \item ROB entry yeniden kullanılabilir
+\end{itemize}
+
+Snapshot güncellenmezse, restore sırasında:
+\begin{itemize}
+    \item Geçersiz ROB pointer kullanılır
+    \item Yanlış veri okunur
+\end{itemize}
+
+Bu yüzden commit, tüm snapshot'larda ilgili mapping'i RF'e günceller.
+\end{nedenbox}
+
+\paragraph{6. RAT Restore}
+
+Misprediction tespit edildiğinde, RAT snapshot'tan restore edilir:
+
+\begin{lstlisting}[caption={RAT restore}]
+always_ff @(posedge clk) begin
+    if (brat_restore_en) begin
+        for (int i = 0; i < ARCH_REGS; i++) begin
+            // Handle same-cycle commit
+            if (commit_valid[0] && commit_addr_0 == i &&
+                commit_rob_idx_0 == brat_restore_snapshot[i][4:0]) begin
+                rat_table[i] <= {1'b0, commit_addr_0};
+            end else begin
+                rat_table[i] <= brat_restore_snapshot[i];
+            end
+        end
+    end
+end
+\end{lstlisting}
+
+\subsubsection{RAS Checkpoint/Restore}
+
+BRAT, Return Address Stack için de checkpoint tutar:
+
+\begin{lstlisting}[caption={RAS checkpoint}]
+.push_ras_tos_0(push_ras_tos_i),
+.ras_restore_valid_o(ras_restore_valid_o),
+.ras_restore_tos_o(ras_restore_tos_o)
+\end{lstlisting}
+
+Misprediction durumunda RAS pointer da restore edilir, böylece fonksiyon
+dönüş tahminleri doğru kalır.
+
+\subsubsection{BRAT Özet Tablosu}
+
+\begin{table}[H]
+\centering
+\caption{BRAT özellikleri}
+\label{tab:brat_summary}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Özellik} & \textbf{Değer/Açıklama} \\
+\midrule
+Derinlik & 16 entry (maksimum in-flight branch) \\
+Snapshot Boyutu & 32 × 6 bit = 192 bit/entry \\
+Toplam Depolama & 16 × (~250 bit) ≈ 4 Kbit \\
+Push Genişliği & 3-wide (her cycle 3 branch) \\
+Resolution Genişliği & 3-wide (her cycle 3 resolution) \\
+Recovery Latency & 0 cycle (combinational bypass) \\
+\bottomrule
+\end{tabular}
+\end{table}

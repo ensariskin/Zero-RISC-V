@@ -1,0 +1,245 @@
+% =============================================================================
+% CIRCULAR BUFFER - ROB VE LSQ ALLOCATION
+% =============================================================================
+
+\subsection{3-Port Circular Buffer ile Kaynak Allocation}
+\label{sec:circular_buffer}
+
+Bu bölümde, ROB ve LSQ kaynak tahsisi için kullanılan 3-port circular buffer
+yapısı detaylı olarak açıklanmaktadır.
+
+\subsubsection{Problem: 3-Way Paralel Allocation}
+
+3-way superscalar mimaride, her çevrimde en fazla 3 komut issue edilir. Her komut
+potansiyel olarak şu kaynakları gerektirir:
+\begin{itemize}
+    \item 1 ROB entry (fiziksel register = ROB indeksi)
+    \item 1 LSQ entry (load/store komutları için)
+\end{itemize}
+
+Geleneksel \concept{free list} yaklaşımında, 3 bağımsız boş kaynak bulmak karmaşık
+priority encoder mantığı gerektirir. N entry'li bir free list için:
+\begin{itemize}
+    \item İlk boş entry'yi bul: O(N) tarama veya priority encoder
+    \item İkinci boş entry'yi bul: O(N) tarama, ilkini hariç tut
+    \item Üçüncü boş entry'yi bul: O(N) tarama, ilk ikisini hariç tut
+\end{itemize}
+
+Bu yaklaşım hem alan hem de zamanlama açısından maliyetlidir.
+
+\begin{nedenbox}
+\textbf{Neden geleneksel free list yetersiz?}
+\begin{itemize}
+    \item \textbf{Donanım Maliyeti:} 3 bağımsız priority encoder, her biri 32-64 bit
+    \item \textbf{Critical Path:} Birinci sonuç ikinciye, ikinci üçüncüye bağımlı
+    \item \textbf{Karmaşıklık:} Misprediction recovery için tüm allocation'ları track etmek gerekir
+\end{itemize}
+\end{nedenbox}
+
+\subsubsection{Çözüm: Index-as-Value Circular Buffer}
+
+Bu tasarımda, circular buffer'ın her entry'sinin değeri kendi indeksine eşittir:
+
+\begin{lstlisting}[caption={Index-as-value circular buffer yapısı}]
+// Buffer initialization
+for (int i = 0; i < BUFFER_DEPTH; i++) begin
+    buffer[i] = i;  // Entry[0]=0, Entry[1]=1, ..., Entry[31]=31
+end
+\end{lstlisting}
+
+\paragraph{Temel Fikir}
+
+Buffer, gerçek veri depolamaz. Sadece hangi indekslerin ``kullanılabilir'' olduğunu
+yönetir:
+\begin{itemize}
+    \item \sig{read\_ptr}: Bir sonraki allocation'ın yapılacağı pozisyon
+    \item \sig{write\_ptr}: Deallocation yapıldığında kullanılacak pozisyon
+    \item \sig{count}: Mevcut kullanılabilir entry sayısı
+\end{itemize}
+
+\paragraph{Allocation (Okuma)}
+
+Allocation, \sig{read\_ptr}'dan okuma ile yapılır:
+
+\begin{lstlisting}[caption={3-port paralel allocation}]
+// 3 parallel reads
+assign read_data_0 = read_ptr;           // Allocated ID = read_ptr
+assign read_data_1 = read_ptr + 1;       // Next ID
+assign read_data_2 = read_ptr + 2;       // Next+1 ID
+
+// Advance pointer by number of successful allocations
+always_ff @(posedge clk) begin
+    if (read_en_0 || read_en_1 || read_en_2)
+        read_ptr <= read_ptr + read_count;
+end
+\end{lstlisting}
+
+\paragraph{Deallocation (Yazma)}
+
+Deallocation, \sig{write\_ptr}'a yazma ile yapılır (değer zaten sabit):
+
+\begin{lstlisting}[caption={3-port paralel deallocation}]
+// 3 parallel writes (from commit)
+always_ff @(posedge clk) begin
+    if (write_en_0 || write_en_1 || write_en_2)
+        write_ptr <= write_ptr + write_count;
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden bu tasarım üstün?}
+\begin{itemize}
+    \item \textbf{O(1) Complexity:} Priority encoder yok, sadece pointer aritmetiği
+    \item \textbf{Paralel Erişim:} 3 allocation aynı anda, bağımsız olarak
+    \item \textbf{Sıfır Depolama:} Gerçek veri saklanmaz, sadece pointer'lar
+    \item \textbf{Basit Recovery:} Pointer reset ile tüm allocation'lar geri alınır
+\end{itemize}
+\end{nedenbox}
+
+\subsubsection{Free List Yönetimi (ROB Allocation)}
+
+ROB allocation için 32 entry'lik circular buffer kullanılır:
+
+\begin{lstlisting}[caption={Free address buffer instantiation}]
+circular_buffer_3port free_address_buffer(
+    .clk(clk),
+    .rst_n(reset),
+    .redo_last_alloc(|branch_mispredicted_o),
+    .read_en_0(need_alloc_0),
+    .read_en_1(need_alloc_1),
+    .read_en_2(need_alloc_2),
+    .read_data_0(first_free),
+    .read_data_1(second_free),
+    .read_data_2(third_free),
+    .read_valid_0(found_first),
+    .read_valid_1(found_second),
+    .read_valid_2(found_third),
+    .write_en_0(commit_valid[0]),
+    .write_en_1(commit_valid[1]),
+    .write_en_2(commit_valid[2]),
+    .set_read_ptr_en(free_addr_set_en),
+    .set_read_ptr_value(free_addr_set_value)
+);
+\end{lstlisting}
+
+\paragraph{ROB Allocation neden RAT'ta?}
+
+Bu tasarımda, \concept{fiziksel register = ROB indeksi} eşitliği kullanılır:
+\begin{itemize}
+    \item Mimari register'lar (x0-x31): Fiziksel register 0-31 (RF'te)
+    \item ROB entry'leri (0-31): Fiziksel register 32-63 (ROB'da)
+\end{itemize}
+
+RAT zaten register renaming yapıyor. Yeni hedef için ROB ID allocation doğal
+olarak renaming sürecinin parçasıdır.
+
+\subsubsection{LSQ Index Allocation}
+
+Load/store komutları için ayrı bir circular buffer kullanılır:
+
+\begin{lstlisting}[caption={LSQ address buffer instantiation}]
+circular_buffer_3port #(.BUFFER_DEPTH(32)) lsq_address_buffer(
+    .clk(clk),
+    .rst_n(reset),
+    .redo_last_alloc(|branch_mispredicted_o),
+    .read_en_0(need_lsq_alloc_0),
+    .read_en_1(need_lsq_alloc_1),
+    .read_en_2(need_lsq_alloc_2),
+    .write_en_0(lsq_commit_0),
+    .write_en_1(lsq_commit_1),
+    .write_en_2(lsq_commit_2),
+    .set_read_ptr_en(lsq_flush_valid_i),
+    .set_read_ptr_value(first_invalid_lsq_idx_i)
+);
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden ayrı LSQ buffer?}
+
+LSQ allocation sadece load/store komutları için gerekli. Ayrı buffer tutmak:
+\begin{itemize}
+    \item ROB ve LSQ yaşam döngülerini bağımsız yönetir
+    \item Her yapı kendi hızında dolup boşalabilir
+    \item Misprediction recovery ayrı ayrı yapılabilir
+\end{itemize}
+\end{nedenbox}
+
+\subsubsection{Misprediction Recovery}
+
+Misprediction durumunda, yanlış yolda yapılan allocation'lar geri alınmalıdır.
+İki mekanizma kullanılır:
+
+\paragraph{1. Pointer Reset (\sig{set\_read\_ptr\_en})}
+
+Misprediction tespit edildiğinde, \sig{read\_ptr} mispredicting instruction'ın
+allocation noktasına reset edilir:
+
+\begin{lstlisting}[caption={Misprediction pointer reset}]
+always_comb begin
+    if (brat_resolved_0 && brat_mispredicted_0) begin
+        free_addr_set_en = 1'b1;
+        free_addr_set_value = brat_resolved_phys_0 + 1;
+    end else if (brat_resolved_1 && brat_mispredicted_1) begin
+        free_addr_set_en = 1'b1;
+        free_addr_set_value = brat_resolved_phys_1 + 1;
+    end else ...
+end
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden \texttt{+1}?}
+
+Mispredicting branch'in kendi allocation'ı geçerlidir. Sadece ondan sonraki
+allocation'lar geri alınmalı. Bu yüzden yeni \sig{read\_ptr} = branch'in
+fiziksel register'ı + 1.
+\end{nedenbox}
+
+\paragraph{2. Redo Last Allocation (\sig{redo\_last\_alloc})}
+
+Misprediction aynı çevrimde tespit edilirse, o çevrimdeki allocation'lar henüz
+commit edilmemiştir. Bu sinyal, son allocation'ı geri alır:
+
+\begin{lstlisting}[caption={Redo last allocation}]
+always_ff @(posedge clk) begin
+    if (redo_last_alloc) begin
+        read_ptr <= read_ptr - last_alloc_count;
+    end
+end
+\end{lstlisting}
+
+\subsubsection{Buffer Doluluk Kontrolü}
+
+Allocation'a hazır olup olmadığını belirleyen sinyaller:
+
+\begin{lstlisting}[caption={Rename ready sinyalleri}]
+// ROB allocation ready
+assign rename_ready = (free_count >= 3) ? 3'b111 :
+                      (free_count == 2) ? 3'b011 :
+                      (free_count == 1) ? 3'b001 : 3'b000;
+
+// LSQ allocation ready
+assign lsq_alloc_ready = (lsq_free_count >= 3) ? 3'b111 :
+                         (lsq_free_count == 2) ? 3'b011 :
+                         (lsq_free_count == 1) ? 3'b001 : 3'b000;
+\end{lstlisting}
+
+Bu sinyaller, issue stage'e kaç komutun kabul edilebileceğini bildirir.
+
+\subsubsection{Circular Buffer Özet Tablosu}
+
+\begin{table}[H]
+\centering
+\caption{Circular buffer özellikleri}
+\label{tab:circular_buffer}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Özellik} & \textbf{Free List (ROB)} & \textbf{LSQ Buffer} \\
+\midrule
+Derinlik & 32 entry & 32 entry \\
+Port Sayısı & 3 read, 3 write & 3 read, 3 write \\
+Allocation & Issue aşamasında & Load/store issue'da \\
+Deallocation & ROB commit'te & LSQ commit'te \\
+Reset Kaynağı & BRAT misprediction & BRAT misprediction \\
+\bottomrule
+\end{tabular}
+\end{table}

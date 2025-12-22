@@ -1,0 +1,209 @@
+% =============================================================================
+% BÖLÜM 10: SONUÇ VE GELECEK ÇALIŞMALAR
+% =============================================================================
+
+\chapter{Sonuç ve Gelecek Çalışmalar}
+\label{chap:sonuc}
+
+\section{Sonuç}
+\label{sec:sonuc}
+
+Bu tez çalışmasında, RISC-V RV32I komut seti mimarisini destekleyen 3-way
+superscalar bir işlemci tasarlanmış ve gerçeklenmiştir. Tomasulo algoritması
+temel alınarak out-of-order execution, register renaming ve spekülatif
+branch execution mekanizmaları başarıyla implemente edilmiştir.
+
+\subsection{Başarılan Hedefler}
+
+\begin{enumerate}
+    \item \textbf{3-Way Superscalar Mimari:}
+    \begin{itemize}
+        \item Her çevrimde 3 komut fetch, decode, issue ve commit
+        \item Scalar işlemciye göre 1.83x ortalama hızlanma
+        \item Tam RV32I komut seti desteği
+    \end{itemize}
+
+    \item \textbf{Tomasulo Algoritması Implementasyonu:}
+    \begin{itemize}
+        \item Register Alias Table (RAT) ile register renaming
+        \item Tag-based operand tracking ile dependency resolution
+        \item Common Data Bus (CDB) ile result broadcasting
+        \item Reorder Buffer (ROB) ile in-order commit
+    \end{itemize}
+
+    \item \textbf{Spekülatif Execution:}
+    \begin{itemize}
+        \item Tournament branch predictor (Gshare + Bimodal)
+        \item Return Address Stack (RAS) ile fonksiyon dönüş tahmini
+        \item JALR predictor ile indirect jump tahmini
+        \item BRAT ile eager misprediction recovery
+    \end{itemize}
+
+    \item \textbf{Memory Subsystem:}
+    \begin{itemize}
+        \item Load Store Queue (LSQ) ile memory operasyonu yönetimi
+        \item In-order store commit ile memory consistency
+        \item 3-port memory interface
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Teknik Katkılar}
+
+Bu çalışmanın temel teknik katkıları şunlardır:
+
+\begin{enumerate}
+    \item \textbf{BRAT Mekanizması:}
+    Branch Resolution Alias Table, misprediction recovery latency'sini
+    minimize eden eager recovery mekanizması sağlar. ROB head'e ulaşmadan
+    anında RAT restore yapılabilir.
+
+    \item \textbf{Circular Buffer Tabanlı Kaynak Yönetimi:}
+    ROB, BRAT ve LSQ için tek bir circular buffer yapısı kullanılarak
+    alan ve karmaşıklık optimize edilmiştir.
+
+    \item \textbf{Same-Cycle Forwarding:}
+    Aynı çevrimde issue edilen bağımlı komutlar arasında kombinasyonel
+    forwarding ile IPC kaybı önlenmiştir.
+
+    \item \textbf{Modüler ve Genişletilebilir Tasarım:}
+    SystemVerilog interface'leri ile modüller arası temiz ayrım sağlanmış,
+    gelecek genişletmeler için uygun altyapı oluşturulmuştur.
+\end{enumerate}
+
+\subsection{Performans Sonuçları}
+
+\begin{table}[H]
+\centering
+\caption{Performans özeti}
+\label{tab:final_perf}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metrik} & \textbf{Değer} \\
+\midrule
+Issue Genişliği & 3-way \\
+Ortalama IPC & 1.5-2.0 \\
+Speedup (vs Scalar) & 1.83x \\
+ROB Derinliği & 32 entry \\
+Branch Mispred Rate & 5-10\% \\
+Mispred Penalty & 5-6 cycle \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Karşılaşılan Zorluklar}
+\label{sec:challenges}
+
+Tasarım sürecinde karşılaşılan başlıca zorluklar:
+
+\begin{enumerate}
+    \item \textbf{Timing Closure:}
+    3-way paralel operasyonlar için kritik yol optimizasyonu gerekti.
+    Özellikle RAT lookup ve same-cycle forwarding kombinasyonel
+    gecikme ekledi.
+
+    \item \textbf{Misprediction Recovery Karmaşıklığı:}
+    BRAT snapshot'larının commit update'leri ile senkronizasyonu,
+    köşe durumlarında hatalara yol açtı. Dikkatli tasarım ve
+    kapsamlı test ile çözüldü.
+
+    \item \textbf{LSQ-ROB Koordinasyonu:}
+    Store commit'in ROB ve LSQ arasında doğru senkronizasyonu,
+    özellikle misprediction durumlarında zorlu oldu.
+
+    \item \textbf{Debug Zorluğu:}
+    Out-of-order execution, geleneksel debug tekniklerini zorlaştırdı.
+    Tracer altyapısı bu sorunu çözmek için geliştirildi.
+\end{enumerate}
+
+\section{Gelecek Çalışmalar}
+\label{sec:future_work}
+
+\subsection{Kısa Vadeli İyileştirmeler}
+
+\begin{enumerate}
+    \item \textbf{Daha Derin Reservation Station:}
+    Her RS'yi 1 entry'den 2-4 entry'ye genişletmek, instruction window'u
+    artırarak IPC iyileştirmesi sağlayabilir.
+
+    \item \textbf{Partial Store-to-Load Forwarding:}
+    Farklı boyutlu store-load arası kısmi byte forwarding desteği eklenebilir.
+
+    \item \textbf{TAGE Branch Predictor:}
+    Tournament predictor yerine TAGE kullanmak, misprediction rate'i
+    düşürebilir.
+
+    \item \textbf{Daha Geniş Fetch:}
+    Fetch genişliğini 4-6 komuta çıkarmak, instruction supply darboğazını
+    azaltabilir.
+\end{enumerate}
+
+\subsection{Orta Vadeli İyileştirmeler}
+
+\begin{enumerate}
+    \item \textbf{RV32M Extension:}
+    Multiply/Divide komutları için ayrı functional unit eklemek.
+
+    \item \textbf{Speculative Load Execution:}
+    Address bilinmeyen store'ları bypass eden spekülatif load execution.
+
+    \item \textbf{Cache Hierarchy:}
+    L1 I-Cache ve D-Cache eklenmesi.
+
+    \item \textbf{Exception Handling:}
+    Tam RISC-V exception/interrupt desteği.
+\end{enumerate}
+
+\subsection{Uzun Vadeli Hedefler}
+
+\begin{enumerate}
+    \item \textbf{SMT (Simultaneous Multi-Threading):}
+    Tek çekirdekte birden fazla thread çalıştırma.
+
+    \item \textbf{RV64 Desteği:}
+    64-bit veri yolu ve adres alanı.
+
+    \item \textbf{Floating Point:}
+    RV32F/RV32D extension desteği.
+
+    \item \textbf{Vector Extension:}
+    RV32V ile SIMD operasyonları.
+
+    \item \textbf{Multi-Core:}
+    Birden fazla superscalar çekirdek ile cache coherency.
+\end{enumerate}
+
+\section{Öğrenilen Dersler}
+\label{sec:lessons}
+
+Bu çalışmadan çıkarılan önemli dersler:
+
+\begin{enumerate}
+    \item \textbf{Basitlik Önce Gelir:}
+    Karmaşık optimizasyonlar yerine çalışan basit tasarımdan başlamak,
+    debug sürecini önemli ölçüde kolaylaştırdı.
+
+    \item \textbf{Kapsamlı Test Kritik:}
+    Out-of-order execution'da köşe durumları çok fazla. Kapsamlı
+    unit test ve regression test olmadan güvenilir tasarım mümkün değil.
+
+    \item \textbf{Tracer Altyapısı Zorunlu:}
+    Instruction-level izleme olmadan out-of-order debug neredeyse
+    imkansız. Tracer, tasarım sürecinin başında eklenmeliydi.
+
+    \item \textbf{Modüler Tasarım:}
+    SystemVerilog interface'leri ile modüller arası temiz ayrım,
+    hem geliştirme hem de debug sürecini hızlandırdı.
+\end{enumerate}
+
+\section{Son Söz}
+
+Bu tez çalışması, modern superscalar işlemci tasarımının temel
+prensiplerini başarıyla uygulamış ve çalışan bir 3-way superscalar
+RV32I işlemci ortaya koymuştur. Tomasulo algoritması, spekülatif
+execution ve branch prediction mekanizmalarının entegrasyonu,
+scalar işlemciye göre önemli performans artışı sağlamıştır.
+
+Tasarım, hem eğitim amaçlı referans işlemci olarak hem de gömülü
+sistem uygulamaları için pratik bir çözüm olarak kullanılabilir.
+Modüler yapısı, gelecek genişletmeler için sağlam bir temel
+oluşturmaktadır.

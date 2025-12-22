@@ -1,0 +1,253 @@
+% =============================================================================
+% BÖLÜM 4: ISSUE STAGE
+% =============================================================================
+
+\chapter{Issue Stage}
+\label{chap:issue}
+
+Issue stage, fetch edilen komutların decode edildiği, register renaming'in yapıldığı
+ve kaynak tahsisinin gerçekleştirildiği pipeline aşamasıdır. Bu bölümde, 3-way
+paralel decode, Register Alias Table (RAT), BRAT mekanizması ve kaynak yönetimi
+detaylı olarak açıklanmaktadır.
+
+\section{Genel Bakış}
+\label{sec:issue_genel}
+
+Issue stage, instruction buffer'dan 3 komut alır ve her biri için:
+\begin{enumerate}
+    \item Komut decode işlemi (RV32I format çözümleme)
+    \item Register renaming (RAT lookup ve allocation)
+    \item ROB/LSQ kaynak tahsisi
+    \item Dal komutu ise BRAT'a snapshot kaydetme
+\end{enumerate}
+işlemlerini paralel olarak gerçekleştirir.
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.9\textwidth}
+\centering
+\textbf{Issue Stage Veri Akışı}\\[1em]
+\begin{tabular}{ccccc}
+ & & \fbox{Decoder 0} & & \\
+\fbox{Inst Buffer} & $\rightarrow$ & \fbox{Decoder 1} & $\rightarrow$ & \fbox{RAT + BRAT + Free List} $\rightarrow$ \fbox{Dispatch} \\
+ & & \fbox{Decoder 2} & & \\
+\end{tabular}
+\\[0.5em]
+\scriptsize 3 komut paralel decode $\rightarrow$ Register renaming $\rightarrow$ Renamed operands
+\end{minipage}
+}
+\caption{Issue stage blok diyagramı}
+\label{fig:issue_block}
+\end{figure}
+
+\subsection{Issue Stage Bileşenleri}
+
+\begin{table}[H]
+\centering
+\caption{Issue stage modülleri}
+\label{tab:issue_modules}
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Modül} & \textbf{Dosya} & \textbf{Görev} \\
+\midrule
+Issue Stage & \texttt{issue\_stage.sv} & Üst seviye koordinasyon \\
+RV32I Decoder & \texttt{rv32i\_decoder.sv} & Komut format çözümleme (×3) \\
+RAT & \texttt{register\_alias\_table.sv} & Register renaming \\
+Circular Buffer & \texttt{circular\_buffer\_3port.sv} & ROB/LSQ allocation \\
+BRAT & \texttt{brat\_circular\_buffer.sv} & Dal recovery snapshot \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{RV32I Decoder}
+\label{sec:decoder}
+
+Her issue slot için bağımsız bir \module{rv32i\_decoder} instance'ı bulunur.
+Decoder, 32-bit komuttan kontrol sinyallerini çıkarır.
+
+\subsection{Decoder Çıkışları}
+
+\begin{table}[H]
+\centering
+\caption{Decoder çıkış sinyalleri}
+\label{tab:decoder_outputs}
+\begin{tabular}{lcp{6cm}}
+\toprule
+\textbf{Sinyal} & \textbf{Boyut} & \textbf{Açıklama} \\
+\midrule
+\sig{control\_word} & 26 bit & ALU operasyonu, memory erişimi, vb. \\
+\sig{branch\_sel} & 3 bit & Dal koşulu seçimi \\
+\sig{rs1\_arch} & 5 bit & Kaynak register 1 adresi \\
+\sig{rs2\_arch} & 5 bit & Kaynak register 2 adresi \\
+\sig{rd\_arch} & 5 bit & Hedef register adresi \\
+\sig{rd\_write\_enable} & 1 bit & Hedef register yazma izni \\
+\sig{load\_store} & 1 bit & Memory operasyonu mu? \\
+\sig{branch} & 1 bit & Dal/atlama komutu mu? \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{RV32I Komut Formatları}
+
+RV32I, 6 temel komut formatı tanımlar:
+
+\begin{table}[H]
+\centering
+\caption{RV32I komut formatları}
+\label{tab:rv32i_formats}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Format} & \textbf{Kullanım} \\
+\midrule
+R-type & Register-register ALU (ADD, SUB, AND, OR, ...) \\
+I-type & Immediate ALU, load, JALR \\
+S-type & Store komutları \\
+B-type & Conditional branch \\
+U-type & LUI, AUIPC \\
+J-type & JAL \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Paralel Decode}
+
+3 decoder paralel çalışır, ancak aralarında bağımlılık yoktur:
+
+\begin{lstlisting}[caption={Paralel decoder instantiation}]
+// Decoder 0
+rv32i_decoder #(.size(DATA_WIDTH)) decoder_0 (
+    .instruction(instruction_i_0),
+    .control_word(control_signal_internal_0),
+    .branch_sel(branch_sel_internal_0)
+);
+
+// Decoder 1
+rv32i_decoder #(.size(DATA_WIDTH)) decoder_1 (
+    .instruction(instruction_i_1),
+    .control_word(control_signal_internal_1),
+    .branch_sel(branch_sel_internal_1)
+);
+
+// Decoder 2
+rv32i_decoder #(.size(DATA_WIDTH)) decoder_2 (
+    .instruction(instruction_i_2),
+    .control_word(control_signal_internal_2),
+    .branch_sel(branch_sel_internal_2)
+);
+\end{lstlisting}
+
+\begin{nedenbox}
+\textbf{Neden bağımsız decoder'lar?}
+
+Decode aşaması kombinasyonel lojiktir ve komutlar arası bağımlılık gerektirmez.
+Her komut, sadece kendi 32-bit instruction word'üne bakarak decode edilir.
+Bu, tam paralel decode sağlar ve critical path'i minimize eder.
+\end{nedenbox}
+
+\section{Register Alias Table}
+
+RAT, issue stage'in en kritik bileşenidir. Register renaming, kaynak tahsisi
+ve spekülatif recovery mekanizmalarını içerir.
+
+\input{04_issue_stage/register_alias_table/rat}
+
+\section{Issue Stage Akışı}
+\label{sec:issue_flow}
+
+\subsection{Normal Operasyon}
+
+\begin{enumerate}
+    \item \textbf{Cycle N - Komut Alımı:}
+    \begin{itemize}
+        \item Instruction buffer'dan 3 komut okunur
+        \item Decode valid sinyalleri kontrol edilir
+    \end{itemize}
+
+    \item \textbf{Cycle N - Decode (Kombinasyonel):}
+    \begin{itemize}
+        \item 3 decoder paralel çalışır
+        \item Kontrol sinyalleri ve register adresleri çıkarılır
+    \end{itemize}
+
+    \item \textbf{Cycle N - Renaming (Kombinasyonel):}
+    \begin{itemize}
+        \item RAT lookup: rs1, rs2 için fiziksel register
+        \item Allocation: rd için yeni fiziksel register
+        \item Same-cycle forwarding: komutlar arası bağımlılık
+    \end{itemize}
+
+    \item \textbf{Cycle N - BRAT Push (Kombinasyonel):}
+    \begin{itemize}
+        \item Dal komutu ise RAT snapshot hazırla
+        \item BRAT'a entry ekle
+    \end{itemize}
+
+    \item \textbf{Cycle N+1 - Pipeline Register:}
+    \begin{itemize}
+        \item Tüm bilgiler dispatch stage'e iletilir
+        \item RAT tablosu güncellenir
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Misprediction Durumu}
+
+\begin{enumerate}
+    \item Execute stage'den misprediction sinyali gelir
+    \item BRAT, oldest mispredicted branch'i tespit eder
+    \item RAT, BRAT snapshot'tan restore edilir
+    \item Free list pointer reset edilir
+    \item Issue stage, \sig{internal\_flush} ile mevcut işlemleri iptal eder
+\end{enumerate}
+
+\begin{lstlisting}[caption={Internal flush sinyali}]
+logic internal_flush;
+assign internal_flush = |branch_mispredicted_o;
+\end{lstlisting}
+
+\section{Dispatch Interface}
+\label{sec:dispatch_interface}
+
+Issue stage, decode edilmiş ve rename edilmiş komutları dispatch stage'e iletir:
+
+\begin{lstlisting}[caption={Issue-to-Dispatch interface}]
+interface issue_to_dispatch_if;
+    logic valid;
+    logic [DATA_WIDTH-1:0] pc;
+    logic [DATA_WIDTH-1:0] immediate;
+    logic [25:0] control_word;
+    logic [2:0] branch_sel;
+    logic branch_prediction;
+
+    // Renamed operands
+    logic [PHYS_ADDR_WIDTH-1:0] rs1_phys;
+    logic [PHYS_ADDR_WIDTH-1:0] rs2_phys;
+    logic [PHYS_ADDR_WIDTH-1:0] rd_phys;  // = ROB ID
+    logic [ARCH_ADDR_WIDTH-1:0] rd_arch;
+
+    // LSQ allocation
+    logic lsq_alloc_valid;
+    logic [2:0] alloc_tag;
+endinterface
+\end{lstlisting}
+
+\section{Issue Stage Özeti}
+
+\begin{table}[H]
+\centering
+\caption{Issue stage özellikleri}
+\label{tab:issue_summary}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Özellik} & \textbf{Değer/Açıklama} \\
+\midrule
+Issue Genişliği & 3 komut/çevrim \\
+Decoder Sayısı & 3 (paralel) \\
+RAT Boyutu & 32 entry × 6 bit \\
+BRAT Derinliği & 16 entry \\
+Free List & 32 entry circular buffer \\
+LSQ Allocation & Ayrı circular buffer \\
+Misprediction Latency & 0 cycle (combinational) \\
+\bottomrule
+\end{tabular}
+\end{table}

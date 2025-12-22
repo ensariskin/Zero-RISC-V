@@ -1,0 +1,127 @@
+% =============================================================================
+% MAIN - RV32I 3-Way Superscalar İşlemci Tez Dokümantasyonu
+% =============================================================================
+
+\input{preamble}
+
+\begin{document}
+
+% -----------------------------------------------------------------------------
+% Başlık Sayfası
+% -----------------------------------------------------------------------------
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\scshape\LARGE Üniversite Adı \par}
+    \vspace{1cm}
+    {\scshape\Large Elektrik-Elektronik Mühendisliği Bölümü \par}
+    \vspace{2cm}
+
+    {\huge\bfseries RV32I 3-Way Superscalar İşlemci Tasarımı ve Gerçeklemesi \par}
+    \vspace{2cm}
+
+    {\Large Yüksek Lisans Tezi \par}
+    \vspace{2cm}
+
+    {\large Hazırlayan: \par}
+    {\Large\itshape Öğrenci Adı \par}
+    \vspace{1cm}
+
+    {\large Danışman: \par}
+    {\Large\itshape Prof. Dr. Danışman Adı \par}
+
+    \vfill
+
+    {\large \today \par}
+\end{titlepage}
+
+% -----------------------------------------------------------------------------
+% İçindekiler
+% -----------------------------------------------------------------------------
+\tableofcontents
+\newpage
+
+% -----------------------------------------------------------------------------
+% Şekiller Listesi
+% -----------------------------------------------------------------------------
+\listoffigures
+\newpage
+
+% -----------------------------------------------------------------------------
+% Tablolar Listesi
+% -----------------------------------------------------------------------------
+\listoftables
+\newpage
+
+% -----------------------------------------------------------------------------
+% Kısaltmalar
+% -----------------------------------------------------------------------------
+\chapter*{Kısaltmalar}
+\addcontentsline{toc}{chapter}{Kısaltmalar}
+
+\begin{acronym}[BRAT]
+    \acro{ALU}{Arithmetic Logic Unit -- Aritmetik Mantık Birimi}
+    \acro{BRAT}{Branch Resolution Alias Table -- Dal Çözümleme Takma Ad Tablosu}
+    \acro{BTB}{Branch Target Buffer -- Dal Hedef Tamponu}
+    \acro{CDB}{Common Data Bus -- Ortak Veri Yolu}
+    \acro{FIFO}{First In First Out -- İlk Giren İlk Çıkar}
+    \acro{FSM}{Finite State Machine -- Sonlu Durum Makinesi}
+    \acro{GHR}{Global History Register -- Küresel Geçmiş Kaydı}
+    \acro{IPC}{Instructions Per Cycle -- Çevrim Başına Komut}
+    \acro{ISA}{Instruction Set Architecture -- Komut Seti Mimarisi}
+    \acro{LSQ}{Load Store Queue -- Yükleme/Saklama Kuyruğu}
+    \acro{PC}{Program Counter -- Program Sayacı}
+    \acro{PHT}{Pattern History Table -- Örüntü Geçmiş Tablosu}
+    \acro{RAT}{Register Alias Table -- Kayıt Takma Ad Tablosu}
+    \acro{RAS}{Return Address Stack -- Dönüş Adresi Yığını}
+    \acro{RF}{Register File -- Kayıt Dosyası}
+    \acro{ROB}{Reorder Buffer -- Yeniden Sıralama Tamponu}
+    \acro{RS}{Reservation Station -- Rezervasyon İstasyonu}
+    \acro{WAR}{Write After Read -- Okumadan Sonra Yazma}
+    \acro{WAW}{Write After Write -- Yazmadan Sonra Yazma}
+    \acro{RAW}{Read After Write -- Yazmadan Sonra Okuma}
+\end{acronym}
+\newpage
+
+% =============================================================================
+% BÖLÜMLER
+% =============================================================================
+
+% Bölüm 1: Giriş
+\input{01_giris/giris}
+
+% Bölüm 2: Mimari Genel Bakış
+\input{02_mimari_genel_bakis/mimari_genel_bakis}
+
+% Bölüm 3: Fetch Stage
+\input{03_fetch_stage/fetch_stage}
+
+% Bölüm 4: Issue Stage
+\input{04_issue_stage/issue_stage}
+
+% Bölüm 5: Dispatch Stage
+\input{05_dispatch_stage/dispatch_stage}
+
+% Bölüm 6: Execute Stage
+\input{06_execute_stage/execute_stage}
+
+% Bölüm 7: Memory Stage
+\input{07_memory_stage/memory_stage}
+
+% Bölüm 8: Performans Analizi
+\input{08_performans/performans}
+
+% Bölüm 9: Doğrulama Stratejisi
+\input{09_dogrulama/dogrulama}
+
+% Bölüm 10: Sonuç
+\input{10_sonuc/sonuc}
+
+% =============================================================================
+% KAYNAKÇA
+% =============================================================================
+\bibliographystyle{plain}
+% \bibliography{references}
+
+\end{document}
