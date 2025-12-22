@@ -2,54 +2,54 @@
 % 3.2 FETCH AŞAMASI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Fetch A\c{s}amas{\i}}\label{sec:fetch}
+\section{Fetch Aşaması}\label{sec:fetch}
 
-Fetch a\c{s}amas{\i}, s\"uper\"ol\c{c}ekli i\c{s}lemcinin ilk pipeline a\c{s}amas{\i} olup, bellekten komutlar{\i}n getirilmesi, dal tahmin i\c{s}lemlerinin ger\c{c}ekle\c{s}tirilmesi ve getirilen komutlar{\i}n sonraki a\c{s}amalar i\c{c}in tamponlanmas{\i}ndan sorumludur. Tasarlanan i\c{s}lemcide fetch a\c{s}amas{\i}, \"u\c{c} ana bile\c{s}enden olu\c{s}maktad{\i}r: Multi-Fetch birimi, dal tahmin sistemi ve komut arabelle\u{g}i.
+Fetch aşaması, süperölçekli işlemcinin ilk pipeline aşaması olup, bellekten komutların getirilmesi, dal tahmin işlemlerinin gerçekleştirilmesi ve getirilen komutların sonraki aşamalar için tamponlanmasından sorumludur. Tasarlanan işlemcide fetch aşaması, üç ana bileşenden oluşmaktadır: Multi-Fetch birimi, dal tahmin sistemi ve komut arabelleği.
 
 \subsection{Multi-Fetch Birimi}\label{subsec:multi_fetch}
 
-Multi-Fetch birimi, her \c{c}evrimde bellekten birden fazla komutu paralel olarak getirerek komut seviyesi paralelli\u{g}inden (ILP) yararlanmay{\i} m\"umk\"un k{\i}lar \cite{shen_lipasti}. Tasarlanan sistemde, be\c{s} komut slotu desteklenmekte olup, dal tahminlerinin do\u{g}rulu\u{g}una ba\u{g}l{\i} olarak ge\c{c}erli komut say{\i}s{\i} dinamik olarak belirlenmektedir.
+Multi-Fetch birimi, her çevrimde bellekten birden fazla komutu paralel olarak getirerek komut seviyesi paralelliğinden (ILP) yararlanmayı mümkün kılar \cite{shen_lipasti}. Tasarlanan sistemde, beş komut slotu desteklenmekte olup, dal tahminlerinin doğruluğuna bağlı olarak geçerli komut sayısı dinamik olarak belirlenmektedir.
 
 \subsubsection{Paralel komut getirme}\label{subsubsec:parallel_fetch}
 
-Paralel komut getirme mekanizmas{\i}, ard{\i}\c{s}{\i}k be\c{s} bellek adresine e\c{s} zamanl{\i} eri\c{s}im sa\u{g}layarak y\"uksek bant geni\c{s}li\u{g}i elde edilmesini m\"umk\"un k{\i}lar. Her bir komut slotu i\c{c}in ayr{\i} adres \c{c}{\i}k{\i}\c{s}lar{\i} ve komut giri\c{s}leri bulunmaktad{\i}r:
+Paralel komut getirme mekanizması, ardışık beş bellek adresine eş zamanlı erişim sağlayarak yüksek bant genişliği elde edilmesini mümkün kılar. Her bir komut slotu için ayrı adres çıkışları ve komut girişleri bulunmaktadır:
 
 \begin{itemize}
-    \item \texttt{inst\_addr\_0} ile \texttt{inst\_addr\_4}: Be\c{s} ayr{\i} bellek adres \c{c}{\i}k{\i}\c{s}{\i}
-    \item \texttt{instruction\_i\_0} ile \texttt{instruction\_i\_4}: Be\c{s} ayr{\i} komut giri\c{s}i
+    \item \texttt{inst\_addr\_0} ile \texttt{inst\_addr\_4}: Beş ayrı bellek adres çıkışı
+    \item \texttt{instruction\_i\_0} ile \texttt{instruction\_i\_4}: Beş ayrı komut girişi
 \end{itemize}
 
-Komutlar{\i}n ge\c{c}erlili\u{g}i, dal tahmin sonu\c{c}lar{\i}na ba\u{g}l{\i} olarak belirlenir. E\u{g}er bir dal komutu "al{\i}nacak" (taken) olarak tahmin edilirse, bu daldan sonraki komutlar otomatik olarak ge\c{c}ersiz i\c{s}aretlenir. Bu mekanizma, yanl{\i}\c{s} yol komutlar{\i}n{\i}n pipeline'a girmesini engeller:
+Komutların geçerliliği, dal tahmin sonuçlarına bağlı olarak belirlenir. Eğer bir dal komutu "alınacak" (taken) olarak tahmin edilirse, bu daldan sonraki komutlar otomatik olarak geçersiz işaretlenir. Bu mekanizma, yanlış yol komutlarının pipeline'a girmesini engeller:
 
 \begin{equation}\label{eq:block_logic}
 block\_n = (jump_{n-1}) \lor block_{n-1}
 \end{equation}
 
-Denklem \ref{eq:block_logic}'da g\"or\"uld\"u\u{g}\"u gibi, herhangi bir slottaki dal tahmininin "al{\i}nacak" olmas{\i}, sonraki t\"um slotlar{\i}n bloklanmas{\i}na neden olur.
+Denklem \ref{eq:block_logic}'da görüldüğü gibi, herhangi bir slottaki dal tahmininin "alınacak" olması, sonraki tüm slotların bloklanmasına neden olur.
 
-\subsubsection{Erken a\c{s}ama acil de\u{g}er \c{c}\"oz\"umleyici}\label{subsubsec:early_decode}
+\subsubsection{Erken aşama acil değer çözümleyici}\label{subsubsec:early_decode}
 
-Dal hedef adreslerinin erken hesaplanabilmesi i\c{c}in her komut slotuna \texttt{early\_stage\_immediate\_decoder} mod\"ul\"u eklenmi\c{s}tir. Bu mod\"uller, tam komut \c{c}\"oz\"umleme i\c{s}lemi beklenmeden acil de\u{g}erleri (immediate values) \c{c}{\i}kar{\i}r. Bu yakla\c{s}{\i}m, dal hedef hesaplamas{\i}n{\i}n tek \c{c}evrimde tamamlanmas{\i}n{\i} sa\u{g}lar.
+Dal hedef adreslerinin erken hesaplanabilmesi için her komut slotuna \texttt{early\_stage\_immediate\_decoder} modülü eklenmiştir. Bu modüller, tam komut çözümleme işlemi beklenmeden acil değerleri (immediate values) çıkarır. Bu yaklaşım, dal hedef hesaplamasının tek çevrimde tamamlanmasını sağlar.
 
-Erken \c{c}\"oz\"umleme, RISC-V komut formatlar{\i}n{\i}n d\"uzenli yap{\i}s{\i}ndan yararlanmaktad{\i}r \cite{riscv_spec}. B-tipi dallanma komutlar{\i} ve J-tipi atlama komutlar{\i} i\c{c}in acil de\u{g}erler, komutun belirli bit alanlar{\i}ndan do\u{g}rudan \c{c}{\i}kar{\i}l{\i}r ve i\c{s}aret geni\c{s}letmesi uygulan{\i}r.
+Erken çözümleme, RISC-V komut formatlarının düzenli yapısından yararlanmaktadır \cite{riscv_spec}. B-tipi dallanma komutları ve J-tipi atlama komutları için acil değerler, komutun belirli bit alanlarından doğrudan çıkarılır ve işaret genişletmesi uygulanır.
 
-\subsubsection{Program sayac{\i} hesaplama}\label{subsubsec:pc_ctrl}
+\subsubsection{Program sayacı hesaplama}\label{subsubsec:pc_ctrl}
 
-Program sayac{\i} (PC) kontrol birimi (\texttt{pc\_ctrl\_super}), bir sonraki getirme adresini belirlemekten sorumludur. Bu birim, a\c{s}a\u{g}{\i}daki giri\c{s}leri de\u{g}erlendirerek PC de\u{g}erini hesaplar:
+Program sayacı (PC) kontrol birimi (\texttt{pc\_ctrl\_super}), bir sonraki getirme adresini belirlemekten sorumludur. Bu birim, aşağıdaki girişleri değerlendirerek PC değerini hesaplar:
 
 \begin{enumerate}
-    \item \textbf{S{\i}ral{\i} ilerleme:} Dal tahmini yap{\i}lmam{\i}\c{s}sa veya dal "al{\i}nmayacak" olarak tahmin edilmi\c{s}se, PC de\u{g}eri 4 artt{\i}r{\i}l{\i}r (32-bit komutlar i\c{c}in).
-    \item \textbf{Dal tahmini:} Dal "al{\i}nacak" olarak tahmin edilmi\c{s}se, PC hedef adrese atlar.
-    \item \textbf{Yanl{\i}\c{s} tahmin d\"uzeltmesi:} Execute a\c{s}amas{\i}ndan yanl{\i}\c{s} tahmin sinyali gelirse, PC do\u{g}ru adrese y\"onlendirilir.
+    \item \textbf{Sıralı ilerleme:} Dal tahmini yapılmamışsa veya dal "alınmayacak" olarak tahmin edilmişse, PC değeri 4 arttırılır (32-bit komutlar için).
+    \item \textbf{Dal tahmini:} Dal "alınacak" olarak tahmin edilmişse, PC hedef adrese atlar.
+    \item \textbf{Yanlış tahmin düzeltmesi:} Execute aşamasından yanlış tahmin sinyali gelirse, PC doğru adrese yönlendirilir.
 \end{enumerate}
 
-PC hesaplama mant{\i}\u{g}{\i} a\c{s}a\u{g}{\i}daki gibi ifade edilebilir:
+PC hesaplama mantığı aşağıdaki gibi ifade edilebilir:
 
 \begin{equation}\label{eq:pc_next}
 PC_{next} = \begin{cases}
-correct\_pc & \text{e\u{g}er } misprediction = 1 \\
-PC + imm & \text{e\u{g}er } branch\_taken = 1 \\
-PC + 20 & \text{aksi halde (5 komut i\c{c}in)}
+correct\_pc & \text{eğer } misprediction = 1 \\
+PC + imm & \text{eğer } branch\_taken = 1 \\
+PC + 20 & \text{aksi halde (5 komut için)}
 \end{cases}
 \end{equation}
 
@@ -57,125 +57,115 @@ PC + 20 & \text{aksi halde (5 komut i\c{c}in)}
 
 \subsection{Dal Tahmin Sistemi}\label{subsec:branch_pred}
 
-Dal tahmin sistemi, kontrol ak{\i}\c{s}{\i} de\u{g}i\c{s}ikliklerinin erken tespit edilmesini ve y\"uksek do\u{g}rulukla tahmin edilmesini sa\u{g}lar. Yanl{\i}\c{s} tahminler, pipeline'{\i}n temizlenmesine (flush) ve \"onemli performans kay{\i}plar{\i}na neden oldu\u{g}undan, g\"u\c{c}l\"u bir dal tahmin sistemi kritik \"oneme sahiptir \cite{smith_branch}.
+Dal tahmin sistemi, kontrol akışı değişikliklerinin erken tespit edilmesini ve yüksek doğrulukla tahmin edilmesini sağlar. Yanlış tahminler, pipeline'ın temizlenmesine (flush) ve önemli performans kayıplarına neden olduğundan, güçlü bir dal tahmin sistemi kritik öneme sahiptir \cite{smith_branch}.
 
-Tasarlanan sistemde, dallanma komutlar{\i} (B-tipi) ve do\u{g}rudan olmayan atlamalar (JALR) i\c{c}in ayr{\i} tahmin mekanizmalar{\i} kullan{\i}lmaktad{\i}r. Dallanma komutlar{\i} i\c{c}in Tournament predictor, JALR komutlar{\i} i\c{c}in ise ayr{\i} bir JALR predictor ve Return Address Stack (RAS) kullan{\i}lmaktad{\i}r.
+Tasarlanan sistemde, dallanma komutları (B-tipi) ve doğrudan olmayan atlamalar (JALR) için ayrı tahmin mekanizmaları kullanılmaktadır. Dallanma komutları için Tournament predictor, JALR komutları için ise ayrı bir JALR predictor ve Return Address Stack (RAS) kullanılmaktadır.
 
 \subsubsection{Tournament predictor}\label{subsubsec:tournament}
 
-Tournament predictor, McFarling taraf{\i}ndan \"onerilen hibrit tahmin yakla\c{s}{\i}m{\i}n{\i} temel almaktad{\i}r \cite{mcfarling}. Bu yap{\i}, iki farkl{\i} tahmin mekanizmas{\i}n{\i} birle\c{s}tirerek her birinin g\"u\c{c}l\"u y\"onlerinden yararlan{\i}r:
+Tournament predictor, McFarling tarafından önerilen hibrit tahmin yaklaşımını temel almaktadır \cite{mcfarling}. Bu yapı, iki farklı tahmin mekanizmasını birleştirerek her birinin güçlü yönlerinden yararlanır:
 
 \begin{itemize}
-    \item \textbf{GShare predictor:} Global dal ge\c{c}mi\c{s}ini kullanarak dallar aras{\i}ndaki korelasyonlar{\i} yakalar.
-    \item \textbf{Bimodal predictor:} Yerel dal davran{\i}\c{s}{\i}n{\i} takip ederek g\"u\c{c}l\"u bir \c{s}ekilde tek y\"onl\"u dallarda y\"uksek do\u{g}ruluk sa\u{g}lar.
-    \item \textbf{Chooser (Se\c{c}ici):} Her dal i\c{c}in hangi tahmincinin daha ba\c{s}ar{\i}l{\i} oldu\u{g}unu takip eder ve dinamik olarak se\c{c}im yapar.
+    \item \textbf{GShare predictor:} Global dal geçmişini kullanarak dallar arasındaki korelasyonları yakalar.
+    \item \textbf{Bimodal predictor:} Yerel dal davranışını takip ederek güçlü bir şekilde tek yönlü dallarda yüksek doğruluk sağlar.
+    \item \textbf{Chooser (Seçici):} Her dal için hangi tahmincinin daha başarılı olduğunu takip eder ve dinamik olarak seçim yapar.
 \end{itemize}
 
-Tournament predictor'{\i}n \c{c}al{\i}\c{s}ma prensibi \c{S}ekil \ref{fig:tournament}'de g\"osterilmi\c{s}tir.
-
-% TODO: Tournament predictor şeması eklenecek
-% \begin{figure}[h]
-%     \centering
-%     \includegraphics[width=0.8\textwidth]{figures/tournament_predictor.png}
-%     \caption{Tournament predictor blok diyagramı.}
-%     \label{fig:tournament}
-% \end{figure}
-
-Se\c{c}ici tablo, 2-bit doyurma saya\c{c}lar{\i}ndan olu\c{s}maktad{\i}r. Saya\c{c} de\u{g}eri 2 veya 3 ise GShare tahmini, 0 veya 1 ise Bimodal tahmini tercih edilir:
+Seçici tablo, 2-bit doyurma sayaçlarından oluşmaktadır. Sayaç değeri 2 veya 3 ise GShare tahmini, 0 veya 1 ise Bimodal tahmini tercih edilir:
 
 \begin{equation}\label{eq:chooser}
 prediction = \begin{cases}
-gshare\_pred & \text{e\u{g}er } chooser[pc] \geq 2 \\
+gshare\_pred & \text{eğer } chooser[pc] \geq 2 \\
 bimodal\_pred & \text{aksi halde}
 \end{cases}
 \end{equation}
 
 \subsubsection{GShare predictor}\label{subsubsec:gshare}
 
-GShare predictor, global dal ge\c{c}mi\c{s}i kayd{\i}n{\i} (GHR) dal adresi ile XOR i\c{s}lemine tabi tutarak indeks olu\c{s}turur \cite{yeh_patt}. Bu yakla\c{s}{\i}m, farkl{\i} dallar aras{\i}ndaki korelasyonlar{\i} yakalamada etkilidir.
+GShare predictor, global dal geçmişi kaydını (GHR) dal adresi ile XOR işlemine tabi tutarak indeks oluşturur \cite{yeh_patt}. Bu yaklaşım, farklı dallar arasındaki korelasyonları yakalamada etkilidir.
 
 \begin{equation}\label{eq:gshare_index}
 index = PC[n+1:2] \oplus GHR[n-1:0]
 \end{equation}
 
-Denklem \ref{eq:gshare_index}'da, \texttt{n} indeks geni\c{s}li\u{g}ini temsil eder. Tasarlanan sistemde, \texttt{ENTRIES} parametresi ile yap{\i}land{\i}r{\i}labilir bir tablo boyutu desteklenmektedir (varsay{\i}lan 32 giri\c{s}).
+Denklem \ref{eq:gshare_index}'da, \texttt{n} indeks genişliğini temsil eder. Tasarlanan sistemde, \texttt{ENTRIES} parametresi ile yapılandırılabilir bir tablo boyutu desteklenmektedir (varsayılan 32 giriş).
 
-GHR, her dal \c{c}\"oz\"umlemesinden sonra g\"uncellenir. Spek\"ulatif y\"ur\"utme s{\i}ras{\i}nda, GHR de\u{g}eri tahmin an{\i}nda kaydedilir ve yanl{\i}\c{s} tahmin durumunda geri y\"uklenir.
+GHR, her dal çözümlemesinden sonra güncellenir. Spekülatif yürütme sırasında, GHR değeri tahmin anında kaydedilir ve yanlış tahmin durumunda geri yüklenir.
 
 \subsubsection{Bimodal predictor}\label{subsubsec:bimodal}
 
-Bimodal predictor, en basit dinamik dal tahmin y\"ontemidir ve Smith taraf{\i}ndan \"onerilmi\c{s}tir \cite{smith_branch}. Her dal adresi i\c{c}in 2-bit doyurma sayac{\i} tutulur:
+Bimodal predictor, en basit dinamik dal tahmin yöntemidir ve Smith tarafından önerilmiştir \cite{smith_branch}. Her dal adresi için 2-bit doyurma sayacı tutulur:
 
 \begin{itemize}
-    \item \textbf{00 (Strongly Not Taken):} G\"u\c{c}l\"u bir \c{s}ekilde al{\i}nmayacak
-    \item \textbf{01 (Weakly Not Taken):} Zay{\i}f bir \c{s}ekilde al{\i}nmayacak
-    \item \textbf{10 (Weakly Taken):} Zay{\i}f bir \c{s}ekilde al{\i}nacak
-    \item \textbf{11 (Strongly Taken):} G\"u\c{c}l\"u bir \c{s}ekilde al{\i}nacak
+    \item \textbf{00 (Strongly Not Taken):} Güçlü bir şekilde alınmayacak
+    \item \textbf{01 (Weakly Not Taken):} Zayıf bir şekilde alınmayacak
+    \item \textbf{10 (Weakly Taken):} Zayıf bir şekilde alınacak
+    \item \textbf{11 (Strongly Taken):} Güçlü bir şekilde alınacak
 \end{itemize}
 
-Tahmin, sayac{\i}n en anlaml{\i} bitine (MSB) g\"ore yap{\i}l{\i}r. MSB 1 ise dal{\i}n al{\i}naca\u{g}{\i}, 0 ise al{\i}nmayaca\u{g}{\i} tahmin edilir.
+Tahmin, sayacın en anlamlı bitine (MSB) göre yapılır. MSB 1 ise dalın alınacağı, 0 ise alınmayacağı tahmin edilir.
 
 \subsubsection{JALR predictor ve Return Address Stack}\label{subsubsec:jalr}
 
-Do\u{g}rudan olmayan atlamalar (JALR komutlar{\i}) i\c{c}in ayr{\i} bir tahmin mekanizmas{\i} gerekmektedir \c{c}\"unk\"u hedef adres, bir yazma\c{c}tan okunmakta ve derleme zaman{\i}nda bilinmemektedir.
+Doğrudan olmayan atlamalar (JALR komutları) için ayrı bir tahmin mekanizması gerekmektedir çünkü hedef adres, bir yazmaçtan okunmakta ve derleme zamanında bilinmemektedir.
 
-JALR predictor, iki ana bile\c{s}enden olu\c{s}maktad{\i}r:
+JALR predictor, iki ana bileşenden oluşmaktadır:
 
 \begin{enumerate}
-    \item \textbf{Branch Target Buffer (BTB):} Son kullan{\i}lan JALR hedef adreslerini kaydeden bir \"onbellek yap{\i}s{\i}d{\i}r.
-    \item \textbf{Return Address Stack (RAS):} Fonksiyon d\"on\"u\c{s}lerini (return) tahmin etmek i\c{c}in LIFO yap{\i}s{\i}nda bir y{\i}\u{g}{\i}nd{\i}r.
+    \item \textbf{Branch Target Buffer (BTB):} Son kullanılan JALR hedef adreslerini kaydeden bir önbellek yapısıdır.
+    \item \textbf{Return Address Stack (RAS):} Fonksiyon dönüşlerini (return) tahmin etmek için LIFO yapısında bir yığındır.
 \end{enumerate}
 
-RAS, fonksiyon \c{c}a\u{g}r{\i}lar{\i}nda (CALL) d\"on\"u\c{s} adresini y{\i}\u{g}{\i}na iter (push) ve d\"on\"u\c{s}lerde (RET) y{\i}\u{g}{\i}ndan \c{c}eker (pop). RISC-V'de CALL ve RET, hedef/kaynak olarak \texttt{x1} veya \texttt{x5} yazma\c{c}lar{\i}n{\i} kullanan JAL/JALR komutlar{\i} ile ger\c{c}ekle\c{s}tirilir.
+RAS, fonksiyon çağrılarında (CALL) dönüş adresini yığına iter (push) ve dönüşlerde (RET) yığından çeker (pop). RISC-V'de CALL ve RET, hedef/kaynak olarak \texttt{x1} veya \texttt{x5} yazmaçlarını kullanan JAL/JALR komutları ile gerçekleştirilir.
 
-Tasarlanan sistemde RAS derinli\u{g}i 8 giri\c{s} olarak yap{\i}land{\i}r{\i}lm{\i}\c{s}t{\i}r. Spek\"ulatif y\"ur\"utme desteklemek i\c{c}in, her dal tahmini s{\i}ras{\i}nda RAS TOS (Top of Stack) i\c{s}aret\c{c}isi kaydedilir ve yanl{\i}\c{s} tahmin durumunda geri y\"uklenir.
+Tasarlanan sistemde RAS derinliği 8 giriş olarak yapılandırılmıştır. Spekülatif yürütme desteklemek için, her dal tahmini sırasında RAS TOS (Top of Stack) işaretçisi kaydedilir ve yanlış tahmin durumunda geri yüklenir.
 
 %------------------------------------------------------------------------
 
-\subsection{Komut Arabelle\u{g}i}\label{subsec:instr_buffer}
+\subsection{Komut Arabelleği}\label{subsec:instr_buffer}
 
-Komut arabelle\u{g}i (\texttt{instruction\_buffer\_new}), Fetch ve Decode a\c{s}amalar{\i} aras{\i}nda ayr{\i}\c{s}t{\i}rma (decoupling) sa\u{g}layan bir FIFO yap{\i}s{\i}d{\i}r. Bu ayr{\i}\c{s}t{\i}rma, her iki a\c{s}aman{\i}n farkl{\i} h{\i}zlarda \c{c}al{\i}\c{s}mas{\i}na olanak tan{\i}r ve pipeline verimlili\u{g}ini art{\i}r{\i}r.
+Komut arabelleği (\texttt{instruction\_buffer\_new}), Fetch ve Decode aşamaları arasında ayrıştırma (decoupling) sağlayan bir FIFO yapısıdır. Bu ayrıştırma, her iki aşamanın farklı hızlarda çalışmasına olanak tanır ve pipeline verimliliğini artırır.
 
-\subsubsection{Dairesel tampon yap{\i}s{\i}}\label{subsubsec:circ_buffer}
+\subsubsection{Dairesel tampon yapısı}\label{subsubsec:circ_buffer}
 
-Komut arabelle\u{g}i, ba\c{s} (head) ve kuyruk (tail) i\c{s}aret\c{c}ileri ile y\"onetilen dairesel bir tampon olarak ger\c{c}eklenmi\c{s}tir. Varsay{\i}lan tampon derinli\u{g}i 16 giri\c{s}tir ve 2'nin kuvveti olmas{\i} zorunludur.
+Komut arabelleği, baş (head) ve kuyruk (tail) işaretçileri ile yönetilen dairesel bir tampon olarak gerçeklenmiştir. Varsayılan tampon derinliği 16 giriştir ve 2'nin kuvveti olması zorunludur.
 
-Her tampon giri\c{s}i a\c{s}a\u{g}{\i}daki bilgileri i\c{c}ermektedir:
+Her tampon girişi aşağıdaki bilgileri içermektedir:
 
 \begin{itemize}
     \item 32-bit komut verisi
-    \item 32-bit PC de\u{g}eri
-    \item 32-bit acil de\u{g}er (hesaplanm{\i}\c{s})
+    \item 32-bit PC değeri
+    \item 32-bit acil değer (hesaplanmış)
     \item Dal tahmin biti
-    \item Tahmin an{\i}ndaki PC de\u{g}eri
-    \item Global ge\c{c}mi\c{s} kayd{\i} (GHR snapshot)
+    \item Tahmin anındaki PC değeri
+    \item Global geçmiş kaydı (GHR snapshot)
     \item RAS TOS checkpoint
 \end{itemize}
 
-Tampon doluluk durumu, a\c{s}a\u{g}{\i}daki form\"ulle hesaplan{\i}r:
+Tampon doluluk durumu, aşağıdaki formülle hesaplanır:
 
 \begin{equation}\label{eq:occupancy}
 occupancy = (tail - head) \mod BUFFER\_DEPTH
 \end{equation}
 
-\subsubsection{Geriye bask{\i} mekanizmas{\i}}\label{subsubsec:backpressure}
+\subsubsection{Geriye baskı mekanizması}\label{subsubsec:backpressure}
 
-Geriye bask{\i} (backpressure) mekanizmas{\i}, tamponun dolmas{\i} durumunda Fetch a\c{s}amas{\i}n{\i} yava\c{s}latarak veri kayb{\i}n{\i} \"onler. \texttt{fetch\_ready\_o} sinyali, tamponda yeterli alan oldu\u{g}unda aktif hale gelir:
+Geriye baskı (backpressure) mekanizması, tamponun dolması durumunda Fetch aşamasını yavaşlatarak veri kaybını önler. \texttt{fetch\_ready\_o} sinyali, tamponda yeterli alan olduğunda aktif hale gelir:
 
 \begin{equation}\label{eq:fetch_ready}
 fetch\_ready = \lnot flush \land \lnot buffer\_full \land (space\_available \geq 5)
 \end{equation}
 
-Be\c{s} slot gereksinimi, tek \c{c}evrimde gelebilecek maksimum komut say{\i}s{\i}n{\i} kar\c{s}{\i}lamak i\c{c}in belirlenmi\c{s}tir.
+Beş slot gereksinimi, tek çevrimde gelebilecek maksimum komut sayısını karşılamak için belirlenmiştir.
 
-\subsubsection{TMR korumal{\i} i\c{s}aret\c{c}iler}\label{subsubsec:tmr_buffer}
+\subsubsection{TMR korumalı işaretçiler}\label{subsubsec:tmr_buffer}
 
-Komut arabelle\u{g}i, kritik i\c{s}aret\c{c}iler i\c{c}in Triple Modular Redundancy (TMR) korumas{\i} uygulamaktad{\i}r. Ba\c{s}, kuyruk ve doluluk sayac{\i} i\c{s}aret\c{c}ileri \c{c}o\u{g}altarak korunmaktad{\i}r:
+Komut arabelleği, kritik işaretçiler için Triple Modular Redundancy (TMR) koruması uygulamaktadır. Baş, kuyruk ve doluluk sayacı işaretçileri çoğaltarak korunmaktadır:
 
 \begin{itemize}
-    \item \texttt{head\_ptr\_0}, \texttt{head\_ptr\_1}, \texttt{head\_ptr\_2}: \"U\c{c} kopya ba\c{s} i\c{s}aret\c{c}isi
-    \item \texttt{tail\_ptr\_0}, \texttt{tail\_ptr\_1}, \texttt{tail\_ptr\_2}: \"U\c{c} kopya kuyruk i\c{s}aret\c{c}isi
-    \item \texttt{count\_0}, \texttt{count\_1}, \texttt{count\_2}: \"U\c{c} kopya doluluk sayac{\i}
+    \item \texttt{head\_ptr\_0}, \texttt{head\_ptr\_1}, \texttt{head\_ptr\_2}: Üç kopya baş işaretçisi
+    \item \texttt{tail\_ptr\_0}, \texttt{tail\_ptr\_1}, \texttt{tail\_ptr\_2}: Üç kopya kuyruk işaretçisi
+    \item \texttt{count\_0}, \texttt{count\_1}, \texttt{count\_2}: Üç kopya doluluk sayacı
 \end{itemize}
 
-Her i\c{s}aret\c{c}i grubu i\c{c}in ayr{\i} bir \texttt{tmr\_voter} mod\"ul\"u kullan{\i}lmaktad{\i}r. Oylama mant{\i}\u{g}{\i}, \c{c}o\u{g}unluk karar{\i} ile do\u{g}ru de\u{g}eri belirler ve tek bit hatalar{\i}n{\i} tolere eder. G\"uvenli mod (\texttt{secure\_mode}) aktif de\u{g}ilken, TMR oylamas{\i} devre d{\i}\c{s}{\i} b{\i}rak{\i}l{\i}r ve sadece birinci kopya kullan{\i}l{\i}r.
+Her işaretçi grubu için ayrı bir \texttt{tmr\_voter} modülü kullanılmaktadır. Oylama mantığı, çoğunluk kararı ile doğru değeri belirler ve tek bit hatalarını tolere eder. Güvenli mod (\texttt{secure\_mode}) aktif değilken, TMR oylaması devre dışı bırakılır ve sadece birinci kopya kullanılır.

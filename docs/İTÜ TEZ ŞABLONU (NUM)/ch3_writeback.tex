@@ -2,114 +2,114 @@
 % 3.7 WRITEBACK AŞAMASI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Writeback A\c{s}amas{\i}}\label{sec:writeback}
+\section{Writeback Aşaması}\label{sec:writeback}
 
-Writeback a\c{s}amas{\i}, s{\i}ra d{\i}\c{s}{\i} y\"ur\"utmenin son a\c{s}amas{\i} olup, komutlar{\i}n program s{\i}ras{\i}na g\"ore kesinle\c{s}tirilmesini ve sonu\c{c}lar{\i}n mimari duruma kal{\i}c{\i} olarak yaz{\i}lmas{\i}n{\i} sa\u{g}lar. Bu a\c{s}ama, hassas kesme (\textit{precise exception}) deste\u{g}i i\c{c}in kritik \"oneme sahiptir.
+Writeback aşaması, sıra dışı yürütmenin son aşaması olup, komutların program sırasına göre kesinleştirilmesini ve sonuçların mimari duruma kalıcı olarak yazılmasını sağlar. Bu aşama, hassas kesme (\textit{precise exception}) desteği için kritik öneme sahiptir.
 
-\subsection{S{\i}ral{\i} Kesinle\c{s}tirme}\label{subsec:commit}
+\subsection{Sıralı Kesinleştirme}\label{subsec:commit}
 
-Kesinle\c{s}tirme (commit), ROB ba\c{s}{\i}ndaki komutlar{\i}n program s{\i}ras{\i}yla i\c{s}lenmesidir. Bir komutun kesinle\c{s}tirilmesi i\c{c}in y\"ur\"ut\"ulm\"u\c{s} ve istisnas{\i}z olmas{\i} gerekir.
+Kesinleştirme (commit), ROB başındaki komutların program sırasıyla işlenmesidir. Bir komutun kesinleştirilmesi için yürütülmüş ve istisnasız olması gerekir.
 
-\subsubsection{ROB ba\c{s} de\u{g}erlendirmesi}\label{subsubsec:rob_head}
+\subsubsection{ROB baş değerlendirmesi}\label{subsubsec:rob_head}
 
-Her saat \c{c}evriminde, ROB ba\c{s}{\i}ndaki en fazla \"u\c{c} komut kesinle\c{s}tirme i\c{c}in de\u{g}erlendirilir:
+Her saat çevriminde, ROB başındaki en fazla üç komut kesinleştirme için değerlendirilir:
 
 \begin{equation}\label{eq:commit_condition}
 commit\_valid_n = executed[head+n] \land \lnot exception[head+n] \land \bigwedge_{i=0}^{n-1} commit\_valid_i
 \end{equation}
 
-Bu form\"ul, kesinle\c{s}tirmenin s{\i}ral{\i} oldu\u{g}unu ifade eder: ikinci komut ancak birinci komut kesinle\c{s}tirilecekse kesinle\c{s}tirilebilir.
+Bu formül, kesinleştirmenin sıralı olduğunu ifade eder: ikinci komut ancak birinci komut kesinleştirilecekse kesinleştirilebilir.
 
-Y\"ukleme ve saklama i\c{s}lemleri i\c{c}in ek ko\c{s}ullar gereklidir:
+Yükleme ve saklama işlemleri için ek koşullar gereklidir:
 
 \begin{itemize}
-    \item \textbf{Y\"uklemeler:} Veri belle\u{g}den al{\i}nm{\i}\c{s} olmal{\i}
-    \item \textbf{Saklamalar:} LSQ'dan kesinle\c{s}tirme onay{\i} al{\i}nm{\i}\c{s} olmal{\i}
+    \item \textbf{Yüklemeler:} Veri bellekten alınmış olmalı
+    \item \textbf{Saklamalar:} LSQ'dan kesinleştirme onayı alınmış olmalı
 \end{itemize}
 
-\subsubsection{Mimari durum g\"uncelleme}\label{subsubsec:arch_update}
+\subsubsection{Mimari durum güncelleme}\label{subsubsec:arch_update}
 
-Kesinle\c{s}tirme s{\i}ras{\i}nda, spek\"ulatif durum mimari duruma d\"on\"u\c{s}\"ur:
+Kesinleştirme sırasında, spekülatif durum mimari duruma dönüşür:
 
 \begin{enumerate}
-    \item Hesaplanan de\u{g}erler Fiziksel Yazma\c{c} Dosyas{\i}na yaz{\i}l{\i}r
-    \item Eski fiziksel yazma\c{c}lar serbest listeye eklenir
-    \item ROB giri\c{s}leri serbest b{\i}rak{\i}l{\i}r
-    \item LSQ'daki saklama i\c{s}lemleri belle\u{g}e yaz{\i}l{\i}r
+    \item Hesaplanan değerler Fiziksel Yazmaç Dosyasına yazılır
+    \item Eski fiziksel yazmaçlar serbest listeye eklenir
+    \item ROB girişleri serbest bırakılır
+    \item LSQ'daki saklama işlemleri belleğe yazılır
 \end{enumerate}
 
-Kesinle\c{s}tirme sonras{\i}nda, ilgili komutun sonu\c{c}lar{\i} kal{\i}c{\i} hale gelir ve geri al{\i}namaz.
+Kesinleştirme sonrasında, ilgili komutun sonuçları kalıcı hale gelir ve geri alınamaz.
 
 %------------------------------------------------------------------------
 
-\subsection{Fiziksel Yazma\c{c} Dosyas{\i} G\"uncelleme}\label{subsec:prf_update}
+\subsection{Fiziksel Yazmaç Dosyası Güncelleme}\label{subsec:prf_update}
 
-\subsubsection{Kesinle\c{s}tirme yazma mant{\i}\u{g}{\i}}\label{subsubsec:commit_write}
+\subsubsection{Kesinleştirme yazma mantığı}\label{subsubsec:commit_write}
 
-Kesinle\c{s}tirme s{\i}ras{\i}nda, ROB'daki de\u{g}erler Fiziksel Yazma\c{c} Dosyas{\i}na yaz{\i}l{\i}r:
+Kesinleştirme sırasında, ROB'daki değerler Fiziksel Yazmaç Dosyasına yazılır:
 
 \begin{equation}\label{eq:prf_write}
-PRF[commit\_phys\_addr_n] \leftarrow commit\_data_n \quad \text{e\u{g}er } commit\_valid_n
+PRF[commit\_phys\_addr_n] \leftarrow commit\_data_n \quad \text{eğer } commit\_valid_n
 \end{equation}
 
-\"U\c{c} paralel yazma portu, her \c{c}evrimde \"u\c{c} komutun e\c{s} zamanl{\i} kesinle\c{s}tirilmesine olanak tan{\i}r.
+Üç paralel yazma portu, her çevrimde üç komutun eş zamanlı kesinleştirilmesine olanak tanır.
 
-\subsubsection{Serbest liste g\"uncelleme}\label{subsubsec:free_update}
+\subsubsection{Serbest liste güncelleme}\label{subsubsec:free_update}
 
-Bir komut kesinle\c{s}tirildi\u{g}inde, mimari yazma\c{c}{\i}n \"onceki fiziksel e\c{s}lemesi art{\i}k gerekli de\u{g}ildir ve serbest listeye geri eklenir:
+Bir komut kesinleştirildiğinde, mimari yazmacın önceki fiziksel eşlemesi artık gerekli değildir ve serbest listeye geri eklenir:
 
 \begin{equation}\label{eq:free_list_update}
-free\_list.push(old\_phys\_reg_n) \quad \text{e\u{g}er } commit\_valid_n \land has\_dest_n
+free\_list.push(old\_phys\_reg_n) \quad \text{eğer } commit\_valid_n \land has\_dest_n
 \end{equation}
 
-Bu i\c{s}lem, fiziksel yazma\c{c} havuzunun t\"ukenmesini \"onler ve s\"urekli yeniden adland{\i}rma yap{\i}labilmesini sa\u{g}lar.
+Bu işlem, fiziksel yazmaç havuzunun tükenmesini önler ve sürekli yeniden adlandırma yapılabilmesini sağlar.
 
-\"Onemli bir ayr{\i}nt{\i}: \texttt{x0} yazma\c{c}{\i} hedef alan komutlar i\c{c}in serbest b{\i}rakma yap{\i}lmaz, \c{c}\"unk\"u \texttt{x0} hi\c{c}bir zaman yeniden adland{\i}r{\i}lmaz.
+Önemli bir ayrıntı: \texttt{x0} yazmacı hedef alan komutlar için serbest bırakma yapılmaz, çünkü \texttt{x0} hiçbir zaman yeniden adlandırılmaz.
 
 %------------------------------------------------------------------------
 
-\subsection{\.Istisna Y\"onetimi}\label{subsec:exception_handling}
+\subsection{İstisna Yönetimi}\label{subsec:exception_handling}
 
-\subsubsection{Hassas istisna deste\u{g}i}\label{subsubsec:precise}
+\subsubsection{Hassas istisna desteği}\label{subsubsec:precise}
 
-S{\i}ral{\i} kesinle\c{s}tirme sayesinde, herhangi bir istisna durumunda i\c{s}lemci tutarl{\i} bir durumda olur:
+Sıralı kesinleştirme sayesinde, herhangi bir istisna durumunda işlemci tutarlı bir durumda olur:
 
 \begin{itemize}
-    \item \.Istisnadan \"onceki t\"um komutlar kesinle\c{s}tirilmi\c{s}tir
-    \item \.Istisna yaratan komut kesinle\c{s}tirilmemi\c{s}tir
-    \item \.Istisnadan sonraki t\"um komutlar spek\"ulatif durumda kalm{\i}\c{s}t{\i}r
+    \item İstisnadan önceki tüm komutlar kesinleştirilmiştir
+    \item İstisna yaratan komut kesinleştirilmemiştir
+    \item İstisnadan sonraki tüm komutlar spekülatif durumda kalmıştır
 \end{itemize}
 
-Bu \"ozellik, i\c{s}letim sisteminin istisna nedenini belirlemesini ve uygun i\c{s}lemi yapmas{\i}n{\i} m\"umk\"un k{\i}lar.
+Bu özellik, işletim sisteminin istisna nedenini belirlemesini ve uygun işlemi yapmasını mümkün kılar.
 
 \subsubsection{Pipeline temizleme}\label{subsubsec:flush}
 
-\.Istisna veya yanl{\i}\c{s} tahmin durumunda, pipeline temizleme (flush) i\c{s}lemi ger\c{c}ekle\c{s}tirilir:
+İstisna veya yanlış tahmin durumunda, pipeline temizleme (flush) işlemi gerçekleştirilir:
 
 \begin{enumerate}
-    \item \textbf{ROB temizleme:} \.Istisnadan sonraki t\"um giri\c{s}ler ge\c{c}ersiz k{\i}l{\i}n{\i}r
-    \item \textbf{RS temizleme:} T\"um rezervasyon istasyonlar{\i} bo\c{s}alt{\i}l{\i}r
-    \item \textbf{LSQ temizleme:} Spek\"ulatif bellek i\c{s}lemleri iptal edilir
-    \item \textbf{RAT geri y\"ukleme:} BRAT'tan uygun snapshot y\"uklenir
-    \item \textbf{Serbest liste geri alma:} Tahsis edilen fiziksel yazma\c{c}lar geri al{\i}n{\i}r
-    \item \textbf{Fetch y\"onlendirme:} PC do\u{g}ru adrese ayarlan{\i}r
+    \item \textbf{ROB temizleme:} İstisnadan sonraki tüm girişler geçersiz kılınır
+    \item \textbf{RS temizleme:} Tüm rezervasyon istasyonları boşaltılır
+    \item \textbf{LSQ temizleme:} Spekülatif bellek işlemleri iptal edilir
+    \item \textbf{RAT geri yükleme:} BRAT'tan uygun snapshot yüklenir
+    \item \textbf{Serbest liste geri alma:} Tahsis edilen fiziksel yazmaçlar geri alınır
+    \item \textbf{Fetch yönlendirme:} PC doğru adrese ayarlanır
 \end{enumerate}
 
-Temizleme sinyalleri, t\"um pipeline a\c{s}amalar{\i}na e\c{s} zamanl{\i} olarak g\"onderilir.
+Temizleme sinyalleri, tüm pipeline aşamalarına eş zamanlı olarak gönderilir.
 
 %------------------------------------------------------------------------
 
-\subsection{Kesinle\c{s}tirme-Yan{\i}t D\"ong\"us\"u}\label{subsec:commit_response}
+\subsection{Kesinleştirme-Yanıt Döngüsü}\label{subsec:commit_response}
 
-ROB kesinle\c{s}tirme \'c{\i}k{\i}\c{s} sinyalleri, di\u{g}er mod\"ullere durum g\"uncellemeleri sa\u{g}lar:
+ROB kesinleştirme çıkış sinyalleri, diğer modüllere durum güncellemeleri sağlar:
 
 \begin{itemize}
-    \item \textbf{RAT:} Eski fiziksel yazma\c{c}lar{\i} serbest b{\i}rakmak i\c{c}in
-    \item \textbf{LSQ:} Saklama i\c{s}lemlerini belle\u{g}e yazmak i\c{c}in
-    \item \textbf{PRF:} Sonu\c{c}lar{\i} kal{\i}c{\i} olarak saklamak i\c{c}in
+    \item \textbf{RAT:} Eski fiziksel yazmaçları serbest bırakmak için
+    \item \textbf{LSQ:} Saklama işlemlerini belleğe yazmak için
+    \item \textbf{PRF:} Sonuçları kalıcı olarak saklamak için
 \end{itemize}
 
-Bu sinyaller, her \c{c}evrimde \"u\c{c} komut i\c{c}in paralel olarak \"uretilir:
+Bu sinyaller, her çevrimde üç komut için paralel olarak üretilir:
 
 \begin{equation}\label{eq:commit_signals}
 \begin{aligned}
@@ -122,12 +122,12 @@ Bu sinyaller, her \c{c}evrimde \"u\c{c} komut i\c{c}in paralel olarak \"uretilir
 
 \subsection{Performans Metrikleri}\label{subsec:perf_metrics}
 
-Writeback a\c{s}amas{\i}, i\c{s}lemci performans{\i}n{\i}n \"ol\c{c}\"ulmesi i\c{c}in kritik noktad{\i}r:
+Writeback aşaması, işlemci performansının ölçülmesi için kritik noktadır:
 
 \begin{itemize}
-    \item \textbf{IPC (Instructions Per Cycle):} Her \c{c}evrimde kesinle\c{s}tirilen ortalama komut say{\i}s{\i}
-    \item \textbf{Commit bandwidth:} Maksimum teorik kesinle\c{s}tirme h{\i}z{\i} (3 komut/\c{c}evrim)
-    \item \textbf{ROB utilization:} ROB doluluk oran{\i}
+    \item \textbf{IPC (Instructions Per Cycle):} Her çevrimde kesinleştirilen ortalama komut sayısı
+    \item \textbf{Commit bandwidth:} Maksimum teorik kesinleştirme hızı (3 komut/çevrim)
+    \item \textbf{ROB utilization:} ROB doluluk oranı
 \end{itemize}
 
-Tasarlanan 3-way s\"uper\"ol\c{c}ekli yap{\i}da, maksimum teorik IPC de\u{g}eri 3.0'dur. Ger\c{c}ek IPC, dal tahmin do\u{g}rulu\u{g}u, bellek gecikmesi ve veri ba\u{g}{\i}ml{\i}l{\i}klar{\i}na ba\u{g}l{\i} olarak de\u{g}i\c{s}ir.
+Tasarlanan 3-way süperölçekli yapıda, maksimum teorik IPC değeri 3.0'dır. Gerçek IPC, dal tahmin doğruluğu, bellek gecikmesi ve veri bağımlılıklarına bağlı olarak değişir.

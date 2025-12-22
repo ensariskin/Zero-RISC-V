@@ -2,36 +2,36 @@
 % 3.1 GENEL BAKIŞ
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Genel Bak{\i}\c{s}}\label{sec:genel_bakis}
+\section{Genel Bakış}\label{sec:genel_bakis}
 
-Bu b\"ol\"umde tasarlanan 3-way s\"uper\"ol\c{c}ekli RISC-V i\c{s}lemcinin genel mimarisi tan{\i}t{\i}lmaktad{\i}r. \.I\c{s}lemci, s{\i}ra d{\i}\c{s}{\i} y\"ur\"utme (out-of-order execution) ve spek\"ulatif y\"ur\"utme yetenekleriyle donat{\i}lm{\i}\c{s} olup, RV32I temel komut setini desteklemektedir.
+Bu bölümde tasarlanan 3-way süperölçekli RISC-V işlemcinin genel mimarisi tanıtılmaktadır. İşlemci, sıra dışı yürütme (out-of-order execution) ve spekülatif yürütme yetenekleriyle donatılmış olup, RV32I temel komut setini desteklemektedir.
 
-\subsection{Tasar{\i}m Hedefleri}\label{subsec:hedefler}
+\subsection{Tasarım Hedefleri}\label{subsec:hedefler}
 
-Tasarlanan i\c{s}lemci, a\c{s}a\u{g}{\i}daki temel hedefleri kar\c{s}{\i}lamak \"uzere geli\c{s}tirilmi\c{s}tir:
+Tasarlanan işlemci, aşağıdaki temel hedefleri karşılamak üzere geliştirilmiştir:
 
 \begin{enumerate}
-    \item \textbf{Y\"uksek komut seviyesi paralelli\u{g}i (ILP):} 3-way s\"uper\"ol\c{c}ekli yap{\i} ile her \c{c}evrimde en fazla \"u\c{c} komutun paralel y\"ur\"ut\"ulmesi
-    \item \textbf{S{\i}ra d{\i}\c{s}{\i} y\"ur\"utme:} Veri ba\u{g}{\i}ml{\i}l{\i}klar{\i}n{\i}n dinamik \c{c}\"oz\"umlenmesi ile pipeline duraklama s\"urelerinin azalt{\i}lmas{\i}
-    \item \textbf{Spek\"ulatif y\"ur\"utme:} Dal tahmin mekanizmas{\i} ile kontrol tehlikelerinin azalt{\i}lmas{\i}
-    \item \textbf{\.Iste\u{g}e ba\u{g}l{\i} yedeklilik:} TMR ve ECC ile yap{\i}land{\i}r{\i}labilir hata tolerans{\i}
-    \item \textbf{Hassas istisna deste\u{g}i:} S{\i}ral{\i} kesinle\c{s}tirme ile tutarl{\i} istisna y\"onetimi
+    \item \textbf{Yüksek komut seviyesi paralelliği (ILP):} 3-way süperölçekli yapı ile her çevrimde en fazla üç komutun paralel yürütülmesi
+    \item \textbf{Sıra dışı yürütme:} Veri bağımlılıklarının dinamik çözümlenmesi ile pipeline duraklama sürelerinin azaltılması
+    \item \textbf{Spekülatif yürütme:} Dal tahmin mekanizması ile kontrol tehlikelerinin azaltılması
+    \item \textbf{İsteğe bağlı yedeklilik:} TMR ve ECC ile yapılandırılabilir hata toleransı
+    \item \textbf{Hassas istisna desteği:} Sıralı kesinleştirme ile tutarlı istisna yönetimi
 \end{enumerate}
 
-\subsection{Pipeline Genel Yap{\i}s{\i}}\label{subsec:pipeline_yapi}
+\subsection{Pipeline Genel Yapısı}\label{subsec:pipeline_yapi}
 
-Tasarlanan i\c{s}lemci, alt{\i} a\c{s}amal{\i} bir pipeline yap{\i}s{\i}na sahiptir:
+Tasarlanan işlemci, altı aşamalı bir pipeline yapısına sahiptir:
 
 \begin{enumerate}
     \item \textbf{Fetch:} Bellekten komut getirme ve dal tahmini
-    \item \textbf{Decode \& Rename:} Komut \c{c}\"oz\"umleme ve yazma\c{c} yeniden adland{\i}rma
-    \item \textbf{Data Control:} Operand haz{\i}rl{\i}k takibi ve komut g\"onderme
-    \item \textbf{Execute:} ALU/Shifter i\c{s}lemleri ve dal \c{c}\"oz\"umlemesi
-    \item \textbf{Memory:} Y\"ukleme/Saklama i\c{s}lemleri
-    \item \textbf{Writeback:} S{\i}ral{\i} kesinle\c{s}tirme ve durum g\"uncelleme
+    \item \textbf{Decode \& Rename:} Komut çözümleme ve yazmaç yeniden adlandırma
+    \item \textbf{Data Control:} Operand hazırlık takibi ve komut gönderme
+    \item \textbf{Execute:} ALU/Shifter işlemleri ve dal çözümlemesi
+    \item \textbf{Memory:} Yükleme/Saklama işlemleri
+    \item \textbf{Writeback:} Sıralı kesinleştirme ve durum güncelleme
 \end{enumerate}
 
-Bu yap{\i}, klasik 5 a\c{s}amal{\i} RISC pipeline'{\i}ndan farkl{\i} olarak, s{\i}ra d{\i}\c{s}{\i} y\"ur\"utme i\c{c}in gerekli Data Control a\c{s}amas{\i}n{\i} ve ayr{\i} Writeback a\c{s}amas{\i}n{\i} i\c{c}ermektedir \cite{patterson_hennessy}.
+Bu yapı, klasik 5 aşamalı RISC pipeline'ından farklı olarak, sıra dışı yürütme için gerekli Data Control aşamasını ve ayrı Writeback aşamasını içermektedir \cite{patterson_hennessy}.
 
 % TODO: Pipeline diyagramı eklenecek
 % \begin{figure}[h]
@@ -41,93 +41,93 @@ Bu yap{\i}, klasik 5 a\c{s}amal{\i} RISC pipeline'{\i}ndan farkl{\i} olarak, s{\
 %     \label{fig:pipeline}
 % \end{figure}
 
-\subsection{Blok Diyagram{\i}}\label{subsec:blok_diagram}
+\subsection{Blok Diyagramı}\label{subsec:blok_diagram}
 
-\.I\c{s}lemci, \c{C}izelge \ref{tab:modules}'de listelenen ana mod\"ullerden olu\c{s}maktad{\i}r.
+İşlemci, Çizelge \ref{tab:modules}'de listelenen ana modüllerden oluşmaktadır.
 
 \begin{table}[h]
 \centering
-\caption{\.I\c{s}lemci ana mod\"ulleri ve i\c{s}levleri.}
+\caption{İşlemci ana modülleri ve işlevleri.}
 \label{tab:modules}
 \begin{tabular}{|l|l|l|}
 \hline
-\textbf{A\c{s}ama} & \textbf{Mod\"ul} & \textbf{\.I\c{s}lev} \\
+\textbf{Aşama} & \textbf{Modül} & \textbf{İşlev} \\
 \hline
 Fetch & fetch\_buffer\_top & Komut getirme entegrasyonu \\
       & multi\_fetch & 5-slot paralel fetch \\
       & tournament\_predictor & Dal tahmini \\
-      & instruction\_buffer & Fetch-Decode ayr{\i}\c{s}t{\i}rma \\
+      & instruction\_buffer & Fetch-Decode ayrıştırma \\
 \hline
 Decode \& Rename & issue\_stage & 3-way paralel decode \\
-                 & register\_alias\_table & Yazma\c{c} yeniden adland{\i}rma \\
-                 & brat\_circular\_buffer & Dal spek\"ulasyon checkpoint \\
+                 & register\_alias\_table & Yazmaç yeniden adlandırma \\
+                 & brat\_circular\_buffer & Dal spekülasyon checkpoint \\
 \hline
-Data Control & reorder\_buffer & S{\i}ral{\i} kesinle\c{s}tirme \\
+Data Control & reorder\_buffer & Sıralı kesinleştirme \\
              & reservation\_station & Operand takibi \\
-             & multi\_port\_register\_file & Fiziksel yazma\c{c} dosyas{\i} \\
+             & multi\_port\_register\_file & Fiziksel yazmaç dosyası \\
 \hline
-Execute & superscalar\_execute\_stage & 3-way paralel y\"ur\"utme \\
+Execute & superscalar\_execute\_stage & 3-way paralel yürütme \\
         & function\_unit\_alu\_shifter & ALU/Shifter \\
-        & Branch\_Controller & Dal \c{c}\"oz\"umleme \\
+        & Branch\_Controller & Dal çözümleme \\
 \hline
-Memory & lsq\_simple\_top & Y\"ukleme/Saklama kuyru\u{g}u \\
+Memory & lsq\_simple\_top & Yükleme/Saklama kuyruğu \\
 \hline
-Writeback & (ROB commit logic) & S{\i}ral{\i} kesinle\c{s}tirme \\
+Writeback & (ROB commit logic) & Sıralı kesinleştirme \\
 \hline
 \end{tabular}
 \end{table}
 
-\subsection{Veri Ak{\i}\c{s}{\i}}\label{subsec:veri_akisi}
+\subsection{Veri Akışı}\label{subsec:veri_akisi}
 
-\.I\c{s}lemcide \"u\c{c} temel veri ak{\i}\c{s}{\i} bulunmaktad{\i}r:
+İşlemcide üç temel veri akışı bulunmaktadır:
 
-\subsubsection{Komut ak{\i}\c{s}{\i}}
+\subsubsection{Komut akışı}
 
-Komutlar, bellekten Fetch a\c{s}amas{\i}nda getirilir, Decode \& Rename a\c{s}amas{\i}nda \c{c}\"oz\"umlenir ve yeniden adland{\i}r{\i}l{\i}r, Data Control a\c{s}amas{\i}nda ROB ve RS'ye eklenir, Execute a\c{s}amas{\i}nda y\"ur\"ut\"ul\"ur ve Writeback a\c{s}amas{\i}nda kesinle\c{s}tirilir.
+Komutlar, bellekten Fetch aşamasında getirilir, Decode \& Rename aşamasında çözümlenir ve yeniden adlandırılır, Data Control aşamasında ROB ve RS'ye eklenir, Execute aşamasında yürütülür ve Writeback aşamasında kesinleştirilir.
 
 \begin{equation}\label{eq:instr_flow}
 \text{Memory} \rightarrow \text{Fetch} \rightarrow \text{Decode} \rightarrow \text{ROB/RS} \rightarrow \text{Execute} \rightarrow \text{Commit}
 \end{equation}
 
-\subsubsection{Veri ak{\i}\c{s}{\i}}
+\subsubsection{Veri akışı}
 
-Operand verileri, Fiziksel Yazma\c{c} Dosyas{\i}ndan okunur veya CDB \"uzerinden iletilir. Hesaplanan sonu\c{c}lar, CDB arac{\i}l{\i}\u{g}{\i}yla RS ve ROB'a yay{\i}nlan{\i}r ve kesinle\c{s}tirme s{\i}ras{\i}nda PRF'ye yaz{\i}l{\i}r.
+Operand verileri, Fiziksel Yazmaç Dosyasından okunur veya CDB üzerinden iletilir. Hesaplanan sonuçlar, CDB aracılığıyla RS ve ROB'a yayınlanır ve kesinleştirme sırasında PRF'ye yazılır.
 
 \begin{equation}\label{eq:data_flow}
 \text{PRF} \rightarrow \text{RS} \leftrightarrow \text{CDB} \leftarrow \text{Execute} \rightarrow \text{ROB} \rightarrow \text{PRF}
 \end{equation}
 
-\subsubsection{Kontrol ak{\i}\c{s}{\i}}
+\subsubsection{Kontrol akışı}
 
-Kontrol sinyalleri, dal tahmin ve \c{c}\"oz\"umleme, yanl{\i}\c{s} tahmin toparlanmas{\i}, istisna y\"onetimi ve pipeline durdurma/temizleme i\c{s}lemlerini y\"onetir.
+Kontrol sinyalleri, dal tahmin ve çözümleme, yanlış tahmin toparlanması, istisna yönetimi ve pipeline durdurma/temizleme işlemlerini yönetir.
 
 \begin{itemize}
-    \item \textbf{Dal tahmini:} Fetch $\rightarrow$ PC g\"uncelleme
-    \item \textbf{Dal \c{c}\"oz\"umlemesi:} Execute $\rightarrow$ BRAT $\rightarrow$ T\"um a\c{s}amalar
-    \item \textbf{Yanl{\i}\c{s} tahmin:} BRAT $\rightarrow$ Flush $\rightarrow$ RAT geri y\"ukleme
+    \item \textbf{Dal tahmini:} Fetch $\rightarrow$ PC güncelleme
+    \item \textbf{Dal çözümlemesi:} Execute $\rightarrow$ BRAT $\rightarrow$ Tüm aşamalar
+    \item \textbf{Yanlış tahmin:} BRAT $\rightarrow$ Flush $\rightarrow$ RAT geri yükleme
 \end{itemize}
 
-\subsection{Temel Tasar{\i}m Parametreleri}\label{subsec:params}
+\subsection{Temel Tasarım Parametreleri}\label{subsec:params}
 
-\c{C}izelge \ref{tab:params}'de i\c{s}lemcinin temel tasar{\i}m parametreleri listelenmektedir.
+Çizelge \ref{tab:params}'de işlemcinin temel tasarım parametreleri listelenmektedir.
 
 \begin{table}[h]
 \centering
-\caption{\.I\c{s}lemci tasar{\i}m parametreleri.}
+\caption{İşlemci tasarım parametreleri.}
 \label{tab:params}
 \begin{tabular}{|l|l|l|}
 \hline
-\textbf{Parametre} & \textbf{De\u{g}er} & \textbf{A\c{c}{\i}klama} \\
+\textbf{Parametre} & \textbf{Değer} & \textbf{Açıklama} \\
 \hline
 ISA & RV32I & RISC-V 32-bit taban komut seti \\
-Issue width & 3-way & Paralel komut say{\i}s{\i} \\
-Fiziksel yazma\c{c} & 64 & Yeniden adland{\i}rma kapasitesi \\
-ROB derinli\u{g}i & 32 & Maksimum uçuşta komut \\
-RS say{\i}s{\i} & 3 & Her FU i\c{c}in bir RS \\
-BRAT derinli\u{g}i & 16 & Maksimum spek\"ulatif dal \\
-LSQ derinli\u{g}i & 32 & Bellek i\c{s}lem kapasitesi \\
+Issue width & 3-way & Paralel komut sayısı \\
+Fiziksel yazmaç & 64 & Yeniden adlandırma kapasitesi \\
+ROB derinliği & 32 & Maksimum uçuşta komut \\
+RS sayısı & 3 & Her FU için bir RS \\
+BRAT derinliği & 16 & Maksimum spekülatif dal \\
+LSQ derinliği & 32 & Bellek işlem kapasitesi \\
 Branch predictor & Tournament & GShare + Bimodal \\
-RAS derinli\u{g}i & 8 & D\"on\"u\c{s} adresi y{\i}\u{g}{\i}n{\i} \\
+RAS derinliği & 8 & Dönüş adresi yığını \\
 \hline
 \end{tabular}
 \end{table}

@@ -2,166 +2,166 @@
 % 3.5 EXECUTE AŞAMASI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Execute A\c{s}amas{\i}}\label{sec:execute}
+\section{Execute Aşaması}\label{sec:execute}
 
-Execute a\c{s}amas{\i}, komutlar{\i}n ger\c{c}ek hesaplama i\c{s}lemlerinin ger\c{c}ekle\c{s}ti\u{g}i pipeline a\c{s}amas{\i}d{\i}r. Tasarlanan 3-way s\"uper\"ol\c{c}ekli yap{\i}da, \"u\c{c} ba\u{g}{\i}ms{\i}z fonksiyonel birim (FU0, FU1, FU2) paralel olarak \c{c}al{\i}\c{s}{\i}r ve her \c{c}evrimde en fazla \"u\c{c} komut y\"ur\"ut\"ulebilir.
+Execute aşaması, komutların gerçek hesaplama işlemlerinin gerçekleştiği pipeline aşamasıdır. Tasarlanan 3-way süperölçekli yapıda, üç bağımsız fonksiyonel birim (FU0, FU1, FU2) paralel olarak çalışır ve her çevrimde en fazla üç komut yürütülebilir.
 
-\subsection{ALU ve Kayd{\i}r{\i}c{\i} Birimi}\label{subsec:alu_shifter}
+\subsection{ALU ve Kaydırıcı Birimi}\label{subsec:alu_shifter}
 
-Her fonksiyonel birim, bir ALU ve bir kayd{\i}r{\i}c{\i}dan (shifter) olu\c{s}an \texttt{function\_unit\_alu\_shifter} mod\"ul\"un\"u i\c{c}erir. Bu mod\"uller, RV32I temel komut setinin t\"um aritmetik ve mant{\i}ksal i\c{s}lemlerini destekler.
+Her fonksiyonel birim, bir ALU ve bir kaydırıcıdan (shifter) oluşan \texttt{function\_unit\_alu\_shifter} modülünü içerir. Bu modüller, RV32I temel komut setinin tüm aritmetik ve mantıksal işlemlerini destekler.
 
 \subsubsection{Aritmetik birim}\label{subsubsec:arithmetic}
 
-Aritmetik birim a\c{s}a\u{g}{\i}daki i\c{s}lemleri destekler:
+Aritmetik birim aşağıdaki işlemleri destekler:
 
 \begin{itemize}
-    \item \textbf{ADD:} Toplama i\c{s}lemi ($A + B$)
-    \item \textbf{SUB:} \c{C}{\i}karma i\c{s}lemi ($A - B$)
-    \item \textbf{SLT:} \.I\c{s}aretli kar\c{s}{\i}la\c{s}t{\i}rma, k\"u\c{c}\"ukse 1 ($A < B$ signed)
-    \item \textbf{SLTU:} \.I\c{s}aretsiz kar\c{s}{\i}la\c{s}t{\i}rma, k\"u\c{c}\"ukse 1 ($A < B$ unsigned)
+    \item \textbf{ADD:} Toplama işlemi ($A + B$)
+    \item \textbf{SUB:} Çıkarma işlemi ($A - B$)
+    \item \textbf{SLT:} İşaretli karşılaştırma, küçükse 1 ($A < B$ signed)
+    \item \textbf{SLTU:} İşaretsiz karşılaştırma, küçükse 1 ($A < B$ unsigned)
 \end{itemize}
 
-Toplama ve \c{c}{\i}karma i\c{s}lemleri, 32-bit operandlar \"uzerinde \c{c}al{\i}\c{s}{\i}r. Kar\c{s}{\i}la\c{s}t{\i}rma i\c{s}lemleri, \c{c}{\i}karma sonucunun i\c{s}aret ve ta\c{s}ma bayraklar{\i}n{\i} de\u{g}erlendirerek sonu\c{c} \"uretir.
+Toplama ve çıkarma işlemleri, 32-bit operandlar üzerinde çalışır. Karşılaştırma işlemleri, çıkarma sonucunun işaret ve taşma bayraklarını değerlendirerek sonuç üretir.
 
-\subsubsection{Mant{\i}ksal birim}\label{subsubsec:logical}
+\subsubsection{Mantıksal birim}\label{subsubsec:logical}
 
-Mant{\i}ksal birim a\c{s}a\u{g}{\i}daki bit d\"uzeyinde i\c{s}lemleri destekler:
+Mantıksal birim aşağıdaki bit düzeyinde işlemleri destekler:
 
 \begin{itemize}
-    \item \textbf{AND:} Bit d\"uzeyinde VE i\c{s}lemi ($A \land B$)
-    \item \textbf{OR:} Bit d\"uzeyinde VEYA i\c{s}lemi ($A \lor B$)
-    \item \textbf{XOR:} Bit d\"uzeyinde \"Ozel VEYA i\c{s}lemi ($A \oplus B$)
+    \item \textbf{AND:} Bit düzeyinde VE işlemi ($A \land B$)
+    \item \textbf{OR:} Bit düzeyinde VEYA işlemi ($A \lor B$)
+    \item \textbf{XOR:} Bit düzeyinde Özel VEYA işlemi ($A \oplus B$)
 \end{itemize}
 
-T\"um mant{\i}ksal i\c{s}lemler kombinasyonel olarak tek \c{c}evrimde tamamlan{\i}r.
+Tüm mantıksal işlemler kombinasyonel olarak tek çevrimde tamamlanır.
 
-\subsubsection{Varil kayd{\i}r{\i}c{\i}}\label{subsubsec:shifter}
+\subsubsection{Varil kaydırıcı}\label{subsubsec:shifter}
 
-Varil kayd{\i}r{\i}c{\i} (barrel shifter), de\u{g}i\c{s}ken miktarda kayd{\i}rma i\c{s}lemlerini tek \c{c}evrimde ger\c{c}ekle\c{s}tirir:
+Varil kaydırıcı (barrel shifter), değişken miktarda kaydırma işlemlerini tek çevrimde gerçekleştirir:
 
 \begin{itemize}
-    \item \textbf{SLL:} Mant{\i}ksal sola kayd{\i}rma ($A << B[4:0]$)
-    \item \textbf{SRL:} Mant{\i}ksal sa\u{g}a kayd{\i}rma ($A >> B[4:0]$)
-    \item \textbf{SRA:} Aritmetik sa\u{g}a kayd{\i}rma (i\c{s}aret koruyarak)
+    \item \textbf{SLL:} Mantıksal sola kaydırma ($A << B[4:0]$)
+    \item \textbf{SRL:} Mantıksal sağa kaydırma ($A >> B[4:0]$)
+    \item \textbf{SRA:} Aritmetik sağa kaydırma (işaret koruyarak)
 \end{itemize}
 
-Kayd{\i}rma miktar{\i} 5-bit olarak i\c{s}lenir (0-31 aral{\i}\u{g}{\i}nda).
+Kaydırma miktarı 5-bit olarak işlenir (0-31 aralığında).
 
-\subsubsection{\.I\c{s}lem se\c{c}imi}\label{subsubsec:func_sel}
+\subsubsection{İşlem seçimi}\label{subsubsec:func_sel}
 
-\texttt{func\_sel} sinyali, hangi i\c{s}lemin ger\c{c}ekle\c{s}tirilece\u{g}ini belirler. Bu sinyal, kontrol kelimesinin [10:7] bitlerinden al{\i}n{\i}r:
+\texttt{func\_sel} sinyali, hangi işlemin gerçekleştirileceğini belirler. Bu sinyal, kontrol kelimesinin [10:7] bitlerinden alınır:
 
 \begin{equation}\label{eq:func_sel}
 func\_sel = control\_signals[10:7]
 \end{equation}
 
-ALU, hesaplama sonu\c{c}lar{\i}na ek olarak durum bayraklar{\i} da \"uretir:
+ALU, hesaplama sonuçlarına ek olarak durum bayrakları da üretir:
 
 \begin{itemize}
-    \item \textbf{zero:} Sonu\c{c} s{\i}f{\i}r ise 1
-    \item \textbf{negative:} Sonu\c{c} negatif ise 1 (MSB = 1)
-    \item \textbf{carry\_out:} Ta\c{s}{\i}ma \c{c}{\i}k{\i}\c{s}{\i}
-    \item \textbf{overflow:} Ta\c{s}ma durumu (i\c{s}aretli aritmetik i\c{c}in)
+    \item \textbf{zero:} Sonuç sıfır ise 1
+    \item \textbf{negative:} Sonuç negatif ise 1 (MSB = 1)
+    \item \textbf{carry\_out:} Taşıma çıkışı
+    \item \textbf{overflow:} Taşma durumu (işaretli aritmetik için)
 \end{itemize}
 
 %------------------------------------------------------------------------
 
-\subsection{Dal \c{C}\"oz\"umlemesi}\label{subsec:branch_resolution}
+\subsection{Dal Çözümlemesi}\label{subsec:branch_resolution}
 
-Dal \c{c}\"oz\"umlemesi, dal komutlar{\i}n{\i}n ger\c{c}ek sonu\c{c}lar{\i}n{\i}n hesaplanmas{\i} ve tahminlerle kar\c{s}{\i}la\c{s}t{\i}r{\i}lmas{\i}n{\i} kapsar. Her fonksiyonel birim, bir \texttt{Branch\_Controller} mod\"ul\"u i\c{c}erir.
+Dal çözümlemesi, dal komutlarının gerçek sonuçlarının hesaplanması ve tahminlerle karşılaştırılmasını kapsar. Her fonksiyonel birim, bir \texttt{Branch\_Controller} modülü içerir.
 
 \subsubsection{Dal sonucu hesaplama}\label{subsubsec:branch_outcome}
 
-Branch Controller, \texttt{branch\_sel} sinyaline ve ALU bayraklar{\i}na dayanarak dal sonucunu belirler. RV32I'da alt{\i} farkl{\i} dal ko\c{s}ulu desteklenir:
+Branch Controller, \texttt{branch\_sel} sinyaline ve ALU bayraklarına dayanarak dal sonucunu belirler. RV32I'da altı farklı dal koşulu desteklenir:
 
 \begin{itemize}
-    \item \textbf{BEQ:} E\c{s}itse dallan (Z = 1)
-    \item \textbf{BNE:} E\c{s}it de\u{g}ilse dallan (Z = 0)
-    \item \textbf{BLT:} K\"u\c{c}\"ukse dallan (signed, N $\neq$ Overflow)
-    \item \textbf{BGE:} B\"uy\"uk veya e\c{s}itse dallan (signed, N = Overflow)
-    \item \textbf{BLTU:} K\"u\c{c}\"ukse dallan (unsigned, Carry = 0)
-    \item \textbf{BGEU:} B\"uy\"uk veya e\c{s}itse dallan (unsigned, Carry = 1)
+    \item \textbf{BEQ:} Eşitse dallan (Z = 1)
+    \item \textbf{BNE:} Eşit değilse dallan (Z = 0)
+    \item \textbf{BLT:} Küçükse dallan (signed, N $\neq$ Overflow)
+    \item \textbf{BGE:} Büyük veya eşitse dallan (signed, N = Overflow)
+    \item \textbf{BLTU:} Küçükse dallan (unsigned, Carry = 0)
+    \item \textbf{BGEU:} Büyük veya eşitse dallan (unsigned, Carry = 1)
 \end{itemize}
 
-\texttt{MPC} (Misprediction Condition) \c{c}{\i}k{\i}\c{s}{\i}, dal{\i}n al{\i}n{\i}p al{\i}nmayaca\u{g}{\i}n{\i} belirtir. \texttt{JALR} \c{c}{\i}k{\i}\c{s}{\i}, komutun do\u{g}rudan olmayan atlama oldu\u{g}unu belirtir.
+\texttt{MPC} (Misprediction Condition) çıkışı, dalın alınıp alınmayacağını belirtir. \texttt{JALR} çıkışı, komutun doğrudan olmayan atlama olduğunu belirtir.
 
-\subsubsection{Yanl{\i}\c{s} tahmin tespiti}\label{subsubsec:mispred_detect}
+\subsubsection{Yanlış tahmin tespiti}\label{subsubsec:mispred_detect}
 
-Yanl{\i}\c{s} tahmin, ger\c{c}ek dal sonucu ile tahmin edilen sonucun kar\c{s}{\i}la\c{s}t{\i}r{\i}lmas{\i}yla tespit edilir:
+Yanlış tahmin, gerçek dal sonucu ile tahmin edilen sonucun karşılaştırılmasıyla tespit edilir:
 
 \begin{equation}\label{eq:mispred_detect}
 misprediction = \begin{cases}
-(result \neq predicted\_target) & \text{e\u{g}er JALR} \\
+(result \neq predicted\_target) & \text{eğer JALR} \\
 (MPC \oplus branch\_prediction) & \text{aksi halde}
 \end{cases}
 \end{equation}
 
-JALR komutlar{\i} i\c{c}in, hesaplanan hedef adres tahmin edilen adresle kar\c{s}{\i}la\c{s}t{\i}r{\i}l{\i}r. Di\u{g}er dal komutlar{\i} i\c{c}in, al{\i}nd{\i}/al{\i}nmad{\i} durumu kar\c{s}{\i}la\c{s}t{\i}r{\i}l{\i}r.
+JALR komutları için, hesaplanan hedef adres tahmin edilen adresle karşılaştırılır. Diğer dal komutları için, alındı/alınmadı durumu karşılaştırılır.
 
-\subsubsection{Toparlanma sinyali \"uretimi}\label{subsubsec:recovery_signal}
+\subsubsection{Toparlanma sinyali üretimi}\label{subsubsec:recovery_signal}
 
-Yanl{\i}\c{s} tahmin tespit edildi\u{g}inde, a\c{s}a\u{g}{\i}daki sinyaller \"uretilir:
+Yanlış tahmin tespit edildiğinde, aşağıdaki sinyaller üretilir:
 
 \begin{itemize}
-    \item \textbf{misprediction\_n:} n. fonksiyonel birimde yanl{\i}\c{s} tahmin bayra\u{g}{\i}
-    \item \textbf{correct\_pc\_n:} Do\u{g}ru PC de\u{g}eri (fetch'e g\"onderilecek)
-    \item \textbf{update\_predictor\_n:} Tahmin tablosu g\"uncelleme sinyali
+    \item \textbf{misprediction\_n:} n. fonksiyonel birimde yanlış tahmin bayrağı
+    \item \textbf{correct\_pc\_n:} Doğru PC değeri (fetch'e gönderilecek)
+    \item \textbf{update\_predictor\_n:} Tahmin tablosu güncelleme sinyali
 \end{itemize}
 
-Do\u{g}ru PC hesaplamas{\i}:
+Doğru PC hesaplaması:
 
 \begin{equation}\label{eq:correct_pc}
 correct\_pc = \begin{cases}
-result \land \sim 2'b11 & \text{e\u{g}er JALR (2-byte hizalama)} \\
-pc + 4 & \text{e\u{g}er tahmin taken, ger\c{c}ek not-taken} \\
-pc + imm & \text{e\u{g}er tahmin not-taken, ger\c{c}ek taken}
+result \land \sim 2'b11 & \text{eğer JALR (2-byte hizalama)} \\
+pc + 4 & \text{eğer tahmin taken, gerçek not-taken} \\
+pc + imm & \text{eğer tahmin not-taken, gerçek taken}
 \end{cases}
 \end{equation}
 
 %------------------------------------------------------------------------
 
-\subsection{Y\"ur\"utme Paralelizmi}\label{subsec:exec_parallel}
+\subsection{Yürütme Paralelizmi}\label{subsec:exec_parallel}
 
-\subsubsection{3-way paralel y\"ur\"utme}\label{subsubsec:3way}
+\subsubsection{3-way paralel yürütme}\label{subsubsec:3way}
 
-Tasarlanan sistemde \"u\c{c} fonksiyonel birim (FU0, FU1, FU2) tam ba\u{g}{\i}ms{\i}z olarak \c{c}al{\i}\c{s}{\i}r. Her biri kendi rezervasyon istasyonundan komut al{\i}r ve sonu\c{c}lar{\i}n{\i} CDB'ye yazar.
+Tasarlanan sistemde üç fonksiyonel birim (FU0, FU1, FU2) tam bağımsız olarak çalışır. Her biri kendi rezervasyon istasyonundan komut alır ve sonuçlarını CDB'ye yazar.
 
-Fonksiyonel birimlerin koordinasyonu a\c{s}a\u{g}{\i}daki sinyallerle sa\u{g}lan{\i}r:
-
-\begin{itemize}
-    \item \textbf{issue\_ready:} FU me\c{s}gul de\u{g}il, yeni komut kabul edebilir
-    \item \textbf{issue\_valid:} RS'den ge\c{c}erli komut gelmekte
-    \item \textbf{busy:} FU \c{s}u anda i\c{s}lem yap{\i}yor
-\end{itemize}
-
-RV32I temel komut seti i\c{c}in t\"um i\c{s}lemler tek \c{c}evrimde tamamlan{\i}r, bu nedenle \texttt{busy} sinyali genellikle inaktiftir. Gelecekte \c{c}ok \c{c}evrimli i\c{s}lemler (b\"olme, \c{c}arpma) eklenirse bu sinyal kullan{\i}lacakt{\i}r.
-
-\subsubsection{Sonu\c{c} yay{\i}n{\i}}\label{subsubsec:broadcast}
-
-Her fonksiyonel birimin sonu\c{c}lar{\i}, CDB \"uzerinden t\"um bile\c{s}enlere yay{\i}nlan{\i}r:
+Fonksiyonel birimlerin koordinasyonu aşağıdaki sinyallerle sağlanır:
 
 \begin{itemize}
-    \item \textbf{Reservation Stations:} Bekleyen operandlar{\i} yakalar
-    \item \textbf{ROB:} \texttt{executed} bayra\u{g}{\i}n{\i} ve de\u{g}eri g\"unceller
-    \item \textbf{BRAT:} Dal \c{c}\"oz\"umleme bilgilerini al{\i}r
-    \item \textbf{LSQ:} Adres hesaplama sonu\c{c}lar{\i}n{\i} al{\i}r
+    \item \textbf{issue\_ready:} FU meşgul değil, yeni komut kabul edebilir
+    \item \textbf{issue\_valid:} RS'den geçerli komut gelmekte
+    \item \textbf{busy:} FU şu anda işlem yapıyor
 \end{itemize}
 
-CDB yay{\i}n{\i}, a\c{s}a\u{g}{\i}daki bilgileri i\c{c}erir:
+RV32I temel komut seti için tüm işlemler tek çevrimde tamamlanır, bu nedenle \texttt{busy} sinyali genellikle inaktiftir. Gelecekte çok çevrimli işlemler (bölme, çarpma) eklenirse bu sinyal kullanılacaktır.
+
+\subsubsection{Sonuç yayını}\label{subsubsec:broadcast}
+
+Her fonksiyonel birimin sonuçları, CDB üzerinden tüm bileşenlere yayınlanır:
+
+\begin{itemize}
+    \item \textbf{Reservation Stations:} Bekleyen operandları yakalar
+    \item \textbf{ROB:} \texttt{executed} bayrağını ve değeri günceller
+    \item \textbf{BRAT:} Dal çözümleme bilgilerini alır
+    \item \textbf{LSQ:} Adres hesaplama sonuçlarını alır
+\end{itemize}
+
+CDB yayını, aşağıdaki bilgileri içerir:
 
 \begin{equation}\label{eq:cdb_broadcast}
 CDB_n = \{valid_n, tag_n, data_n, is\_branch_n, exception_n\}
 \end{equation}
 
-\subsubsection{JAL/JALR sonu\c{c} se\c{c}imi}\label{subsubsec:jal_result}
+\subsubsection{JAL/JALR sonuç seçimi}\label{subsubsec:jal_result}
 
-JAL ve JALR komutlar{\i} i\c{c}in sonu\c{c}, ALU hesaplamas{\i} yerine d\"on\"u\c{s} adresidir (PC + 4):
+JAL ve JALR komutları için sonuç, ALU hesaplaması yerine dönüş adresidir (PC + 4):
 
 \begin{equation}\label{eq:link_addr}
 result = \begin{cases}
-pc[31:2] || 2'b00 & \text{e\u{g}er JAL/JALR (ba\u{g}lant{\i} adresi)} \\
+pc[31:2] || 2'b00 & \text{eğer JAL/JALR (bağlantı adresi)} \\
 alu\_result & \text{aksi halde}
 \end{cases}
 \end{equation}
 
-Bu se\c{c}im, \texttt{control\_signals[5]} bitine dayanarak yap{\i}l{\i}r.
+Bu seçim, \texttt{control\_signals[5]} bitine dayanarak yapılır.
