@@ -4,161 +4,179 @@
 
 \section{Decode \& Rename Aşaması}\label{sec:decode_rename}
 
-Decode \& Rename aşaması, komut arabelleğinden alınan komutların çözümlenmesi ve yazmaç yeniden adlandırma işlemlerinin gerçekleştirilmesinden sorumludur. Bu aşama, sıra dışı yürütme için gerekli olan yalancı bağımlılıkların (WAW ve WAR) ortadan kaldırılmasını sağlar \cite{keller,tomasulo}.
+Decode \& Rename aşaması, komut arabelleğinden alınan komutların kod çözme ve yazmaç yeniden adlandırma işlemlerinin gerçekleştirilmesinden sorumludur. Bu aşama, sıra dışı yürütme için gerekli olan yalancı bağımlılıkların ortadan kaldırılmasını sağlamaktadır \cite{keller,tomasulo}. Yalancı bağımlılıklar, gerçek veri akışından kaynaklanmayan ancak aynı mimari yazmacın farklı komutlar tarafından kullanılmasından doğan bağımlılıklardır. Bu bağımlılıklar ortadan kaldırılmadan, komutlar sıralarından bağımsız olarak çalıştırılamazlar ve işlemcinin paralellik potansiyeli kısıtlanmış olur.
 
-Tasarlanan sistemde Decode \& Rename aşaması, üç ana bileşenden oluşmaktadır: paralel komut çözümleyiciler, yazmaç takma ad tablosu (RAT) ve dal çözümleme takma ad tablosu (BRAT).
+Tasarlanan sistemde Decode \& Rename aşaması beş ana bileşenden oluşmaktadır: paralel komut kod çözücüleri, yazmaç takma ad tablosu, serbest yazmaç listesi yöneticisi, yükleme saklama kuyruğu adres tahsis birimi ve dal çözümleme takma ad tablosu.
 
-\subsection{Komut Çözümleme}\label{subsec:decoding}
+\subsection{Komut Kod Çözme}\label{subsec:decoding}
 
-\subsubsection{Paralel çözümleyici yapısı}\label{subsubsec:parallel_decode}
+\subsubsection{Paralel Kod Çözücü Yapısı}\label{subsubsec:parallel_decode}
 
-Komut çözümleme birimi (\texttt{issue\_stage}), üç ayrı \texttt{rv32i\_decoder} modülünün paralel çalışmasıyla gerçeklenmiştir. Her çevrimde üç komut eş zamanlı olarak çözümlenir ve kontrol sinyalleri üretilir.
+Komut kod çözme birimi, üç ayrı RV32I kod çözücü modülünün paralel çalışmasıyla gerçeklenmiştir. Her saat çevriminde üç komut eş zamanlı olarak işlenmekte ve kontrol sinyalleri üretilmektedir. Bu paralel yapının tercih edilmesinin temel nedeni, komut kod çözme işleminin tamamen kombinasyonel bir süreç olması ve komutlar arasında bu aşamada herhangi bir bağımlılık bulunmamasıdır. Her komut yalnızca kendi otuz iki bitlik komut kelimesine bakarak işlenmektedir; dolayısıyla üç kod çözücünün paralel çalışması kritik yolu uzatmamaktadır.
 
-Her çözümleyici, 32-bit RISC-V komutunu analiz ederek aşağıdaki bilgileri üretir:
+Her kod çözücü, otuz iki bitlik RISC-V komutunu analiz ederek mimari yazmaç adreslerini, kontrol sinyallerini ve komut türü bilgilerini üretmektedir. Mimari yazmaç adresleri, birinci kaynak yazmacı, ikinci kaynak yazmacı ve hedef yazmacı için beşer bit genişliğindedir. Kontrol sinyalleri, aritmetik mantık birimi işlemini, bellek erişim türünü, dallanma koşulunu ve yazmaç yazma iznini belirlemektedir.
 
-\begin{itemize}
-    \item \textbf{Mimari yazmaç adresleri:} \texttt{rs1}, \texttt{rs2} (kaynak) ve \texttt{rd} (hedef)
-    \item \textbf{Kontrol sinyalleri:} ALU işlemi, bellek erişimi, dallanma tipi
-    \item \textbf{Acil değer:} Komut formatına göre çıkarılıp işaret genişletilmiş değer
-\end{itemize}
+\subsubsection{RV32I Komut Formatları}\label{subsubsec:instr_formats}
 
-\subsubsection{Kontrol sinyali üretimi}\label{subsubsec:control_signals}
+RISC-V mimarisinin düzenli yapısı, komut kod çözme işlemini önemli ölçüde basitleştirmektedir. RV32I temel komut seti altı temel komut formatı tanımlamaktadır \cite{riscv_spec}.
 
-Kontrol kelimesi (\texttt{control\_word}), komutun türünü ve gerekli işlemleri kodlayan bir bit vektörüdür. Bu sinyal, sonraki pipeline aşamalarında veri yolu kontrolü için kullanılır.
+R tipi format, yazmaç-yazmaç aritmetik ve mantıksal işlemler için kullanılmaktadır. Bu formatta iki kaynak yazmacı ve bir hedef yazmacı bulunmaktadır. Toplama, çıkarma, mantıksal VE, mantıksal VEYA gibi işlemler bu formattadır.
 
-RV32I komut seti için çözümleyici, altı temel komut formatını tanır \cite{riscv_spec}:
+I tipi format, sabit değerli işlemler ve yükleme komutları için kullanılmaktadır. On iki bitlik bir sabit değer alanı içermektedir. Sabit değerli aritmetik, bellek yükleme ve dolaylı atlama komutları bu formattadır.
 
-\begin{enumerate}
-    \item \textbf{R-tipi:} Yazmaç-yazmaç aritmetik/mantıksal işlemler
-    \item \textbf{I-tipi:} Acil değerli işlemler ve yüklemeler
-    \item \textbf{S-tipi:} Saklama işlemleri
-    \item \textbf{B-tipi:} Koşullu dallanma
-    \item \textbf{U-tipi:} Üst acil değer işlemleri
-    \item \textbf{J-tipi:} Koşulsuz atlama
-\end{enumerate}
+S tipi format, saklama işlemleri için kullanılmaktadır. İki kaynak yazmacı bulunmakta ve hedef yazmacı yerine bellek adresi hesaplaması için kullanılan sabit değer alanı yer almaktadır.
 
-Ek olarak, her komut için bellek erişim gereksinimi (load/store) ve dallanma tipi belirlenir:
+B tipi format, koşullu dallanma komutları için kullanılmaktadır. İki kaynak yazmacı karşılaştırılmakta ve sonuca göre program akışı değiştirilmektedir.
 
-\begin{equation}\label{eq:load_store}
-load\_store = mem\_read \lor (mem\_write \land \lnot branch)
-\end{equation}
+U tipi format, üst sabit değer işlemleri için kullanılmaktadır. Yirmi bitlik bir sabit değeri yazmacın üst kısmına yerleştirmek veya program sayacı ile toplamak için kullanılmaktadır.
+
+J tipi format, koşulsuz atlama komutu için kullanılmaktadır. Yirmi bitlik bir hedef ofset içermekte ve dönüş adresini bağlantı yazmacına kaydetmektedir.
+
+Tüm bu formatlarda yazmaç adresleri aynı bit konumlarında bulunduğundan, kod çözücü tasarımı basitleşmektedir. Kaynak yazmaç adresleri her zaman on dokuzuncu ile on beşinci bitler arasında ve yirmi dördüncü ile yirminci bitler arasında, hedef yazmaç adresi ise on birinci ile yedinci bitler arasında yer almaktadır.
 
 %------------------------------------------------------------------------
 
 \subsection{Yazmaç Yeniden Adlandırma}\label{subsec:reg_rename}
 
-Yazmaç yeniden adlandırma, sıra dışı yürütmenin temelini oluşturan kritik bir mekanizmadır. Bu teknik, mimari yazmaçları daha büyük bir fiziksel yazmaç havuzuna eşleyerek gerçek veri bağımlılıkları (RAW) dışındaki tüm sahte bağımlılıkları ortadan kaldırır \cite{johnson}.
+Yazmaç yeniden adlandırma, sıra dışı yürütmenin temelini oluşturan kritik bir mekanizmadır. Bu teknik, mimari yazmaçları daha büyük bir fiziksel yazmaç havuzuna eşleyerek gerçek veri bağımlılıkları dışındaki tüm sahte bağımlılıkları ortadan kaldırmaktadır \cite{johnson}.
 
-\subsubsection{Yazmaç Takma Ad Tablosu (RAT)}\label{subsubsec:rat}
+RISC-V mimarisi otuz iki mimari yazmaç tanımlamaktadır, ancak tasarlanan işlemcide altmış dört fiziksel yazmaç bulunmaktadır. Bu fazladan otuz iki fiziksel yazmaç, aynı anda birden fazla komutun aynı mimari yazmacı hedef almasına olanak tanımaktadır. Bu sayede, bir yazmaç değerinin üzerine yazılmasını beklemek yerine, her komut kendi sonucu için ayrı bir fiziksel yazmaç alabilmektedir.
 
-Yazmaç Takma Ad Tablosu (\texttt{register\_alias\_table}), 32 mimari yazmacın her birinin hangi fiziksel yazmaca eşlendiğini takip eder. Tasarlanan sistemde 64 fiziksel yazmaç bulunmaktadır, bu da 32 mimari yazmaca ek olarak 32 geçici fiziksel yazmaç sağlar.
+\subsubsection{Yazmaç Takma Ad Tablosu}\label{subsubsec:rat}
 
-RAT, aşağıdaki arayüzleri desteklemektedir:
+Yazmaç Takma Ad Tablosu, otuz iki mimari yazmacın her birinin hangi fiziksel yazmaca eşlendiğini takip eden bir yapıdır. Tablo, altı bit genişliğinde otuz iki girdiden oluşmaktadır. Her girdi, ilgili mimari yazmacın mevcut fiziksel yazmaç adresini tutmaktadır. En anlamlı bit, fiziksel yazmacın yazmaç dosyasında mı yoksa yeniden sıralama arabelleğinde mi bulunduğunu belirtmektedir.
 
-\begin{itemize}
-    \item \textbf{Okuma (6 port):} Her komut için iki kaynak yazmacı (3 komut $\times$ 2 kaynak = 6 okuma)
-    \item \textbf{Yazma (3 port):} Her komut için bir hedef yazmacı güncellemesi
-    \item \textbf{Commit (3 port):} ROB'dan gelen kesinleştirme bilgileri
-\end{itemize}
+Tablonun çoklu port yapısı, üç yollu süperölçekli yürütmeyi destekleyecek şekilde tasarlanmıştır. Her saat çevriminde altı okuma işlemi gerçekleştirilebilmektedir; bu sayı, üç komutun her biri için iki kaynak yazmacı sorgulamasına karşılık gelmektedir. Ayrıca üç yazma işlemi de paralel olarak gerçekleştirilebilmektedir; bu sayı, üç komutun hedef yazmaç güncellemelerine karşılık gelmektedir.
 
-Üç paralel komut için yeniden adlandırma işlemi, komutlar arasındaki bağımlılıklar dikkate alınarak gerçekleştirilir. Eğer ardışık komutlar aynı mimari yazmacı hedef alıyorsa, yeniden adlandırma sırayla uygulanır:
+Önemli bir tasarım kararı olarak, sıfırıncı mimari yazmaç her zaman sıfırıncı fiziksel yazmaca eşlenmektedir. RISC-V mimarisinde sıfırıncı yazmaç sabit sıfır değeri içermektedir ve bu özel durum donanımda ele alınmaktadır.
 
-\begin{equation}\label{eq:rename_chain}
-rd\_phys_n = \begin{cases}
-rd\_phys_{n-1} & \text{eğer } rd\_arch_n = rd\_arch_{n-1} \\
-allocated\_phys_n & \text{aksi halde}
-\end{cases}
-\end{equation}
+\subsubsection{Aynı Çevrim İletme Mantığı}\label{subsubsec:same_cycle_fwd}
 
-\subsubsection{Serbest liste yönetimi}\label{subsubsec:free_list}
+Üç komutun paralel olarak yeniden adlandırılması sırasında, komutlar arasındaki bağımlılıkların doğru bir şekilde ele alınması gerekmektedir. Örneğin, birinci komut bir yazmaca yazıyor ve ikinci komut aynı yazmacı kaynak olarak kullanıyorsa, ikinci komut tablodaki eski değeri değil, birinci komutun yeni fiziksel yazmaç adresini almalıdır.
 
-Serbest liste (\texttt{circular\_buffer\_3port}), kullanılabilir fiziksel yazmaçların adreslerini tutan bir dairesel tampondur. Yeni bir hedef yazmacı gerektiğinde, serbest listeden bir adres ayrılır; bir komut kesinleştirildiğinde eski fiziksel yazmaç adresi serbest listeye geri eklenir.
+Bu gereksinim, aynı çevrim iletme mantığı ile karşılanmaktadır. Kaynak yazmaç adresleri sorgulanırken, önceki komutların hedef yazmaçlarıyla karşılaştırma yapılmaktadır. Eğer bir eşleşme varsa, tablo değeri yerine yeni tahsis edilen fiziksel yazmaç adresi kullanılmaktadır. Bu mantık kombinasyonel olarak gerçeklenmekte ve kritik yola ek bir karşılaştırıcı gecikmesi eklemektedir.
 
-Serbest liste, üç paralel okuma ve üç paralel yazma portuna sahiptir:
+Çizelge \ref{tab:same_cycle_fwd}'de aynı çevrim iletme mantığının çalışma şekli özetlenmektedir. İkinci ve üçüncü komutlar için kaynak yazmaç adresleri, önceki komutların hedef yazmaçlarıyla karşılaştırılmaktadır.
 
-\begin{itemize}
-    \item \textbf{Okuma (tahsis):} Her çevrimde en fazla 3 yeni fiziksel yazmaç ayrılır
-    \item \textbf{Yazma (serbest bırakma):} Kesinleştirme sırasında eski fiziksel yazmaçlar geri eklenir
-\end{itemize}
+\begin{table}[H]
+\centering
+\caption{Aynı çevrim iletme mantığı.}
+\label{tab:same_cycle_fwd}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Kaynak} & \textbf{Karşılaştırma} & \textbf{Sonuç} \\
+\hline
+rs1\_1, rs2\_1 & rd\_0 ile & Eşleşirse: rd\_phys\_0 kullan \\
+\hline
+rs1\_2, rs2\_2 & rd\_1 ile & Eşleşirse: rd\_phys\_1 kullan \\
+               & rd\_0 ile & Eşleşirse: rd\_phys\_0 kullan \\
+\hline
+\end{tabular}
+\end{table}
 
-Serbest liste doluluk durumu, yeniden adlandırma aşamasının beklemesine neden olabilir. \texttt{rename\_ready} sinyali, yeterli serbest fiziksel yazmaç olduğunda aktif hale gelir:
+İletme önceliği, en son komuta verilmektedir. Örneğin, hem birinci hem de ikinci komut aynı mimari yazmaca yazıyorsa ve üçüncü komut bu yazmacı okuyorsa, üçüncü komut ikinci komutun fiziksel yazmaç adresini almalıdır. Bu önceliklendirme, program sırasını korumak için zorunludur.
 
-\begin{equation}\label{eq:rename_ready}
-rename\_ready = (free\_count \geq 3)
-\end{equation}
+\subsubsection{Serbest Yazmaç Listesi Yönetimi}\label{subsubsec:free_list}
 
-\subsubsection{WAW/WAR eliminasyonu}\label{subsubsec:waw_war}
+Serbest yazmaç listesi, kullanılabilir fiziksel yazmaç adreslerini tutan bir dairesel tampondur. Yeni bir hedef yazmacı gerektiğinde, serbest listeden bir adres tahsis edilmektedir. Bir komut kesinleştirildiğinde ve eski fiziksel yazmaca artık ihtiyaç kalmadığında, bu adres serbest listeye geri eklenmektedir.
 
-Yazmaç yeniden adlandırma, iki tür sahte bağımlılığı ortadan kaldırır:
+Dairesel tampon yapısının tercih edilmesinin birkaç önemli nedeni bulunmaktadır. Birinci olarak, dairesel tampon sabit boyutlu bir yapıda verimli ekleme ve çıkarma işlemleri sağlamaktadır. Baş ve kuyruk işaretçileri ile yönetilen bu yapıda, hem tahsis hem de serbest bırakma işlemleri sabit zamanda gerçekleştirilebilmektedir.
 
-\begin{enumerate}
-    \item \textbf{Write-After-Write (WAW):} Aynı mimari yazmaca yazım yapan iki komut, farklı fiziksel yazmaçlara eşlenerek bağımsız hale getirilir.
-    \item \textbf{Write-After-Read (WAR):} Kaynak olarak okunan bir yazmaca daha sonra yazılacak olsa bile, okuma eski fiziksel yazmaçtan, yazma yeni fiziksel yazmaca yapılır.
-\end{enumerate}
+İkinci olarak, dairesel tampon yanlış tahmin toparlanmasını büyük ölçüde kolaylaştırmaktadır. Bir dalın yanlış tahmin edildiği tespit edildiğinde, yalnızca okuma işaretçisinin yanlış tahmin anındaki değere geri döndürülmesi yeterlidir. Bu sayede, yanlış yolda tahsis edilen tüm fiziksel yazmaçlar anında tekrar kullanılabilir hale gelmektedir. Eğer normal bir liste yapısı kullanılsaydı, yanlış yolda tahsis edilen her yazmacın tek tek listeye geri eklenmesi gerekecekti; bu da hem karmaşıklık hem de gecikme açısından dezavantajlı olurdu.
 
-Bu eliminasyon sayesinde, yalnızca gerçek veri bağımlılıkları (Read-After-Write, RAW) kalmaktadır. RAW bağımlılıkları, Reservation Station'larda operand hazır olana kadar bekletilerek çözümlenir.
+Üçüncü olarak, dairesel tampon bellek verimliliği sağlamaktadır. Sabit boyutlu bir dizi üzerinde çalıştığından, dinamik bellek tahsisi gerektirmemekte ve donanım gerçeklemesi basitleşmektedir.
+
+Serbest listesinin üç paralel okuma portu, her çevrimde en fazla üç yeni fiziksel yazmaç tahsis edilmesine olanak tanımaktadır. Benzer şekilde, üç paralel yazma portu, kesinleştirme sırasında üç eski fiziksel yazmacın geri eklenmesini desteklemektedir.
+
+Serbest liste doluluk durumu, yeniden adlandırma hazırlığını belirlemektedir. Eğer yeterli sayıda serbest fiziksel yazmaç yoksa, yeni komutların decode aşamasına kabul edilmesi durdurulmaktadır. Hazırlık sinyali, serbest listedeki mevcut giriş sayısına göre belirlenmekte ve her kanal için ayrı ayrı üretilmektedir.
+
+\subsubsection{Yükleme Saklama Kuyruğu Adres Tahsisi}\label{subsubsec:lsq_alloc}
+
+Bellek işlemleri için ayrı bir adres tahsis mekanizması bulunmaktadır. Yükleme ve saklama komutları tespit edildiğinde, yükleme saklama kuyruğunda bir giriş tahsis edilmektedir. Bu tahsis işlemi, fiziksel yazmaç tahsisi ile paralel olarak gerçekleşmektedir.
+
+Yükleme saklama kuyruğu adres tamponu da dairesel tampon yapısında gerçeklenmiştir. Bu tasarım, serbest yazmaç listesiyle aynı avantajları sağlamaktadır: yanlış tahmin durumunda okuma işaretçisinin geri döndürülmesiyle tüm spekülatif tahsisler anında iptal edilebilmektedir.
+
+Her çevrimde en fazla üç bellek işlemi için kuyruk girişi tahsis edilebilmektedir. Kuyruk doluluk durumu, bellek komutlarının bekletilmesine neden olabilmektedir ve bu durum decode aşamasına geri basınç olarak yansımaktadır.
+
+\subsubsection{Sahte Bağımlılık Eliminasyonu}\label{subsubsec:waw_war}
+
+Yazmaç yeniden adlandırma mekanizması, iki tür sahte bağımlılığı ortadan kaldırmaktadır.
+
+Yazma Sonrası Yazma bağımlılığı, aynı mimari yazmaca yazım yapan iki komut arasında oluşmaktadır. Geleneksel boruhattında, ikinci komutun birinci komutu beklemesi gerekmektedir; aksi takdirde birinci komutun değeri kaybolabilmektedir. Yazmaç yeniden adlandırma ile her iki komut farklı fiziksel yazmaçlara yazım yapmaktadır ve birbirlerinden bağımsız olarak çalışabilmektedirler.
+
+Okuma Sonrası Yazma bağımlılığı, bir komutun okuduğu yazmaca başka bir komutun yazması durumunda oluşmaktadır. Geleneksel boruhattında, yazım yapan komutun okuma tamamlanana kadar beklemesi gerekmektedir. Yazmaç yeniden adlandırma ile okuma işlemi eski fiziksel yazmaçtan, yazma işlemi ise yeni fiziksel yazmaca yapılmaktadır.
+
+Bu eliminasyon sayesinde, yalnızca gerçek veri bağımlılıkları olan Okuma Sonrası Yazma durumu kalmaktadır. Bu bağımlılıklar, rezervasyon istasyonlarında operand hazır olana kadar bekletilerek çözümlenmektedir.
 
 %------------------------------------------------------------------------
 
-\subsection{Dal Spekülasyon Desteği (BRAT)}\label{subsec:brat}
+\subsection{Dal Spekülasyon Desteği}\label{subsec:brat}
 
-Sıra dışı yürütme sırasında, dallanma komutları henüz çözümlenmeden spekülatif olarak yürütülür. Yanlış tahmin durumunda, işlemcinin tutarlı bir duruma geri dönebilmesi için checkpoint mekanizması gereklidir.
+Sıra dışı yürütme sırasında dallanma komutları henüz sonuçlanmadan spekülatif olarak yürütülmektedir. Bu yaklaşım, dallanma komutlarının sonuçlanmasını beklemeden sonraki komutların işlenmesine olanak tanımaktadır. Ancak yanlış tahmin durumunda, işlemcinin tutarlı bir duruma geri dönebilmesi için özel mekanizmalar gerekmektedir.
 
-Dal Çözümleme Takma Ad Tablosu (Branch Resolution Alias Table - BRAT), her spekülatif dal için RAT'ın bir anlık görüntüsünü saklar ve dal çözümlemesi sırasında gerekli bilgileri sıralı olarak sağlar \cite{johnson}.
+\subsubsection{Yanlış Tahmin Toparlanma Yöntemleri}\label{subsubsec:recovery_methods}
 
-\subsubsection{RAT anlık görüntü mekanizması}\label{subsubsec:snapshot}
+Yanlış tahmin tespit edildiğinde işlemciyi tutarlı bir duruma döndürmenin birkaç farklı yöntemi bulunmaktadır. En basit yöntem, yanlış tahmin edilen dalın yeniden sıralama arabelleğinin başına gelmesini beklemektir. Bu durumda, dal komutunun kesinleştirilmesi sırasında mimari durum zaten tutarlıdır ve yalnızca program sayacının düzeltilmesi yeterlidir. Ancak bu yöntem, özellikle derin boruhattı yapılarında ciddi performans kayıplarına neden olmaktadır; çünkü yanlış tahmin tespit edildikten sonra bile arabellek boşalana kadar beklenmesi gerekmektedir.
 
-BRAT (\texttt{brat\_circular\_buffer}), 16 girişlik bir dairesel tampon olarak gerçeklenmiştir. Her dal komutu decode edildiğinde, aşağıdaki bilgiler BRAT'a kaydedilir:
+Bu performans kaybını önlemek için hızlı toparlanma yöntemleri geliştirilmiştir. Anlık görüntü tabanlı yöntemler, her spekülatif dal için işlemci durumunun bir kopyasını saklamakta ve yanlış tahmin durumunda bu kopyayı anında geri yüklemektedir.
 
-\begin{itemize}
-    \item 32 mimari yazmacın fiziksel eşlemesi (RAT snapshot)
-    \item Dal komutunun fiziksel yazmaç adresi (ROB ID olarak kullanılır)
-    \item Tahmin anındaki PC değeri
-    \item Global dal geçmişi (GHR)
-    \item JALR bayrağı (doğrudan olmayan atlama ise)
-    \item RAS TOS (Return Address Stack Top of Stack) değeri
-\end{itemize}
+Dal Çözümleme Takma Ad Tablosu yöntemi, her dal için yazmaç takma ad tablosunun tam bir kopyasını saklamaktadır. Bu yaklaşım, bazı alternatif yöntemlere göre daha fazla depolama alanı gerektirmektedir; örneğin yalnızca delta bilgilerini saklayan yöntemler daha az alan kullanmaktadır. Ancak tasarlanan işlemcide bu yöntemin tercih edilmesinin özel bir nedeni bulunmaktadır: güvenli modda aynı yapı, her komut için kullanılarak hata toleransı sağlanmaktadır. Bu ikili kullanım senaryosu, ek alan maliyetini haklı kılmaktadır.
 
-Üç paralel push arayüzü ile her çevrimde en fazla üç dal komutu için checkpoint alınabilir.
+\subsubsection{Anlık Görüntü Mekanizması}\label{subsubsec:snapshot}
 
-\subsubsection{Yanlış tahmin toparlanması}\label{subsubsec:recovery}
+Dal Çözümleme Takma Ad Tablosu, on altı girişlik bir dairesel tampon olarak gerçeklenmiştir. Her dallanma veya atlama komutu işlendiğinde, mevcut durumun bir anlık görüntüsü bu tampona kaydedilmektedir.
 
-Dal çözümlemesi Execute aşamasında gerçekleşir. BRAT, Execute aşamasından gelen çözümleme sinyallerini alır ve bunları sıralı (in-order) bir şekilde işler. Her dal için:
+Kaydedilen bilgiler arasında otuz iki mimari yazmacın fiziksel eşlemesi, dal komutunun fiziksel yazmaç adresi, tahmin anındaki program sayacı değeri, küresel dal geçmişi, dolaylı atlama bayrağı ve dönüş adresi yığını tepe işaretçisi bulunmaktadır. Ayrıca, yükleme saklama kuyruğu işaretçisi de kaydedilmektedir; bu sayede bellek işlemleri de doğru şekilde geri alınabilmektedir.
 
+Fiziksel yazmaç adresi, yeniden sıralama arabelleği indeksi olarak da kullanılmaktadır. Bu tasarım kararı, dal sonuçlanması sırasında hangi dalın sonuçlandığının belirlenmesini kolaylaştırmaktadır. Yürütme aşamasından gelen sonuçlanma sinyalleri bu adresle eşleştirilerek doğru anlık görüntünün bulunması sağlanmaktadır.
+
+On altı giriş kapasitesinin belirlenmesinde güvenli mod gereksinimi etkili olmuştur. Normal çalışmada sekiz hatta dört girişlik bir tampon bile performans kaybına neden olmadan kullanılabilmektedir; tipik programlarda bu kadar derin dal spekülasyonu nadir görülmektedir. Ancak güvenli modda bu yapı her komut için kullanıldığından, daha büyük bir kapasite gerekmektedir.
+
+Üç paralel push arayüzü ile her saat çevriminde en fazla üç dallanma komutu için checkpoint alınabilmektedir. Bu kapasite, üç yollu süperölçekli yapıyla uyumludur.
+
+\subsubsection{Sıralı Sonuçlanma Mekanizması}\label{subsubsec:inorder_resolution}
+
+Dallar sıra dışı yürütülse bile, sonuçlanma çıkışlarının diğer modüllere sıralı olarak iletilmesi gerekmektedir. Bunun nedeni, eski bir dalın yanlış tahmini durumunda genç dalların zaten temizlenmesi gerektiğidir.
+
+Dal Çözümleme Takma Ad Tablosu, yürütme aşamasından gelen sıra dışı sonuçlanma sonuçlarını bir tamponlama mekanizmasıyla toplamakta ve baş işaretçisinden itibaren sıralı olarak çıkarmaktadır. Her giriş, ilgili dalın sonuçlanıp sonuçlanmadığını gösteren bir bayrak içermektedir. Baş işaretçisindeki dal sonuçlandığında, sonuç diğer modüllere iletilmekte ve işaretçi ilerletilmektedir.
+
+Bu mekanizma, her saat çevriminde en fazla üç dalı sıralı olarak işleyebilmektedir. Sonuçlanma sırasında doğru tahmin edilen dallar için giriş basitçe serbest bırakılmakta, yanlış tahmin edilen dallar için ise toparlanma işlemi başlatılmaktadır.
+
+\subsubsection{Yanlış Tahmin Toparlanması}\label{subsubsec:recovery}
+
+Yanlış tahmin tespit edildiğinde, anlık görüntüdeki bilgiler kullanılarak işlemci tutarlı bir duruma geri döndürülmektedir. Toparlanma işlemi birkaç adımdan oluşmaktadır.
+
+Birinci olarak, yazmaç takma ad tablosu anlık görüntüden geri yüklenmektedir. Bu işlem, yanlış yolda yapılan tüm yazmaç eşlemelerini geçersiz kılmaktadır.
+
+İkinci olarak, serbest yazmaç listesi işaretçisi yanlış tahmin edilen dalın fiziksel yazmaç adresinin bir fazlasına ayarlanmaktadır. Bu ayarlama, yanlış yolda tahsis edilen fiziksel yazmaçların tekrar kullanılabilir hale gelmesini sağlamaktadır.
+
+Üçüncü olarak, yükleme saklama kuyruğu işaretçisi anlık görüntüdeki değere geri döndürülmektedir. Bu sayede, yanlış yolda tahsis edilen bellek işlemi girişleri iptal edilmektedir.
+
+Dördüncü olarak, doğru program sayacı değeri komut getirme aşamasına iletilmektedir. Bu sayede, doğru yoldaki komutların getirilmesi başlatılmaktadır.
+
+Beşinci olarak, küresel dal geçmişi anlık görüntüdeki değere geri yüklenmektedir. Bu işlem, dal tahmincisinin doğru durumda kalmasını sağlamaktadır.
+
+Son olarak, dönüş adresi yığını tepe işaretçisi geri yüklenmektedir. Yanlış yolda yapılan çağrı ve dönüş işlemleri geri alınmaktadır.
+
+\paragraph{Örnek Senaryo}
+
+Aşağıdaki komut dizisini ele alalım:
+
+\begin{verbatim}
+    BEQ x1, x2, hedef   ; Dal komutu (yanlış tahmin: alınacak)
+    ADD x3, x4, x5      ; Spekülatif komut 1
+    SUB x6, x7, x8      ; Spekülatif komut 2
+    LW  x9, 0(x10)      ; Spekülatif yükleme
+\end{verbatim}
+
+Dal komutu ``alınacak'' olarak tahmin edilmiş ancak gerçekte ``alınmayacak'' olsun. Dal işlendiğinde, yazmaç takma ad tablosu ve yükleme saklama kuyruğu işaretçileri anlık görüntüye kaydedilmiştir. Spekülatif komutlar yürütüldükçe, x3, x6 ve x9 yazmaçları için yeni fiziksel yazmaçlar tahsis edilmiş ve yükleme komutu için kuyruk girişi ayrılmıştır.
+
+Dalın yanlış tahmin edildiği tespit edildiğinde:
 \begin{enumerate}
-    \item \textbf{Doğru tahmin:} BRAT girişi serbest bırakılır, toparlanma yapılmaz.
-    \item \textbf{Yanlış tahmin:} BRAT girişindeki snapshot RAT'a geri yüklenir, serbest liste geri alınır ve fetch aşamasına doğru PC gönderilir.
+    \item Yazmaç takma ad tablosu, dal anındaki duruma geri yüklenir (x3, x6, x9 eşlemeleri iptal)
+    \item Serbest yazmaç listesi işaretçisi geri döndürülür (tahsis edilen fiziksel yazmaçlar tekrar kullanılabilir)
+    \item Yükleme saklama kuyruğu işaretçisi geri döndürülür (yükleme girişi iptal)
+    \item Program sayacı, daldan sonraki gerçek adrese (BEQ+4) ayarlanır
 \end{enumerate}
 
-Sıralı çözümleme, birden fazla spekülatif dalın aynı anda çözümlenmesi durumunda doğru toparlanmayı garanti eder. En eski dalın yanlış tahmini, daha yeni tüm dalların da iptal edilmesini gerektirir.
-
-Toparlanma sırasında aşağıdaki işlemler gerçekleştirilir:
-
-\begin{equation}\label{eq:recovery}
-\begin{aligned}
-RAT &\leftarrow BRAT\_snapshot \\
-free\_list\_ptr &\leftarrow resolved\_phys\_reg + 1 \\
-PC &\leftarrow correct\_pc \\
-GHR &\leftarrow stored\_global\_history \\
-RAS\_TOS &\leftarrow stored\_ras\_tos
-\end{aligned}
-\end{equation}
-
-\subsubsection{Çoklu spekülasyon desteği}\label{subsubsec:multi_spec}
-
-BRAT'ın 16 girişlik kapasitesi, eş zamanlı olarak 16 spekülatif dalın takip edilmesine olanak tanır. Bu, derin spekülatif yürütme zincirlerinin desteklenmesini sağlar.
-
-BRAT doluluk durumu, dal komutlarının bekletilmesine neden olabilir. \texttt{brat\_full} sinyali aktif olduğunda, yeni dal komutları için checkpoint alınamaz ve pipeline durdurulur.
-
-\subsubsection{TMR korumalı işaretçiler}\label{subsubsec:tmr_brat}
-
-BRAT, kritik işaretçiler için TMR koruması uygulamaktadır. Baş ve kuyruk işaretçileri çoğaltılarak korunmaktadır:
-
-\begin{itemize}
-    \item \texttt{head\_ptr\_0}, \texttt{head\_ptr\_1}, \texttt{head\_ptr\_2}: Üç kopya baş işaretçisi
-    \item \texttt{tail\_ptr\_0}, \texttt{tail\_ptr\_1}, \texttt{tail\_ptr\_2}: Üç kopya kuyruk işaretçisi
-\end{itemize}
-
-Her işaretçi grubu için \texttt{tmr\_voter} modülü kullanılmaktadır. Çoğunluk oylaması ile tek bit hataları tolere edilir ve \texttt{fatal\_error} sinyali, tüm kopyaların farklı olduğu durumda aktif hale gelir.
-
-Güvenli mod (\texttt{secure\_mode}) aktif değilken, TMR oylaması devre dışı bırakılır ve enerji tasarrufu sağlanır.
+Bu işlemler tek saat çevriminde tamamlanmakta ve bir sonraki çevrimde doğru yoldaki komutlar getirilebilmektedir.
