@@ -8,6 +8,16 @@ Decode \& Rename aşaması, komut arabelleğinden alınan komutların kod çözm
 
 Tasarlanan sistemde Decode \& Rename aşaması beş ana bileşenden oluşmaktadır: paralel komut kod çözücüleri, yazmaç takma ad tablosu, serbest yazmaç listesi yöneticisi, yükleme saklama kuyruğu adres tahsis birimi ve dal çözümleme takma ad tablosu.
 
+Bu aşama, komut arabelleğinden üç komut almakta ve her biri için aşağıdaki işlemleri paralel olarak gerçekleştirmektedir:
+\begin{enumerate}
+    \item Komut kod çözme işlemi (RV32I format çözümleme)
+    \item Yazmaç yeniden adlandırma (yazmaç takma ad tablosu sorgulama ve tahsis)
+    \item Yeniden sıralama arabelleği ve yükleme saklama kuyruğu kaynak tahsisi
+    \item Dal komutu ise dal çözümleme takma ad tablosuna anlık görüntü kaydetme
+\end{enumerate}
+
+Bu işlemlerin tamamı tek bir saat çevriminde gerçekleştirilmektedir. N çevrimi içinde komut alımı yapılmakta, kod çözme kombinasyonel olarak tamamlanmakta, yeniden adlandırma kombinasyonel olarak gerçekleştirilmekte ve dal komutları için anlık görüntü hazırlanmaktadır. N artı bir çevriminde ise tüm bilgiler dağıtım aşamasına iletilmekte ve yazmaç takma ad tablosu güncellenmektedir.
+
 \subsection{Komut Kod Çözme}\label{subsec:decoding}
 
 \subsubsection{Paralel Kod Çözücü Yapısı}\label{subsubsec:parallel_decode}
@@ -41,6 +51,8 @@ Tüm bu formatlarda yazmaç adresleri aynı bit konumlarında bulunduğundan, ko
 Yazmaç yeniden adlandırma, sıra dışı yürütmenin temelini oluşturan kritik bir mekanizmadır. Bu teknik, mimari yazmaçları daha büyük bir fiziksel yazmaç havuzuna eşleyerek gerçek veri bağımlılıkları dışındaki tüm sahte bağımlılıkları ortadan kaldırmaktadır \cite{johnson}.
 
 RISC-V mimarisi otuz iki mimari yazmaç tanımlamaktadır, ancak tasarlanan işlemcide altmış dört fiziksel yazmaç bulunmaktadır. Bu fazladan otuz iki fiziksel yazmaç, aynı anda birden fazla komutun aynı mimari yazmacı hedef almasına olanak tanımaktadır. Bu sayede, bir yazmaç değerinin üzerine yazılmasını beklemek yerine, her komut kendi sonucu için ayrı bir fiziksel yazmaç alabilmektedir.
+
+Altmış dört fiziksel yazmaç iki bölgeye ayrılmaktadır. Sıfırdan otuz bire kadar olan fiziksel yazmaçlar yazmaç dosyasında bulunmakta ve kesinleştirilmiş değerleri tutmaktadır. Otuz ikiden altmış üçe kadar olan fiziksel yazmaçlar ise yeniden sıralama arabelleğinde bulunmakta ve henüz kesinleştirilmemiş, uçuşta olan değerleri tutmaktadır. Bu tasarımda yeniden sıralama arabelleği indeksi doğrudan fiziksel yazmaç adresi olarak kullanılmakta ve kaynak yönetimi basitleştirilmektedir.
 
 \subsubsection{Yazmaç Takma Ad Tablosu}\label{subsubsec:rat}
 
@@ -78,17 +90,21 @@ rs1\_2, rs2\_2 & rd\_1 ile & Eşleşirse: rd\_phys\_1 kullan \\
 
 \subsubsection{Serbest Yazmaç Listesi Yönetimi}\label{subsubsec:free_list}
 
-Serbest yazmaç listesi, kullanılabilir fiziksel yazmaç adreslerini tutan bir dairesel tampondur. Yeni bir hedef yazmacı gerektiğinde, serbest listeden bir adres tahsis edilmektedir. Bir komut kesinleştirildiğinde ve eski fiziksel yazmaca artık ihtiyaç kalmadığında, bu adres serbest listeye geri eklenmektedir.
+Serbest yazmaç listesi, kullanılabilir fiziksel yazmaç adreslerini yöneten kritik bir yapıdır. Üç yollu süperölçekli mimaride, her çevrimde en fazla üç komut işlenmekte ve her komut potansiyel olarak bir fiziksel yazmaç tahsisi gerektirmektedir.
 
-Dairesel tampon yapısının tercih edilmesinin birkaç önemli nedeni bulunmaktadır. Birinci olarak, dairesel tampon sabit boyutlu bir yapıda verimli ekleme ve çıkarma işlemleri sağlamaktadır. Baş ve kuyruk işaretçileri ile yönetilen bu yapıda, hem tahsis hem de serbest bırakma işlemleri sabit zamanda gerçekleştirilebilmektedir.
+Geleneksel serbest liste yaklaşımında, üç bağımsız boş kaynak bulmak karmaşık öncelik kodlayıcı mantığı gerektirmektedir. N girişlik bir serbest liste için: ilk boş girişi bulmak O(N) tarama veya öncelik kodlayıcı gerektirmekte, ikinci boş girişi bulmak ilkini hariç tutarak O(N) tarama gerektirmekte ve üçüncü boş giriş için de benzer şekilde ilk ikisini hariç tutarak tarama yapılması gerekmektedir. Bu yaklaşım hem alan hem de zamanlama açısından maliyetlidir; üç bağımsız öncelik kodlayıcı gerektirir, birinci sonuç ikinciye ve ikinci sonuç üçüncüye bağımlı olduğundan kritik yol uzar ve yanlış tahmin toparlanması için tüm tahsislerin takip edilmesi gerekmektedir.
 
-İkinci olarak, dairesel tampon yanlış tahmin toparlanmasını büyük ölçüde kolaylaştırmaktadır. Bir dalın yanlış tahmin edildiği tespit edildiğinde, yalnızca okuma işaretçisinin yanlış tahmin anındaki değere geri döndürülmesi yeterlidir. Bu sayede, yanlış yolda tahsis edilen tüm fiziksel yazmaçlar anında tekrar kullanılabilir hale gelmektedir. Eğer normal bir liste yapısı kullanılsaydı, yanlış yolda tahsis edilen her yazmacın tek tek listeye geri eklenmesi gerekecekti; bu da hem karmaşıklık hem de gecikme açısından dezavantajlı olurdu.
+Bu tasarımda, bu sorunları çözmek için dizin değeri olarak dizin yapısı kullanılmaktadır. Dairesel tamponun her girişinin değeri kendi dizinine eşittir: sıfırıncı girişte sıfır, birinci girişte bir değeri bulunmaktadır. Bu yaklaşımda tampon gerçek veri depolamamakta, yalnızca hangi dizinlerin kullanılabilir olduğunu yönetmektedir. Okuma işaretçisi bir sonraki tahsisin yapılacağı konumu, yazma işaretçisi serbest bırakma yapıldığında kullanılacak konumu ve sayaç mevcut kullanılabilir giriş sayısını göstermektedir.
 
-Üçüncü olarak, dairesel tampon bellek verimliliği sağlamaktadır. Sabit boyutlu bir dizi üzerinde çalıştığından, dinamik bellek tahsisi gerektirmemekte ve donanım gerçeklemesi basitleşmektedir.
+Tahsis işlemi basitçe okuma işaretçisinden okuma ile yapılmaktadır. İlk tahsis edilen kimlik okuma işaretçisinin değeri, ikinci tahsis edilen kimlik okuma işaretçisi artı bir ve üçüncü tahsis edilen kimlik okuma işaretçisi artı iki olmaktadır. Başarılı tahsis sayısı kadar işaretçi ilerletilmektedir. Bu yaklaşımın üstünlüğü birçok açıdan ortaya çıkmaktadır. Birinci olarak, öncelik kodlayıcı bulunmadığından karmaşıklık O(1) seviyesindedir ve yalnızca işaretçi aritmetiği kullanılmaktadır. İkinci olarak, üç tahsis aynı anda ve birbirinden bağımsız olarak gerçekleştirilebilmektedir. Üçüncü olarak, gerçek veri saklanmadığından yalnızca işaretçiler tutulmaktadır. Dördüncü olarak, işaretçi sıfırlaması ile tüm tahsisler tek çevrimde geri alınabilmektedir.
 
 Serbest listesinin üç paralel okuma portu, her çevrimde en fazla üç yeni fiziksel yazmaç tahsis edilmesine olanak tanımaktadır. Benzer şekilde, üç paralel yazma portu, kesinleştirme sırasında üç eski fiziksel yazmacın geri eklenmesini desteklemektedir.
 
 Serbest liste doluluk durumu, yeniden adlandırma hazırlığını belirlemektedir. Eğer yeterli sayıda serbest fiziksel yazmaç yoksa, yeni komutların decode aşamasına kabul edilmesi durdurulmaktadır. Hazırlık sinyali, serbest listedeki mevcut giriş sayısına göre belirlenmekte ve her kanal için ayrı ayrı üretilmektedir.
+
+Serbest bırakma işlemi, tahsisin tersi olarak yazma işaretçisi üzerinden gerçekleştirilmektedir. Bir komut kesinleştirildiğinde, o komutun hedef yazmacı için daha önce kullanılan eski fiziksel yazmaç artık gerekli değildir. Bu eski fiziksel yazmaç, yazma işaretçisinin gösterdiği konuma kaydedilmekte ve işaretçi ilerletilmektedir. Her çevrimde en fazla üç kesinleştirme yapılabildiğinden, üç paralel yazma portu bulunmaktadır.
+
+Kesinleştirme sırasında önemli bir kontrol yapılmaktadır: aynı mimari yazmaç için birden fazla bekleyen yazma olabilmektedir. Örneğin, birinci komut x1 yazmacına yazıyor ve henüz kesinleştirilmeden ikinci komut da x1 yazmacına yazıyorsa, birinci komut kesinleştirildiğinde yazmaç takma ad tablosundaki x1 eşlemesi hâlâ ikinci komutun fiziksel yazmacına işaret etmektedir. Bu durumda, yazmaç takma ad tablosunu yazmaç dosyası eşlemesine döndürmek yanlış olur. Bu yüzden kesinleştirme sırasında yeniden sıralama arabelleği indeksi karşılaştırılmakta ve yalnızca en son yazma kesinleştirildiğinde yazmaç dosyası eşlemesine geri dönülmektedir.
 
 \subsubsection{Yükleme Saklama Kuyruğu Adres Tahsisi}\label{subsubsec:lsq_alloc}
 
@@ -116,11 +132,13 @@ Sıra dışı yürütme sırasında dallanma komutları henüz sonuçlanmadan sp
 
 \subsubsection{Yanlış Tahmin Toparlanma Yöntemleri}\label{subsubsec:recovery_methods}
 
-Yanlış tahmin tespit edildiğinde işlemciyi tutarlı bir duruma döndürmenin birkaç farklı yöntemi bulunmaktadır. En basit yöntem, yanlış tahmin edilen dalın yeniden sıralama arabelleğinin başına gelmesini beklemektir. Bu durumda, dal komutunun kesinleştirilmesi sırasında mimari durum zaten tutarlıdır ve yalnızca program sayacının düzeltilmesi yeterlidir. Ancak bu yöntem, özellikle derin boruhattı yapılarında ciddi performans kayıplarına neden olmaktadır; çünkü yanlış tahmin tespit edildikten sonra bile arabellek boşalana kadar beklenmesi gerekmektedir.
+Yanlış tahmin tespit edildiğinde işlemciyi tutarlı bir duruma döndürmenin birkaç farklı yöntemi bulunmaktadır. Geleneksel Tomasulo tabanlı işlemcilerde, yanlış tahmin tespit edildiğinde dal komutu yeniden sıralama arabelleğinin başına ulaşana kadar beklenmektedir. Bu durumda, dal komutunun kesinleştirilmesi sırasında mimari durum zaten tutarlıdır ve yalnızca program sayacının düzeltilmesi gerekmektedir.
 
-Bu performans kaybını önlemek için hızlı toparlanma yöntemleri geliştirilmiştir. Anlık görüntü tabanlı yöntemler, her spekülatif dal için işlemci durumunun bir kopyasını saklamakta ve yanlış tahmin durumunda bu kopyayı anında geri yüklemektedir.
+Ancak bu yöntem ciddi performans kayıplarına neden olmaktadır. Örneğin, otuz iki girişlik bir yeniden sıralama arabelleğinde dal komutu on altıncı pozisyondaysa, önündeki on beş komutun kesinleştirilmesi beklenmektedir. Her çevrimde üç komut kesinleştirilse bile, bu beş çevrimden fazla gecikme anlamına gelmektedir. Spekülatif dallanma oranının yüksek olduğu programlarda bu gecikme kabul edilemez seviyelere ulaşabilmektedir.
 
-Dal Çözümleme Takma Ad Tablosu yöntemi, her dal için yazmaç takma ad tablosunun tam bir kopyasını saklamaktadır. Bu yaklaşım, bazı alternatif yöntemlere göre daha fazla depolama alanı gerektirmektedir; örneğin yalnızca delta bilgilerini saklayan yöntemler daha az alan kullanmaktadır. Ancak tasarlanan işlemcide bu yöntemin tercih edilmesinin özel bir nedeni bulunmaktadır: güvenli modda aynı yapı, her komut için kullanılarak hata toleransı sağlanmaktadır. Bu ikili kullanım senaryosu, ek alan maliyetini haklı kılmaktadır.
+Bu performans kaybını önlemek için hızlı toparlanma yöntemleri geliştirilmiştir. Anlık görüntü tabanlı yöntemler, her spekülatif dal için işlemci durumunun bir kopyasını saklamakta ve yanlış tahmin durumunda arabellek başı beklenmeden bu kopyayı anında geri yüklemektedir.
+
+Dal Çözümleme Takma Ad Tablosu yöntemi, her dal için yazmaç takma ad tablosunun tam bir kopyasını saklamaktadır. Bu yaklaşım, bazı alternatif yöntemlere göre daha fazla depolama alanı gerektirmektedir; örneğin yalnızca fark bilgilerini saklayan yöntemler daha az alan kullanmaktadır. Ancak tasarlanan işlemcide bu yöntemin tercih edilmesinin özel bir nedeni bulunmaktadır: güvenli modda aynı yapı, her komut için kullanılarak hata toleransı sağlanmaktadır. Bu ikili kullanım senaryosu, ek alan maliyetini haklı kılmaktadır.
 
 \subsubsection{Anlık Görüntü Mekanizması}\label{subsubsec:snapshot}
 
