@@ -222,7 +222,7 @@ module dv_top_superscalar;
     ) dut (
         .clk(clk),
         .reset(rst_n),
-        .secure_mode(1'b1), // todo change
+        .secure_mode(1'b0), // todo change
 
         // Instruction Memory Interface (3-port for parallel fetch)
         .inst_addr_0(inst_addr_0),
@@ -2025,4 +2025,102 @@ module dv_top_superscalar;
 
      `undef BP
      */
+
+    //==========================================================================
+    // PC TMR FAULT INJECTION TEST
+    //==========================================================================
+    // Injects random faults into PC TMR registers (at most 2 at a time)
+    // Forces random values, holds for a while, then releases
+
+    initial begin
+        int fault_mask;           // Which registers to fault (2'b01, 2'b10, 2'b11 for single faults, combinations for double)
+        int fault_duration;       // How long to hold the fault
+        int wait_between_faults;  // Wait time between fault injections
+        logic [31:0] random_val_0, random_val_1, random_val_2;
+        static int num_faults = 500;       // Number of fault injection cycles
+
+        // Wait for reset to complete
+        wait(rst_n);
+        repeat(100) @(posedge clk);
+
+        $display("[%t] PC TMR FAULT INJECTION TEST STARTING", $time);
+
+        for (int i = 0; i < num_faults; i++) begin
+            // Random wait before injecting fault (100-500 cycles)
+            wait_between_faults = $urandom_range(100, 500);
+            repeat(wait_between_faults) @(posedge clk);
+
+            // Generate random fault mask (0-2: single faults, 3-5: double faults)
+            // Ensure at most 2 registers are faulted simultaneously
+            fault_mask = $urandom_range(0, 3);  // 0: none, 1: val_0, 2: val_1, 3: val_2, 4: val_0+val_1, 5: val_0+val_2, etc.
+
+            // Generate random faulty values
+            random_val_0 = $urandom();
+            random_val_1 = $urandom();
+            random_val_2 = $urandom();
+
+            // Random fault duration (10-50 cycles)
+            fault_duration = $urandom_range(10, 50);
+
+            case (fault_mask)
+                0: begin // Only val_0 faulty
+                    $display("[%t] FAULT INJECT: pc_current_val_0 = 0x%08x (duration: %0d cycles)", $time, random_val_0, fault_duration);
+                    force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0 = random_val_0;
+                    repeat(fault_duration) @(posedge clk);
+                    release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0;
+                    $display("[%t] FAULT RELEASE: pc_current_val_0", $time);
+                end
+
+                1: begin // Only val_1 faulty
+                    $display("[%t] FAULT INJECT: pc_current_val_1 = 0x%08x (duration: %0d cycles)", $time, random_val_1, fault_duration);
+                    force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1 = random_val_1;
+                    repeat(fault_duration) @(posedge clk);
+                    release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1;
+                    $display("[%t] FAULT RELEASE: pc_current_val_1", $time);
+                end
+
+                2: begin // Only val_2 faulty
+                    $display("[%t] FAULT INJECT: pc_current_val_2 = 0x%08x (duration: %0d cycles)", $time, random_val_2, fault_duration);
+                    force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2 = random_val_2;
+                    repeat(fault_duration) @(posedge clk);
+                    release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2;
+                    $display("[%t] FAULT RELEASE: pc_current_val_2", $time);
+                end
+                /*
+                 3: begin // val_0 and val_1 faulty (val_2 is the correct one)
+                 $display("[%t] FAULT INJECT: pc_current_val_0 = 0x%08x, pc_current_val_1 = 0x%08x (duration: %0d cycles)", $time, random_val_0, random_val_1, fault_duration);
+                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0 = random_val_0;
+                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1 = random_val_1;
+                 repeat(fault_duration) @(posedge clk);
+                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0;
+                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1;
+                 $display("[%t] FAULT RELEASE: pc_current_val_0, pc_current_val_1", $time);
+                 end
+
+                 4: begin // val_0 and val_2 faulty (val_1 is the correct one)
+                 $display("[%t] FAULT INJECT: pc_current_val_0 = 0x%08x, pc_current_val_2 = 0x%08x (duration: %0d cycles)", $time, random_val_0, random_val_2, fault_duration);
+                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0 = random_val_0;
+                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2 = random_val_2;
+                 repeat(fault_duration) @(posedge clk);
+                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0;
+                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2;
+                 $display("[%t] FAULT RELEASE: pc_current_val_0, pc_current_val_2", $time);
+                 end
+
+                 5: begin // val_1 and val_2 faulty (val_0 is the correct one)
+                 $display("[%t] FAULT INJECT: pc_current_val_1 = 0x%08x, pc_current_val_2 = 0x%08x (duration: %0d cycles)", $time, random_val_1, random_val_2, fault_duration);
+                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1 = random_val_1;
+                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2 = random_val_2;
+                 repeat(fault_duration) @(posedge clk);
+                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1;
+                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2;
+                 $display("[%t] FAULT RELEASE: pc_current_val_1, pc_current_val_2", $time);
+                 end
+                 */
+            endcase
+        end
+
+        $display("[%t] PC TMR FAULT INJECTION TEST COMPLETED", $time);
+    end
+
 endmodule
