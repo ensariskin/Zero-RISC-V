@@ -2027,100 +2027,471 @@ module dv_top_superscalar;
      */
 
     //==========================================================================
-    // PC TMR FAULT INJECTION TEST
+    // COMPREHENSIVE TMR FAULT INJECTION TEST
     //==========================================================================
-    // Injects random faults into PC TMR registers (at most 2 at a time)
-    // Forces random values, holds for a while, then releases
+    // Injects random faults into ALL TMR-protected registers across the design
+    // At most 1 replica faulted at a time (to test single-event upset tolerance)
+    //
+    // TMR Register Groups:
+    //   0-2:   PC Controller (pc_current_val_0/1/2)
+    //   3-5:   Instruction Buffer head_ptr
+    //   6-8:   Instruction Buffer tail_ptr
+    //   9-11:  Instruction Buffer count
+    //   12-14: ROB head_ptr_reg
+    //   15-17: ROB tail_ptr_reg
+    //   18-20: BRAT head_ptr
+    //   21-23: BRAT tail_ptr
+    //   24-26: Free List read_ptr
+    //   27-29: Free List write_ptr
+    //   30-32: LSQ tail_ptr
+    //   33-35: Issue Stage pc_reg
+    //   36-38: Issue Stage control_signal_reg
+    //   39-41: Issue Stage rd_phys_reg
+    //==========================================================================
+
+    // Fault injection statistics
+    int tmr_faults_injected = 0;
+    int tmr_pc_faults = 0;
+    int tmr_ibuf_faults = 0;
+    int tmr_rob_faults = 0;
+    int tmr_brat_faults = 0;
+    int tmr_freelist_faults = 0;
+    int tmr_lsq_faults = 0;
+    int tmr_issue_faults = 0;
 
     initial begin
-        int fault_mask;           // Which registers to fault (2'b01, 2'b10, 2'b11 for single faults, combinations for double)
+        int target_group;         // Which TMR register group to target (0-41)
+        int target_replica;       // Which replica to fault (0, 1, or 2)
         int fault_duration;       // How long to hold the fault
         int wait_between_faults;  // Wait time between fault injections
-        logic [31:0] random_val_0, random_val_1, random_val_2;
-        static int num_faults = 500;       // Number of fault injection cycles
+        logic [31:0] random_val;
+        static int num_fault_rounds = 0;  // Number of fault injection rounds
 
-        // Wait for reset to complete
+        // Wait for reset to complete and system to stabilize
         wait(rst_n);
-        repeat(100) @(posedge clk);
+        repeat(500) @(posedge clk);
 
-        $display("[%t] PC TMR FAULT INJECTION TEST STARTING", $time);
+        $display("\n==========================================================================");
+        $display("[%t] COMPREHENSIVE TMR FAULT INJECTION TEST STARTING", $time);
+        $display("==========================================================================");
+        $display("  Total fault rounds: %0d", num_fault_rounds);
+        $display("  Target: All TMR-protected registers across the design");
+        $display("  Mode: Single-replica fault injection (SEU simulation)");
+        $display("==========================================================================\n");
 
-        for (int i = 0; i < num_faults; i++) begin
-            // Random wait before injecting fault (100-500 cycles)
-            wait_between_faults = $urandom_range(100, 500);
+        for (int round = 0; round < num_fault_rounds; round++) begin
+            // Random wait before injecting fault (50-200 cycles)
+            wait_between_faults = $urandom_range(50, 200);
             repeat(wait_between_faults) @(posedge clk);
 
-            // Generate random fault mask (0-2: single faults, 3-5: double faults)
-            // Ensure at most 2 registers are faulted simultaneously
-            fault_mask = $urandom_range(0, 3);  // 0: none, 1: val_0, 2: val_1, 3: val_2, 4: val_0+val_1, 5: val_0+val_2, etc.
+            // Select random target group and replica
+            target_group = $urandom_range(0, 13);  // 14 different register groups
+            target_replica = $urandom_range(0, 2); // Replica 0, 1, or 2
 
-            // Generate random faulty values
-            random_val_0 = $urandom();
-            random_val_1 = $urandom();
-            random_val_2 = $urandom();
+            // Generate random faulty value
+            random_val = $urandom();
 
-            // Random fault duration (10-50 cycles)
-            fault_duration = $urandom_range(10, 50);
+            // Random fault duration (5-30 cycles)
+            fault_duration = $urandom_range(5, 30);
 
-            case (fault_mask)
-                0: begin // Only val_0 faulty
-                    $display("[%t] FAULT INJECT: pc_current_val_0 = 0x%08x (duration: %0d cycles)", $time, random_val_0, fault_duration);
-                    force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0 = random_val_0;
-                    repeat(fault_duration) @(posedge clk);
-                    release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0;
-                    $display("[%t] FAULT RELEASE: pc_current_val_0", $time);
+            // Inject fault based on target group
+            case (target_group)
+                //==============================================================
+                // PC Controller Registers
+                //==============================================================
+                0: begin
+                    tmr_pc_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: PC.pc_current_val_0 = 0x%08x (%0d cyc)", $time, round, random_val, fault_duration);
+                            force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0 = random_val;
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: PC.pc_current_val_1 = 0x%08x (%0d cyc)", $time, round, random_val, fault_duration);
+                            force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1 = random_val;
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: PC.pc_current_val_2 = 0x%08x (%0d cyc)", $time, round, random_val, fault_duration);
+                            force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2 = random_val;
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2;
+                        end
+                    endcase
                 end
 
-                1: begin // Only val_1 faulty
-                    $display("[%t] FAULT INJECT: pc_current_val_1 = 0x%08x (duration: %0d cycles)", $time, random_val_1, fault_duration);
-                    force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1 = random_val_1;
-                    repeat(fault_duration) @(posedge clk);
-                    release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1;
-                    $display("[%t] FAULT RELEASE: pc_current_val_1", $time);
+                //==============================================================
+                // Instruction Buffer Head Pointer
+                //==============================================================
+                1: begin
+                    tmr_ibuf_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: IBUF.head_ptr_0 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.fetch_buffer_unit.inst_buffer.head_ptr_0 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.inst_buffer.head_ptr_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: IBUF.head_ptr_1 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.fetch_buffer_unit.inst_buffer.head_ptr_1 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.inst_buffer.head_ptr_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: IBUF.head_ptr_2 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.fetch_buffer_unit.inst_buffer.head_ptr_2 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.inst_buffer.head_ptr_2;
+                        end
+                    endcase
                 end
 
-                2: begin // Only val_2 faulty
-                    $display("[%t] FAULT INJECT: pc_current_val_2 = 0x%08x (duration: %0d cycles)", $time, random_val_2, fault_duration);
-                    force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2 = random_val_2;
-                    repeat(fault_duration) @(posedge clk);
-                    release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2;
-                    $display("[%t] FAULT RELEASE: pc_current_val_2", $time);
+                //==============================================================
+                // Instruction Buffer Tail Pointer
+                //==============================================================
+                2: begin
+                    tmr_ibuf_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: IBUF.tail_ptr_0 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.fetch_buffer_unit.inst_buffer.tail_ptr_0 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.inst_buffer.tail_ptr_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: IBUF.tail_ptr_1 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.fetch_buffer_unit.inst_buffer.tail_ptr_1 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.inst_buffer.tail_ptr_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: IBUF.tail_ptr_2 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.fetch_buffer_unit.inst_buffer.tail_ptr_2 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.inst_buffer.tail_ptr_2;
+                        end
+                    endcase
                 end
-                /*
-                 3: begin // val_0 and val_1 faulty (val_2 is the correct one)
-                 $display("[%t] FAULT INJECT: pc_current_val_0 = 0x%08x, pc_current_val_1 = 0x%08x (duration: %0d cycles)", $time, random_val_0, random_val_1, fault_duration);
-                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0 = random_val_0;
-                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1 = random_val_1;
-                 repeat(fault_duration) @(posedge clk);
-                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0;
-                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1;
-                 $display("[%t] FAULT RELEASE: pc_current_val_0, pc_current_val_1", $time);
-                 end
 
-                 4: begin // val_0 and val_2 faulty (val_1 is the correct one)
-                 $display("[%t] FAULT INJECT: pc_current_val_0 = 0x%08x, pc_current_val_2 = 0x%08x (duration: %0d cycles)", $time, random_val_0, random_val_2, fault_duration);
-                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0 = random_val_0;
-                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2 = random_val_2;
-                 repeat(fault_duration) @(posedge clk);
-                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_0;
-                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2;
-                 $display("[%t] FAULT RELEASE: pc_current_val_0, pc_current_val_2", $time);
-                 end
+                //==============================================================
+                // Instruction Buffer Count
+                //==============================================================
+                3: begin
+                    tmr_ibuf_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: IBUF.count_0 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.fetch_buffer_unit.inst_buffer.count_0 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.inst_buffer.count_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: IBUF.count_1 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.fetch_buffer_unit.inst_buffer.count_1 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.inst_buffer.count_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: IBUF.count_2 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.fetch_buffer_unit.inst_buffer.count_2 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.fetch_buffer_unit.inst_buffer.count_2;
+                        end
+                    endcase
+                end
 
-                 5: begin // val_1 and val_2 faulty (val_0 is the correct one)
-                 $display("[%t] FAULT INJECT: pc_current_val_1 = 0x%08x, pc_current_val_2 = 0x%08x (duration: %0d cycles)", $time, random_val_1, random_val_2, fault_duration);
-                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1 = random_val_1;
-                 force dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2 = random_val_2;
-                 repeat(fault_duration) @(posedge clk);
-                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_1;
-                 release dut.fetch_buffer_unit.fetch_unit.PC_super.pc_current_val_2;
-                 $display("[%t] FAULT RELEASE: pc_current_val_1, pc_current_val_2", $time);
-                 end
-                 */
+                //==============================================================
+                // ROB Head Pointer
+                //==============================================================
+                4: begin
+                    tmr_rob_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: ROB.head_ptr_reg_0 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.dispatch_stage_unit.rob.head_ptr_reg_0 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.dispatch_stage_unit.rob.head_ptr_reg_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: ROB.head_ptr_reg_1 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.dispatch_stage_unit.rob.head_ptr_reg_1 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.dispatch_stage_unit.rob.head_ptr_reg_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: ROB.head_ptr_reg_2 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.dispatch_stage_unit.rob.head_ptr_reg_2 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.dispatch_stage_unit.rob.head_ptr_reg_2;
+                        end
+                    endcase
+                end
+
+                //==============================================================
+                // ROB Tail Pointer
+                //==============================================================
+                5: begin
+                    tmr_rob_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: ROB.tail_ptr_reg_0 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.dispatch_stage_unit.rob.tail_ptr_reg_0 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.dispatch_stage_unit.rob.tail_ptr_reg_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: ROB.tail_ptr_reg_1 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.dispatch_stage_unit.rob.tail_ptr_reg_1 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.dispatch_stage_unit.rob.tail_ptr_reg_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: ROB.tail_ptr_reg_2 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.dispatch_stage_unit.rob.tail_ptr_reg_2 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.dispatch_stage_unit.rob.tail_ptr_reg_2;
+                        end
+                    endcase
+                end
+
+                //==============================================================
+                // BRAT Head Pointer
+                //==============================================================
+                6: begin
+                    tmr_brat_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: BRAT.head_ptr_0 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.brat_buffer.head_ptr_0 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.brat_buffer.head_ptr_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: BRAT.head_ptr_1 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.brat_buffer.head_ptr_1 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.brat_buffer.head_ptr_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: BRAT.head_ptr_2 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.brat_buffer.head_ptr_2 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.brat_buffer.head_ptr_2;
+                        end
+                    endcase
+                end
+
+                //==============================================================
+                // BRAT Tail Pointer
+                //==============================================================
+                7: begin
+                    tmr_brat_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: BRAT.tail_ptr_0 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.brat_buffer.tail_ptr_0 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.brat_buffer.tail_ptr_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: BRAT.tail_ptr_1 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.brat_buffer.tail_ptr_1 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.brat_buffer.tail_ptr_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: BRAT.tail_ptr_2 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.brat_buffer.tail_ptr_2 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.brat_buffer.tail_ptr_2;
+                        end
+                    endcase
+                end
+
+                //==============================================================
+                // Free List Read Pointer
+                //==============================================================
+                8: begin
+                    tmr_freelist_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: FREELIST.read_ptr_0 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.free_address_buffer.read_ptr_0 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.free_address_buffer.read_ptr_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: FREELIST.read_ptr_1 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.free_address_buffer.read_ptr_1 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.free_address_buffer.read_ptr_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: FREELIST.read_ptr_2 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.free_address_buffer.read_ptr_2 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.free_address_buffer.read_ptr_2;
+                        end
+                    endcase
+                end
+
+                //==============================================================
+                // Free List Write Pointer
+                //==============================================================
+                9: begin
+                    tmr_freelist_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: FREELIST.write_ptr_0 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.free_address_buffer.write_ptr_0 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.free_address_buffer.write_ptr_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: FREELIST.write_ptr_1 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.free_address_buffer.write_ptr_1 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.free_address_buffer.write_ptr_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: FREELIST.write_ptr_2 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.issue_stage_unit.rat_inst.free_address_buffer.write_ptr_2 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rat_inst.free_address_buffer.write_ptr_2;
+                        end
+                    endcase
+                end
+
+                //==============================================================
+                // LSQ Tail Pointer
+                //==============================================================
+                10: begin
+                    tmr_lsq_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: LSQ.tail_ptr_0 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.dispatch_stage_unit.lsq.tail_ptr_0 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.dispatch_stage_unit.lsq.tail_ptr_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: LSQ.tail_ptr_1 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.dispatch_stage_unit.lsq.tail_ptr_1 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.dispatch_stage_unit.lsq.tail_ptr_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: LSQ.tail_ptr_2 = 0x%02x (%0d cyc)", $time, round, random_val[4:0], fault_duration);
+                            force dut.dispatch_stage_unit.lsq.tail_ptr_2 = random_val[4:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.dispatch_stage_unit.lsq.tail_ptr_2;
+                        end
+                    endcase
+                end
+
+                //==============================================================
+                // Issue Stage PC Register
+                //==============================================================
+                11: begin
+                    tmr_issue_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: ISSUE.pc_reg_0 = 0x%08x (%0d cyc)", $time, round, random_val, fault_duration);
+                            force dut.issue_stage_unit.pc_reg_0 = random_val;
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.pc_reg_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: ISSUE.pc_reg_1 = 0x%08x (%0d cyc)", $time, round, random_val, fault_duration);
+                            force dut.issue_stage_unit.pc_reg_1 = random_val;
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.pc_reg_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: ISSUE.pc_reg_2 = 0x%08x (%0d cyc)", $time, round, random_val, fault_duration);
+                            force dut.issue_stage_unit.pc_reg_2 = random_val;
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.pc_reg_2;
+                        end
+                    endcase
+                end
+
+                //==============================================================
+                // Issue Stage Immediate Register
+                //==============================================================
+                12: begin
+                    tmr_issue_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: ISSUE.immediate_reg_0 = 0x%08x (%0d cyc)", $time, round, random_val, fault_duration);
+                            force dut.issue_stage_unit.immediate_reg_0 = random_val;
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.immediate_reg_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: ISSUE.immediate_reg_1 = 0x%08x (%0d cyc)", $time, round, random_val, fault_duration);
+                            force dut.issue_stage_unit.immediate_reg_1 = random_val;
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.immediate_reg_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: ISSUE.immediate_reg_2 = 0x%08x (%0d cyc)", $time, round, random_val, fault_duration);
+                            force dut.issue_stage_unit.immediate_reg_2 = random_val;
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.immediate_reg_2;
+                        end
+                    endcase
+                end
+
+                //==============================================================
+                // Issue Stage RD Phys Register
+                //==============================================================
+                13: begin
+                    tmr_issue_faults++;
+                    case (target_replica)
+                        0: begin
+                            $display("[%t] FAULT[%0d]: ISSUE.rd_phys_reg_0 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.issue_stage_unit.rd_phys_reg_0 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rd_phys_reg_0;
+                        end
+                        1: begin
+                            $display("[%t] FAULT[%0d]: ISSUE.rd_phys_reg_1 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.issue_stage_unit.rd_phys_reg_1 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rd_phys_reg_1;
+                        end
+                        2: begin
+                            $display("[%t] FAULT[%0d]: ISSUE.rd_phys_reg_2 = 0x%02x (%0d cyc)", $time, round, random_val[5:0], fault_duration);
+                            force dut.issue_stage_unit.rd_phys_reg_2 = random_val[5:0];
+                            repeat(fault_duration) @(posedge clk);
+                            release dut.issue_stage_unit.rd_phys_reg_2;
+                        end
+                    endcase
+                end
+
             endcase
+
+            tmr_faults_injected++;
         end
 
-        $display("[%t] PC TMR FAULT INJECTION TEST COMPLETED", $time);
+        $display("\n==========================================================================");
+        $display("[%t] COMPREHENSIVE TMR FAULT INJECTION TEST COMPLETED", $time);
+        $display("==========================================================================");
+        $display("  Total faults injected: %0d", tmr_faults_injected);
+        $display("  PC Controller faults:  %0d", tmr_pc_faults);
+        $display("  Inst Buffer faults:    %0d", tmr_ibuf_faults);
+        $display("  ROB faults:            %0d", tmr_rob_faults);
+        $display("  BRAT faults:           %0d", tmr_brat_faults);
+        $display("  Free List faults:      %0d", tmr_freelist_faults);
+        $display("  LSQ faults:            %0d", tmr_lsq_faults);
+        $display("  Issue Stage faults:    %0d", tmr_issue_faults);
+        $display("==========================================================================\n");
     end
 
 endmodule
+
