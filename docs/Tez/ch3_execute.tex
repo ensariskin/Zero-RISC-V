@@ -1,167 +1,137 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 3.5 EXECUTE AŞAMASI
+% 3.5 YÜRÜTME AŞAMASI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Execute Aşaması}\label{sec:execute}
+\section{Yürütme Aşaması}\label{sec:execute}
 
-Execute aşaması, komutların gerçek hesaplama işlemlerinin gerçekleştiği pipeline aşamasıdır. Tasarlanan 3-way süperölçekli yapıda, üç bağımsız fonksiyonel birim (FU0, FU1, FU2) paralel olarak çalışır ve her çevrimde en fazla üç komut yürütülebilir.
+Yürütme aşaması, komutların gerçek hesaplama işlemlerinin gerçekleştirildiği boruhattı aşamasıdır. Bu aşama, rezervasyon istasyonlarından gelen komutları almakta, aritmetik mantık birimi ve kaydırıcı işlemlerini gerçekleştirmekte, dal koşullarını değerlendirmekte, yanlış tahmin tespit etmekte ve sonuçları ortak veri yolu üzerinden yayınlamaktadır.
 
-\subsection{ALU ve Kaydırıcı Birimi}\label{subsec:alu_shifter}
+Tasarlanan üç yollu süperölçekli yapıda, üç bağımsız işlevsel birim paralel olarak çalışmakta ve her saat çevriminde en fazla üç komut yürütülebilmektedir. Her işlevsel birim, tam aritmetik mantık birimi ve dal çözümleme kapasitesine sahiptir.
 
-Her fonksiyonel birim, bir ALU ve bir kaydırıcıdan (shifter) oluşan \texttt{function\_unit\_alu\_shifter} modülünü içerir. Bu modüller, RV32I temel komut setinin tüm aritmetik ve mantıksal işlemlerini destekler.
+\subsection{İşlevsel Birim Yapısı}\label{subsec:fu_structure}
 
-\subsubsection{Aritmetik birim}\label{subsubsec:arithmetic}
+Her işlevsel birim, bir aritmetik mantık birimi, bir kaydırıcı ve bir dal denetleyicisinden oluşmaktadır. Bu bileşenler, RV32I temel komut setinin tüm aritmetik, mantıksal ve kontrol akışı işlemlerini desteklemektedir.
 
-Aritmetik birim aşağıdaki işlemleri destekler:
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: İşlevsel Birim İç Yapısı - ALU, Shifter ve Branch Controller alt birimleri, MUX ve çıkışlar]}}
+    \caption{İşlevsel birim (Functional Unit) iç yapısı}
+    \label{fig:fu_structure}
+\end{figure}
 
-\begin{itemize}
-    \item \textbf{ADD:} Toplama işlemi ($A + B$)
-    \item \textbf{SUB:} Çıkarma işlemi ($A - B$)
-    \item \textbf{SLT:} İşaretli karşılaştırma, küçükse 1 ($A < B$ signed)
-    \item \textbf{SLTU:} İşaretsiz karşılaştırma, küçükse 1 ($A < B$ unsigned)
-\end{itemize}
+\subsubsection{Aritmetik Mantık Birimi}\label{subsubsec:alu}
 
-Toplama ve çıkarma işlemleri, 32-bit operandlar üzerinde çalışır. Karşılaştırma işlemleri, çıkarma sonucunun işaret ve taşma bayraklarını değerlendirerek sonuç üretir.
+Aritmetik mantık birimi, aritmetik ve mantıksal olmak üzere iki alt birimden oluşmaktadır. Her iki sonuç paralel olarak hesaplanmakta ve işlev seçim sinyalinin en anlamlı bitine göre seçim yapılmaktadır.
 
-\subsubsection{Mantıksal birim}\label{subsubsec:logical}
+Aritmetik birim dört işlemi desteklemektedir. Toplama işlemi iki operandın toplanmasını, çıkarma işlemi birinci operanddan ikincinin çıkarılmasını gerçekleştirmektedir. İşaretli karşılaştırma, birinci operandın ikinciden küçük olup olmadığını işaretli sayı olarak değerlendirmekte ve sonuç bir ise küçüktür anlamına gelmektedir. İşaretsiz karşılaştırma ise aynı kontrolü işaretsiz sayı olarak yapmaktadır.
 
-Mantıksal birim aşağıdaki bit düzeyinde işlemleri destekler:
+Mantıksal birim üç bit düzeyinde işlemi desteklemektedir. VE işlemi iki operandın bit düzeyinde VE sonucunu, VEYA işlemi bit düzeyinde VEYA sonucunu ve özel VEYA işlemi bit düzeyinde özel VEYA sonucunu üretmektedir. Tüm mantıksal işlemler kombinasyonel olarak tek çevrimde tamamlanmaktadır.
 
-\begin{itemize}
-    \item \textbf{AND:} Bit düzeyinde VE işlemi ($A \land B$)
-    \item \textbf{OR:} Bit düzeyinde VEYA işlemi ($A \lor B$)
-    \item \textbf{XOR:} Bit düzeyinde Özel VEYA işlemi ($A \oplus B$)
-\end{itemize}
+Aritmetik ve mantıksal birimlerin ayrı tutulmasının birkaç önemli nedeni bulunmaktadır. Birinci olarak, paralel hesaplama sayesinde her iki sonuç aynı anda hesaplanmaktadır. İkinci olarak, işlev seçim sinyalinin en anlamlı biti ile basit bir çoğullayıcı seçimi yapılabilmektedir. Üçüncü olarak, kritik yol kısaltılmakta ve zamanlama iyileştirilmektedir. Dördüncü olarak, modüler yapı bağımsız test ve optimizasyona olanak tanımaktadır.
 
-Tüm mantıksal işlemler kombinasyonel olarak tek çevrimde tamamlanır.
+İşlev seçim sinyali, kontrol kelimesinin onuncu ile yedinci bitleri arasından alınmaktadır. Değer sıfır olduğunda toplama, bir olduğunda çıkarma, iki olduğunda işaretli karşılaştırma, üç olduğunda işaretsiz karşılaştırma, dört olduğunda özel VEYA, beş olduğunda VEYA ve altı olduğunda VE işlemi seçilmektedir (Çizelge \ref{tab:alu_ops}).
 
-\subsubsection{Varil kaydırıcı}\label{subsubsec:shifter}
+\begin{table}[H]
+    \centering
+    \caption{ALU işlev seçim sinyalleri ve operasyonlar.}
+    \label{tab:alu_ops}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Seçim Değeri} & \textbf{İşlem} & \textbf{Açıklama} \\
+        \hline
+        0 (3'b000) & ADD & Toplama \\
+        \hline
+        1 (3'b001) & SUB & Çıkarma \\
+        \hline
+        2 (3'b010) & SLT & İşaretli Küçüktür \\
+        \hline
+        3 (3'b011) & SLTU & İşaretsiz Küçüktür \\
+        \hline
+        4 (3'b100) & XOR & Özel VEYA \\
+        \hline
+        5 (3'b101) & OR & VEYA \\
+        \hline
+        6 (3'b110) & AND & VE \\
+        \hline
+    \end{tabular}
+\end{table}
 
-Varil kaydırıcı (barrel shifter), değişken miktarda kaydırma işlemlerini tek çevrimde gerçekleştirir:
+Aritmetik mantık birimi, hesaplama sonuçlarına ek olarak durum bayrakları da üretmektedir. Sıfır bayrağı sonuç sıfır ise aktif olmakta, negatif bayrağı sonucun en anlamlı biti bir ise aktif olmakta, taşıma çıkışı toplama veya çıkarma işleminde taşıma oluştuğunda aktif olmakta ve taşma bayrağı işaretli aritmetikte taşma durumunu göstermektedir.
 
-\begin{itemize}
-    \item \textbf{SLL:} Mantıksal sola kaydırma ($A << B[4:0]$)
-    \item \textbf{SRL:} Mantıksal sağa kaydırma ($A >> B[4:0]$)
-    \item \textbf{SRA:} Aritmetik sağa kaydırma (işaret koruyarak)
-\end{itemize}
+\subsubsection{Varil Kaydırıcı}\label{subsubsec:shifter}
 
-Kaydırma miktarı 5-bit olarak işlenir (0-31 aralığında).
+Varil kaydırıcı, değişken miktarda kaydırma işlemlerini tek saat çevriminde gerçekleştirmektedir. Üç kaydırma işlemi desteklenmektedir.
 
-\subsubsection{İşlem seçimi}\label{subsubsec:func_sel}
+Mantıksal sola kaydırma, birinci operandı ikinci operandın alt beş bitinde belirtilen miktar kadar sola kaydırmakta ve sağdan sıfır doldurmaktadır. Mantıksal sağa kaydırma, birinci operandı belirtilen miktar kadar sağa kaydırmakta ve soldan sıfır doldurmaktadır. Aritmetik sağa kaydırma ise birinci operandı sağa kaydırırken işaret bitini korumakta ve soldan işaret biti ile doldurmaktadır.
 
-\texttt{func\_sel} sinyali, hangi işlemin gerçekleştirileceğini belirler. Bu sinyal, kontrol kelimesinin [10:7] bitlerinden alınır:
-
-\begin{equation}\label{eq:func_sel}
-func\_sel = control\_signals[10:7]
-\end{equation}
-
-ALU, hesaplama sonuçlarına ek olarak durum bayrakları da üretir:
-
-\begin{itemize}
-    \item \textbf{zero:} Sonuç sıfır ise 1
-    \item \textbf{negative:} Sonuç negatif ise 1 (MSB = 1)
-    \item \textbf{carry\_out:} Taşıma çıkışı
-    \item \textbf{overflow:} Taşma durumu (işaretli aritmetik için)
-\end{itemize}
+Kaydırma miktarı beş bit olarak işlenmekte ve sıfırdan otuz bire kadar kaydırma yapılabilmektedir.
 
 %------------------------------------------------------------------------
 
 \subsection{Dal Çözümlemesi}\label{subsec:branch_resolution}
 
-Dal çözümlemesi, dal komutlarının gerçek sonuçlarının hesaplanması ve tahminlerle karşılaştırılmasını kapsar. Her fonksiyonel birim, bir \texttt{Branch\_Controller} modülü içerir.
+Dal çözümlemesi, dal komutlarının gerçek sonuçlarının hesaplanması ve tahminlerle karşılaştırılmasını kapsamaktadır. Her işlevsel birim bir dal denetleyicisi içermektedir.
 
-\subsubsection{Dal sonucu hesaplama}\label{subsubsec:branch_outcome}
+\subsubsection{Dal Koşulu Değerlendirmesi}\label{subsubsec:branch_cond}
 
-Branch Controller, \texttt{branch\_sel} sinyaline ve ALU bayraklarına dayanarak dal sonucunu belirler. RV32I'da altı farklı dal koşulu desteklenir:
+Dal denetleyicisi, dal seçim sinyaline ve aritmetik mantık birimi bayraklarına dayanarak dal sonucunu belirlemektedir. RV32I mimarisinde altı farklı dal koşulu desteklenmektedir.
 
-\begin{itemize}
-    \item \textbf{BEQ:} Eşitse dallan (Z = 1)
-    \item \textbf{BNE:} Eşit değilse dallan (Z = 0)
-    \item \textbf{BLT:} Küçükse dallan (signed, N $\neq$ Overflow)
-    \item \textbf{BGE:} Büyük veya eşitse dallan (signed, N = Overflow)
-    \item \textbf{BLTU:} Küçükse dallan (unsigned, Carry = 0)
-    \item \textbf{BGEU:} Büyük veya eşitse dallan (unsigned, Carry = 1)
-\end{itemize}
+Eşitlik dallanması, iki kaynak yazmacı eşitse dallanmaktadır ve sıfır bayrağının aktif olmasıyla tespit edilmektedir. Eşitsizlik dallanması, iki kaynak yazmacı farklıysa dallanmaktadır. İşaretli küçüklük dallanması, birinci kaynak ikinciden küçükse dallanmakta ve negatif bayrağı ile taşma bayrağının farklı olmasıyla tespit edilmektedir. İşaretli büyüklük veya eşitlik dallanması, birinci kaynak ikinciden büyük veya eşitse dallanmaktadır. İşaretsiz küçüklük dallanması, taşıma bayrağının aktif olmamasıyla tespit edilmektedir. İşaretsiz büyüklük veya eşitlik dallanması ise taşıma bayrağının aktif olmasıyla tespit edilmektedir.
 
-\texttt{MPC} (Misprediction Condition) çıkışı, dalın alınıp alınmayacağını belirtir. \texttt{JALR} çıkışı, komutun doğrudan olmayan atlama olduğunu belirtir.
+Koşulsuz atlama ve dolaylı atlama komutları için dal koşulu her zaman alınacak olarak değerlendirilmektedir.
 
-\subsubsection{Yanlış tahmin tespiti}\label{subsubsec:mispred_detect}
+\subsubsection{Yanlış Tahmin Tespiti}\label{subsubsec:mispred_detect}
 
-Yanlış tahmin, gerçek dal sonucu ile tahmin edilen sonucun karşılaştırılmasıyla tespit edilir:
+Yanlış tahmin, gerçek dal sonucu ile tahmin edilen sonucun karşılaştırılmasıyla tespit edilmektedir. Dallanma komutları için gerçek yön ve tahmin edilen yön karşılaştırılmaktadır. Dolaylı atlama komutları için ise hesaplanan hedef adres ve tahmin edilen hedef adres karşılaştırılmaktadır.
 
-\begin{equation}\label{eq:mispred_detect}
-misprediction = \begin{cases}
-(result \neq predicted\_target) & \text{eğer JALR} \\
-(MPC \oplus branch\_prediction) & \text{aksi halde}
-\end{cases}
-\end{equation}
+Dolaylı atlama komutları için özel kontrol yapılmasının nedeni, bu komutların hem yön hem de hedef adres tahmini gerektirmesidir. Dallanma komutlarında yalnızca yönün doğru tahmin edilmesi yeterliyken, dolaylı atlama komutlarında hedef adresin de doğru tahmin edilmesi gerekmektedir. Hesaplanan hedef adres, birinci kaynak yazmacı ile sabit değerin toplamıdır. Bu değer tahmin edilen hedef adresten farklıysa yanlış tahmin oluşmaktadır.
 
-JALR komutları için, hesaplanan hedef adres tahmin edilen adresle karşılaştırılır. Diğer dal komutları için, alındı/alınmadı durumu karşılaştırılır.
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Dal Çözümleme Mantığı - Tahmin edilen (PC+Ofset / Tahmin) ve Gerçek (ALU sonucu) karşılaştırması, Yanlış tahmin sinyal üretimi]}}
+    \caption{Dal çözümleme ve yanlış tahmin tespit mekanizması}
+    \label{fig:branch_resolution}
+\end{figure}
 
-\subsubsection{Toparlanma sinyali üretimi}\label{subsubsec:recovery_signal}
+\subsubsection{Doğru Program Sayacı Hesaplaması}\label{subsubsec:correct_pc}
 
-Yanlış tahmin tespit edildiğinde, aşağıdaki sinyaller üretilir:
-
-\begin{itemize}
-    \item \textbf{misprediction\_n:} n. fonksiyonel birimde yanlış tahmin bayrağı
-    \item \textbf{correct\_pc\_n:} Doğru PC değeri (fetch'e gönderilecek)
-    \item \textbf{update\_predictor\_n:} Tahmin tablosu güncelleme sinyali
-\end{itemize}
-
-Doğru PC hesaplaması:
-
-\begin{equation}\label{eq:correct_pc}
-correct\_pc = \begin{cases}
-result \land \sim 2'b11 & \text{eğer JALR (2-byte hizalama)} \\
-pc + 4 & \text{eğer tahmin taken, gerçek not-taken} \\
-pc + imm & \text{eğer tahmin not-taken, gerçek taken}
-\end{cases}
-\end{equation}
+Yanlış tahmin tespit edildiğinde, doğru program sayacı değerinin hesaplanması gerekmektedir. Dolaylı atlama komutları için doğru program sayacı, hesaplanan hedef adresin dört bayta hizalanmış halidir. Dallanma komutları için ise duruma göre iki farklı değer kullanılmaktadır: tahmin alınacak ancak gerçekte alınmayacak ise mevcut program sayacı artı dört, tahmin alınmayacak ancak gerçekte alınacak ise mevcut program sayacı artı sabit değer kullanılmaktadır.
 
 %------------------------------------------------------------------------
 
-\subsection{Yürütme Paralelizmi}\label{subsec:exec_parallel}
+\subsection{Sonuç Seçimi}\label{subsec:result_select}
 
-\subsubsection{3-way paralel yürütme}\label{subsubsec:3way}
+Yürütme aşaması, farklı komut türleri için farklı sonuçlar üretmektedir.
 
-Tasarlanan sistemde üç fonksiyonel birim (FU0, FU1, FU2) tam bağımsız olarak çalışır. Her biri kendi rezervasyon istasyonundan komut alır ve sonuçlarını CDB'ye yazar.
+Aritmetik ve mantıksal komutlar için sonuç, aritmetik mantık birimi hesaplama sonucudur. Yükleme ve saklama komutları için sonuç, adres hesaplama sonucudur ve bu değer yükleme saklama kuyruğuna gönderilmektedir. Koşulsuz atlama ve dolaylı atlama komutları için sonuç, dönüş adresidir ve mevcut program sayacı artı dört olarak hesaplanmaktadır. Dallanma komutları için ise sonuç, tahmin edilen program sayacı değeridir.
 
-Fonksiyonel birimlerin koordinasyonu aşağıdaki sinyallerle sağlanır:
+Sonuç seçimi, kontrol sinyallerinin beşinci bitine dayanarak yapılmaktadır. Bu bit aktif olduğunda dönüş adresi, aksi halde aritmetik mantık birimi sonucu seçilmektedir.
 
-\begin{itemize}
-    \item \textbf{issue\_ready:} FU meşgul değil, yeni komut kabul edebilir
-    \item \textbf{issue\_valid:} RS'den geçerli komut gelmekte
-    \item \textbf{busy:} FU şu anda işlem yapıyor
-\end{itemize}
+\subsubsection{Bellek Adresi Hesaplaması}\label{subsubsec:mem_addr}
 
-RV32I temel komut seti için tüm işlemler tek çevrimde tamamlanır, bu nedenle \texttt{busy} sinyali genellikle inaktiftir. Gelecekte çok çevrimli işlemler (bölme, çarpma) eklenirse bu sinyal kullanılacaktır.
+Yükleme ve saklama komutları için adres hesaplaması, aritmetik mantık biriminde gerçekleştirilmektedir. Hesaplanan adres, yükleme saklama kuyruğuna gönderilmekte ve kuyruktaki ilgili giriş güncellenmektedir. Kontrol sinyallerinin dördüncü biti yükleme işlemini, üçüncü biti bellek işlemini belirtmektedir.
 
-\subsubsection{Sonuç yayını}\label{subsubsec:broadcast}
+%------------------------------------------------------------------------
 
-Her fonksiyonel birimin sonuçları, CDB üzerinden tüm bileşenlere yayınlanır:
+\subsection{Yürütme Paralelliği}\label{subsec:exec_parallel}
 
-\begin{itemize}
-    \item \textbf{Reservation Stations:} Bekleyen operandları yakalar
-    \item \textbf{ROB:} \texttt{executed} bayrağını ve değeri günceller
-    \item \textbf{BRAT:} Dal çözümleme bilgilerini alır
-    \item \textbf{LSQ:} Adres hesaplama sonuçlarını alır
-\end{itemize}
+Tasarlanan sistemde üç işlevsel birim tam bağımsız olarak çalışmaktadır. Her biri kendi rezervasyon istasyonundan komut almakta ve sonuçlarını ortak veri yoluna yazmaktadır.
 
-CDB yayını, aşağıdaki bilgileri içerir:
+İşlevsel birimlerin koordinasyonu belirli sinyallerle sağlanmaktadır. Gönderime hazır sinyali, işlevsel birimin meşgul olmadığını ve yeni komut kabul edebileceğini göstermektedir. Gönderim geçerli sinyali, rezervasyon istasyonundan geçerli bir komutun geldiğini belirtmektedir. Meşgul sinyali, işlevsel birimin şu anda işlem yaptığını göstermektedir.
 
-\begin{equation}\label{eq:cdb_broadcast}
-CDB_n = \{valid_n, tag_n, data_n, is\_branch_n, exception_n\}
-\end{equation}
+RV32I temel komut seti için tüm işlemler tek saat çevriminde tamamlandığından meşgul sinyali genellikle pasiftir. Gelecekte çok çevrimli işlemler eklenirse bu sinyal kullanılacaktır.
 
-\subsubsection{JAL/JALR sonuç seçimi}\label{subsubsec:jal_result}
+\subsubsection{Ortak Veri Yolu Yayını}\label{subsubsec:cdb_broadcast}
 
-JAL ve JALR komutları için sonuç, ALU hesaplaması yerine dönüş adresidir (PC + 4):
+Her işlevsel birimin sonuçları, ortak veri yolu üzerinden tüm bileşenlere yayınlanmaktadır. Rezervasyon istasyonları bekleyen operandları yakalamakta, yeniden sıralama arabelleği yürütülmüş bayrağını ve değeri güncellemekte, dal çözümleme takma ad tablosu dal çözümleme bilgilerini almakta ve yükleme saklama kuyruğu adres hesaplama sonuçlarını almaktadır.
 
-\begin{equation}\label{eq:link_addr}
-result = \begin{cases}
-pc[31:2] || 2'b00 & \text{eğer JAL/JALR (bağlantı adresi)} \\
-alu\_result & \text{aksi halde}
-\end{cases}
-\end{equation}
+Ortak veri yolu yayını, geçerlilik sinyali, etiket, veri, dallanma komutu bayrağı ve istisna bayrağı bilgilerini içermektedir.
 
-Bu seçim, \texttt{control\_signals[5]} bitine dayanarak yapılır.
+%------------------------------------------------------------------------
+
+\subsection{Dal Tahmincisi Güncellemesi}\label{subsec:predictor_update}
+
+Yürütme aşaması, dal sonuçlarını dal tahmincisine geri bildirmektedir. Yalnızca koşullu dallanma komutları için tahminci güncellenmektedir; koşulsuz atlama ve dolaylı atlama komutları için güncelleme yapılmamaktadır.
+
+Güncelleme sinyalleri arasında yanlış tahmin bayrağı dal çözümleme takma ad tablosuna gönderilmekte, doğru program sayacı değeri komut getirme aşamasına iletilmekte ve tahmin anındaki program sayacı değeri tahminci tablo güncellemesi için kullanılmaktadır. Fiziksel yazmaç adresi, yeniden sıralama arabelleği kimliği olarak dal çözümleme takma ad tablosu eşleştirmesinde kullanılmaktadır.
+

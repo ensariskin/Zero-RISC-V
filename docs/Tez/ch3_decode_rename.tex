@@ -8,6 +8,13 @@ Decode \& Rename aşaması, komut arabelleğinden alınan komutların kod çözm
 
 Tasarlanan sistemde Decode \& Rename aşaması beş ana bileşenden oluşmaktadır: paralel komut kod çözücüleri, yazmaç takma ad tablosu, serbest yazmaç listesi yöneticisi, yükleme saklama kuyruğu adres tahsis birimi ve dal çözümleme takma ad tablosu.
 
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Decode \& Rename Akış Diyagramı - 3 Paralel Kod Çözücü, RAT Okuma/Yazma, Free List Etkileşimi]}}
+    \caption{Kod çözme ve yeniden adlandırma aşaması genel akışı}
+    \label{fig:decode_rename_flow}
+\end{figure}
+
 Bu aşama, komut arabelleğinden üç komut almakta ve her biri için aşağıdaki işlemleri paralel olarak gerçekleştirmektedir:
 \begin{enumerate}
     \item Komut kod çözme işlemi (RV32I format çözümleme)
@@ -56,7 +63,14 @@ Altmış dört fiziksel yazmaç iki bölgeye ayrılmaktadır. Sıfırdan otuz bi
 
 \subsubsection{Yazmaç Takma Ad Tablosu}\label{subsubsec:rat}
 
-Yazmaç Takma Ad Tablosu, otuz iki mimari yazmacın her birinin hangi fiziksel yazmaca eşlendiğini takip eden bir yapıdır. Tablo, altı bit genişliğinde otuz iki girdiden oluşmaktadır. Her girdi, ilgili mimari yazmacın mevcut fiziksel yazmaç adresini tutmaktadır. En anlamlı bit, fiziksel yazmacın yazmaç dosyasında mı yoksa yeniden sıralama arabelleğinde mi bulunduğunu belirtmektedir.
+Yazmaç Takma Ad Tablosu, otuz iki mimari yazmacın her birinin hangi fiziksel yazmaca eşlendiğini takip eden bir yapıdır.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: RAT Eşleme Yapısı - Mimari Yazmaçlar (0-31) -> Fiziksel Yazmaçlar (0-63), Valid Bitleri, 3 Yazma / 6 Okuma Portu]}}
+    \caption{Yazmaç takma ad tablosu (RAT) yapısı}
+    \label{fig:rat_structure}
+\end{figure} Tablo, altı bit genişliğinde otuz iki girdiden oluşmaktadır. Her girdi, ilgili mimari yazmacın mevcut fiziksel yazmaç adresini tutmaktadır. En anlamlı bit, fiziksel yazmacın yazmaç dosyasında mı yoksa yeniden sıralama arabelleğinde mi bulunduğunu belirtmektedir.
 
 Tablonun çoklu port yapısı, üç yollu süperölçekli yürütmeyi destekleyecek şekilde tasarlanmıştır. Her saat çevriminde altı okuma işlemi gerçekleştirilebilmektedir; bu sayı, üç komutun her biri için iki kaynak yazmacı sorgulamasına karşılık gelmektedir. Ayrıca üç yazma işlemi de paralel olarak gerçekleştirilebilmektedir; bu sayı, üç komutun hedef yazmaç güncellemelerine karşılık gelmektedir.
 
@@ -102,6 +116,13 @@ Serbest listesinin üç paralel okuma portu, her çevrimde en fazla üç yeni fi
 
 Serbest liste doluluk durumu, yeniden adlandırma hazırlığını belirlemektedir. Eğer yeterli sayıda serbest fiziksel yazmaç yoksa, yeni komutların decode aşamasına kabul edilmesi durdurulmaktadır. Hazırlık sinyali, serbest listedeki mevcut giriş sayısına göre belirlenmekte ve her kanal için ayrı ayrı üretilmektedir.
 
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Dairesel Tampon Serbest Liste - Okuma/Yazma İşaretçileri, Index-as-Value Prensibi, 3-wide Allocation]}}
+    \caption{Dairesel tampon tabanlı serbest liste (Free List) yapısı}
+    \label{fig:free_list}
+\end{figure}
+
 Serbest bırakma işlemi, tahsisin tersi olarak yazma işaretçisi üzerinden gerçekleştirilmektedir. Bir komut kesinleştirildiğinde, o komutun hedef yazmacı için daha önce kullanılan eski fiziksel yazmaç artık gerekli değildir. Bu eski fiziksel yazmaç, yazma işaretçisinin gösterdiği konuma kaydedilmekte ve işaretçi ilerletilmektedir. Her çevrimde en fazla üç kesinleştirme yapılabildiğinden, üç paralel yazma portu bulunmaktadır.
 
 Kesinleştirme sırasında önemli bir kontrol yapılmaktadır: aynı mimari yazmaç için birden fazla bekleyen yazma olabilmektedir. Örneğin, birinci komut x1 yazmacına yazıyor ve henüz kesinleştirilmeden ikinci komut da x1 yazmacına yazıyorsa, birinci komut kesinleştirildiğinde yazmaç takma ad tablosundaki x1 eşlemesi hâlâ ikinci komutun fiziksel yazmacına işaret etmektedir. Bu durumda, yazmaç takma ad tablosunu yazmaç dosyası eşlemesine döndürmek yanlış olur. Bu yüzden kesinleştirme sırasında yeniden sıralama arabelleği indeksi karşılaştırılmakta ve yalnızca en son yazma kesinleştirildiğinde yazmaç dosyası eşlemesine geri dönülmektedir.
@@ -124,6 +145,25 @@ Okuma Sonrası Yazma bağımlılığı, bir komutun okuduğu yazmaca başka bir 
 
 Bu eliminasyon sayesinde, yalnızca gerçek veri bağımlılıkları olan Okuma Sonrası Yazma durumu kalmaktadır. Bu bağımlılıklar, rezervasyon istasyonlarında operand hazır olana kadar bekletilerek çözümlenmektedir.
 
+Yazmaç yeniden adlandırma işleminin bir örneği Çizelge \ref{tab:rename_example}'de gösterilmektedir.
+
+\begin{table}[H]
+    \centering
+    \caption{Örnek komut dizisi için yazmaç yeniden adlandırma işlemi.}
+    \label{tab:rename_example}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Orijinal Komut} & \textbf{İşlem} & \textbf{Yeniden Adlandırılmış Komut} \\
+        \hline
+        ADD x1, x2, x3 & x2$\to$p2, x3$\to$p3, x1$\leftarrow$p33 & ADD p33, p2, p3 \\
+        \hline
+        SUB x4, x1, x5 & x1$\to$p33, x5$\to$p5, x4$\leftarrow$p34 & SUB p34, p33, p5 \\
+        \hline
+        XOR x1, x6, x7 & x6$\to$p6, x7$\to$p7, x1$\leftarrow$p35 & XOR p35, p6, p7 \\
+        \hline
+    \end{tabular}
+\end{table}
+
 %------------------------------------------------------------------------
 
 \subsection{Dal Spekülasyon Desteği}\label{subsec:brat}
@@ -144,7 +184,14 @@ Dal Çözümleme Takma Ad Tablosu yöntemi, her dal için yazmaç takma ad tablo
 
 Dal Çözümleme Takma Ad Tablosu, on altı girişlik bir dairesel tampon olarak gerçeklenmiştir. Her dallanma veya atlama komutu işlendiğinde, mevcut durumun bir anlık görüntüsü bu tampona kaydedilmektedir.
 
-Kaydedilen bilgiler arasında otuz iki mimari yazmacın fiziksel eşlemesi, dal komutunun fiziksel yazmaç adresi, tahmin anındaki program sayacı değeri, küresel dal geçmişi, dolaylı atlama bayrağı ve dönüş adresi yığını tepe işaretçisi bulunmaktadır. Ayrıca, yükleme saklama kuyruğu işaretçisi de kaydedilmektedir; bu sayede bellek işlemleri de doğru şekilde geri alınabilmektedir.
+Kaydedilen bilgiler arasında otuz iki mimari yazmacın fiziksel eşlemesi, dal komutunun fiziksel yazmaç adresi, tahmin anındaki program sayacı değeri, küresel dal geçmişi, dolaylı atlama bayrağı ve dönüş adresi yığını tepe işaretçisi bulunmaktadır.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: BRAT Snapshot Yapısı - Her dal için RAT kopyası, GHR, TOS ve PC saklama]}}
+    \caption{Dal çözümleme takma ad tablosu (BRAT) ve anlık görüntü yapısı}
+    \label{fig:brat_structure}
+\end{figure} Ayrıca, yükleme saklama kuyruğu işaretçisi de kaydedilmektedir; bu sayede bellek işlemleri de doğru şekilde geri alınabilmektedir.
 
 Fiziksel yazmaç adresi, yeniden sıralama arabelleği indeksi olarak da kullanılmaktadır. Bu tasarım kararı, dal sonuçlanması sırasında hangi dalın sonuçlandığının belirlenmesini kolaylaştırmaktadır. Yürütme aşamasından gelen sonuçlanma sinyalleri bu adresle eşleştirilerek doğru anlık görüntünün bulunması sağlanmaktadır.
 

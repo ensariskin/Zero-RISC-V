@@ -1,0 +1,118 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.1 GENEL BAKIŞ
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Genel Bakış}\label{sec:genel_bakis}
+
+Bu bölümde, tasarlanan üç yollu süperölçekli sıra dışı yürütme özellikli RISC-V işlemcinin genel mimarisi tanıtılmaktadır. İşlemci, komut seviyesi paralelliğinden yararlanarak yüksek performans elde etmeyi hedeflemektedir.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Süperölçekli İşlemci Blok Diyagramı - 6 aşamalı (Fetch, Decode/Rename, Dispatch, Execute, Memory, Writeback), Ana Tamponlar (IB, ROB, RS, LSQ) ve Veri Yolları]}}
+    \caption{Tasarlanan süperölçekli işlemcinin üst seviye blok diyagramı}
+    \label{fig:processor_block_diagram}
+\end{figure}
+
+\subsection{Mimari Hedefler}\label{subsec:mimari_hedef}
+
+Tasarlanan işlemci, birkaç temel hedef doğrultusunda geliştirilmiştir. Birinci hedef, her saat çevriminde birden fazla komutun paralel olarak işlenmesini sağlayan süperölçekli yürütmedir. İkinci hedef, program sırasından bağımsız olarak hazır komutların yürütülmesini mümkün kılan sıra dışı yürütmedir. Üçüncü hedef, dal sonuçları beklenmeden spekülatif olarak komut getirme ve yürütme yapılmasını sağlayan dal tahmini ile spekülatif yürütmedir. Dördüncü hedef, istisna durumlarında tutarlı işlemci durumunun garanti edilmesini sağlayan hassas kesme desteğidir.
+
+Bu hedefler doğrultusunda işlemci, Tomasulo algoritmasının modern bir uyarlaması olarak tasarlanmıştır \cite{tomasulo}. Yazmaç yeniden adlandırma ile yalancı bağımlılıklar ortadan kaldırılmakta, etiket tabanlı operand bekleme ile veri bağımlılıkları dinamik olarak çözümlenmekte ve yeniden sıralama arabelleği ile sıralı kesinleştirme sağlanmaktadır.
+
+\subsection{Boruhattı Aşamaları}\label{subsec:pipeline_stages}
+
+İşlemci boruhattı altı ana aşamadan oluşmaktadır. Her aşama, belirli bir işlev grubunu yerine getirmektedir ve aşamalar arası veri akışı boruhattı yazmaçları ile sağlanmaktadır.
+
+Komut getirme aşaması, bellekten komutların paralel olarak getirilmesinden sorumludur. Bu aşamada her saat çevriminde beş komut getirilebilmekte, dal tahmin sistemi ile kontrol akışı önceden tahmin edilmekte ve komut tamponu ile sonraki aşamalar için komutlar tamponlanmaktadır.
+
+Kod çözme ve yeniden adlandırma aşaması, komutların çözümlenmesi ve yazmaç yeniden adlandırmasından sorumludur. Bu aşamada üç paralel kod çözücü komut formatlarını çözümlemekte, yazmaç takma ad tablosu mimari yazmaçları fiziksel yazmaçlara eşlemekte ve dal çözümleme takma ad tablosu dal spekülasyonu için anlık görüntüler saklamaktadır.
+
+Dağıtım aşaması, komutların yürütme birimlerine gönderilmesinden sorumludur. Bu aşamada rezervasyon istasyonları operandlar hazır olana kadar komutları bekletmekte, yeniden sıralama arabelleği sıralı kesinleştirme için komutları takip etmekte ve ortak veri yolu sonuçları tüm bekleyen birimlere yayınlamaktadır.
+
+Yürütme aşaması, aritmetik ve mantıksal işlemlerin gerçekleştirilmesinden sorumludur. Bu aşamada üç paralel işlevsel birim hesaplamaları gerçekleştirmekte, dal denetleyicileri dal sonuçlarını değerlendirmekte ve yanlış tahmin tespiti yapılarak toparlanma başlatılmaktadır.
+
+Bellek aşaması, yükleme ve saklama işlemlerinin yönetilmesinden sorumludur. Bu aşamada yükleme saklama kuyruğu bellek işlemlerini sıralamakta, saklamadan yüklemeye iletme bellek gecikmesini azaltmakta ve üç paralel bellek portu yüksek veri bant genişliği sağlamaktadır.
+
+Geri yazma aşaması, sonuçların mimari duruma yazılmasından sorumludur. Bu aşamada sıralı kesinleştirme program sırasını korumakta, fiziksel yazmaç dosyası sonuçları kalıcı olarak saklamakta ve serbest liste yazmaç havuzunu yönetmektedir.
+
+\subsection{Süperölçekli Genişlik}\label{subsec:superscalar_width}
+
+Tasarlanan işlemci üç yollu süperölçekli genişliğe sahiptir. Bu değer, her saat çevriminde paralel olarak işlenebilecek maksimum komut sayısını ifade etmektedir.
+
+Komut getirme aşamasında beş genişlikli getirme tasarımı bulunmaktadır. Bu asimetrik tasarımın nedeni, dallanma ve atlama komutları nedeniyle bazı getirilen komutların geçersiz olmasıdır. Beş komut getirilerek dallanma kayıpları telafi edilmekte ve sonraki aşamalara ortalama üç geçerli komut iletilmektedir.
+
+Kod çözme ve yeniden adlandırma aşamasında üç paralel kod çözücü bulunmaktadır. Her kod çözücü bağımsız olarak çalışmakta ve kontrol sinyalleri üretmektedir. Yazmaç takma ad tablosu altı okuma ve üç yazma portuna sahip olup üç komutun paralel yeniden adlandırılmasını desteklemektedir.
+
+Dağıtım aşamasında üç rezervasyon istasyonu bulunmaktadır. Her rezervasyon istasyonu tek bir işlevsel birime bağlıdır ve ortak veri yolunu sürekli izlemektedir.
+
+Yürütme aşamasında üç paralel işlevsel birim bulunmaktadır. Her birim tam aritmetik mantık birimi ve dal işleme kapasitesine sahiptir.
+
+Bellek aşamasında üç paralel bellek portu bulunmaktadır. Her port bağımsız olarak belleğe erişebilmekte ve üç baş işaretçisi bu paralel erişimi koordine etmektedir.
+
+Geri yazma aşamasında üç paralel kesinleştirme portu bulunmaktadır. Her saat çevriminde en fazla üç komut kesinleştirilebilmektedir.
+
+\subsection{Yazmaç Yeniden Adlandırma Mimarisi}\label{subsec:renaming_arch}
+
+Yazmaç yeniden adlandırma, sıra dışı yürütmenin temel bileşenidir. RISC-V mimarisi otuz iki mimari yazmaç tanımlarken, tasarlanan işlemcide altmış dört fiziksel yazmaç bulunmaktadır.
+
+Fiziksel yazmaç alanı iki bölgeye ayrılmaktadır. Sıfırdan otuz bire kadar olan fiziksel yazmaçlar yazmaç dosyasında bulunmakta ve kesinleştirilmiş değerleri tutmaktadır. Otuz ikiden altmış üçe kadar olan fiziksel yazmaçlar ise yeniden sıralama arabelleğinde bulunmakta ve henüz kesinleştirilmemiş değerleri tutmaktadır.
+
+Bu tasarımda yeniden sıralama arabelleği indeksi doğrudan fiziksel yazmaç adresi olarak kullanılmaktadır. Bu yaklaşım, ayrı bir serbest liste yerine dairesel tampon kullanılmasına olanak tanımakta ve kaynak yönetimini basitleştirmektedir.
+
+\subsection{Dal Tahmini ve Spekülatif Yürütme}\label{subsec:branch_pred_overview}
+
+Dal tahmini, süperölçekli işlemcilerde kritik öneme sahiptir. Tipik programlarda dallanma ve atlama komutları yüzde on beş ile yüzde yirmi beş arasında bir orana sahiptir \cite{patterson_hennessy}. Etkili bir dal tahmini olmadan, her dal komutu boruhattında birkaç saat çevrimi gecikmeye neden olmaktadır.
+
+Tasarlanan sistemde iki ana tahmin mekanizması bulunmaktadır. Koşullu dallanma komutları için turnuva tahmincisi kullanılmaktadır. Bu tahminci, küresel geçmiş tabanlı GShare tahmincisi ile yerel geçmiş tabanlı iki bitlik sayaç tahmincisini birleştirmekte ve dinamik olarak daha başarılı olanı seçmektedir.
+
+Dolaylı atlama komutları için JALR tahmincisi kullanılmaktadır. Bu tahminci, hedef adres önbelleği ve dönüş adresi yığınından oluşmaktadır. Fonksiyon çağrısı ve dönüş kalıpları, dönüş adresi yığını ile yüksek doğrulukla tahmin edilmektedir.
+
+Dal çözümleme takma ad tablosu, yanlış tahmin durumunda hızlı toparlanmayı sağlamaktadır. Her dal komutu için yazmaç takma ad tablosu anlık görüntüsü saklanmakta ve yanlış tahmin tespit edildiğinde bu anlık görüntüden geri yükleme yapılmaktadır.
+
+\subsection{Bellek Sistemi}\label{subsec:memory_system}
+
+Bellek sistemi, yükleme saklama kuyruğu merkezli olarak tasarlanmıştır. Kuyruk otuz iki giriş kapasitesine sahip olup her çevrimde üç bellek işlemini paralel olarak işleyebilmektedir.
+
+Bellek tutarlılığı, saklama işlemlerinin yalnızca kesinleştirme sonrası belleğe yazılmasıyla sağlanmaktadır. Bu yaklaşım, spekülatif saklama işlemlerinin belleği değiştirmesini engellemektedir.
+
+Saklamadan yüklemeye iletme mekanizması, bir yükleme işleminin önceki bir saklamayla aynı adresi hedeflemesi durumunda veriyi doğrudan saklamadan almasını sağlamaktadır. Bu mekanizma, bellek gecikmesini atlayarak performansı önemli ölçüde artırmaktadır.
+
+\subsection{Tasarım Özellikleri Özeti}\label{subsec:design_summary}
+
+Tasarlanan işlemcinin temel özellikleri Çizelge \ref{tab:processor_specs}'de özetlenmiştir.
+
+\begin{table}[H]
+    \centering
+    \caption{Tasarlanan işlemcinin teknik özellikleri.}
+    \label{tab:processor_specs}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Özellik} & \textbf{Değer} \\
+        \hline
+        Mimari & RISC-V (RV32I) \\
+        \hline
+        Boruhattı Derinliği & 6 Aşama \\
+        \hline
+        Komut Getirme Genişliği & 5 Komut/Çevrim \\
+        \hline
+        Komut Dağıtım Genişliği & 3 Komut/Çevrim \\
+        \hline
+        ROB Kapasitesi & 32 Giriş \\
+        \hline
+        Fiziksel Yazmaç Sayısı & 64 (32 Mimari + 32 Spekülatif) \\
+        \hline
+        Rezervasyon İstasyonları & 3 Adet (Tekil) \\
+        \hline
+        LSQ Kapasitesi & 32 Giriş \\
+        \hline
+        Dal Tahmincisi & Turnuva (GShare + 2-bit), RAS, JALR Cache \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Tasarlanan işlemcinin temel özellikleri şu şekilde özetlenebilmektedir.
+
+Süperölçekli genişlik olarak komut getirmede beş, diğer tüm aşamalarda üç yollu yapı kullanılmaktadır. Yeniden adlandırma yapısı olarak altmış dört fiziksel yazmaç ile otuz iki mimari yazmaç eşlemesi yapılmaktadır. Yeniden sıralama arabelleği otuz iki giriş kapasitesine sahiptir. Dal tahmini için turnuva tahmincisi ve dönüş adresi yığını kullanılmaktadır. Bellek sistemi otuz iki girişli yükleme saklama kuyruğu ve üç paralel port içermektedir. Tüm aritmetik mantık birimi işlemleri tek saat çevriminde tamamlanmaktadır.
+
+Bu mimari, komut seviyesi paralelliğinden etkin bir şekilde yararlanarak yüksek performans elde etmeyi hedeflemektedir. Sıra dışı yürütme, dal tahmini ve spekülatif bellek erişimi özellikleri, işlemcinin teorik maksimum verime yaklaşmasını sağlamaktadır.
+

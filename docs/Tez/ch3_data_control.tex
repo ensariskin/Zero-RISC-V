@@ -1,183 +1,177 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 3.4 DATA CONTROL AŞAMASI
+% 3.4 DAĞITIM AŞAMASI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Data Control Aşaması}\label{sec:data_control}
+\section{Dağıtım Aşaması}\label{sec:data_control}
 
-Data Control aşaması, sıra dışı yürütmenin merkezi kontrol noktasıdır. Bu aşama, komutların operandları hazır olana kadar bekletilmesini, hazır komutların yürütme birimlerine gönderilmesini ve sonuçların sıralı olarak kesinleştirilmesini yönetir.
+Dağıtım aşaması, Tomasulo algoritmasının operand çözümleme ve komut gönderme mekanizmalarını içermektedir \cite{tomasulo}. Bu aşama, kod çözme ve yeniden adlandırma aşamasından gelen komutların operand değerlerini okumakta, operandlar hazır değilse etiket tabanlı bekleme yapmakta, tüm operandlar hazır olduğunda işlevsel birimlere göndermekte ve ortak veri yolu üzerinden sonuçları yayınlayarak yeniden sıralama arabelleğini güncellemektedir.
 
-Tasarlanan sistemde Data Control aşaması, üç ana bileşenden oluşmaktadır: Yeniden Sıralama Arabelleği (ROB), Rezervasyon İstasyonları (RS) ve Fiziksel Yazmaç Dosyası (PRF).
-
-\subsection{Yeniden Sıralama Arabelleği (ROB)}\label{subsec:rob}
-
-Yeniden Sıralama Arabelleği (\texttt{reorder\_buffer}), sıra dışı yürütmenin temel yapı taşıdır \cite{johnson}. ROB, komutların program sırasında kesinleştirilmesini (\textit{in-order commit}) sağlayarak hassas kesme (precise exception) desteği sunar.
-
-\subsubsection{ROB yapısı ve alanları}\label{subsubsec:rob_fields}
-
-ROB, 32 girişlik bir dairesel tampon olarak gerçeklenmiştir. Her ROB girişi aşağıdaki alanları içermektedir:
-
-\begin{itemize}
-    \item \textbf{destination:} Hedef fiziksel yazmaç adresi
-    \item \textbf{value:} Hesaplanmış sonuç değeri (32-bit)
-    \item \textbf{tag:} Operand hazırlık durumu (3-bit etiket)
-    \item \textbf{executed:} Komutun yürütülüp yürütülmediği
-    \item \textbf{exception:} İstisna veya yanlış tahmin bayrağı
-    \item \textbf{is\_store:} Saklama işlemi bayrağı
-    \item \textbf{is\_branch:} Dallanma komutu bayrağı
-\end{itemize}
-
-ROB, üç paralel tahsis portunu destekleyerek her çevrimde üç yeni komutun eklenmesine olanak tanır:
-
-\begin{equation}\label{eq:rob_alloc}
-alloc\_idx_n = (tail\_ptr + n) \mod BUFFER\_DEPTH
-\end{equation}
-
-\subsubsection{Sıralı kesinleştirme mantığı}\label{subsubsec:retirement}
-
-ROB, baş işaretçisinden (head pointer) başlayarak sıralı kesinleştirme gerçekleştirir. Bir komutun kesinleştirilebilmesi için aşağıdaki koşulların sağlanması gerekir:
-
+Bu aşama, komut arabelleğinden üç komut almakta ve her biri için aşağıdaki işlemleri paralel olarak gerçekleştirmektedir:
 \begin{enumerate}
-    \item Komut yürütülmüş olmalı (\texttt{executed = 1})
-    \item İstisna bayrağı aktif olmamalı (\texttt{exception = 0})
-    \item Saklama işlemleri için LSQ'dan onay alınmış olmalı
+    \item Fiziksel yazmaç dosyası veya yeniden sıralama arabelleğinden operand değerlerini okuma
+    \item Operandlar hazır değilse etiket tabanlı bekleme yapma
+    \item Tüm operandlar hazır olduğunda işlevsel birime gönderme
+    \item Ortak veri yolu üzerinden sonuçları yayınlama ve yeniden sıralama arabelleğini güncelleme
 \end{enumerate}
 
-Her çevrimde en fazla üç komut kesinleştirilebilir:
+Tasarlanan sistemde dağıtım aşaması üç ana bileşenden oluşmaktadır: yeniden sıralama arabelleği, rezervasyon istasyonları ve fiziksel yazmaç dosyası.
 
-\begin{equation}\label{eq:commit_valid}
-commit\_valid_n = executed[head+n] \land \lnot exception[head+n] \land commit\_valid_{n-1}
-\end{equation}
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Dağıtım Aşaması Genel Yapısı - RS, ROB, PRF ve CDB Bağlantıları]}}
+    \caption{Dağıtım aşaması ve veri kontrol mekanizmaları}
+    \label{fig:dispatch_overview}
+\end{figure}
 
-Kesinleştirme sırasında, hesaplanan değerler Fiziksel Yazmaç Dosyasına yazılır ve eski fiziksel yazmaçlar serbest listeye geri eklenir.
+\subsection{Fiziksel Yazmaç Alanı}\label{subsec:phys_reg_space}
 
-\subsubsection{İstisna ve yanlış tahmin yönetimi}\label{subsubsec:exception}
+Altmış dört fiziksel yazmaç iki bölgeye ayrılmaktadır. Bu ayrım, spekülatif ve kesinleşmiş değerlerin tek bir sistemde yönetilmesini sağlamaktadır.
 
-Bir komutta istisna veya yanlış tahmin tespit edildiğinde, ROB aşağıdaki işlemleri gerçekleştirir:
+Sıfırdan otuz bire kadar olan fiziksel yazmaçlar yazmaç dosyasında bulunmakta ve kesinleştirilmiş değerleri tutmaktadır. Bu değerler mimari açıdan garantili olarak doğrudur. Otuz ikiden altmış üçe kadar olan fiziksel yazmaçlar ise yeniden sıralama arabelleğinde bulunmakta ve henüz kesinleştirilmemiş, uçuşta olan değerleri tutmaktadır.
 
-\begin{enumerate}
-    \item İstisnadan sonraki tüm kuyruk girişleri geçersiz kılınır (flush)
-    \item BRAT'tan uygun RAT snapshot geri yüklenir
-    \item Serbest liste işaretçisi geri alınır
-    \item Fetch aşamasına doğru PC gönderilir
-\end{enumerate}
+Fiziksel adres çözümlemesi, adresin en anlamlı bitine göre yapılmaktadır. Bu bit sıfır olduğunda değer yazmaç dosyasından, bir olduğunda yeniden sıralama arabelleğinden okunmaktadır. Yazmaç dosyasından okunan değerler her zaman hazır kabul edilmektedir çünkü bu değerler zaten kesinleştirilmiştir. Yeniden sıralama arabelleğinden okunan değerler ise henüz hazır olmayabilmektedir; bu durumda değer yerine üretici etiketi döndürülmektedir.
 
-ROB, Common Data Bus (CDB) üzerinden gelen çözümleme sinyallerini dinleyerek \texttt{executed} ve \texttt{exception} alanlarını günceller.
-
-\subsubsection{TMR korumalı işaretçiler}\label{subsubsec:rob_tmr}
-
-ROB, kritik işaretçiler için TMR koruması uygular. Baş ve kuyruk işaretçileri üçer kopya olarak tutulur:
-
-\begin{itemize}
-    \item \texttt{head\_ptr\_reg\_0/1/2}: Baş işaretçisi kopyaları
-    \item \texttt{tail\_ptr\_reg\_0/1/2}: Kuyruk işaretçisi kopyaları
-\end{itemize}
-
-Ayrıca kesinleştirme için kullanılan gecikmeli indeksler de TMR ile korunmaktadır. \texttt{tmr\_voter} modülleri, çoğunluk oylaması ile doğru değeri belirler.
+Yazmaç takma ad tablosu, her yazmaç için en güncel kaynağı göstermektedir. Değer kesinleştirilmişse yazmaç dosyasını, değer uçuştaysa yeniden sıralama arabelleğini işaret etmektedir. Bu sayede hem spekülatif hem de kesinleşmiş değerler tek sistemde yönetilmektedir.
 
 %------------------------------------------------------------------------
 
-\subsection{Rezervasyon İstasyonu (RS)}\label{subsec:rs}
+\subsection{Rezervasyon İstasyonu}\label{subsec:rs}
 
-Rezervasyon İstasyonları, Tomasulo algoritmasının temelini oluşturur \cite{tomasulo}. Her RS, bir komutu ve operandlarını saklar, operandlar hazır olana kadar bekler ve hazır olduğunda komutu yürütme birimine gönderir.
+Rezervasyon istasyonları, Tomasulo algoritmasının temelini oluşturmaktadır \cite{tomasulo}. Her rezervasyon istasyonu, bir komutu ve operandlarını saklamakta, operandlar hazır olana kadar beklemekte ve hazır olduğunda komutu yürütme birimine göndermektedir.
 
-\subsubsection{RS yapısı}\label{subsubsec:rs_struct}
+\subsubsection{Rezervasyon İstasyonu Yapısı}\label{subsubsec:rs_struct}
 
-Tasarlanan sistemde üç ayrı rezervasyon istasyonu bulunmaktadır, her biri tek bir yürütme birimine bağlıdır. Her RS aşağıdaki bilgileri saklar:
+Tasarlanan sistemde üç ayrı rezervasyon istasyonu bulunmaktadır ve her biri tek bir yürütme birimine bağlıdır. Her rezervasyon istasyonu aşağıdaki bilgileri saklamaktadır: dolu bayrağı, kontrol sinyalleri, program sayacı değeri, sabit değer, hedef fiziksel yazmaç adresi, birinci ve ikinci operand verisi ve etiketi, saklama verisi, dal tahmin bilgileri ve yükleme saklama kuyruğu tahsis etiketi.
 
-\begin{itemize}
-    \item \textbf{occupied:} RS dolu mu bayrağı
-    \item \textbf{control\_signals:} Komut kontrol sinyalleri (11-bit)
-    \item \textbf{pc:} Komutun PC değeri
-    \item \textbf{immediate:} Acil değer
-    \item \textbf{rd\_phys\_addr:} Hedef fiziksel yazmaç adresi
-    \item \textbf{operand\_a\_data/tag:} Birinci operand verisi ve etiketi
-    \item \textbf{operand\_b\_data/tag:} İkinci operand verisi ve etiketi
-    \item \textbf{branch\_sel/prediction:} Dal tahmin bilgileri
-    \item \textbf{alloc\_tag:} LSQ tahsis etiketi
-\end{itemize}
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Rezervasyon İstasyonu (RS) Giriş Yapısı - Operand Etiketleri, Veri Alanları, Meşgul Bitleri]}}
+    \caption{Rezervasyon istasyonu giriş formatı}
+    \label{fig:rs_entry}
+\end{figure}
 
-Operand etiketleri (\texttt{tag}), operandın nereden geleceğini belirtir:
+\subsubsection{Etiket Sistemi}\label{subsubsec:tag_system}
 
-\begin{itemize}
-    \item \texttt{TAG\_READY (3'b111):} Operand hazır, değer doğrudan kullanılabilir
-    \item \texttt{3'b000-3'b010:} Yürütme birimi 0-2'den CDB üzerinden gelecek
-    \item \texttt{3'b011:} LSQ'dan gelecek (yükleme sonucu)
-\end{itemize}
+Tomasulo algoritmasının temel mekanizması olan etiket sistemi, üretici-tüketici ilişkisini takip etmektedir. Operand etiketi, operandın nereden geleceğini belirtmektedir.
 
-\subsubsection{Operand iletimi (CDB)}\label{subsubsec:cdb}
+Etiket değeri sıfır olduğunda operand sıfırıncı aritmetik mantık biriminden beklenmektedir. Etiket değeri bir olduğunda birinci aritmetik mantık biriminden, iki olduğunda ikinci aritmetik mantık biriminden beklenmektedir. Etiket değeri üç olduğunda operand yükleme saklama kuyruğundan beklenmekte ve bu durumda yeniden sıralama arabelleği kimliği ile eşleştirme yapılmaktadır. Etiket değeri yedi olduğunda operand hazırdır ve değer doğrudan kullanılabilmektedir. Bu değerler Çizelge \ref{tab:tag_encoding}'de özetlenmiştir.
 
-Common Data Bus (CDB), yürütme birimlerinden çıkan sonuçları tüm rezervasyon istasyonlarına ve ROB'a yayınlar. Her RS, CDB'yi sürekli olarak dinler ve bekleyen operandları yakalar:
+\begin{table}[H]
+    \centering
+    \caption{Operand etiketi değerleri ve anlamları.}
+    \label{tab:tag_encoding}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Etiket Değeri} & \textbf{Kaynak / Durum} \\
+        \hline
+        0 (3'b000) & ALU Kanal 0'dan bekleniyor \\
+        \hline
+        1 (3'b001) & ALU Kanal 1'den bekleniyor \\
+        \hline
+        2 (3'b010) & ALU Kanal 2'den bekleniyor \\
+        \hline
+        3 (3'b011) & LSQ'dan bekleniyor (ROB ID ile eşleşir) \\
+        \hline
+        7 (3'b111) & Operand Hazır (Ready) \\
+        \hline
+    \end{tabular}
+\end{table}
 
-\begin{equation}\label{eq:operand_capture}
-operand\_ready = (tag = \text{TAG\_READY}) \lor (cdb\_valid \land cdb\_tag = operand\_tag)
-\end{equation}
+Etiket tabanlı beklemenin klasik yaklaşıma göre önemli avantajları bulunmaktadır. Klasik yaklaşımda bağımlı komut üreticinin bitmesini beklerken, etiket sistemiyle üretici henüz yürütülmemiş olsa bile rezervasyon istasyonu dolu olabilmektedir. Rezervasyon istasyonu, ortak veri yolunu izleyerek üretici sonucunu yakalamaktadır. Üretici bittiği çevrimde tüketici de gönderilmeye hazır olmaktadır. Bu yaklaşım, sıra dışı yürütmede boruhatları iletmenin karşılığıdır.
 
-CDB yapısı, 4 farklı kaynak destekler:
+\subsubsection{Ortak Veri Yolu İzleme}\label{subsubsec:cdb_watch}
 
-\begin{enumerate}
-    \item \textbf{cdb\_0, cdb\_1, cdb\_2:} Üç yürütme biriminden ALU/shifter sonuçları
-    \item \textbf{cdb\_3:} LSQ'dan gelen yükleme sonuçları (3 alt port)
-\end{enumerate}
+Rezervasyon istasyonu, ortak veri yolunu sürekli izlemekte ve bekleyen operandları çözmektedir. Her operand için saklanan etiket, ortak veri yolundaki geçerli sinyallerle karşılaştırılmaktadır. Etiket değeri sıfır ise ve sıfırıncı kanalda geçerli veri varsa, operand bu kanaldan alınmaktadır. Benzer şekilde diğer kanallar için de kontrol yapılmaktadır.
 
-\subsubsection{Komut gönderme politikası}\label{subsubsec:issue_policy}
+Yükleme saklama kuyruğu için özel bir eşleştirme gerekmektedir. Aritmetik mantık birimi sonuçları tek bir ortak veri yolu kanalından gelmektedir ve her birim için bir kanal bulunmaktadır. Ancak yükleme saklama kuyruğundan üç ayrı sonuç gelebilmektedir. Etiket değeri üç yalnızca yükleme saklama kuyruğundan beklediğini belirtmekte, hangi girişten geleceğini belirtmemektedir. Bu nedenle yükleme saklama kuyruğu için ek olarak yeniden sıralama arabelleği kimliği eşleştirmesi yapılmaktadır.
 
-Bir komutun yürütme birimine gönderilebilmesi için her iki operandın da hazır olması gerekir:
+\subsubsection{Komut Gönderme Koşulu}\label{subsubsec:issue_cond}
 
-\begin{equation}\label{eq:issue_ready}
-should\_issue = occupied \land operand\_a\_ready \land operand\_b\_ready
-\end{equation}
+Bir komutun yürütme birimine gönderilebilmesi için her iki operandın da hazır olması gerekmektedir. Rezervasyon istasyonu iki farklı gönderme senaryosunu desteklemektedir.
 
-RS, iki farklı gönderme senaryosunu destekler:
+Birinci senaryo doğrudan göndermedir. Kod çözme aşamasından gelen komut, operandları zaten hazırsa aynı çevrimde yürütme birimine gönderilmektedir. Bu durumda komut rezervasyon istasyonunda bekletilmemektedir.
 
-\begin{enumerate}
-    \item \textbf{Doğrudan gönderme:} Decode'dan gelen komut, operandlar hazırsa aynı çevrimde gönderilir
-    \item \textbf{Bekletme ve gönderme:} Operandlar hazır değilse komut saklanır, CDB'den operandlar gelince gönderilir
-\end{enumerate}
+İkinci senaryo saklanmış göndermedir. Operandlar hazır değilse komut rezervasyon istasyonunda saklanmaktadır. Ortak veri yolundan operandlar geldiğinde komut gönderilmektedir.
 
-\subsubsection{RS doğrulayıcı}\label{subsubsec:rs_validator}
+\subsubsection{Hevesli Yanlış Tahmin Temizleme}\label{subsubsec:eager_flush}
 
-Güvenli modda, RS içindeki kritik alanlar \texttt{rs\_validator} modülü tarafından doğrulanır. Bu modül, üç yürütme birimi arasında karşılaştırma yaparak tutarlılığı kontrol eder.
+Rezervasyon istasyonu, yanlış tahmin durumunda spekülatif komutları temizlemektedir. Temizleme kararı için yeniden sıralama arabelleğindeki uzaklık karşılaştırması kullanılmaktadır.
+
+Yeniden sıralama arabelleği dairesel tampon olduğundan basit indeks karşılaştırması yetersiz kalmaktadır. Örneğin yanlış tahmin edilen dallanma komutu yirmi beşinci konumda, rezervasyon istasyonundaki komut üçüncü konumda ve baş işaretçisi yirminci konumda olabilmektedir. Bu durumda dallanma komutunun uzaklığı beş, rezervasyon istasyonundaki komutun uzaklığı on beş olmaktadır. On beş beşten büyük olduğundan rezervasyon istasyonundaki komut spekülatiftir ve temizlenmelidir.
 
 %------------------------------------------------------------------------
 
-\subsection{Fiziksel Yazmaç Dosyası (PRF)}\label{subsec:prf}
+\subsection{Yeniden Sıralama Arabelleği}\label{subsec:rob}
 
-Fiziksel Yazmaç Dosyası (\texttt{multi\_port\_register\_file}), 64 adet 32-bit fiziksel yazmaç içeren çok portlu bir yapıdır.
+Yeniden sıralama arabelleği, sıra dışı yürütme ile sıralı kesinleştirme arasındaki köprüdür \cite{johnson}. Spekülatif sonuçları tutmakta ve program sırasında kesinleştirmektedir.
 
-\subsubsection{Çok portlu yapı}\label{subsubsec:multiport}
+\subsubsection{Yeniden Sıralama Arabelleği Yapısı}\label{subsubsec:rob_struct}
 
-PRF, aşağıdaki port yapılandırmasına sahiptir:
+Yeniden sıralama arabelleği, otuz iki girişlik bir dairesel tampon olarak gerçeklenmiştir. Her giriş aşağıdaki alanları içermektedir: sonuç değeri, üretici etiketi, mimari yazmaç adresi, yürütülmüş bayrağı, istisna bayrağı, dallanma komutu bayrağı ve saklama komutu bayrağı.
 
-\begin{itemize}
-    \item \textbf{6 okuma portu:} Her komut için 2 kaynak operand (3 komut $\times$ 2 = 6)
-    \item \textbf{3 yazma portu:} Kesinleştirme sırasında 3 eş zamanlı yazma
-\end{itemize}
+Etiket değeri yedi olduğunda sonuç hazırdır ve kesinleştirilebilmektedir. Diğer etiket değerleri, sonucun hangi işlevsel birimden beklediğini göstermektedir.
 
-Okuma portları kombinasyonel olarak çalışır ve aynı çevrimde veri döndürür. Yazma işlemleri saat yükselen kenarında gerçekleşir.
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: ROB Giriş Yapısı - Durum bitleri, İstisna alanları, Fiziksel yazmaç ve Mimari yazmaç alanları]}}
+    \caption{Yeniden sıralama arabelleği (ROB) giriş yapısı}
+    \label{fig:rob_entry}
+\end{figure}
 
-\subsubsection{Okuma-sırasında-yazma davranışı}\label{subsubsec:rdw}
+\subsubsection{Yeniden Sıralama Arabelleği Portları}\label{subsubsec:rob_ports}
 
-Aynı çevrimde bir adrese hem okuma hem yazma yapıldığında, bypass mantığı yeni değerin okunmasını sağlar:
+Yeniden sıralama arabelleği yoğun bir port yapısına sahiptir. Üç tahsis portu, kod çözme aşamasından gelen komutlar için kullanılmaktadır. Altı okuma portu, rezervasyon istasyonu operand okuması için kullanılmakta ve her komut için iki kaynak operand okunmaktadır. Altı ortak veri yolu yazma portu, üç aritmetik mantık birimi ve üç yükleme saklama kuyruğu sonucu için kullanılmaktadır. Üç kesinleştirme portu, yazmaç dosyasına yazma ve serbest bırakma için kullanılmaktadır.
 
-\begin{equation}\label{eq:bypass}
-read\_data = \begin{cases}
-write\_data & \text{eğer } read\_addr = write\_addr \land write\_en \\
-register[read\_addr] & \text{aksi halde}
-\end{cases}
-\end{equation}
+\subsubsection{Sıralı Kesinleştirme Mantığı}\label{subsubsec:commit_logic}
 
-Üç yazma portunun tamamı için bypass kontrolü uygulanır. En yüksek öncelik, \texttt{commit\_addr\_2}'ye (en son kesinleşen) verilir:
+Yeniden sıralama arabelleği, baş işaretçisinden başlayarak sıralı kesinleştirme gerçekleştirmektedir. Bir komutun kesinleştirilebilmesi için yürütülmüş olması ve istisna bayrağının aktif olmaması gerekmektedir. Saklama işlemleri için ek olarak yükleme saklama kuyruğundan onay alınmış olması gerekmektedir.
 
-\begin{equation}\label{eq:bypass_priority}
-priority: commit\_2 > commit\_1 > commit\_0 > stored\_value
-\end{equation}
+Her çevrimde en fazla üç komut kesinleştirilebilmektedir. İkinci komutun kesinleştirilebilmesi için birinci komutun kesinleştirilmiş olması, üçüncü komutun kesinleştirilebilmesi için ikinci komutun kesinleştirilmiş olması gerekmektedir. Bu zincirleme bağımlılık, program sırasının korunmasını sağlamaktadır.
 
-\subsubsection{Sıfır yazmacı yönetimi}\label{subsubsec:zero_reg}
+Sıralı kesinleştirmenin kritik önemi birkaç açıdan ortaya çıkmaktadır. İstisna yönetiminde yalnızca önceki komutlar kesinleşmelidir. Yanlış tahmin durumunda spekülatif komutlar geri alınabilmelidir. Bellek tutarlılığında saklama işlemleri program sırasında görünmelidir. Sıralı kesinleştirme, mimari durumun her zaman tutarlı olmasını sağlamaktadır.
 
-RISC-V mimarisinde \texttt{x0} yazmacı her zaman sıfır değerini taşır. PRF'de fiziksel yazmaç 0, her saat çevriminde sıfıra zorlanır:
+\subsubsection{Saklama İzni}\label{subsubsec:store_perm}
 
-\begin{verbatim}
-register_data[0] <= '0;
-\end{verbatim}
+Saklama komutları, yeniden sıralama arabelleğinin başına ulaşana kadar belleğe yazamamaktadır. Bir saklama komutunun yürütülebilmesi için baş işaretçisinde bulunması ve yürütülmüş olması gerekmektedir. Bu kısıtlama, spekülatif saklama işlemlerinin belleği değiştirmesini engellemektedir.
 
-Bu sayede herhangi bir komut \texttt{x0}'a yazma yapmaya çalışsa bile değer değişmez.
+%------------------------------------------------------------------------
+
+\subsection{Ortak Veri Yolu}\label{subsec:cdb}
+
+Ortak veri yolu, yürütme sonuçlarını tüm bekleme noktalarına yayınlamaktadır. Bu yapı, Tomasulo algoritmasının sonuç yayınlama mekanizmasını gerçeklemektedir.
+
+\subsubsection{Ortak Veri Yolu Kanalları}\label{subsubsec:cdb_channels}
+
+Tasarlanan sistemde altı ortak veri yolu kanalı bulunmaktadır. İlk üç kanal aritmetik mantık birimlerinden gelmektedir: sıfırıncı kanal sıfırıncı aritmetik mantık birimi sonucunu, birinci kanal birinci aritmetik mantık birimi sonucunu, ikinci kanal ikinci aritmetik mantık birimi sonucunu taşımaktadır.
+
+Sonraki üç kanal yükleme saklama kuyruğundan gelmektedir. Bu kanallar, her çevrimde en fazla üç yükleme veya saklama sonucunun yayınlanmasına olanak tanımaktadır.
+
+Her ortak veri yolu kanalı aşağıdaki sinyalleri taşımaktadır: geçerlilik sinyali, otuz iki bitlik sonuç verisi, hedef fiziksel yazmaç adresi, yanlış tahmin bayrağı ve dallanma komutu bayrağı. Bu sinyaller, hem rezervasyon istasyonlarına hem de yeniden sıralama arabelleğine paralel olarak iletilmektedir.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Ortak Veri Yolu (CDB) Ağı - Yayınlanan sonuçların (Broadcast) RS, ROB ve LSQ'ya dağılımı]}}
+    \caption{Ortak veri yolu (CDB) yayın ağı ve bağlantıları}
+    \label{fig:cdb_network}
+\end{figure}
+
+%------------------------------------------------------------------------
+
+\subsection{Fiziksel Yazmaç Dosyası}\label{subsec:prf}
+
+Fiziksel yazmaç dosyası, otuz iki adet otuz iki bitlik yazmaç içeren çok portlu bir yapıdır. Bu yapı, kesinleştirilmiş değerleri tutmaktadır.
+
+\subsubsection{Çok Portlu Yapı}\label{subsubsec:multiport}
+
+Fiziksel yazmaç dosyası, altı okuma portu ve üç yazma portuna sahiptir. Altı okuma portu, her komut için iki kaynak operand okumak üzere kullanılmaktadır ve üç komut için toplam altı okuma gerekmektedir. Üç yazma portu, kesinleştirme sırasında eş zamanlı yazma için kullanılmaktadır.
+
+Okuma portları kombinasyonel olarak çalışmakta ve aynı çevrimde veri döndürmektedir. Yazma işlemleri saat yükselen kenarında gerçekleşmektedir.
+
+\subsubsection{Okuma Sırasında Yazma Davranışı}\label{subsubsec:rdw}
+
+Aynı çevrimde bir adrese hem okuma hem yazma yapıldığında, atlama mantığı yeni değerin okunmasını sağlamaktadır. Üç yazma portunun tamamı için atlama kontrolü uygulanmaktadır. En yüksek öncelik, son kesinleştirilen komuta verilmektedir.
+
+\subsubsection{Sıfır Yazmacı Yönetimi}\label{subsubsec:zero_reg}
+
+RISC-V mimarisinde sıfırıncı yazmaç her zaman sıfır değerini taşımaktadır. Fiziksel yazmaç dosyasında sıfırıncı fiziksel yazmaç, her saat çevriminde sıfıra zorlanmaktadır. Bu sayede herhangi bir komut sıfırıncı yazmaca yazma yapmaya çalışsa bile değer değişmemektedir.
+

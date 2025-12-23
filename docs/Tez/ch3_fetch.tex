@@ -10,6 +10,13 @@ Komut getirme aşaması, süperölçekli işlemcinin boruhattındaki ilk aşamad
 
 Çoklu getirme birimi, süperölçekli işlemcinin komut seviyesi paralelliğinden yararlanabilmesi için tasarlanmış merkezi koordinasyon birimidir. Bu modül, her saat çevriminde bellekten beş komut getirme kapasitesine sahiptir ve getirilen komutların geçerliliğini dal tahmin sonuçlarına göre dinamik olarak belirlemektedir.
 
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Çoklu Getirme Birimi Şeması - 5-genişlikli fetch mantığı, PC, PC+4..PC+16 Artırma, Instruction Memory Bağlantısı]}}
+    \caption{Çoklu getirme birimi ve paralel komut erişimi yapısı}
+    \label{fig:multi_fetch_unit}
+\end{figure}
+
 \subsubsection{Beş Genişlikli Getirme Tasarımının Gerekçesi}
 
 Tasarlanan işlemci üç yollu bir komut verme yapısına sahip olmasına rağmen, komut getirme genişliği beş olarak belirlenmiştir. Bu asimetrik tasarım kararının arkasında önemli bir gerekçe bulunmaktadır.
@@ -38,7 +45,14 @@ Geçersizleme mantığı kademeli olarak çalışmaktadır: birinci komut dallan
 
 Dal hedef adreslerinin erken hesaplanabilmesi için her komuta bir erken aşama sabit değer çözümleyici modülü eklenmiştir. Bu modüller, tam komut çözümleme işlemi beklenmeden komut içindeki sabit değerleri çıkarmaktadır. RISC-V komut formatlarının düzenli yapısı, bu erken çözümleme işlemini kolaylaştırmaktadır.
 
-Dal komutlarının hedef adresi, mevcut program sayacı değeri ile komut içindeki sabit değerin toplanmasıyla hesaplanmaktadır. Bu hesaplamanın komut getirme aşamasında gerçekleştirilmesi, dal tahmininin doğru hedef adresini tek saat çevriminde belirlemesine olanak tanımaktadır. Sabit değer çözümleyici, B tipi dallanma komutları ve J tipi atlama komutları için farklı bit alanlarından değer çıkarmakta ve işaret genişletmesi uygulamaktadır.
+Dal komutlarının hedef adresi, mevcut program sayacı değeri ile komut içindeki sabit değerin toplanmasıyla hesaplanmaktadır.
+
+\begin{equation}
+    Hedef\_Adres = PC + Ofset
+    \label{eq:branch_target}
+\end{equation}
+
+Bu hesaplamanın komut getirme aşamasında gerçekleştirilmesi, dal tahmininin doğru hedef adresini tek saat çevriminde belirlemesine olanak tanımaktadır. Sabit değer çözümleyici, B tipi dallanma komutları ve J tipi atlama komutları için farklı bit alanlarından değer çıkarmakta ve işaret genişletmesi uygulamaktadır.
 
 \subsubsection{Yanlış Tahmin İşleme}
 
@@ -78,35 +92,57 @@ Ayrıca, atlama komutları için dönüş adresi değerleri de hesaplanmaktadır
 
 Dal tahmin sistemi, kontrol akışı değişikliklerinin erken tespit edilmesini ve yüksek doğrulukla öngörülmesini sağlamaktadır. Tipik programlarda dallanma ve atlama komutları yüzde on beş ile yüzde yirmi beş arasında bir orana sahiptir \cite{patterson_hennessy}. Etkili bir dal tahmini olmadan, her dal komutu boruhattında birkaç saat çevrimi gecikmeye neden olmaktadır; bu durum işlemci performansını önemli ölçüde düşürmektedir.
 
+Yanlış tahmin cezasının süperölçekli işlemcilere etkisi, skaler işlemcilere kıyasla çok daha yıkıcıdır. Bunun temel nedeni, geniş boruhattında daha fazla spekülatif komutun aynı anda işleniyor olması ve bir yanlış tahmin durumunda tüm bu komutların boşa gitmesidir. Etkin çevrim başına komut değeri ($IPC_{etkin}$), ideal değer ($W$), dallanma oranı ($B$), yanlış tahmin oranı ($M$) ve ceza çevrimi ($P$) cinsinden şu şekilde ifade edilmektedir:
+
+\begin{equation}
+    IPC_{etkin} = \frac{W}{1 + W \cdot B \cdot M \cdot P}
+    \label{eq:ipc_mispred}
+\end{equation}
+
+Bu denklemde $W$ işlemci genişliğini (skaler için 1, üç yollu süperölçekli için 3), $B$ dallanma komut oranını, $M = (1 - Doğruluk)$ yanlış tahmin oranını ve $P$ yanlış tahmin cezası çevrim sayısını ifade etmektedir. Yüzde yirmi dallanma oranı ($B = 0.20$), yüzde seksen tahmin doğruluğu ($M = 0.20$) ve üç çevrimlik ceza ($P = 3$) varsayımlarıyla:
+
+\begin{align}
+    IPC_{skaler} &= \frac{1}{1 + 1 \times 0.20 \times 0.20 \times 3} = \frac{1}{1.12} = 0.89 \label{eq:ipc_scalar} \\
+    IPC_{super}  &= \frac{3}{1 + 3 \times 0.20 \times 0.20 \times 3} = \frac{3}{1.36} = 2.21 \label{eq:ipc_super}
+\end{align}
+
+Verimlilik açısından değerlendirildiğinde, skaler işlemci ideal değerinin yüzde seksen dokuzunu korurken ($\eta_{skaler} = 0.89/1 = \%89$), süperölçekli işlemci yalnızca yüzde yetmiş dördünü koruyabilmektedir ($\eta_{super} = 2.21/3 = \%74$). Bu analiz, süperölçekli mimarilerde dal tahmini doğruluğunun neden kritik öneme sahip olduğunu açıkça ortaya koymaktadır.
+
 Tasarlanan sistemde iki ana tahmin mekanizması bulunmaktadır: koşullu dallanma komutları için turnuva tahmincisi ve dolaylı atlama komutları için JALR tahmincisi.
 
 \subsubsection{Turnuva Tahmincisi}
 
 Turnuva tahmincisi, iki farklı tahmin mekanizmasını birleştirerek her birinin güçlü yönlerinden yararlanmaktadır. Bu hibrit yaklaşım, farklı dal davranış kalıplarına uyum sağlama kapasitesi sunmaktadır.
 
-\paragraph{GShare Tahmincisi}
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Turnuva Tahmincisi Yapısı - GShare, 2-bit Counter ve Seçici (Selector) tablolarının blok şeması]}}
+    \caption{Turnuva tahmincisi mimarisi}
+    \label{fig:tournament_predictor}
+\end{figure}
 
 GShare tahmincisi, küresel dal geçmişini kullanarak dallar arasındaki korelasyonları yakalamaktadır. Bu yaklaşımın temelinde, bir dalın sonucunun önceki dalların sonuçlarıyla ilişkili olabileceği gözlemi yatmaktadır.
 
-Tahmin indeksi, program sayacı değeri ile küresel geçmiş kaydının XOR işlemine tabi tutulmasıyla hesaplanmaktadır. Bu indeks, iki bitlik doyurma sayaçlarından oluşan bir tabloya erişmek için kullanılmaktadır. Sayacın en anlamlı biti, dalın tahmin edilen yönünü belirlemektedir.
+Tahmin indeksi, program sayacı değeri ile küresel geçmiş kaydının XOR işlemine tabi tutulmasıyla hesaplanmaktadır.
+
+\begin{equation}
+    Indeks = PC \oplus GHR
+    \label{eq:gshare_index}
+\end{equation}
+
+Bu indeks, iki bitlik doyurma sayaçlarından oluşan bir tabloya erişmek için kullanılmaktadır. Sayacın en anlamlı biti, dalın tahmin edilen yönünü belirlemektedir.
 
 Küresel geçmiş kaydı, son dalların sonuçlarını bir kaydırma yazmacında tutmaktadır. Her dal çözümlendiğinde, sonuç bu yazmaca kaydırılmaktadır. Spekülatif yürütme sırasında, küresel geçmiş kaydı tahmin anında güncellenmekte ve yanlış tahmin durumunda geri yüklenmektedir.
-
-\paragraph{İki Bitlik Sayaç Tahmincisi}
 
 İki bitlik sayaç tahmincisi, en temel dinamik dal tahmin yöntemidir ve her dal adresi için ayrı bir doyurma sayacı tutmaktadır. Sayaç dört durumdan birinde bulunabilmektedir: güçlü alınmayacak, zayıf alınmayacak, zayıf alınacak ve güçlü alınacak.
 
 İki bitlik sayaç kullanılmasının nedeni, tek bitlik sayacın tek bir yanlış sonuçta hemen tahmini değiştirmesidir. Döngü sonlarında bu durum sorunlu olmaktadır: bir döngü yüz kez ``alınacak'' olduktan sonra bir kez ``alınmayacak'' olmaktadır ve tek bitlik sayaç hemen ``alınmayacak'' tahmin etmeye başlamaktadır. İki bitlik sayaç, iki ardışık yanlış sonuç gerektirdiğinden bu tür anomali durumlarına karşı dayanıklılık sağlamaktadır.
-
-\paragraph{Seçici Tablosu}
 
 Seçici tablosu, her dal adresi için hangi tahmincinin daha başarılı olduğunu takip etmektedir. Bu tablo da iki bitlik doyurma sayaçlarından oluşmaktadır. Sayaç değeri iki veya üç olduğunda GShare tahmini, sıfır veya bir olduğunda iki bitlik sayaç tahmini tercih edilmektedir.
 
 Seçici tablosu yalnızca iki tahmincinin farklı tahminler ürettiği durumlarda güncellenmektedir. Her iki tahmincinin aynı tahmini yaptığı durumlarda seçici değişmemektedir. Güncelleme sırasında, doğru tahmin yapan tahmincinin yönünde sayaç artırılmakta veya azaltılmaktadır.
 
 Önemli bir tasarım kararı olarak, her iki tahmincinin de her dal çözümlemesinde eğitilmesi tercih edilmiştir. Alternatif olarak yalnızca seçilen tahmincinin eğitilmesi düşünülebilirdi, ancak bu durumda seçici yanlış tahminciye sabitlenirse diğer tahmincinin güncel kalması mümkün olmayacaktı.
-
-\paragraph{Tahmin Bilgisinin Paketlenmesi}
 
 Turnuva tahmincisi, hem GShare hem de iki bitlik sayaç bilgisini dal kayıt tablosuna kaydetmelidir. Bu bilgi, dalın çözümlenmesi sırasında tahmincinin güncellenmesi için gereklidir. Paketlenen bilgi küresel geçmiş kaydının tahmin anındaki değerini, GShare tahminini, iki bitlik sayaç tahminini ve seçici kararını içermektedir.
 
@@ -116,13 +152,16 @@ Dolaylı atlama komutları, hedef adresini bir yazmaçtan okuduğundan derleme z
 
 JALR tahmincisi iki temel bileşenden oluşmaktadır: JALR hedef tamponu ve dönüş adresi yığını.
 
-\paragraph{JALR Hedef Tamponu}
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: JALR Tahmincisi ve RAS - Hedef Önbelleği (Target Cache) ve Dönüş Adresi Yığını (RAS) yapısı]}}
+    \caption{Dolaylı atlama tahmincisi ve dönüş adresi yığını}
+    \label{fig:jalr_ras}
+\end{figure}
 
 JALR hedef tamponu, daha önce yürütülen JALR komutlarının hedef adreslerini saklayan bir önbellek yapısıdır. Bu yapı, program sayacı değerine göre indekslenmekte ve son kullanılan hedef adresi döndürmektedir. Birçok dolaylı atlama, özellikle sanal fonksiyon çağrıları ve anahtarlama ifadeleri, aynı hedef adrese tekrar tekrar atladığından bu yaklaşım yüksek doğruluk sağlamaktadır.
 
 Tasarlanan sistemde JALR hedef tamponu otuz iki giriş kapasitesine sahiptir. Her giriş geçerlilik biti, etiket değeri ve hedef adres içermektedir. Etiket karşılaştırması, farklı JALR komutlarını ayırt etmek için kullanılmaktadır.
-
-\paragraph{Dönüş Adresi Yığını}
 
 Dönüş adresi yığını, fonksiyon çağrısı ve dönüş kalıplarını tahmin etmek için özelleştirilmiş bir yapıdır. Fonksiyon çağrılarının çoğunluğu çağrı ve dönüş çiftleri şeklinde gerçekleşmektedir; bu durum son giren ilk çıkar yapısıyla doğal olarak eşleşmektedir.
 
@@ -135,6 +174,13 @@ Tasarlanan sistemde dönüş adresi yığını sekiz giriş derinliğindedir. Sp
 \subsection{Komut Tamponu}\label{subsec:instr_buffer}
 
 Komut tamponu, komut getirme ve kod çözme aşamaları arasında ayrıştırma sağlayan bir ilk giren ilk çıkar yapısıdır. Bu ayrıştırma, her iki aşamanın farklı hızlarda çalışmasına olanak tanımakta ve boruhattı verimliliğini artırmaktadır.
+
+\begin{figure}[H]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Komut Tamponu Yapısı - Dairesel Tampon, Baş/Kuyruk İşaretçileri, Giriş Formatı (Instr, PC, Pred Info)]}}
+    \caption{Komut tamponu dairesel yapısı ve giriş formatı}
+    \label{fig:instr_buffer}
+\end{figure}
 
 \subsubsection{Tampon Tasarımının Gerekçesi}
 
