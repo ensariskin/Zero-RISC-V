@@ -265,10 +265,10 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 	assign inst_addr_3 = inst_addr_0 + 32'd12;
 	assign inst_addr_4 = inst_addr_0 + 32'd16;
 	assign current_pc_0 = pc_current_val;
-	assign current_pc_1 = !secure_mode ? pc_current_val + 32'd4 : current_pc_0;
-	assign current_pc_2 = !secure_mode ? pc_current_val + 32'd8 : current_pc_0;
-	assign current_pc_3 = !secure_mode ? pc_current_val + 32'd12 : current_pc_0;
-	assign current_pc_4 = !secure_mode ? pc_current_val + 32'd16 : current_pc_0;
+	assign current_pc_1 = pc_current_val + 32'd4;
+	assign current_pc_2 = pc_current_val + 32'd8;
+	assign current_pc_3 = pc_current_val + 32'd12;
+	assign current_pc_4 = pc_current_val + 32'd16;
 
 	// TODO : We can store some pc values in case of JAL, JALR instruction then we can use them in case of new JALR calculation
 
