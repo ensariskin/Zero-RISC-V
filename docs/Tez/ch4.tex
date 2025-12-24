@@ -3,69 +3,273 @@
 \chapter{İSTEĞE BAĞLI YEDEKLİLİK TEKNİĞİ}\label{ch:redundancy}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{On-Demand Redundancy Konsepti}\label{sec:on_demand_concept}
-
-\subsection{Motivasyon}\label{subsec:motivasyon}
-
-% TODO: Normal mod vs güvenli mod dinamik geçişi
-
-\subsection{Tasarım hedefleri}\label{subsec:redundancy_hedefler}
-
-% TODO: Performans/güvenlik trade-off
-
-\subsection{secure\_mode sinyali}\label{subsec:secure_mode}
-
-% TODO: Runtime yapılandırma mekanizması
+Bu bölümde, tasarlanan süperölçekli RISC-V işlemcisine uygulanan isteğe bağlı yedeklilik tekniği detaylı olarak ele alınmaktadır. Öncelikle hata toleransının önemi ve mevcut yöntemlerin sınırlılıkları açıklanmakta, ardından tasarlanan işlemcinin bu alandaki katkıları sunulmaktadır.
 
 %------------------------------------------------------------------------
-
-\section{Triple Modular Redundancy (TMR) Uygulaması}\label{sec:tmr}
-
-\subsection{TMR temel prensibi}\label{subsec:tmr_prensip}
-
-% TODO: 3x replikasyon + voting
-
-\subsection{TMR Voter modülü}\label{subsec:tmr_voter}
-
-% TODO: Majority voting implementasyonu
-
-\subsection{TMR uygulanan modüller}\label{subsec:tmr_moduller}
-
-% TODO: Hemen hemen tüm pipeline modülleri
-
-\subsection{Area/resource analizi}\label{subsec:area_analysis}
-
-% TODO: TMR overhead değerlendirmesi
-
+\section{Motivasyon}\label{sec:motivasyon}
 %------------------------------------------------------------------------
 
-\section{Error Correction Codes (ECC) Varsayımı}\label{sec:ecc}
+Modern elektronik sistemlerin güvenilirliği, özellikle uzay, havacılık ve otomotiv gibi kritik uygulamalarda, hataların etkilerinin minimize edilmesiyle doğrudan ilişkilidir. Bu alanlarda çevresel faktörlerden kaynaklanan hatalar, sistemin kararlılığını tehdit edebilmektedir. Bu tür uygulamalarda hata toleransı, hem sistem güvenilirliğini hem de kullanıcı güvenliğini sağlamak için vazgeçilmez bir gereklilik haline gelmiştir \cite{rogenmoser_hmr_2023}.
 
-\subsection{ECC temel prensibi}\label{subsec:ecc_prensip}
+\subsection{Hata Türleri}\label{subsec:fault_types}
 
-% TODO: SECDED kavramı
+Hata toleranslı sistemlerin geliştirilmesinde, hata türlerinin sınıflandırılması büyük önem taşımaktadır. Farklı hata türleri farklı düzeltme yöntemleri gerektirmektedir.
 
-\subsection{ECC varsayılan yapılar}\label{subsec:ecc_yapilar}
+\textbf{Geçici Hatalar (Transient Faults):} Genellikle çevresel faktörlerden kaynaklanan ve kısa sürede etkisini yitiren hatalardır. Tek olay bozulması (Single Event Upset - SEU), kozmik ışınların veya yüksek enerjili parçacıkların yarı iletken malzeme ile etkileşimi sonucu oluşan bit değişikliklerini ifade etmektedir. Çoklu bit bozulması (Multiple Bit Upset - MBU) ise birden fazla bitin aynı anda etkilenmesi durumudur \cite{annink}.
 
-% TODO: Büyük memory blokları (ROB, RS, LSQ, PRF)
+\textbf{Kalıcı Hatalar (Permanent Faults):} Fiziksel donanım arızalarından kaynaklanan ve donanım çalıştığı sürece etkisini sürdüren hatalardır. Bu hatalar, mantık değerlerinin sabit olarak 0 veya 1'de kalmasına (stuck-at fault) neden olmaktadır \cite{vigli_2024}.
 
-\subsection{Implementasyon notu}\label{subsec:ecc_not}
+Santos ve arkadaşları tarafından gerçekleştirilen radyasyon testlerinde, hataların yüzde 78'inin belleklerde, yüzde 15'inin ise yazmaç dosyasında meydana geldiği gözlemlenmiştir \cite{santos_2023}. Bu sonuçlar, bellek yapılarının ve yazmac dosyasının korunmasının kritik önemini ortaya koymaktadır.
 
-% NOT: ECC implementasyonu bu tez kapsamı dışındadır.
-% Tasarımda büyük memory yapılarının ECC korumalı olduğu varsayılmıştır.
+\subsection{Mevcut Hata Toleransı Yöntemleri}\label{subsec:existing_methods}
+
+Hataların tespit ve düzeltilmesi için üç temel yedeklilik yöntemi geliştirilmiştir:
+
+\subsubsection{Uzaysal Yedeklilik}
+
+Uzaysal yedeklilik, bir sistem bileşeninin fiziksel olarak çoğaltılması ve çıkışların karşılaştırılması esasına dayanmaktadır. İkili Modüler Yedeklilik (Dual Modular Redundancy - DMR), iki kopyanın karşılaştırılmasını sağlarken, Üçlü Modüler Yedeklilik (Triple Modular Redundancy - TMR) üç kopyanın çoğunluk oylaması ile tek bir hatanın maskelenmesini mümkün kılmaktadır \cite{lyons_tmr}.
+
+Uzaysal yedeklilik çekirdek seviyesinde veya alt modül seviyesinde uygulanabilmektedir. Çekirdek seviyesi uygulamalar, iki çekirdeğin aynı komutları paralel yürütmesine dayanan İkili Çekirdek Kilitli Adım (Dual Core Lock-Step - DCLS) veya üç çekirdeğin kullanıldığı Üçlü Çekirdek Kilitli Adım (Triple Core Lock-Step - TCLS) olarak bilinmektedir \cite{dorflinger_2022}.
+
+\subsubsection{Zamansal Yedeklilik}
+
+Zamansal yedeklilik, bir işlemin farklı zamanlarda tekrar çalıştırılarak hata tespiti yapılmasına olanak tanımaktadır \cite{rogenmoser_hmr_2023}. Bu yöntem ek donanım gerektirmemekte, ancak performansı önemli ölçüde düşürmektedir. Tedeschi ve arkadaşları, zamansal yedeklilik kullanarak düşük maliyetli hata toleransı sağlayan bir tasarım geliştirmişlerdir \cite{tedeschi_2025}.
+
+\subsubsection{Bilgi Yedekliliği}
+
+Bilgi yedekliliği, hata toleransı sağlamak için ek bitlerin kullanılmasını ifade etmektedir. Hata Düzeltme Kodları (Error Correction Codes - ECC), bu yöntemin en yaygın uygulamasıdır. ECC, uzaysal yedekliliğin mümkün olmadığı veya maliyet-etkin olmadığı büyük bellek yapılarında tercih edilmektedir \cite{li_duckcore}.
 
 %------------------------------------------------------------------------
+\section{Mevcut Yöntemlerin Sınırlılıkları}\label{sec:limitations}
+%------------------------------------------------------------------------
 
-\section{Mod Geçişi ve Kontrolü}\label{sec:mod_gecisi}
+\subsection{DCLS ve TCLS'nin Dezavantajları}\label{subsec:dcls_limitations}
 
-\subsection{Normal moddan güvenli moda geçiş}\label{subsec:transition}
+Çekirdek seviyesi kilitli adım (DCLS/TCLS) yöntemleri, pratik uygulamalarda çeşitli sınırlılıklara sahiptir:
 
-% TODO: Transition protocol
+\begin{enumerate}
+    \item \textbf{Geç hata tespiti:} DCLS ve TCLS, hataları yalnızca çekirdek çıkışında tespit edebilmektedir. Bu durum, hatanın boruhattı içinde yayılmasına ve tespit edilmeden önce birden fazla aşamayı etkilemesine neden olabilmektedir. Dörflinger'in çalışmasında belirtildiği gibi, boruhattının daha derin seviyelerinde bulunan dedektörler, hataları çok daha erken yakalayabilmektedir \cite{dorflinger_2022}.
+    
+    \item \textbf{Yüksek gecikme süresi:} Çekirdek seviyesinde karşılaştırma, tüm boruhattı aşamalarının tamamlanmasını beklemektedir. Bu durum, hata tespit gecikmesini artırmakta ve toparlanma süresini uzatmaktadır.
+    
+    \item \textbf{Performans kaybı:} TCLS yöntemi, üç çekirdeğin aynı komutu yürütmesini gerektirdiğinden, potansiyel işlem gücünün yalnızca üçte biri kullanılabilmektedir. Normal koşullarda bile bu kaynak israfı devam etmektedir.
+    
+    \item \textbf{Sabit mod çalışması:} Geleneksel DCLS/TCLS uygulamaları, performans ve güvenlik arasında dinamik geçiş yapamamaktadır. Sistem ya sürekli yedekli modda çalışmakta ya da koruma olmadan tam performansta çalışmaktadır.
+\end{enumerate}
 
-\subsection{Pipeline state yönetimi}\label{subsec:state_mgmt}
+\subsection{Boruhattı Seviyesi Korumanın Avantajları}\label{subsec:pipeline_level_advantages}
 
-% TODO: State consistency
+Li ve arkadaşlarının geliştirdiği DuckCore mimarisinde gösterildiği gibi, boruhattı seviyesinde hata tespiti önemli avantajlar sunmaktadır \cite{li_duckcore}:
 
-\subsection{Performance impact beklentisi}\label{subsec:perf_impact}
+\begin{itemize}
+    \item \textbf{Erken tespit:} Hatalar, oluştukları aşamada tespit edilebilmekte ve yayılmaları önlenebilmektedir.
+    \item \textbf{Düşük gecikme:} Her aşamada yapılan kontroller, çekirdek çıkışını beklemeyi gerektirmemektedir.
+    \item \textbf{Hedefli düzeltme:} Hangi aşamada hata oluştuğu bilindiğinden, düzeltme mekanizması daha etkin çalışabilmektedir.
+\end{itemize}
 
-% TODO: Latency overhead tahmini
+Dörflinger'in çalışmasında, derin seviye dedektörlerinin (Deep Level Detectors) geçici mantık hatalarının ortalama tespit gecikmesini yüzde 79'a kadar azalttığı gösterilmiştir \cite{dorflinger_2022}. Bu sonuç, boruhattı seviyesi korumanın pratik etkinliğini kanıtlamaktadır.
+
+\subsection{İsteğe Bağlı Yedeklilik İhtiyacı}\label{subsec:odmr_need}
+
+Rogenmoser ve arkadaşları tarafından geliştirilen İsteğe Bağlı Modüler Yedeklilik (On-Demand Modular Redundancy - ODMR) yaklaşımı, yukarıdaki sınırlılıklara çözüm sunmaktadır \cite{rogenmoser_odrg_2022}. Bu yaklaşımda sistem, ihtiyaca göre:
+
+\begin{itemize}
+    \item Kritik görevlerde tam yedeklilik (TMR) modunda,
+    \item Normal koşullarda bağımsız çalışma modunda çalışabilmektedir.
+\end{itemize}
+
+Trikarenos projesi bu esnek yapının somut bir uygulamasıdır. TSMC 28nm teknolojisi ile üretilen bu mikrodenetleyici, yalnızca kritik görevler sırasında tam yedeklilik moduna geçerek enerji tasarrufu sağlamaktadır \cite{trikarenos_2023}.
+
+%------------------------------------------------------------------------
+\section{Üç Yollu Süperölçekli Tasarımın TMR Uygunluğu}\label{sec:superscalar_tmr}
+%------------------------------------------------------------------------
+
+Tasarlanan işlemcinin en temel özelliklerinden biri, üç paralel yürütme kanalına sahip süperölçekli mimarisidir. Bu tasarım kararı, hem performans hem de hata toleransı hedefleri göz önünde bulundurularak verilmiştir.
+
+\subsection{Neden Üç Yollu Süperölçekli?}\label{subsec:why_three_way}
+
+Süperölçekli işlemci tasarımında kanal sayısının belirlenmesi, performans ve karmaşıklık arasındaki dengeye bağlıdır. İki yollu tasarım, TMR için yetersiz kalırken, dört veya daha fazla yol gereksiz karmaşıklık getirmektedir.
+
+Üç yollu tasarımın seçilme nedenleri:
+
+\begin{enumerate}
+    \item \textbf{TMR ile doğal uyumluluk:} Üç kanal, doğrudan TMR yapısına karşılık gelmektedir. Her kanal bir modül olarak düşünüldüğünde, mevcut donanım altyapısı yedeklilik amacıyla yeniden kullanılabilmektedir.
+    
+    \item \textbf{Performans ve maliyet dengesi:} Normal çalışmada üç komut paralel işlenebilmekte (IPC=3), güvenli modda ise aynı donanım hata maskeleme için kullanılmaktadır.
+    
+    \item \textbf{Minimal ek yük:} TMR için gereken oylayıcı (voter) devreleri dışında ek donanım gerekmemektedir. Mevcut süperölçekli altyapı, hem performans hem de güvenlik amacıyla kullanılmaktadır.
+\end{enumerate}
+
+\subsection{Çalışma Modları}\label{subsec:operating_modes}
+
+Tasarlanan işlemci üç farklı çalışma modunu desteklemektedir:
+
+\begin{table}[htbp]
+\centering
+\caption{İşlemci çalışma modları}
+\label{tab:operating_modes}
+\begin{tabular}{|l|c|c|c|p{5cm}|}
+\hline
+\textbf{Mod} & \textbf{Kanal} & \textbf{TMR} & \textbf{IPC} & \textbf{Açıklama} \\
+\hline
+Süperölçekli & 3 bağımsız & Kapalı & 3 & Üç kanal farklı komutları paralel işler \\
+\hline
+Güvenli & 3 kilitli & Açık & 1 & Üç kanal aynı komutu işler, sonuçlar oylanır \\
+\hline
+Düşük Güç & 1 aktif & Kapalı & 1 & Diğer kanallar kapatılarak enerji tasarrufu sağlanır \\
+\hline
+\end{tabular}
+\end{table}
+
+%------------------------------------------------------------------------
+\section{Tasarımın Katkıları}\label{sec:contributions}
+%------------------------------------------------------------------------
+
+Mevcut literatürde, boruhattı seviyesinde TMR uygulayan DuckCore gibi tasarımlar \cite{li_duckcore} ve çekirdek seviyesinde ODMR uygulayan Trikarenos gibi tasarımlar \cite{trikarenos_2023} ayrı ayrı bulunmaktadır. Ancak bu iki yaklaşımın birleştirilmesi, daha önce gerçekleştirilmemiştir.
+
+Bu tezde tasarlanan işlemci, aşağıdaki özgün katkıları sunmaktadır:
+
+\subsection{Boruhattı Seviyesinde TMR ile ODMR Birleşimi}\label{subsec:contribution_combined}
+
+Tasarlanan işlemci, \textbf{hem boruhattı seviyesinde hata tespiti hem de ODMR desteğini} tek bir mimaride birleştirmektedir. Bu kombinasyon:
+
+\begin{itemize}
+    \item DuckCore'un boruhattı seviyesi koruma avantajlarını,
+    \item Trikarenos'un esnek mod geçiş yeteneklerini
+\end{itemize}
+
+tek bir tasarımda sunmaktadır.
+
+\subsection{Düşük Gecikmeli Mod Geçişi}\label{subsec:contribution_low_latency}
+
+Boruhattı seviyesinde TMR uygulaması, modlar arası geçiş gecikmesinin minimize edilmesini sağlamaktadır. Geçiş için:
+
+\begin{itemize}
+    \item Boruhattının boşaltılması gerekmemektedir.
+    \item Çekirdek durumunun senkronizasyonu gerekmemektedir.
+    \item Yalnızca oylayıcı devrelerinin aktifleştirilmesi yeterlidir.
+\end{itemize}
+
+Bu özellik, uygulama ihtiyaçlarına göre hızlı mod değişikliklerini mümkün kılmaktadır.
+
+\subsection{Erken Hata Tespiti}\label{subsec:contribution_early_detection}
+
+Çekirdek seviyesi DCLS/TCLS'den farklı olarak, tasarlanan işlemci hataları boruhattının her aşamasında tespit edebilmektedir. Bu sayede:
+
+\begin{itemize}
+    \item Hatanın yayılması önlenmektedir.
+    \item Tespit gecikmesi minimuma indirilmektedir.
+    \item Toparlanma süresi kısaltılmaktadır.
+\end{itemize}
+
+\subsection{Dinamik Mod Geçişi Altyapısı}\label{subsec:contribution_dynamic}
+
+Tasarlanan mimari, gelecekte otomatik mod geçişini destekleyecek şekilde planlanmıştır. Bu özellik henüz implemente edilmemiş olsa da, altyapı şu senaryoyu destekleyecek şekilde tasarlanmıştır:
+
+\begin{enumerate}
+    \item İşlemci süperölçekli modda çalışırken bile oylayıcılar uyumsuzlukları izlemektedir.
+    \item Belirli bir eşik değerinin üzerinde uyumsuzluk tespit edildiğinde, sistem otomatik olarak güvenli moda geçebilmektedir.
+    \item Radyasyon riski azaldığında, sistem yeniden süperölçekli moda dönebilmektedir.
+\end{enumerate}
+
+Bu yaklaşım, dışarıdan bir müdahale gerektirmeden adaptif hata toleransı sağlama potansiyeli taşımaktadır.
+
+%------------------------------------------------------------------------
+\section{TMR Uygulaması}\label{sec:tmr_implementation}
+%------------------------------------------------------------------------
+
+\subsection{Çoğunluk Oylayıcısı}\label{subsec:voter}
+
+TMR'nin temel bileşeni olan çoğunluk oylayıcısı (majority voter), üç girişten en az ikisinin aynı değeri ürettiği durumda bu değeri çıkış olarak seçmektedir \cite{lyons_tmr}. Matematiksel olarak:
+
+\begin{equation}
+    \textit{Çıkış} = (A \cdot B) + (B \cdot C) + (A \cdot C)
+    \label{eq:majority_vote}
+\end{equation}
+
+Bu denklemde $A$, $B$ ve $C$ üç modülün çıkışlarını, çarpma işlemi mantıksal VE (AND), toplama işlemi ise mantıksal VEYA (OR) işlemini temsil etmektedir.
+
+Tasarımda kullanılan oylayıcı modülü aşağıdaki özelliklere sahiptir:
+
+\begin{itemize}
+    \item \textbf{Parametrik veri genişliği:} 1 bitten 32 bite kadar farklı genişliklerde kullanılabilmektedir.
+    \item \textbf{Baypas modu:} Güvenli mod kapalıyken, birincil giriş doğrudan çıkışa aktarılmaktadır.
+    \item \textbf{Hata raporlama:} Hangi girişin azınlıkta olduğu tespit edilmekte ve raporlanmaktadır.
+    \item \textbf{Kritik hata işareti:} Üç girişin tamamının farklı olduğu durumda uyarı üretilmektedir.
+\end{itemize}
+
+\subsection{Korunan Yapılar}\label{subsec:protected_structures}
+
+Tasarımda maliyet-etkinlik analizi sonucunda, kritik kontrol akışı elemanları TMR ile korunmaktadır. Bu yapılar, hatanın işlemci durumunu bozabileceği noktaları kapsamaktadır:
+
+\textbf{Komut Getirme Aşaması:}
+\begin{itemize}
+    \item Program sayacı
+    \item Komut tamponu işaretçileri (baş ve kuyruk)
+    \item Doluluk sayacı
+\end{itemize}
+
+\textbf{Kod Çözme ve Yeniden Adlandırma Aşaması:}
+\begin{itemize}
+    \item Yazmaç takma ad tablosu işaretçileri
+    \item Serbest yazmaç listesi işaretçileri
+    \item Dal çözümleme tablosu işaretçileri
+\end{itemize}
+
+\textbf{Dağıtım Aşaması:}
+\begin{itemize}
+    \item Yeniden sıralama arabelleği işaretçileri
+    \item Dispatch sinyalleri (güvenli modda)
+\end{itemize}
+
+\textbf{Yürütme ve Bellek Aşamaları:}
+\begin{itemize}
+    \item ALU sonuçları (güvenli modda oylama)
+    \item Yükleme-saklama kuyruğu işaretçileri
+    \item Bellek adresi hesaplamaları
+\end{itemize}
+
+\textbf{Geri Yazma Aşaması:}
+\begin{itemize}
+    \item Kesinleştirme kararları
+    \item Mimari durum güncellemeleri
+\end{itemize}
+
+Her korunan yapı için üç kopya tutulmakta ve her okuma işleminde çoğunluk oylaması yapılmaktadır. Yazma işlemlerinde üç kopya da aynı değerle güncellenmektedir.
+
+%------------------------------------------------------------------------
+\section{Büyük Bellek Yapıları için ECC Varsayımı}\label{sec:ecc}
+%------------------------------------------------------------------------
+
+Büyük bellek yapılarına TMR uygulanması, yüzde 200 alan maliyeti getirmektedir. Bu yapılar için ECC çok daha verimli bir alternatif sunmaktadır.
+
+Dörflinger'in belirttiği gibi, bellekler için tam veri yedekleri yerine ECC kullanılması kaynak kullanımını önemli ölçüde azaltmaktadır \cite{dorflinger_2022}. Annink'in çalışmasında, ECC eklenmesinin ulaşılabilir frekansı yüzde 20 düşürdüğü ve alan ek yükünün yüzde 33.7 olduğu belirtilmiştir \cite{annink}. Bu değerler, TMR'nin yüzde 200 alan ek yüküne kıyasla kabul edilebilir düzeydedir.
+
+Tasarımda aşağıdaki büyük bellek yapılarının ECC korumalı olduğu varsayılmaktadır:
+
+\begin{itemize}
+    \item Yeniden sıralama arabelleği (ROB) veri alanları
+    \item Rezervasyon istasyonları (RS) veri alanları
+    \item Yükleme-saklama kuyruğu (LSQ) veri alanları
+    \item Fiziksel yazmaç dosyası (PRF)
+\end{itemize}
+
+\textbf{Not:} ECC implementasyonu bu tez kapsamı dışındadır ve gelecek çalışma olarak önerilmektedir.
+
+%------------------------------------------------------------------------
+\section{Sonuç}\label{sec:ch4_conclusion}
+%------------------------------------------------------------------------
+
+Bu bölümde, tasarlanan süperölçekli RISC-V işlemcisine uygulanan isteğe bağlı yedeklilik tekniği sunulmuştur. Tasarımın temel katkıları şunlardır:
+
+\begin{enumerate}
+    \item \textbf{Üç yollu süperölçekli mimarinin TMR için yeniden kullanımı:} Mevcut donanım altyapısı, minimal ek yük ile hem performans hem de güvenlik amacıyla kullanılabilmektedir.
+    
+    \item \textbf{Boruhattı seviyesinde TMR ile ODMR birleşimi:} DuckCore'un erken hata tespiti avantajları ile Trikarenos'un esnek mod geçiş yetenekleri tek bir mimaride birleştirilmiştir.
+    
+    \item \textbf{Düşük gecikmeli mod geçişi:} Boruhattı seviyesi uygulama, modlar arası geçişin minimum gecikme ile gerçekleştirilmesini sağlamaktadır.
+    
+    \item \textbf{Dinamik mod geçişi altyapısı:} Gelecekte otomatik hata tespiti ve mod geçişini destekleyecek mimari altyapı hazırlanmıştır.
+\end{enumerate}
+
+Bu yaklaşım, literatürde önerilen ``süperölçekli çekirdeğin boruhattı seviyesinde TMR ve ODMR ile birleştirilmesi'' fikrini ilk kez hayata geçirmektedir. Sonuç olarak, hem kritik görevlerde hata toleransı sağlayan hem de normal koşullarda tam süperölçekli performans sunan esnek bir işlemci mimarisi elde edilmiştir.
