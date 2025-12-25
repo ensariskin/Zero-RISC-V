@@ -257,6 +257,88 @@ Tasarımda aşağıdaki büyük bellek yapılarının ECC korumalı olduğu vars
 \textbf{Not:} ECC implementasyonu bu tez kapsamı dışındadır ve gelecek çalışma olarak önerilmektedir.
 
 %------------------------------------------------------------------------
+\section{BRAT ile Kritik Hata Toparlanması}\label{sec:brat_recovery}
+%------------------------------------------------------------------------
+
+Bölüm \ref{subsec:brat}'te açıklanan Dal Çözümleme Takma Ad Tablosu (BRAT), yanlış dal tahmini durumunda hızlı toparlanma için tasarlanmıştır. Ancak bu yapı, güvenli modda kritik hataların toparlanması için de kullanılabilmektedir. Bu yaklaşım, mevcut donanım altyapısının hata toleransı amacıyla yeniden kullanılmasının somut bir örneğini oluşturmaktadır.
+
+\subsection{BRAT'ın İkili Kullanımı}\label{subsec:brat_dual_use}
+
+BRAT, normal modda her dallanma komutu için checkpoint almaktadır. Ancak güvenli modda hatalar yalnızca yanlış tahmin kaynaklı değil, aynı zamanda SEU ve MBU gibi radyasyon etkilerinden de kaynaklanabilmektedir.
+
+BRAT, diğer hevesli yanlış tahmin toparlanma yöntemlerine göre daha fazla alan gerektirmektedir. Bununla birlikte, aynı yapının radyasyon kaynaklı hataların toparlanmasında da kullanılabilmesi, bu ek alan maliyetini haklı kılmaktadır. Tek bir donanım yapısı ile hem dal spekülasyonu hem de hata toleransı sağlanmaktadır.
+
+\subsection{Güvenli Mod Checkpoint Stratejisi}\label{subsec:secure_checkpoint}
+
+Normal modda yalnızca dallanma ve atlama komutları için checkpoint alınmaktadır. Güvenli modda ise önerilen yaklaşım, \textbf{her komut için checkpoint almaktır}. Bu strateji sayesinde:
+
+\begin{itemize}
+    \item Herhangi bir komutta kritik hata tespit edildiğinde, o komutun durumuna geri dönülebilmektedir.
+    \item Toparlanma gecikmesi minimize edilmektedir çünkü en güncel checkpoint her zaman mevcuttur.
+    \item Yanlış tahmin toparlanması ile aynı mekanizma kullanılmaktadır.
+\end{itemize}
+
+On altı girişlik BRAT kapasitesi, bu strateji için yeterlidir. Güvenli modda IPC değeri 1 olduğundan ve komutlar sıralı olarak işlendiğinden, boruhattı derinliği kadar checkpoint yeterli olmaktadır.
+
+\subsection{Kritik Hata Tespit ve Toparlanma Akışı}\label{subsec:fatal_recovery_flow}
+
+İşlemci güvenli modda çalışırken, TMR mekanizması tek bitlik hataları maskeleyebilmektedir. Ancak birden fazla biti etkileyen veya ilişkili sinyalleri bozan hatalar, üç kopyanın da farklı değerler üretmesine neden olabilmektedir. Bu durum, TMR tarafından düzeltilemeyen ``kritik hata'' (fatal error) olarak sınıflandırılmaktadır.
+
+Tasarımda, boruhattının farklı aşamalarına dağılmış TMR modülleri kritik hata tespit ettiğinde bir sinyal üretmektedir. Bu sinyal, toparlanma mekanizmasını tetiklemektedir. Toparlanma akışı şu şekilde gerçekleşmektedir:
+
+\begin{enumerate}
+    \item \textbf{Kritik hata tespiti:} Herhangi bir aşamadaki TMR modülü, üç kopyanın da farklı olduğunu tespit eder ve kritik hata sinyalini aktifleştirir.
+    
+    \item \textbf{İlgili komutun belirlenmesi:} Hatalı komuta atanmış fiziksel yazmaç adresi, BRAT'teki ilgili checkpoint'a erişmek için kullanılır.
+    
+    \item \textbf{Checkpoint'tan geri yükleme:} BRAT'ten yazmaç takma ad tablosu anlık görüntüsü ve program sayacı değeri alınır.
+    
+    \item \textbf{Boruhattı temizleme:} Hatalı komuttan sonra işlenen tüm spekülatif komutlar temizlenir.
+    
+    \item \textbf{Yeniden başlatma:} Program sayacı, hatalı komutun adresine ayarlanır ve komut bellekten yeniden getirilir.
+\end{enumerate}
+
+Bu mekanizma, yanlış tahmin toparlanmasıyla aynı donanım yollarını kullanmaktadır. Dolayısıyla, \textbf{kritik hata toparlanma cezası, yanlış tahmin cezasına eşit veya daha düşüktür}.
+
+\subsection{Boruhattı Seviyesi Korumanın Avantajı}\label{subsec:pipeline_protection_advantage}
+
+Bu yaklaşım, hata algılama ve toparlanmanın boruhattı seviyesinde yapılmasının somut avantajlarını göstermektedir:
+
+\begin{itemize}
+    \item \textbf{Hızlı tespit:} Hata, oluştuğu aşamada anında tespit edilmektedir. Çekirdek çıkışına kadar beklemek gerekmemektedir.
+    
+    \item \textbf{Düşük toparlanma gecikmesi:} BRAT mekanizması sayesinde toparlanma tek saat çevriminde başlatılabilmektedir.
+    
+    \item \textbf{Minimal performans kaybı:} Toparlanma cezası, tipik bir yanlış tahmin cezasından daha düşüktür.
+    
+    \item \textbf{Mevcut altyapı kullanımı:} Ek donanım yerine, zaten mevcut olan BRAT yapısı kullanılmaktadır.
+\end{itemize}
+
+\subsection{Fiziksel Adres Bozulması Durumu}\label{subsec:address_corruption}
+
+Nadir durumlarda, hatalı komuta ait fiziksel yazmaç adresi de bozulabilmektedir. Bu durumda, hangi checkpoint'a dönüleceği belirlenememektedir. Bu senaryoya karşı alternatif bir mekanizma tasarlanmıştır:
+
+BRAT girişleri, büyük bellek yapılarıyla birlikte ECC koruması altında olduğu varsayılmaktadır. Ayrıca, BRAT'ın baş işaretçisinde bulunan ve belirli bir zaman aşımı süresince sonuçlanmayan komutlar, potansiyel olarak bozulmuş kabul edilebilmektedir.
+
+Bu durumda bile, BRAT'teki en eski geçerli checkpoint ve doğru program sayacı değeri kullanılarak program en az kayıpla yeniden başlatılabilmektedir. Bu yaklaşım, tamamen sistem yeniden başlatmasına kıyasla çok daha hızlı ve verimli bir toparlanma sağlamaktadır.
+
+\textbf{Not:} Zaman aşımı tabanlı mekanizma henüz test edilmemiştir ve gelecek çalışma olarak önerilmektedir.
+
+\subsection{Dinamik Mod Geçişi Potansiyeli}\label{subsec:dynamic_mode_potential}
+
+Tasarlanan mimari, henüz implemente edilmemiş olsa da, gelecekte dışarıdan müdahale gerektirmeden otomatik mod geçişini destekleyecek şekilde planlanmıştır:
+
+\begin{enumerate}
+    \item İşlemci süperölçekli modda çalışırken bile, oylayıcılar uyumsuzlukları algılayabilmektedir (baypas modunda bile karşılaştırma yapılabilmektedir).
+    
+    \item Belirli bir zaman diliminde eşik değerinin üzerinde uyumsuzluk tespit edildiğinde, sistem otomatik olarak güvenli moda geçebilmektedir.
+    
+    \item Radyasyon riski azaldığında ve uyumsuzluk oranı düştüğünde, sistem yeniden süperölçekli moda dönebilmektedir.
+\end{enumerate}
+
+Bu yaklaşım, adaptif hata toleransı sağlama potansiyeli taşımakta olup, gelecek çalışmalar için önemli bir araştırma yönü oluşturmaktadır.
+
+%------------------------------------------------------------------------
 \section{Sonuç}\label{sec:ch4_conclusion}
 %------------------------------------------------------------------------
 
@@ -268,6 +350,8 @@ Bu bölümde, tasarlanan süperölçekli RISC-V işlemcisine uygulanan isteğe b
     \item \textbf{Boruhattı seviyesinde TMR ile ODMR birleşimi:} DuckCore'un erken hata tespiti avantajları ile Trikarenos'un esnek mod geçiş yetenekleri tek bir mimaride birleştirilmiştir.
     
     \item \textbf{Düşük gecikmeli mod geçişi:} Boruhattı seviyesi uygulama, modlar arası geçişin minimum gecikme ile gerçekleştirilmesini sağlamaktadır.
+    
+    \item \textbf{BRAT ile kritik hata toparlanması:} Yanlış tahmin toparlanması için tasarlanan BRAT yapısı, radyasyon kaynaklı kritik hataların toparlanmasında da kullanılmaktadır. Tek donanım yapısı ile ikili işlevsellik sağlanmaktadır.
     
     \item \textbf{Dinamik mod geçişi altyapısı:} Gelecekte otomatik hata tespiti ve mod geçişini destekleyecek mimari altyapı hazırlanmıştır.
 \end{enumerate}

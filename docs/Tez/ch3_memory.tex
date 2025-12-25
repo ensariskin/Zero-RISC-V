@@ -14,7 +14,7 @@ Tasarlanan sistemde yükleme saklama kuyruğu, bellek işlemlerinin sıralanmas�
 
 Yükleme saklama kuyruğu, otuz iki girişlik bir dairesel tampon olarak gerçeklenmiştir. Bu yapı, basitleştirilmiş bir tasarım olup gömülü uygulamalar için yeterli performansı sağlamaktadır.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: LSQ Dairesel Yapısı - 3 Baş İşaretçisi (Head Pointers), Kuyruk (Tail), 3-port paralel erişim]}}
     \caption{Yükleme saklama kuyruğu dairesel tampon yapısı}
@@ -71,7 +71,7 @@ Boyut kontrolünün gerekliliği, saklamanın yüklemenin ihtiyaç duyduğu tüm
 
 İletme yapılamıyorsa ancak potansiyel bir bağımlılık varsa yükleme beklemektedir. Bekleme koşulları arasında eski saklamanın verisinin hazır olmaması veya adres eşleşmesi olup boyutun yetersiz ve saklamanın henüz gönderilmemiş olması bulunmaktadır. Saklamadan yüklemeye iletme ve bekleme koşulları Çizelge \ref{tab:fwd_stall_rules}'de özetlenmiştir.
 
-\begin{table}[H]
+\begin{table}[htbp]
     \centering
     \caption{Saklamadan yüklemeye iletme ve bekleme kuralları.}
     \label{tab:fwd_stall_rules}
@@ -90,7 +90,7 @@ Boyut kontrolünün gerekliliği, saklamanın yüklemenin ihtiyaç duyduğu tüm
     \end{tabular}
 \end{table}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Saklamadan Yüklemeye İletme - Adres CAM (Content Addressable Memory) yapısı, Çakışma tespiti ve Veri MUX'lama]}}
     \caption{Saklamadan yüklemeye iletme mantığı}
@@ -103,7 +103,7 @@ Boyut kontrolünün gerekliliği, saklamanın yüklemenin ihtiyaç duyduğu tüm
 
 Yükleme saklama kuyruğu, üç bağımsız bellek portu desteklemektedir. Her port için istek geçerlilik sinyali, yazma etkinleştirme sinyali, bellek adresi, yazma verisi ve bayt etkinleştirme sinyalleri çıkış olarak bulunmaktadır. Giriş olarak bellek hazır sinyali, yanıt geçerlilik sinyali ve okuma verisi bulunmaktadır.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Bellek Arayüzü Sinyalleri - LSQ ile Veri Belleği (D-Cache) arasındaki Request/Ready/Response sinyalleri]}}
     \caption{İşlemci ve bellek arayüzü sinyalleri}

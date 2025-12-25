@@ -16,7 +16,7 @@ Bu aşama, komut arabelleğinden üç komut almakta ve her biri için aşağıda
 
 Tasarlanan sistemde dağıtım aşaması üç ana bileşenden oluşmaktadır: yeniden sıralama arabelleği, rezervasyon istasyonları ve fiziksel yazmaç dosyası.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Dağıtım Aşaması Genel Yapısı - RS, ROB, PRF ve CDB Bağlantıları]}}
     \caption{Dağıtım aşaması ve veri kontrol mekanizmaları}
@@ -43,7 +43,7 @@ Rezervasyon istasyonları, Tomasulo algoritmasının temelini oluşturmaktadır 
 
 Tasarlanan sistemde üç ayrı rezervasyon istasyonu bulunmaktadır ve her biri tek bir yürütme birimine bağlıdır. Her rezervasyon istasyonu aşağıdaki bilgileri saklamaktadır: dolu bayrağı, kontrol sinyalleri, program sayacı değeri, sabit değer, hedef fiziksel yazmaç adresi, birinci ve ikinci operand verisi ve etiketi, saklama verisi, dal tahmin bilgileri ve yükleme saklama kuyruğu tahsis etiketi.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Rezervasyon İstasyonu (RS) Giriş Yapısı - Operand Etiketleri, Veri Alanları, Meşgul Bitleri]}}
     \caption{Rezervasyon istasyonu giriş formatı}
@@ -56,7 +56,7 @@ Tomasulo algoritmasının temel mekanizması olan etiket sistemi, üretici-tüke
 
 Etiket değeri sıfır olduğunda operand sıfırıncı aritmetik mantık biriminden beklenmektedir. Etiket değeri bir olduğunda birinci aritmetik mantık biriminden, iki olduğunda ikinci aritmetik mantık biriminden beklenmektedir. Etiket değeri üç olduğunda operand yükleme saklama kuyruğundan beklenmekte ve bu durumda yeniden sıralama arabelleği kimliği ile eşleştirme yapılmaktadır. Etiket değeri yedi olduğunda operand hazırdır ve değer doğrudan kullanılabilmektedir. Bu değerler Çizelge \ref{tab:tag_encoding}'de özetlenmiştir.
 
-\begin{table}[H]
+\begin{table}[htbp]
     \centering
     \caption{Operand etiketi değerleri ve anlamları.}
     \label{tab:tag_encoding}
@@ -111,7 +111,7 @@ Yeniden sıralama arabelleği, otuz iki girişlik bir dairesel tampon olarak ger
 
 Etiket değeri yedi olduğunda sonuç hazırdır ve kesinleştirilebilmektedir. Diğer etiket değerleri, sonucun hangi işlevsel birimden beklediğini göstermektedir.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: ROB Giriş Yapısı - Durum bitleri, İstisna alanları, Fiziksel yazmaç ve Mimari yazmaç alanları]}}
     \caption{Yeniden sıralama arabelleği (ROB) giriş yapısı}
@@ -148,7 +148,7 @@ Sonraki üç kanal yükleme saklama kuyruğundan gelmektedir. Bu kanallar, her �
 
 Her ortak veri yolu kanalı aşağıdaki sinyalleri taşımaktadır: geçerlilik sinyali, otuz iki bitlik sonuç verisi, hedef fiziksel yazmaç adresi, yanlış tahmin bayrağı ve dallanma komutu bayrağı. Bu sinyaller, hem rezervasyon istasyonlarına hem de yeniden sıralama arabelleğine paralel olarak iletilmektedir.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Ortak Veri Yolu (CDB) Ağı - Yayınlanan sonuçların (Broadcast) RS, ROB ve LSQ'ya dağılımı]}}
     \caption{Ortak veri yolu (CDB) yayın ağı ve bağlantıları}

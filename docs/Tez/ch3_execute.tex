@@ -12,7 +12,7 @@ Tasarlanan üç yollu süperölçekli yapıda, üç bağımsız işlevsel birim 
 
 Her işlevsel birim, bir aritmetik mantık birimi, bir kaydırıcı ve bir dal denetleyicisinden oluşmaktadır. Bu bileşenler, RV32I temel komut setinin tüm aritmetik, mantıksal ve kontrol akışı işlemlerini desteklemektedir.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: İşlevsel Birim İç Yapısı - ALU, Shifter ve Branch Controller alt birimleri, MUX ve çıkışlar]}}
     \caption{İşlevsel birim (Functional Unit) iç yapısı}
@@ -31,7 +31,7 @@ Aritmetik ve mantıksal birimlerin ayrı tutulmasının birkaç önemli nedeni b
 
 İşlev seçim sinyali, kontrol kelimesinin onuncu ile yedinci bitleri arasından alınmaktadır. Değer sıfır olduğunda toplama, bir olduğunda çıkarma, iki olduğunda işaretli karşılaştırma, üç olduğunda işaretsiz karşılaştırma, dört olduğunda özel VEYA, beş olduğunda VEYA ve altı olduğunda VE işlemi seçilmektedir (Çizelge \ref{tab:alu_ops}).
 
-\begin{table}[H]
+\begin{table}[htbp]
     \centering
     \caption{ALU işlev seçim sinyalleri ve operasyonlar.}
     \label{tab:alu_ops}
@@ -86,7 +86,7 @@ Yanlış tahmin, gerçek dal sonucu ile tahmin edilen sonucun karşılaştırıl
 
 Dolaylı atlama komutları için özel kontrol yapılmasının nedeni, bu komutların hem yön hem de hedef adres tahmini gerektirmesidir. Dallanma komutlarında yalnızca yönün doğru tahmin edilmesi yeterliyken, dolaylı atlama komutlarında hedef adresin de doğru tahmin edilmesi gerekmektedir. Hesaplanan hedef adres, birinci kaynak yazmacı ile sabit değerin toplamıdır. Bu değer tahmin edilen hedef adresten farklıysa yanlış tahmin oluşmaktadır.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Dal Çözümleme Mantığı - Tahmin edilen (PC+Ofset / Tahmin) ve Gerçek (ALU sonucu) karşılaştırması, Yanlış tahmin sinyal üretimi]}}
     \caption{Dal çözümleme ve yanlış tahmin tespit mekanizması}

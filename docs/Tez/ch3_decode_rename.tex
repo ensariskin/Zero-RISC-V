@@ -8,7 +8,7 @@ Decode \& Rename aşaması, komut arabelleğinden alınan komutların kod çözm
 
 Tasarlanan sistemde Decode \& Rename aşaması beş ana bileşenden oluşmaktadır: paralel komut kod çözücüleri, yazmaç takma ad tablosu, serbest yazmaç listesi yöneticisi, yükleme saklama kuyruğu adres tahsis birimi ve dal çözümleme takma ad tablosu.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Decode \& Rename Akış Diyagramı - 3 Paralel Kod Çözücü, RAT Okuma/Yazma, Free List Etkileşimi]}}
     \caption{Kod çözme ve yeniden adlandırma aşaması genel akışı}
@@ -65,7 +65,7 @@ Altmış dört fiziksel yazmaç iki bölgeye ayrılmaktadır. Sıfırdan otuz bi
 
 Yazmaç Takma Ad Tablosu, otuz iki mimari yazmacın her birinin hangi fiziksel yazmaca eşlendiğini takip eden bir yapıdır.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: RAT Eşleme Yapısı - Mimari Yazmaçlar (0-31) -> Fiziksel Yazmaçlar (0-63), Valid Bitleri, 3 Yazma / 6 Okuma Portu]}}
     \caption{Yazmaç takma ad tablosu (RAT) yapısı}
@@ -84,7 +84,7 @@ Bu gereksinim, aynı çevrim iletme mantığı ile karşılanmaktadır. Kaynak y
 
 Çizelge \ref{tab:same_cycle_fwd}'de aynı çevrim iletme mantığının çalışma şekli özetlenmektedir. İkinci ve üçüncü komutlar için kaynak yazmaç adresleri, önceki komutların hedef yazmaçlarıyla karşılaştırılmaktadır.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \caption{Aynı çevrim iletme mantığı.}
 \label{tab:same_cycle_fwd}
@@ -116,7 +116,7 @@ Serbest listesinin üç paralel okuma portu, her çevrimde en fazla üç yeni fi
 
 Serbest liste doluluk durumu, yeniden adlandırma hazırlığını belirlemektedir. Eğer yeterli sayıda serbest fiziksel yazmaç yoksa, yeni komutların decode aşamasına kabul edilmesi durdurulmaktadır. Hazırlık sinyali, serbest listedeki mevcut giriş sayısına göre belirlenmekte ve her kanal için ayrı ayrı üretilmektedir.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Dairesel Tampon Serbest Liste - Okuma/Yazma İşaretçileri, Index-as-Value Prensibi, 3-wide Allocation]}}
     \caption{Dairesel tampon tabanlı serbest liste (Free List) yapısı}
@@ -147,7 +147,7 @@ Bu eliminasyon sayesinde, yalnızca gerçek veri bağımlılıkları olan Okuma 
 
 Yazmaç yeniden adlandırma işleminin bir örneği Çizelge \ref{tab:rename_example}'de gösterilmektedir.
 
-\begin{table}[H]
+\begin{table}[htbp]
     \centering
     \caption{Örnek komut dizisi için yazmaç yeniden adlandırma işlemi.}
     \label{tab:rename_example}
@@ -186,7 +186,7 @@ Dal Çözümleme Takma Ad Tablosu, on altı girişlik bir dairesel tampon olarak
 
 Kaydedilen bilgiler arasında otuz iki mimari yazmacın fiziksel eşlemesi, dal komutunun fiziksel yazmaç adresi, tahmin anındaki program sayacı değeri, küresel dal geçmişi, dolaylı atlama bayrağı ve dönüş adresi yığını tepe işaretçisi bulunmaktadır.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: BRAT Snapshot Yapısı - Her dal için RAT kopyası, GHR, TOS ve PC saklama]}}
     \caption{Dal çözümleme takma ad tablosu (BRAT) ve anlık görüntü yapısı}
@@ -198,6 +198,16 @@ Fiziksel yazmaç adresi, yeniden sıralama arabelleği indeksi olarak da kullan�
 On altı giriş kapasitesinin belirlenmesinde güvenli mod gereksinimi etkili olmuştur. Normal çalışmada sekiz hatta dört girişlik bir tampon bile performans kaybına neden olmadan kullanılabilmektedir; tipik programlarda bu kadar derin dal spekülasyonu nadir görülmektedir. Ancak güvenli modda bu yapı her komut için kullanıldığından, daha büyük bir kapasite gerekmektedir.
 
 Üç paralel push arayüzü ile her saat çevriminde en fazla üç dallanma komutu için checkpoint alınabilmektedir. Bu kapasite, üç yollu süperölçekli yapıyla uyumludur.
+
+\subsubsection{Anlık Görüntülerin Güncellenmesi}\label{subsubsec:snapshot_update}
+
+Anlık görüntüler alındıktan sonra, kesinleştirme (commit) işlemleri yazmaç takma ad tablosunu değiştirmektedir. Bu değişikliklerin anlık görüntülere de yansıtılması gerekmektedir; aksi takdirde, toparlanma durumunda kesinleştirilmiş komutların sonuçları kaybolabilir.
+
+Her kesinleştirme işleminde, yeniden sıralama arabelleğindeki değer fiziksel yazmaç dosyasına aktarılmaktadır. Bu geçiş, yazmaç takma ad tablosundaki eşlemeleri de etkilemektedir. Aynı güncelleme, tüm aktif anlık görüntülere paralel olarak uygulanmaktadır.
+
+Güncelleme mantığı şu şekilde çalışmaktadır: Kesinleştirilen komutun hedef mimari yazmacı ve eski fiziksel yazmaç adresi bilinmektedir. Tüm anlık görüntülerde, ilgili mimari yazmacın eşlemesi kontrol edilmektedir. Eğer eşleme, kesinleştirilen yeniden sıralama arabelleği indeksine işaret ediyorsa, bu eşleme yazmaç dosyasını gösterecek şekilde güncellenmektedir.
+
+Bu mekanizma sayesinde, herhangi bir anlık görüntüye geri dönüldüğünde, o ana kadar kesinleştirilmiş tüm komutların sonuçları korunmaktadır. Yalnızca spekülatif olarak yürütülmüş ancak henüz kesinleştirilmemiş komutların etkileri geri alınmaktadır.
 
 \subsubsection{Sıralı Sonuçlanma Mekanizması}\label{subsubsec:inorder_resolution}
 

@@ -10,7 +10,7 @@ Komut getirme aşaması, süperölçekli işlemcinin boruhattındaki ilk aşamad
 
 Çoklu getirme birimi, süperölçekli işlemcinin komut seviyesi paralelliğinden yararlanabilmesi için tasarlanmış merkezi koordinasyon birimidir. Bu modül, her saat çevriminde bellekten beş komut getirme kapasitesine sahiptir ve getirilen komutların geçerliliğini dal tahmin sonuçlarına göre dinamik olarak belirlemektedir.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Çoklu Getirme Birimi Şeması - 5-genişlikli fetch mantığı, PC, PC+4..PC+16 Artırma, Instruction Memory Bağlantısı]}}
     \caption{Çoklu getirme birimi ve paralel komut erişimi yapısı}
@@ -32,7 +32,7 @@ Paralel komut getirme mekanizması, ardışık beş bellek adresine eş zamanlı
 Getirilen komutların geçerliliği, dal tahmin sonuçlarına bağlı olarak belirlenmektedir. Herhangi bir komut için dallanma veya atlama tahmini ``alınacak'' sonucunu verdiğinde, bu komutun ardından gelen tüm komutlar otomatik olarak geçersiz işaretlenmektedir. Bu komutların sonraki aşamalara iletilmemesinin nedeni, bu komutların işlenmemesi gerektiğinin tahmin edilmesidir; eğer bu komutlar sonraki aşamalara iletilseydi, işlemci yanlış program akışını izleyerek hatalı çalışırdı.
 
 % TODO: Buraya görsel eklenecek - 5 komuttan 2. komut taken branch olacak, sonrakilerin geçersiz olduğunu gösterecek
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
 \fbox{\textbf{[GÖRSEL PLACEHOLDER: 5 komuttan 2. komut taken branch, sonrakiler geçersiz]}}
 \caption{Dallanma komutu nedeniyle sonraki komutların geçersizleşmesi}
@@ -114,7 +114,7 @@ Tasarlanan sistemde iki ana tahmin mekanizması bulunmaktadır: koşullu dallanm
 
 Turnuva tahmincisi, iki farklı tahmin mekanizmasını birleştirerek her birinin güçlü yönlerinden yararlanmaktadır. Bu hibrit yaklaşım, farklı dal davranış kalıplarına uyum sağlama kapasitesi sunmaktadır.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Turnuva Tahmincisi Yapısı - GShare, 2-bit Counter ve Seçici (Selector) tablolarının blok şeması]}}
     \caption{Turnuva tahmincisi mimarisi}
@@ -152,7 +152,7 @@ Dolaylı atlama komutları, hedef adresini bir yazmaçtan okuduğundan derleme z
 
 JALR tahmincisi iki temel bileşenden oluşmaktadır: JALR hedef tamponu ve dönüş adresi yığını.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: JALR Tahmincisi ve RAS - Hedef Önbelleği (Target Cache) ve Dönüş Adresi Yığını (RAS) yapısı]}}
     \caption{Dolaylı atlama tahmincisi ve dönüş adresi yığını}
@@ -175,7 +175,7 @@ Tasarlanan sistemde dönüş adresi yığını sekiz giriş derinliğindedir. Sp
 
 Komut tamponu, komut getirme ve kod çözme aşamaları arasında ayrıştırma sağlayan bir ilk giren ilk çıkar yapısıdır. Bu ayrıştırma, her iki aşamanın farklı hızlarda çalışmasına olanak tanımakta ve boruhattı verimliliğini artırmaktadır.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
     \fbox{\textbf{[GÖRSEL: Komut Tamponu Yapısı - Dairesel Tampon, Baş/Kuyruk İşaretçileri, Giriş Formatı (Instr, PC, Pred Info)]}}
     \caption{Komut tamponu dairesel yapısı ve giriş formatı}
