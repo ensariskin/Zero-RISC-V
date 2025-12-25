@@ -18,7 +18,7 @@
 |------|-------|
 | **TMR (Triple Modular Redundancy)** | ✅ Hemen hemen her modülde uygulandı |
 | **ECC (Error Correction Codes)** | ⚠️ Büyük memory yapılarında ECC varsayıldı, implementasyon **KAPSAM DIŞI** |
-| **Sentez** | ❌ Henüz yapılmadı |
+| **Sentez** | ✅ TSMC 16nm LVT, 1GHz başarıyla sentezlendi |
 | **Sonuç verileri** | Simülasyon/test sonuçları kullanılacak |
 
 ---
@@ -320,7 +320,7 @@
 ---
 
 ### BÖLÜM 5: DOĞRULAMA VE SONUÇLAR [TERCİH]
-**Tahmini Sayfa: 10-15 sayfa**
+**Tahmini Sayfa: 15-20 sayfa**
 
 | Alt Başlık | İçerik |
 |------------|--------|
@@ -330,13 +330,20 @@
 | 5.1.3 Functional verification | Instruction-level, pipeline-level doğrulama |
 | **5.2 Test Sonuçları** | |
 | 5.2.1 Fonksiyonel doğruluk | Test geçme oranları |
-| 5.2.2 Branch prediction accuracy | Tournament predictor başarı oranı (varsa) |
+| 5.2.2 Branch prediction accuracy | 2-bit counter başarı oranı |
 | 5.2.3 Normal mod vs Güvenli mod | Karşılaştırmalı analiz |
-| **5.3 Tartışma** | |
-| 5.3.1 Sonuçların değerlendirilmesi | Test sonuçlarının yorumu |
-| 5.3.2 Kısıtlamalar | Simülasyon tabanlı değerlendirme sınırları |
-
-> **NOT:** Sentez yapılmadığı için bu bölüm simülasyon/test sonuçlarına odaklanacak.
+| **5.3 Sentez Sonuçları** | |
+| 5.3.1 Teknoloji ve araçlar | TSMC 16nm, LVT hücreleri |
+| 5.3.2 Frekans ve zamanlama | 1GHz hedef frekans başarısı |
+| 5.3.3 Kritik yol analizi | BRAT → LSQ yolu, darboğaz analizi |
+| 5.3.4 Alan kullanımı | Hücre sayısı, modül bazlı dağılım |
+| 5.3.5 Güç tüketimi | (varsa) Statik/dinamik güç |
+| **5.4 Karşılaştırmalı Değerlendirme** | |
+| 5.4.1 Literatürdeki tasarımlarla karşılaştırma | BOOM, RSD vb. ile karşılaştırma |
+| 5.4.2 TMR overhead analizi | Normal vs Güvenli mod kaynak kullanımı |
+| **5.5 Tartışma** | |
+| 5.5.1 Sonuçların değerlendirilmesi | Test ve sentez sonuçlarının yorumu |
+| 5.5.2 Kısıtlamalar | Place & Route yapılmadı, post-synthesis timing |
 
 ---
 
@@ -347,7 +354,7 @@
 |------------|--------|
 | 6.1 Sonuçların Değerlendirilmesi | Tezin ana bulgularının özeti |
 | 6.2 Katkılar | 3-way superscalar + on-demand TMR kombinasyonu |
-| 6.3 Kısıtlamalar | ECC implementasyonu yok, sentez yok |
+| 6.3 Kısıtlamalar | ECC implementasyonu yok, P&R yapılmadı |
 | 6.4 Gelecek Çalışmalar | ECC implementasyonu, M/F extension, cache, FPGA sentezi |
 
 ---
