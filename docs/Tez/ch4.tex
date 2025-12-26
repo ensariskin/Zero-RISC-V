@@ -3,7 +3,7 @@
 \chapter{İSTEĞE BAĞLI YEDEKLİLİK TEKNİĞİ}\label{ch:redundancy}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Bu bölümde, tasarlanan süperölçekli RISC-V işlemcisine uygulanan isteğe bağlı yedeklilik tekniği detaylı olarak ele alınmaktadır. Öncelikle hata toleransının önemi ve mevcut yöntemlerin sınırlılıkları açıklanmakta, ardından tasarlanan işlemcinin bu alandaki katkıları sunulmaktadır.
+Bu bölümde, tasarlanan süperölçekli RISC-V işlemcisine uygulanan isteğe bağlı yedeklilik tekniği detaylı olarak ele alınmaktadır. Öncelikle hata toleransının önemi ve mevcut yöntemlerin sınırlılıkları açıklanmakta, ardından tasarlanan işlemcinin bu alandaki katkıları sunulmaktadır. Bu çalışma, daha önce yayınlanan bir literatür taramasında önerilen araştırma yönünün uygulamasını oluşturmaktadır \cite{iskin_fault_tolerance_2024}.
 
 %------------------------------------------------------------------------
 \section{Motivasyon}\label{sec:motivasyon}
@@ -125,7 +125,7 @@ Düşük Güç & 1 aktif & Kapalı & 1 & Diğer kanallar kapatılarak enerji tas
 \section{Tasarımın Katkıları}\label{sec:contributions}
 %------------------------------------------------------------------------
 
-Mevcut literatürde, boruhattı seviyesinde TMR uygulayan DuckCore gibi tasarımlar \cite{li_duckcore} ve çekirdek seviyesinde ODMR uygulayan Trikarenos gibi tasarımlar \cite{trikarenos_2023} ayrı ayrı bulunmaktadır. Ancak bu iki yaklaşımın birleştirilmesi, daha önce gerçekleştirilmemiştir.
+Mevcut literatürde, boruhattı seviyesinde TMR uygulayan DuckCore gibi tasarımlar \cite{li_duckcore}, çekirdek seviyesinde ODMR uygulayan Trikarenos gibi tasarımlar \cite{trikarenos_2023} ve yüksek performanslı açık kaynak RISC-V çekirdekleri olan BOOM \cite{boom_v3_2023} ayrı ayrı bulunmaktadır. Ancak bu yaklaşımların birleştirilmesi daha önce gerçekleştirilmemiştir.
 
 Bu tezde tasarlanan işlemci, aşağıdaki özgün katkıları sunmaktadır:
 

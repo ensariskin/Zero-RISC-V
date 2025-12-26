@@ -4,7 +4,7 @@
 
 \section{Genel Bakış}\label{sec:genel_bakis}
 
-Bu bölümde, tasarlanan üç yollu süperölçekli sıra dışı yürütme özellikli RISC-V işlemcinin genel mimarisi tanıtılmaktadır. İşlemci, komut seviyesi paralelliğinden yararlanarak yüksek performans elde etmeyi hedeflemektedir.
+Bu bölümde, tasarlanan üç yollu süperölçekli sıra dışı yürütme özellikli RISC-V işlemcinin genel mimarisi tanıtılmaktadır. İşlemci, komut seviyesi paralelliğinden yararlanarak yüksek performans elde etmeyi hedeflemektedir. Benzer RISC-V süperölçekli tasarımlar literatürde aktif olarak araştırılmaktadır \cite{xiangshan_2022, riscv_hp_eval_2024, polimi_superscalar_2023}.
 
 \begin{figure}[htbp]
     \centering
@@ -63,7 +63,7 @@ Bu tasarımda yeniden sıralama arabelleği indeksi doğrudan fiziksel yazmaç a
 
 Dal tahmini, süperölçekli işlemcilerde kritik öneme sahiptir. Tipik programlarda dallanma ve atlama komutları yüzde on beş ile yüzde yirmi beş arasında bir orana sahiptir \cite{patterson_hennessy}. Etkili bir dal tahmini olmadan, her dal komutu boruhattında birkaç saat çevrimi gecikmeye neden olmaktadır.
 
-Tasarlanan sistemde iki ana tahmin mekanizması bulunmaktadır. Koşullu dallanma komutları için turnuva tahmincisi kullanılmaktadır. Bu tahminci, küresel geçmiş tabanlı GShare tahmincisi ile yerel geçmiş tabanlı iki bitlik sayaç tahmincisini birleştirmekte ve dinamik olarak daha başarılı olanı seçmektedir.
+Tasarlanan sistemde iki ana tahmin mekanizması bulunmaktadır. Koşullu dallanma komutları için 256 girişli iki bitlik sayaç tahmincisi kullanılmaktadır. Tasarım sürecinde GShare tabanlı turnuva tahmincisi de denenmiş ve daha yüksek doğruluk oranı elde edilmiştir; ancak bu tahmincinin gerektirdiği büyük tablolar için uygun bellek sentezi aracı bulunmaması ve boruhattı uzamasının yanlış tahmin cezasını artırması nedeniyle basit tahminci tercih edilmiştir.
 
 Dolaylı atlama komutları için JALR tahmincisi kullanılmaktadır. Bu tahminci, hedef adres önbelleği ve dönüş adresi yığınından oluşmaktadır. Fonksiyon çağrısı ve dönüş kalıpları, dönüş adresi yığını ile yüksek doğrulukla tahmin edilmektedir.
 
@@ -105,14 +105,14 @@ Tasarlanan işlemcinin temel özellikleri Çizelge \ref{tab:processor_specs}'de 
         \hline
         LSQ Kapasitesi & 32 Giriş \\
         \hline
-        Dal Tahmincisi & Turnuva (GShare + 2-bit), RAS, JALR Cache \\
+        Dal Tahmincisi & 256 Girişli 2-bit Sayaç, RAS, JALR Cache \\
         \hline
     \end{tabular}
 \end{table}
 
 Tasarlanan işlemcinin temel özellikleri şu şekilde özetlenebilmektedir.
 
-Süperölçekli genişlik olarak komut getirmede beş, diğer tüm aşamalarda üç yollu yapı kullanılmaktadır. Yeniden adlandırma yapısı olarak altmış dört fiziksel yazmaç ile otuz iki mimari yazmaç eşlemesi yapılmaktadır. Yeniden sıralama arabelleği otuz iki giriş kapasitesine sahiptir. Dal tahmini için turnuva tahmincisi ve dönüş adresi yığını kullanılmaktadır. Bellek sistemi otuz iki girişli yükleme saklama kuyruğu ve üç paralel port içermektedir. Tüm aritmetik mantık birimi işlemleri tek saat çevriminde tamamlanmaktadır.
+Süperölçekli genişlik olarak komut getirmede beş, diğer tüm aşamalarda üç yollu yapı kullanılmaktadır. Yeniden adlandırma yapısı olarak altmış dört fiziksel yazmaç ile otuz iki mimari yazmaç eşlemesi yapılmaktadır. Yeniden sıralama arabelleği otuz iki giriş kapasitesine sahiptir. Dal tahmini için 256 girişli iki bitlik sayaç tahmincisi ve dönüş adresi yığını kullanılmaktadır. Bellek sistemi otuz iki girişli yükleme saklama kuyruğu ve üç paralel port içermektedir. Tüm aritmetik mantık birimi işlemleri tek saat çevriminde tamamlanmaktadır.
 
 Bu mimari, komut seviyesi paralelliğinden etkin bir şekilde yararlanarak yüksek performans elde etmeyi hedeflemektedir. Sıra dışı yürütme, dal tahmini ve spekülatif bellek erişimi özellikleri, işlemcinin teorik maksimum verime yaklaşmasını sağlamaktadır.
 
