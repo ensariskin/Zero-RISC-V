@@ -117,10 +117,9 @@ module dispatch_stage #(
       input logic [PHYS_REG_ADDR_WIDTH-1:0] brat_resolved_phys_2_i,  // ROB ID of 3rd oldest resolved
 
       //==========================================================================
-      // TMR ERROR OUTPUTS (from ROB)
+      // TMR ERROR OUTPUT (combined from ROB, LSQ, RS)
       //==========================================================================
-      output logic rob_head_ptr_fatal_o,
-      output logic rob_tail_ptr_fatal_o
+      output logic fatal_o
    );
 
    //==========================================================================
@@ -171,6 +170,19 @@ module dispatch_stage #(
 
    // Eager misprediction signals from ROB to LSQ
    logic [4:0]  rob_head_ptr;
+
+
+   // LSQ fatal signals (internal)
+   logic lsq_head_ptr_0_fatal;
+   logic lsq_head_ptr_1_fatal;
+   logic lsq_head_ptr_2_fatal;
+   logic lsq_tail_ptr_fatal;
+   logic lsq_last_commit_ptr_0_fatal;
+   logic lsq_last_commit_ptr_1_fatal;
+   logic lsq_last_commit_ptr_2_fatal;
+   logic rob_head_ptr_fatal, rob_tail_ptr_fatal;
+   logic rs_exec_fatal;
+   logic rs_internal_fatal;
 
    //==========================================================================
    // BRAT-based Eager Misprediction Signals (for RS and LSQ)
@@ -337,8 +349,8 @@ module dispatch_stage #(
       .branch_misprediction_i(brat_eager_misprediction),
       .branch_mispredicted_rob_idx_i(brat_mispredicted_phys_reg[4:0]),
       .rob_head_ptr_o(rob_head_ptr),
-      .head_ptr_fatal_o(rob_head_ptr_fatal_o),
-      .tail_ptr_fatal_o(rob_tail_ptr_fatal_o)
+      .head_ptr_fatal_o(rob_head_ptr_fatal),
+      .tail_ptr_fatal_o(rob_tail_ptr_fatal)
    );
 
    multi_port_register_file #(
@@ -472,8 +484,15 @@ module dispatch_stage #(
    rs_to_exec_if dispatch_to_alu_internal_2();
 
    // RS Validator error outputs
-   logic rs_exec_mismatch, rs_exec_fatal;
-   logic rs_internal_mismatch, rs_internal_fatal;
+   logic rs_exec_mismatch;
+   logic rs_internal_mismatch;
+
+   // Combined fatal output (all sources ORed)
+   assign fatal_o = rob_head_ptr_fatal | rob_tail_ptr_fatal |
+      lsq_head_ptr_0_fatal | lsq_head_ptr_1_fatal | lsq_head_ptr_2_fatal |
+      lsq_tail_ptr_fatal | lsq_last_commit_ptr_0_fatal |
+      lsq_last_commit_ptr_1_fatal | lsq_last_commit_ptr_2_fatal |
+      rs_exec_fatal | rs_internal_fatal;
 
    //==========================================================================
    // RS VALIDATOR (TMR voting for internal registers)
@@ -698,13 +717,13 @@ module dispatch_stage #(
       .lsq_flush_valid_o(lsq_flush_valid_o),
 
       // TMR ports
-      .head_ptr_0_fatal_o(),  // LSQ head_ptr fatal - can be aggregated later
-      .head_ptr_1_fatal_o(),  // LSQ head_ptr_1 fatal
-      .head_ptr_2_fatal_o(),  // LSQ head_ptr_2 fatal
-      .tail_ptr_fatal_o(),    // LSQ tail_ptr fatal
-      .last_commit_ptr_0_fatal_o(),  // LSQ last_commit_ptr_0 fatal
-      .last_commit_ptr_1_fatal_o(),  // LSQ last_commit_ptr_1 fatal
-      .last_commit_ptr_2_fatal_o()   // LSQ last_commit_ptr_2 fatal
+      .head_ptr_0_fatal_o(lsq_head_ptr_0_fatal),
+      .head_ptr_1_fatal_o(lsq_head_ptr_1_fatal),
+      .head_ptr_2_fatal_o(lsq_head_ptr_2_fatal),
+      .tail_ptr_fatal_o(lsq_tail_ptr_fatal),
+      .last_commit_ptr_0_fatal_o(lsq_last_commit_ptr_0_fatal),
+      .last_commit_ptr_1_fatal_o(lsq_last_commit_ptr_1_fatal),
+      .last_commit_ptr_2_fatal_o(lsq_last_commit_ptr_2_fatal)
    );
 
    logic [1:0] active_rs_number;

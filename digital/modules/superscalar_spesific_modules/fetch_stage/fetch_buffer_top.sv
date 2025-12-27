@@ -82,7 +82,10 @@ module fetch_buffer_top #(
         // Status outputs
         output logic buffer_empty_o,
         output logic buffer_full_o,
-        output logic [$clog2(BUFFER_DEPTH):0] occupancy_o
+        output logic [$clog2(BUFFER_DEPTH):0] occupancy_o,
+
+        // TMR Fatal Error
+        output logic inst_buffer_fatal_o
     );
 
     // Internal connections between multi_fetch and instruction_buffer
@@ -208,7 +211,7 @@ module fetch_buffer_top #(
         .reset(reset),
         .flush_i(eager_flush),
         .secure_mode(secure_mode),
-        .fatal_error_o(), // todo connect
+        .fatal_error_o(inst_buffer_fatal_o),
         // Input from multi_fetch
         .fetch_valid_i(fetch_valid),
         .fetch_ready_o(fetch_ready),

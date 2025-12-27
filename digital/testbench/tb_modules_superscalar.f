@@ -24,6 +24,7 @@ tb_modules/tracer_3port.sv
 tb_modules/pipeline_performance_analyzer.sv
 
 tb_modules/ras_monitor.sv
+tb_modules/fault_injector.sv
 #tb_modules/bp_logger_multi.sv
 
 // Superscalar testbench top

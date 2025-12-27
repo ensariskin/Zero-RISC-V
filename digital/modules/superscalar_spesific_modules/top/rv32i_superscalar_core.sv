@@ -81,9 +81,32 @@ module rv32i_superscalar_core #(
     logic brat_tail_ptr_fatal;
     logic rob_head_ptr_fatal;
     logic rob_tail_ptr_fatal;
-    logic tmr_fatal_error;  // Combined fatal error signal
+
+    // Instruction Buffer fatal
+    logic inst_buffer_fatal;
+
+    // LSQ fatal signals (7)
+    logic lsq_head_ptr_0_fatal;
+    logic lsq_head_ptr_1_fatal;
+    logic lsq_head_ptr_2_fatal;
+    logic lsq_tail_ptr_fatal;
+    logic lsq_last_commit_ptr_0_fatal;
+    logic lsq_last_commit_ptr_1_fatal;
+    logic lsq_last_commit_ptr_2_fatal;
+
+    // RS Validator fatal signals (2)
+    logic rs_exec_fatal;
+    logic rs_internal_fatal;
+
+    // Combined fatal error signal (all 13 sources)
+    logic tmr_fatal_error;
     assign tmr_fatal_error = brat_head_ptr_fatal | brat_tail_ptr_fatal |
-        rob_head_ptr_fatal | rob_tail_ptr_fatal;
+        rob_head_ptr_fatal | rob_tail_ptr_fatal |
+        inst_buffer_fatal |
+        lsq_head_ptr_0_fatal | lsq_head_ptr_1_fatal | lsq_head_ptr_2_fatal |
+        lsq_tail_ptr_fatal | lsq_last_commit_ptr_0_fatal |
+        lsq_last_commit_ptr_1_fatal | lsq_last_commit_ptr_2_fatal |
+        rs_exec_fatal | rs_internal_fatal;
 
     // Fetch Buffer Interface
     logic [2:0] decode_valid;
@@ -260,7 +283,10 @@ module rv32i_superscalar_core #(
 
         .ras_tos_checkpoint_o(ras_top_checkpoint),
         .ras_restore_en_i(ras_restore_valid),
-        .ras_restore_tos_i(ras_restore_tos)
+        .ras_restore_tos_i(ras_restore_tos),
+
+        // TMR Fatal Error
+        .inst_buffer_fatal_o(inst_buffer_fatal)
     );
 
 
@@ -486,9 +512,8 @@ module rv32i_superscalar_core #(
         .lsq_flush_valid_o(lsq_flush_valid),
         .first_invalid_lsq_idx_o(first_invalid_lsq_idx),
 
-        // TMR error outputs
-        .rob_head_ptr_fatal_o(rob_head_ptr_fatal),
-        .rob_tail_ptr_fatal_o(rob_tail_ptr_fatal)
+        // TMR fatal error output (combined from ROB+LSQ+RS)
+        .fatal_o(dispatch_fatal)
     );
 
     //==========================================================================

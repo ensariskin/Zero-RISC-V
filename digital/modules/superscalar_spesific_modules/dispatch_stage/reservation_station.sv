@@ -395,6 +395,15 @@ module reservation_station #(
                 end
             end else begin
                 exec_if.issue_valid <= #D 1'b0;
+                exec_if.data_a <= #D final_operand_a_data;
+                exec_if.data_b <= #D final_operand_b_data;
+                exec_if.control_signals <= #D effective_control_signals;
+                exec_if.pc <= #D effective_pc;
+                exec_if.store_data <= #D effective_store_data;
+                exec_if.rd_phys_addr <= #D effective_rd_phys_addr;
+                exec_if.pc_value_at_prediction <= #D effective_pc_value_at_prediction;
+                exec_if.branch_sel <= #D effective_branch_sel;
+                exec_if.branch_prediction <= #D effective_branch_prediction;
             end
         end
     end

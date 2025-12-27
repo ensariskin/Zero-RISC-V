@@ -126,14 +126,12 @@ Fonksiyonel doğruluğun sağlanması, sıra dışı yürütme yapısının teme
 
 İşlemcinin süperölçekli mimarisinin verimliliğini değerlendirmek amacıyla, farklı iş yükleri altında çevrim başına yürütülen ortalama komut sayısı (IPC) ve boru hattındaki performans darboğazları analiz edilmiştir. Geliştirilen test ortamı, simülasyon sırasında işlemcinin performans parametrelerini eşzamanlı olarak raporlayabilme yeteneğine sahiptir.
 
-\subsection{IPC Başarımı ve Karşılaştırmalı Analiz}
-
-Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artışını nicelleştirmek adına, aynı mimarinin tek yollu (scalar) versiyonu ile karşılaştırmalı testler yapılmıştır. Simülasyonlar, doğrulama ortamında 10 ns (100 MHz) saat periyodu kullanılarak gerçekleştirilmiştir. Tablo \ref{tab:ipc_results}, Bölüm \ref{subsec:algoritma_testleri}'de tanımlanan deterministik algoritma seti üzerinde elde edilen ortalama performans metriklerini sunmaktadır.
+Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artışını nicelleştirmek adına, aynı mimarinin tek yollu (scalar) versiyonu ile karşılaştırmalı testler yapılmıştır. Simülasyonlar, doğrulama ortamında 10 ns (100 MHz) saat periyodu kullanılarak gerçekleştirilmiştir. Tablo \ref{tab:ipc_results_deterministik}, Bölüm \ref{subsec:test_vektorleri}'de tanımlanan deterministik algoritma seti üzerinde elde edilen ortalama performans metriklerini sunmaktadır.
 
 \begin{table}[htbp]
 \centering
-\caption{1-Yollu ve 3-Yollu Konfigürasyonların Performans Karşılaştırması}
-\label{tab:ipc_results}
+\caption{Deterministik Testler Altında 1-Yollu ve 3-Yollu Konfigürasyonların Karşılaştırması}
+\label{tab:ipc_results_deterministik}
 \begin{tabular}{l c c c}
 \toprule
 \textbf{Mimari Yapı} & \textbf{Yürütme Süresi ($\mu$s)} & \textbf{Toplam Çevrim} & \textbf{Ortalama IPC} \\
@@ -141,12 +139,38 @@ Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artı�
 1-Yollu (Scalar) & 705,5 & 70.550 & 0,84 \\
 3-Yollu (Süperölçekli) & 345,8 & 34.580 & 1,71 \\
 \midrule
-\textbf{İyileşme Oranı} & \textbf{2,04x} & \textbf{2,04x} & \textbf{%103} \\
+\textbf{İyileşme Oranı} & \textbf{2,04x} & \textbf{2,04x} & \textbf{\%103} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Elde edilen sonuçlara göre, üç yollu paralel yürütme yapısı sayesinde scalar çekirdeğe göre yaklaşık 2,04 kat hızlanma elde edilmiştir. Ortalama IPC değerinin 0,84'ten 1,71'e yükselmesi, süperölçekli mimarinin komut seviyesi paralelliğini (ILP) verimli bir şekilde sömürdüğünü kanıtlamaktadır.
+
+\subsubsection{Rastgele Test Serisi (RISC-V DV) Performans Sonuçları}
+
+Sentetik stres testleri altında mimarinin davranışını gözlemlemek amacıyla RISC-V DV çerçevesi ile üretilen rastgele testlerin sonuçları Tablo \ref{tab:random_ipc_results} üzerinde özetlenmiştir.
+
+\begin{table}[htbp]
+\centering
+\caption{Rastgele Test Senaryoları Altında IPC Karşılaştırması}
+\label{tab:random_ipc_results}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Test Senaryosu} & \textbf{1-Yollu IPC} & \textbf{3-Yollu IPC} & \textbf{Hızlanma Faktörü} \\
+\midrule
+Temel Aritmetik (Basic Arithmetic) & 1,00 & 2,90 & 2,90x \\
+Karmaşık Aritmetik (Complex Arithmetic) & 1,00 & 2,80 & 2,80x \\
+Temel Dallanma (Basic Branch) & 0,80 & 1,59 & 1,99x \\
+Döngü ve Dallanma (Branch Loop) & 0,93 & 2,23 & 2,40x \\
+Karmaşık Dallanma (Combo Branch) & 0,94 & 2,33 & 2,48x \\
+Temel Bellek (Basic Memory) & 0,95 & 1,87 & 1,97x \\
+Karmaşık Bellek (Complex Memory) & 0,76 & 1,47 & 1,93x \\
+Karma Test (Complex Combo) & 0,85 & 1,65 & 1,94x \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Rastgele test sonuçları incelendiğinde, işlemcinin aritmetik ağırlıklı iş yüklerinde 2,90 IPC değerine ulaşarak %97 gibi oldukça yüksek bir teorik verimliliğe ulaştığı görülmektedir. Ancak dallanma ve bellek yoğunluklu senaryolarda IPC değerlerinde düşüşler gözlemlenmiştir.
 
 \subsection{Boru Hattı Tıkanıklık ve Darboğaz Analizi}
 
@@ -168,7 +192,11 @@ Performans analizinde korelasyon değerleri şu yaklaşımla elde edilmektedir:
     \item \textbf{Kısmi Korelasyon (Partial Correlation):} Bir faktörün etkisini (örneğin dal tahmin hatası) sabit tutarak, diğer bir faktörün (örneğin bellek gecikmesi) performans üzerindeki saf etkisini izole etmektedir.
 \end{itemize}
 
-Yapılan istatistiksel analizler sonucunda, süperölçekli mimarinin en temel performans kısıtının dal tahmin hataları olduğu teyit edilmiştir. Pearson korelasyonu, 3-yollu yapıda dal yanlış tahmini oranı ile IPC arasında $-0,74$ düzeyinde güçlü bir negatif ilişki ortaya koymuştur. Daha dikkat çekici bir bulgu ise kısmi korelasyon analizinden elde edilmiştir; bellek operasyonlarının saf performans etkisi, dal tahmin hataları arındırıldığında scalar çekirdekte $-0,21$ iken süperölçekli çekirdekte $-0,80$ seviyesine çıkmaktadır. Bu durum, mimari genişledikçe bellek sisteminin performans üzerindeki etkisinin (Memory Wall) çok daha belirgin hale geldiğini ve dal tahminci iyileştirilmelerinin ardından bellek gecikmelerinin ana darboğaz olacağını göstermektedir.
+Yapılan istatistiksel analizler sonucunda, süperölçekli mimarinin en temel performans kısıtının dal tahmin hataları olduğu teyit edilmiştir. Pearson korelasyonu, 3-yollu yapıda dal yanlış tahmini oranı ile IPC arasında $-0,74$ düzeyinde güçlü bir negatif ilişki ortaya koymuştur. 
+
+Bu noktada, dal tahminci başarımı üzerine önemli bir gözlem yapılmıştır. Deterministik algoritma testlerinde (gerçek dünya iş yüklerini temsil eden) **\%80'den fazla** tahmin doğruluğuna ulaşan mimari, rastgele test setlerinde \%32-\%43 bandında bir başarı sergilemiştir. Bu keskin düşüş, dal tahmincisinin yapısal yetersizliğinden ziyade, rastgele üretilen komut dizilerinin herhangi bir istatistiksel patern veya döngüsel yapı içermemesinden kaynaklanmaktadır. Bu durum, dal tahmincisinin gerçek uygulamalarda yüksek verimlilik sunarken, tahmin edilemez sentetik stres testleri altında dahi boru hattını güvenli bir şekilde temizleyip (flush) doğru yürütme akışını sürdürebildiğini kanıtlamaktadır.
+
+Daha dikkat çekici bir bulgu ise kısmi korelasyon analizinden elde edilmiştir; bellek operasyonlarının saf performans etkisi, dal tahmin hataları arındırıldığında scalar çekirdekte $-0,21$ iken süperölçekli çekirdekte $-0,80$ seviyesine çıkmaktadır. Bu durum, mimari genişledikçe bellek sisteminin performans üzerindeki etkisinin (Memory Wall) çok daha belirgin hale geldiğini ve dal tahminci iyileştirilmelerinin ardından bellek gecikmelerinin ana darboğaz olacağını göstermektedir.
 
 \subsection{Performans İzleme Arayüzü (GUI)}
 
