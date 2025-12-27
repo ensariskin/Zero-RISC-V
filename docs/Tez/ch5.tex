@@ -3,45 +3,276 @@
 \chapter{DOĞRULAMA VE SONUÇLAR}\label{ch:dogrulama}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+Bu bölümde, tasarlanan üç yollu süperölçekli sıra dışı yürütme özellikli RISC-V işlemcisinin doğrulama metodolojisi, fonksiyonel test sonuçları, lojik sentez ve fiziksel tasarım sonuçları kapsamlı olarak ele alınmaktadır. Doğrulama sürecinde referans model tabanlı karşılaştırma yöntemi kullanılmış, sentez ve fiziksel tasarım aşamalarında endüstri standardı araçlar ile gerçek silikon üretim kütüphaneleri kullanılarak sonuçlar elde edilmiştir.
+
+%------------------------------------------------------------------------
 \section{Doğrulama Metodolojisi}\label{sec:metodoloji}
-
-\subsection{Simülasyon ortamı}\label{subsec:sim_ortami}
-
-% TODO: Kullanılan araçlar (DVT, Questa/ModelSim vb.)
-
-\subsection{Test vektörleri}\label{subsec:test_vektorleri}
-
-% TODO: RISC-V compliance tests, custom tests
-
-\subsection{Functional verification}\label{subsec:functional_ver}
-
-% TODO: Instruction-level, pipeline-level doğrulama
-
 %------------------------------------------------------------------------
 
-\section{Test Sonuçları}\label{sec:test_sonuclari}
+Süperölçekli işlemci tasarımlarının doğrulanması, tek yollu tasarımlara kıyasla önemli ölçüde daha karmaşık bir süreç gerektirmektedir. Aynı anda birden fazla komutun getirilmesi, çözümlenmesi ve yürütülmesi; veri bağımlılıklarının dinamik olarak yönetilmesi; spekülatif yürütme ve yanlış tahmin durumunda kurtarma mekanizmalarının doğruluğu gibi pek çok kritik fonksiyonun birlikte test edilmesi gerekmektedir. Bu çalışmada, kapsamlı bir doğrulama stratejisi izlenmiş olup, hem rastgele test programları hem de deterministik algoritma tabanlı test programları kullanılmıştır.
 
-\subsection{Fonksiyonel doğruluk}\label{subsec:fonk_dogruluk}
+\subsection{Simülasyon Ortamı ve Araçları}\label{subsec:sim_ortami}
 
-% TODO: Test geçme oranları
+Tasarımın fonksiyonel doğrulaması için Metrics Design Automation firmasının geliştirdiği DSIM simülasyon aracı kullanılmıştır. DSIM, SystemVerilog dilinin tüm özelliklerini destekleyen, yüksek performanslı bir dijital simülasyon ortamı sağlamaktadır. Simülasyon süresince işlemcinin davranışını izlemek ve kayıt altına almak amacıyla özel bir izleme altyapısı geliştirilmiştir.
 
-\subsection{Branch prediction accuracy}\label{subsec:bp_accuracy}
+Geliştirilen izleme altyapısı, işlemcinin üç yollu commit aşamasından çıkan her komutu kayıt altına almaktadır. Her bir tamamlanan komut için program sayacı değeri, komut kodu, hedef yazmaç adresi ile yazılan değer ve bellek yazma işlemlerinde adres ile veri bilgileri kaydedilmektedir. Bu kayıtlar, referans model ile karşılaştırma amacıyla kullanılmaktadır.
 
-% TODO: Tournament predictor başarı oranı (varsa)
+Referans model olarak Berkeley Üniversitesi tarafından geliştirilen ve RISC-V komut seti mimarisinin resmi referans gerçeklemesi olarak kabul edilen Spike komut seti simülatörü kullanılmıştır \cite{spike_iss}. Spike, RISC-V komutlarının davranışını tam olarak tanımlayan altın model (golden model) niteliğindedir. Tasarlanan işlemci ile Spike aynı test programlarını çalıştırmakta ve her iki tarafın ürettiği izleme kayıtları satır satır karşılaştırılmaktadır. Bu karşılaştırma otomatikleştirilmiş Python betikleri aracılığıyla gerçekleştirilmekte olup, herhangi bir uyumsuzluk tespit edildiğinde ilgili komutun adresi, beklenen ve gerçekleşen değerler ile birlikte raporlanmaktadır.
 
-\subsection{Normal mod vs Güvenli mod}\label{subsec:mod_karsilastirma}
+\subsection{Test Programları ve Kapsam}\label{subsec:test_vektorleri}
 
-% TODO: Karşılaştırmalı analiz
+Doğrulama sürecinde iki farklı kategoride test programı kullanılmıştır. Birinci kategori, kısıtlama tabanlı rastgele test üretim çerçevesi kullanılarak oluşturulan rastgele komut dizileridir. İkinci kategori ise gerçek algoritmik iş yüklerini temsil eden, özel olarak geliştirilen deterministik C programlarıdır.
+
+\subsubsection{Kısıtlama Tabanlı Rastgele Test Programları}
+
+Rastgele test programları, Google tarafından geliştirilen ve açık kaynak olarak sunulan RISC-V DV doğrulama çerçevesi kullanılarak üretilmiştir \cite{riscv_dv}. Bu çerçeve, belirli mikromimari senaryolarını hedefleyen yönlendirilmiş komut akışları (directed instruction streams) oluşturma yeteneğine sahiptir. Farklı işlemci alt sistemlerini stres altına sokmak amacıyla altı farklı test konfigürasyonu hazırlanmıştır.
+
+Tablo \ref{tab:riscv_dv_tests}, kullanılan rastgele test programlarını, her birinin hedeflediği mikromimari bileşenleri ve üretilen komut sayılarını özetlemektedir.
+
+\begin{table}[htbp]
+\centering
+\caption{Kısıtlama Tabanlı Rastgele Test Programları}
+\label{tab:riscv_dv_tests}
+\begin{tabular}{p{4cm} r p{7cm}}
+\toprule
+\textbf{Test Programı} & \textbf{Komut} & \textbf{Hedeflenen Senaryo ve Açıklama} \\
+\midrule
+Temel Aritmetik Testi & 30.000 & Yalnızca aritmetik ve mantıksal komutlar içermekte olup dallanma ve bellek erişim komutları devre dışı bırakılmıştır. Aritmetik mantık birimi performansı ve veri bağımlılığı çözümlemesi test edilmektedir. \\
+\midrule
+Karmaşık Aritmetik Testi & 10.000 & Tamsayı aritmetiğinin sınır değer durumlarını (taşma, alt taşma, maksimum ve minimum değerler) içeren özel komut akışları kullanılmaktadır. Aritmetik birimlerin köşe durumlarındaki davranışı doğrulanmaktadır. \\
+\midrule
+Temel Dallanma Testi & 30.000 & Koşullu dallanma ve koşulsuz atlama komutlarını içeren rastgele komut dizileri üretilmektedir. Dal tahmini mekanizmasının temel doğruluğu test edilmektedir. \\
+\midrule
+Karmaşık Dallanma Testi & 30.000 & Yoğun döngü yapıları ve iç içe dallanma desenlerini içeren komut akışları kullanılmaktadır. Dal tahmini güncelleme mekanizması ve yanlış tahmin kurtarma yolu stres altına alınmaktadır. \\
+\midrule
+Temel Bellek Testi & 10.000 & Yükleme ve saklama komutlarını yoğun biçimde içeren rastgele bellek erişim desenleri üretilmektedir. Yükleme-saklama kuyruğu ve bellek alt sistemi test edilmektedir. \\
+\midrule
+Karma Test & 30.000 & Tüm yönlendirilmiş akış türlerinin kombinasyonunu içermektedir. Gerçek uygulama iş yüklerine benzer karmaşık senaryolar oluşturulmaktadır. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Rastgele test programları toplamda yaklaşık 140.000 komut içermekte olup, işlemcinin temel fonksiyonel bloklarının büyük çoğunluğunu kapsamaktadır. Her test programı, farklı mikromimari bileşenleri hedefleyerek belirli hata sınıflarının tespit edilmesine olanak tanımaktadır.
+
+\subsubsection{Algoritma Tabanlı Deterministik Test Programları}
+
+Rastgele test programlarının yanı sıra, gerçek uygulama senaryolarını modelleyen karmaşık algoritmik C programları da geliştirilmiştir. Bu programlar RISC-V GCC derleyicisi kullanılarak derlenmiş ve işlemci üzerinde çalıştırılmıştır.
+
+En kapsamlı test programı, derleme opsiyonlarına bağlı olarak yaklaşık 67.000 ile 70.000 arasında komut üretmektedir. Bu program, bilgisayar bilimlerinin temel algoritmalarından oluşan bir koleksiyon içermekte olup, işlemcinin farklı hesaplama desenleri, bellek erişim kalıpları ve kontrol akışı yapıları altındaki davranışını test etmektedir.
+
+Programa dahil edilen algoritmalar aşağıda listelenmiştir:
+
+\begin{itemize}
+    \item \textbf{Graf Teorisi:} Dijkstra en kısa yol algoritması, topolojik sıralama
+    \item \textbf{Dinamik Programlama:} 0/1 sırt çantası problemi çözümü, edit uzaklığı hesaplaması
+    \item \textbf{Sıralama Algoritmaları:} Yığın sıralaması (heap sort)
+    \item \textbf{Metin İşleme:} Knuth-Morris-Pratt dizi eşleme algoritması
+    \item \textbf{Sayı Teorisi:} Eratosthenes kalburu, asal çarpanlara ayırma
+    \item \textbf{Matris İşlemleri:} Fibonacci hesaplaması için matris üstelleştirme
+    \item \textbf{Bit Manipülasyonu:} XOR lineer baz hesaplaması, Gray kodu dönüşümü
+    \item \textbf{Oyun Teorisi:} Tic-Tac-Toe oyunu için minimax algoritması
+\end{itemize}
+
+Bu algoritmalar, birbirinden farklı hesaplama karakteristikleri sergilemektedir. Graf algoritmaları yoğun bellek erişimi ve düzensiz dallanma desenleri içerirken, dinamik programlama algoritmaları matris tabanlı erişim kalıpları ve yoğun bağımlılık zincirleri oluşturmaktadır. Sıralama algoritmaları karşılaştırma ve değiştirme işlemlerinin yoğun tekrarını gerektirmekte, metin işleme algoritmaları ise döngü tabanlı karakter karşılaştırmaları içermektedir.
 
 %------------------------------------------------------------------------
+\section{Fonksiyonel Doğrulama Sonuçları}\label{sec:test_sonuclari}
+%------------------------------------------------------------------------
 
+\subsection{Test Geçme Oranları ve Karşılaştırma Sonuçları}\label{subsec:fonk_dogruluk}
+
+Tüm test programları Spike referans modeli ile karşılaştırmalı olarak çalıştırılmış ve sonuçlar analiz edilmiştir. Tablo \ref{tab:test_results}, elde edilen sonuçları özetlemektedir.
+
+\begin{table}[htbp]
+\centering
+\caption{Fonksiyonel Doğrulama Sonuçları}
+\label{tab:test_results}
+\begin{tabular}{p{6cm} r r}
+\toprule
+\textbf{Test Kategorisi} & \textbf{Komut Sayısı} & \textbf{Geçme Oranı} \\
+\midrule
+Kısıtlama Tabanlı Rastgele Testler & $\sim$140.000 & \%100 \\
+\midrule
+Algoritma Tabanlı Deterministik Test & $\sim$67.000-70.000 & \%100 \\
+\midrule
+\textbf{Toplam Test Kapsamı} & $\sim$207.000-210.000 & \textbf{\%100} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Doğrulama sonuçları, tasarlanan işlemcinin RV32I komut seti mimarisini fonksiyonel olarak eksiksiz ve doğru biçimde gerçeklediğini ortaya koymaktadır. Yaklaşık 210.000 komutluk test kapsamında, Spike referans modeli ile tam uyumluluk sağlanmıştır. Her bir test komutunun tamamlanma sırası, hesaplanan sonuç değerleri ve bellek yazma işlemleri referans model ile birebir örtüşmektedir.
+
+Fonksiyonel doğruluğun sağlanması, sıra dışı yürütme yapısının temel mekanizmalarının doğru çalıştığını göstermektedir. Bu mekanizmalar; yazmaç yeniden adlandırma ile veri bağımlılıklarının çözümlenmesi, spekülatif yürütme sırasında mimari durumun korunması, dal yanlış tahmini durumunda doğru kurtarma noktasına geri dönülmesi ve yükleme-saklama işlemlerinin bellek sıralamasını ihlal etmeden tamamlanmasıdır.
+
+%------------------------------------------------------------------------
+\section{Lojik Sentez Sonuçları}\label{sec:sentez}
+%------------------------------------------------------------------------
+
+Tasarım, Cadence Genus 23.11 lojik sentez aracı kullanılarak endüstriyel bir üretim teknolojisine sentezlenmiştir. Hedef teknoloji olarak TSMC 16nm FinFET sürecinin düşük eşik voltajlı (LVT) hücre kütüphanesi seçilmiştir.
+
+Sentez işlemi, tipik çalışma koşulları (TT köşesi) altında, 0.8V besleme voltajı ve 25$^\circ$C sıcaklık değerleri için gerçekleştirilmiştir. Zamanlama kısıtı olarak 1 ns saat periyodu belirlenmiş olup, bu değer 1 GHz çalışma frekansına karşılık gelmektedir.
+
+\subsection{Zamanlama ve Hücre Kullanımı}\label{subsec:timing_syn}
+
+Lojik sentez sonucunda elde edilen zamanlama sonuçları, belirlenen 1 GHz hedef frekansının karşılandığını göstermektedir. Tablo \ref{tab:synthesis_results}, sentez aşamasında elde edilen temel metrikleri özetlemektedir.
+
+\begin{table}[htbp]
+\centering
+\caption{Lojik Sentez Sonuçları}
+\label{tab:synthesis_results}
+\begin{tabular}{p{6cm} r}
+\toprule
+\textbf{Metrik} & \textbf{Değer} \\
+\midrule
+Hedef Teknoloji & TSMC 16nm FinFET LVT \\
+\midrule
+Çalışma Koşulları & TT, 0.8V, 25$^\circ$C \\
+\midrule
+Hedef Saat Periyodu & 1 ns (1 GHz) \\
+\midrule
+Toplam Hücre Sayısı & 141.868 \\
+\midrule
+En Kötü Durum Slack Değeri & 0 ps (zamanlama karşılandı) \\
+\midrule
+Toplam Güç Tüketimi & 150.4 mW \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Sentez aşamasında tespit edilen kritik yol, yürütme aşamasından spekülatif yürütme kurtarma altyapısına uzanan sinyal yolunda oluşmaktadır. Bu yolun toplam kombinasyonel gecikmesi 937 ps olarak ölçülmüş olup, kalan 63 ps kurulum zamanı (setup time) ve zamanlama belirsizliği (uncertainty) için ayrılmıştır.
+
+\subsection{Güç Tüketimi Analizi}\label{subsec:power_syn}
+
+Sentez aşamasında gerçekleştirilen güç analizi, rastgele test aktivitesi varsayımı altında toplam güç tüketimini ortaya koymaktadır. Tablo \ref{tab:power_syn}, güç bileşenlerinin dağılımını göstermektedir.
+
+\begin{table}[htbp]
+\centering
+\caption{Sentez Aşaması Güç Dağılımı}
+\label{tab:power_syn}
+\begin{tabular}{p{5cm} r r}
+\toprule
+\textbf{Güç Kategorisi} & \textbf{Değer (mW)} & \textbf{Oran} \\
+\midrule
+Dahili Güç (Internal Power) & 87.3 & \%58.0 \\
+\midrule
+Anahtarlama Gücü (Switching Power) & 63.0 & \%41.9 \\
+\midrule
+Kaçak Güç (Leakage Power) & 0.2 & \%0.1 \\
+\midrule
+\textbf{Toplam Güç Tüketimi} & \textbf{150.4} & \textbf{\%100} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Güç dağılımı analiz edildiğinde, dahili gücün baskın bileşen olduğu görülmektedir. Bu durum, işlemci içindeki ardışık elemanların (flip-flop) yoğunluğunu yansıtmaktadır. Süperölçekli yapıda yazmaç dosyası, yeniden sıralama tamponu, dal tahmini geçmişi tablosu ve yükleme-saklama kuyruğu gibi yapılar önemli miktarda ardışık eleman içermektedir.
+
+%------------------------------------------------------------------------
+\section{Fiziksel Tasarım Sonuçları}\label{sec:pnr}
+%------------------------------------------------------------------------
+
+Lojik sentez çıktısı, Cadence Innovus 22.31 fiziksel tasarım aracı kullanılarak yerleştirme ve yönlendirme (Place and Route) aşamasından geçirilmiştir. Fiziksel tasarım sürecinde saat ağacı sentezi, yerleştirme optimizasyonu ve sinyal yönlendirmesi gerçekleştirilmiştir.
+
+\subsection{Zamanlama Analizi}\label{subsec:pnr_timing}
+
+Fiziksel tasarım sonrası zamanlama analizi, gerçek tel gecikmelerinin hesaba katılmasıyla lojik senteze göre farklı sonuçlar ortaya koymaktadır. Tablo \ref{tab:pnr_results}, fiziksel tasarım sonuçlarını özetlemektedir.
+
+\begin{table}[htbp]
+\centering
+\caption{Fiziksel Tasarım Sonuçları}
+\label{tab:pnr_results}
+\begin{tabular}{p{6cm} r}
+\toprule
+\textbf{Metrik} & \textbf{Değer} \\
+\midrule
+Toplam Hücre Sayısı & 146.500 \\
+\midrule
+En Kötü Durum Slack Değeri & -106 ps \\
+\midrule
+Ulaşılabilir Çalışma Frekansı & $\sim$900 MHz \\
+\midrule
+Toplam Güç Tüketimi & 131.6 mW \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Fiziksel tasarım aşamasında hücre sayısının lojik senteze göre artış göstermesinin temel nedeni, zamanlama optimizasyonu amacıyla eklenen tampon hücreleri ve saat ağacı sentezi sırasında yerleştirilen saat tamponlarıdır.
+
+Fiziksel tasarım sonrası kritik yol, spekülatif yürütme kurtarma altyapısındaki işaretçi yazmaçlarından yürütme aşamasındaki kaynak yönetimi işaretçilerine uzanan sinyal yolunda tespit edilmiştir. Fiziksel tasarım sonucunda 1 GHz hedef frekans tutturulamamış olup, kritik yolda 106 ps zamanlama ihlali (timing violation) oluşmuştur.
+
+Bu sonuç, tasarımın 1 GHz hedef frekansını tam olarak karşılayamadığını, ancak yaklaşık 900 MHz civarında güvenli biçimde çalışabileceğini göstermektedir. Zamanlama ihlalinin giderilmesi için kritik yol üzerindeki kombinasyonel mantığın yeniden yapılandırılması veya daha agresif sentez kısıtlamalarının uygulanması değerlendirilebilir.
+
+\subsection{Güç Tüketimi Analizi}\label{subsec:power_pnr}
+
+Fiziksel tasarım sonrası güç analizi, lojik sentez aşamasına göre daha düşük toplam güç tüketimi göstermektedir. Bu fark, yerleştirme optimizasyonunun daha kısa tel uzunlukları sağlaması ve dolayısıyla kapasitif yükün azalmasından kaynaklanmaktadır. Tablo \ref{tab:power_pnr}, fiziksel tasarım sonrası güç dağılımını göstermektedir.
+
+\begin{table}[htbp]
+\centering
+\caption{Fiziksel Tasarım Aşaması Güç Dağılımı (1 GHz, 0.8V)}
+\label{tab:power_pnr}
+\begin{tabular}{p{5cm} r r}
+\toprule
+\textbf{Güç Kategorisi} & \textbf{Değer (mW)} & \textbf{Oran} \\
+\midrule
+Dahili Güç (Internal Power) & 78.3 & \%59.5 \\
+\midrule
+Anahtarlama Gücü (Switching Power) & 53.1 & \%40.3 \\
+\midrule
+Kaçak Güç (Leakage Power) & 0.24 & \%0.2 \\
+\midrule
+\textbf{Toplam Güç Tüketimi} & \textbf{131.6} & \textbf{\%100} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Bu güç analizi sonuçları, tasarım aracının varsayılan \%20 anahtarlama aktivitesi kabulüne dayandığından kapsamlı bir analiz niteliği taşımamaktadır. Daha doğru güç tahminleri için gerçek iş yüklerinden elde edilen anahtarlama aktivitesi bilgisinin (Value Change Dump - VCD dosyası) güç analizi aracına beslenmesi gerekmektedir.
+
+%------------------------------------------------------------------------
+\section{Kritik Yol Analizi ve Değerlendirme}\label{sec:critical_path}
+%------------------------------------------------------------------------
+
+Her iki tasarım aşamasında da kritik yol, spekülatif yürütme altyapısının temel bileşenleri arasındaki sinyal iletiminde oluşmaktadır. Tablo \ref{tab:critical_paths}, sentez ve fiziksel tasarım aşamalarındaki kritik yolları karşılaştırmaktadır.
+
+\begin{table}[htbp]
+\centering
+\caption{Kritik Yol Karşılaştırması}
+\label{tab:critical_paths}
+\begin{tabular}{p{3cm} p{5cm} r r}
+\toprule
+\textbf{Aşama} & \textbf{Kritik Yol Tanımı} & \textbf{Gecikme} & \textbf{Slack} \\
+\midrule
+Lojik Sentez & Kuyruk yazmacından spekülatif kurtarma belleğine & 937 ps & 0 ps \\
+\midrule
+Fiziksel Tasarım & Kurtarma işaretçisinden kaynak işaretçisine & 1054 ps & -106 ps \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Kritik yolun her iki aşamada da spekülatif yürütme mekanizması içinde oluşması rastlantı değildir. Sıra dışı yürütme mimarilerinde dal yanlış tahmini durumunda işlemci durumunun hızlı biçimde geri alınması için tüm kritik işaretçilerin tek çevrimde güncellenmesi gerekmektedir. Bu gereksinim, yükleme-saklama kuyruğu, yeniden sıralama tamponu ve dal kurtarma yapısı arasında geniş çaplı kombinasyonel bağlantılar oluşturmaktadır.
+
+%------------------------------------------------------------------------
 \section{Tartışma}\label{sec:tartisma}
+%------------------------------------------------------------------------
 
-\subsection{Sonuçların değerlendirilmesi}\label{subsec:degerlendirme}
+\subsection{Sonuçların Değerlendirilmesi}\label{subsec:degerlendirme}
 
-% TODO: Test sonuçlarının yorumu
+Bu çalışmada sunulan doğrulama ve gerçekleme sonuçları, tasarlanan üç yollu süperölçekli RISC-V işlemcisinin hem fonksiyonel doğruluk hem de fiziksel gerçeklenebilirlik açısından değerlendirilmesine olanak tanımaktadır.
 
-\subsection{Kısıtlamalar}\label{subsec:kisitlamalar}
+Fonksiyonel doğrulama açısından, yaklaşık 210.000 komutluk test kapsamı hem rastgele hem de deterministik test programlarını içermektedir. Tüm testlerin Spike referans modeli ile tam uyumu, işlemcinin RV32I komut seti mimarisini eksiksiz olarak gerçeklediğini doğrulamaktadır. Özellikle karmaşık algoritma testlerinin başarılı tamamlanması, spekülatif yürütme ve kurtarma mekanizmalarının farklı hesaplama desenleri altında doğru çalıştığını göstermektedir.
 
-% TODO: Simülasyon tabanlı değerlendirme sınırları
-% NOT: Sentez yapılmadığı için bu bölüm simülasyon/test sonuçlarına odaklanmaktadır.
+Lojik sentez sonuçları, 16nm FinFET teknolojisinde yaklaşık 142.000 hücre kullanılarak 1 GHz frekansın ulaşılabilir olduğunu ortaya koymaktadır. Ancak fiziksel tasarım aşamasında gerçek tel gecikmelerinin hesaba katılmasıyla 106 ps'lik zamanlama ihlali oluşmakta, bu durum ulaşılabilir frekansı yaklaşık 900 MHz seviyesine çekmektedir.
+
+Güç tüketimi açısından fiziksel tasarım sonrası elde edilen 131.6 mW değeri değerlendirilmelidir. Karşılaştırma amacıyla, Berkeley'in tek yollu sıralı Rocket çekirdeği TSMC 40nm teknolojide 0.034 mW/MHz dinamik güç tüketimi göstermektedir \cite{rocket_power}. Teknoloji farkı göz önünde bulundurulduğunda doğrudan karşılaştırma yapılamamakla birlikte, tasarlanan işlemcinin üç yollu paralel yürütme kapasitesi, spekülatif yürütme altyapısı ve yeniden sıralama mekanizmaları güç artışının temel kaynakları olarak değerlendirilebilir.
+
+\subsection{Kısıtlamalar ve Gelecek Çalışmalar}\label{subsec:kisitlamalar}
+
+Bu çalışmanın bazı kısıtlamaları bulunmakta olup, gelecek çalışmalarda ele alınması öngörülmektedir:
+
+\begin{enumerate}
+    \item \textbf{Zamanlama İhlali:} Fiziksel tasarım sonrası 1 GHz hedef frekansına tam olarak ulaşılamamıştır. Kritik yolun yeniden yapılandırılması, ardışık düzen aşamalarının eklenmesi veya daha agresif sentez stratejilerinin uygulanması ile bu ihlal giderilebilir.
+    
+    \item \textbf{Bellek Entegrasyonu:} Mevcut gerçekleme ideal bellek modelleri kullanmaktadır. Gerçek SRAM makrolarının entegrasyonu, ek gecikme ve alan maliyeti getirecek olup, zamanlama analizi bu koşullar altında yeniden değerlendirilmelidir.
+    
+    \item \textbf{Bilgi Yedekliliği Eksikliği:} Bellek yapıları için hata düzeltme kodları (ECC) bu aşamada gerçeklenmemiştir. Bölüm \ref{ch:redundancy}'de açıklanan üçlü modüler yedeklilik (TMR) koruması yazmaç seviyesinde sağlanmakta olup, bellek yapılarının korunması gelecek çalışmalara bırakılmıştır.
+    
+    \item \textbf{Performans Analizi:} Çevrim başına komut (IPC) metrikleri ve dal tahmini doğruluğu gibi performans göstergeleri bu bölümde sunulmamıştır. Ayrıntılı performans analizi, farklı iş yükleri altında işlemcinin verimlilik karakterizasyonunu içerecek biçimde ileride ele alınabilir.
+\end{enumerate}
