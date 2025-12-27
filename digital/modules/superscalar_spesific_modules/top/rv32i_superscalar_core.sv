@@ -28,6 +28,8 @@ module rv32i_superscalar_core #(
         input  logic clk,
         input  logic reset,
         input  logic secure_mode,
+        input  logic enable_pipe_1,
+        input  logic enable_pipe_2,
 
         // Instruction Memory Interface (3-port for parallel fetch)
         output logic [DATA_WIDTH-1:0] inst_addr_0, inst_addr_1, inst_addr_2, inst_addr_3, inst_addr_4,
@@ -412,6 +414,8 @@ module rv32i_superscalar_core #(
         .clk(clk),
         .reset(reset),
         .secure_mode(secure_mode),
+        .enable_pipe_1(enable_pipe_1),
+        .enable_pipe_2(enable_pipe_2),
 
         // BRAT in-order branch resolution inputs (for RS/LSQ eager flush)
         .brat_branch_resolved_i(brat_branch_resolved),
@@ -496,6 +500,8 @@ module rv32i_superscalar_core #(
     ) execute_stage_unit (
         .clk(clk),
         .rst_n(reset),
+        .enable_pipe_1(enable_pipe_1),
+        .enable_pipe_2(enable_pipe_2),
 
         .update_predictor_0(ex0_commit_is_branch),
         .update_predictor_1(ex1_commit_is_branch),

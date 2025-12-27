@@ -33,6 +33,8 @@ module lsq_simple_top
       input  logic clk,
       input  logic rst_n,
       input  logic secure_mode,
+      input  logic enable_pipe_1,    // Enable second pipe (2-pipe mode when enable_pipe_2=0)
+      input  logic enable_pipe_2,    // Enable third pipe (3-pipe mode)
 
       input  logic store_can_issue_0, // signal from ROB that store at head can be issued
       input  logic [PHYS_REG_WIDTH-1:0] allowed_store_address_0, // allowed store address from ROB
@@ -850,8 +852,8 @@ module lsq_simple_top
    logic effective_dealloc_2;
 
    assign effective_dealloc_0 = (deallocate_head | fwd_head_0) && !(lsq_flush_valid_o && modify_head_0);
-   assign effective_dealloc_1 = (deallocate_head_1 | fwd_head_1) && !(lsq_flush_valid_o && modify_head_1);
-   assign effective_dealloc_2 = (deallocate_head_2 | fwd_head_2) && !(lsq_flush_valid_o && modify_head_2);
+   assign effective_dealloc_1 = enable_pipe_1 && (deallocate_head_1 | fwd_head_1) && !(lsq_flush_valid_o && modify_head_1);
+   assign effective_dealloc_2 = enable_pipe_2 && (deallocate_head_2 | fwd_head_2) && !(lsq_flush_valid_o && modify_head_2);
 
    //----------------------------------------------------------------------
    // Head pointer next-state calculation
@@ -889,13 +891,29 @@ module lsq_simple_top
       age_dist_1 = (tail_ptr_age_ref + 3) - head_ptr_eff_1;
       age_dist_2 = (tail_ptr_age_ref + 3) - head_ptr_eff_2;
 
-      // Newest head is the one with the smallest distance
-      if ((age_dist_0 <= age_dist_1) && (age_dist_0 <= age_dist_2)) begin
+      // Newest head depends on which pipes are enabled
+      // Single pipe mode: only head_ptr_0 is active
+      // Dual pipe mode: head_ptr_0 and head_ptr_1 are active
+      // Triple pipe mode: all three are active
+      if (!enable_pipe_1 && !enable_pipe_2) begin
+         // Single pipe mode: only head_ptr_0 matters
          newest_ptr_eff = head_ptr_eff_0;
-      end else if (age_dist_1 <= age_dist_2) begin
-         newest_ptr_eff = head_ptr_eff_1;
+      end else if (!enable_pipe_2) begin
+         // Dual pipe mode: compare head_ptr_0 and head_ptr_1
+         if (age_dist_0 <= age_dist_1) begin
+            newest_ptr_eff = head_ptr_eff_0;
+         end else begin
+            newest_ptr_eff = head_ptr_eff_1;
+         end
       end else begin
-         newest_ptr_eff = head_ptr_eff_2;
+         // Triple pipe mode: compare all three
+         if ((age_dist_0 <= age_dist_1) && (age_dist_0 <= age_dist_2)) begin
+            newest_ptr_eff = head_ptr_eff_0;
+         end else if (age_dist_1 <= age_dist_2) begin
+            newest_ptr_eff = head_ptr_eff_1;
+         end else begin
+            newest_ptr_eff = head_ptr_eff_2;
+         end
       end
 
       // Default next-state: keep (flush-updated) heads
@@ -912,6 +930,24 @@ module lsq_simple_top
       end
       if (effective_dealloc_2) begin
          head_ptr_2_n = newest_ptr_eff + 1 + effective_dealloc_0 + effective_dealloc_1;
+      end
+
+      // In reduced pipe modes, inactive pointers track the newest active pointer
+      // This keeps them synchronized and ready if pipes are re-enabled
+      if (!enable_pipe_1) begin
+         // Single pipe: head_ptr_1 and head_ptr_2 track head_ptr_n
+         head_ptr_1_n = head_ptr_n;
+         head_ptr_2_n = head_ptr_n;
+      end else if (!enable_pipe_2) begin
+         // Dual pipe: head_ptr_2 tracks the newest of head_ptr_n or head_ptr_1_n
+         if (effective_dealloc_1) begin
+            head_ptr_2_n = head_ptr_1_n;
+         end else if (effective_dealloc_0) begin
+            head_ptr_2_n = head_ptr_n;
+         end else begin
+            // No deallocation: track the newest effective pointer
+            head_ptr_2_n = (age_dist_0 <= age_dist_1) ? head_ptr_eff_0 : head_ptr_eff_1;
+         end
       end
    end
 
@@ -1319,7 +1355,7 @@ module lsq_simple_top
                   lsq_buffer[head_idx].size
                );
 
-            assign mem_1_req_valid_o    = head_ready_1;
+            assign mem_1_req_valid_o    = enable_pipe_1 && head_ready_1;
             assign mem_1_req_is_store_o = mem_1_resp_valid_i ? 1'b0  : lsq_buffer[head_idx_1].is_store;
             assign mem_1_req_addr_o     = lsq_buffer[head_idx_1].address;
             assign mem_1_req_data_o     = store_1_data;
@@ -1328,7 +1364,7 @@ module lsq_simple_top
                   lsq_buffer[head_idx_1].size
                );
 
-            assign mem_2_req_valid_o    = head_ready_2;
+            assign mem_2_req_valid_o    = enable_pipe_2 && head_ready_2;
             assign mem_2_req_is_store_o = mem_2_resp_valid_i ? 1'b0  : lsq_buffer[head_idx_2].is_store;
             assign mem_2_req_addr_o     = lsq_buffer[head_idx_2].address;
             assign mem_2_req_data_o     = store_2_data;
@@ -1395,12 +1431,12 @@ module lsq_simple_top
             assign cdb_interface.cdb_data_3_0 =  load_0_data; //lsq_buffer[head_idx].data;
             assign cdb_interface.cdb_dest_reg_3_0 = lsq_buffer[head_idx].phys_reg;
 
-            assign cdb_interface.cdb_valid_3_1 = mem_1_resp_valid_i | fwd_head_1; //lsq_buffer[head_idx_1].mem_complete;
+            assign cdb_interface.cdb_valid_3_1 = enable_pipe_1 && (mem_1_resp_valid_i | fwd_head_1); //lsq_buffer[head_idx_1].mem_complete;
             assign cdb_interface.cdb_tag_3_1 = 3'b011;
             assign cdb_interface.cdb_data_3_1 =  load_1_data; //lsq_buffer[head_idx_1].data;
             assign cdb_interface.cdb_dest_reg_3_1 = lsq_buffer[head_idx_1].phys_reg;
 
-            assign cdb_interface.cdb_valid_3_2 = mem_2_resp_valid_i | fwd_head_2; //lsq_buffer[head_idx_2].mem_complete;
+            assign cdb_interface.cdb_valid_3_2 = enable_pipe_2 && (mem_2_resp_valid_i | fwd_head_2); //lsq_buffer[head_idx_2].mem_complete;
             assign cdb_interface.cdb_tag_3_2 = 3'b011;
             assign cdb_interface.cdb_data_3_2 =  load_2_data; //we nedd mask here
             assign cdb_interface.cdb_dest_reg_3_2 = lsq_buffer[head_idx_2].phys_reg;

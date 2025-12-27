@@ -52,7 +52,7 @@ Karma Test & 30.000 & Tüm yönlendirilmiş akış türlerinin kombinasyonunu i�
 \end{tabular}
 \end{table}
 
-Rastgele test programları toplamda yaklaşık 140.000 komut içermekte olup, işlemcinin temel fonksiyonel bloklarının büyük çoğunluğunu kapsamaktadır. Her test programı, farklı mikromimari bileşenleri hedefleyerek belirli hata sınıflarının tespit edilmesine olanak tanımaktadır.
+Rastgele test programları toplamda yaklaşık 140.000 komut içermekte olup, işlemcinin temel fonksiyonel bloklarının büyük çoğunluğunu kapsamaktadır. Süperölçekli bir mimari için kritik olan veri bağımlılığı (RAW, WAW, WAR), ardışık atlama (back-to-back jump) ve hizalanmamış bellek erişimi gibi karmaşık senaryolar bu rastgele akışlar sayesinde stres altına alınmıştır. Test kapsamı; boru hattındaki kaynakların (ROB, RS, LSQ) sınır değerlerdeki davranışını ve spekülatif yürütme sonrası kurtarma mekanizmalarının doğruluğunu kanıtlamak için yeterli seviyeye ulaştırılmıştır.
 
 \subsubsection{Algoritma Tabanlı Deterministik Test Programları}
 
@@ -60,18 +60,34 @@ Rastgele test programlarının yanı sıra, gerçek uygulama senaryolarını mod
 
 En kapsamlı test programı, derleme opsiyonlarına bağlı olarak yaklaşık 67.000 ile 70.000 arasında komut üretmektedir. Bu program, bilgisayar bilimlerinin temel algoritmalarından oluşan bir koleksiyon içermekte olup, işlemcinin farklı hesaplama desenleri, bellek erişim kalıpları ve kontrol akışı yapıları altındaki davranışını test etmektedir.
 
-Programa dahil edilen algoritmalar aşağıda listelenmiştir:
+Programa dahil edilen algoritmalar ve bunların mikromimari seviyesinde hedeflediği işlemci karakteristiği Tablo \ref{tab:algorithm_tests} üzerinde gösterilmektedir:
 
-\begin{itemize}
-    \item \textbf{Graf Teorisi:} Dijkstra en kısa yol algoritması, topolojik sıralama
-    \item \textbf{Dinamik Programlama:} 0/1 sırt çantası problemi çözümü, edit uzaklığı hesaplaması
-    \item \textbf{Sıralama Algoritmaları:} Yığın sıralaması (heap sort)
-    \item \textbf{Metin İşleme:} Knuth-Morris-Pratt dizi eşleme algoritması
-    \item \textbf{Sayı Teorisi:} Eratosthenes kalburu, asal çarpanlara ayırma
-    \item \textbf{Matris İşlemleri:} Fibonacci hesaplaması için matris üstelleştirme
-    \item \textbf{Bit Manipülasyonu:} XOR lineer baz hesaplaması, Gray kodu dönüşümü
-    \item \textbf{Oyun Teorisi:} Tic-Tac-Toe oyunu için minimax algoritması
-\end{itemize}
+\begin{table}[htbp]
+\centering
+\caption{Algoritma Tabanlı Deterministik Test Programları}
+\label{tab:algorithm_tests}
+\begin{tabular}{p{4cm} p{8cm}}
+\toprule
+\textbf{Algoritma Grubu} & \textbf{Hedeflenen İşlemci Karakteristiği} \\
+\midrule
+Dijkstra ve Topolojik Sıralama & Yoğun bellek erişimi ve düzensiz dallanma desenleri ile LSQ ve dal tahminci yüklemesi. \\
+\midrule
+0/1 Sırt Çantası ve Edit Uzaklığı & Matris tabanlı veri erişimi ve ardışık veri bağımlılık zincirleri ile RS ve CDB kullanımı. \\
+\midrule
+Yığın Sıralaması (Heap Sort) & Karşılaştırma ve yer değiştirme işlemlerinin yoğun tekrarı ile spekülatif yürütme başarımı. \\
+\midrule
+KMP Dizi Eşleme & Döngü tabanlı karakter karşılaştırmaları ve sık dallanma işlemleri. \\
+\midrule
+Eratosthenes Kalburu ve Asal Çarpanlar & Yoğun aritmetik işlem kapasitesi ve ALU birimlerinin stres testi. \\
+\midrule
+Matris Üstelleştirme (Fibonacci) & Rekürsif yapılar ve yoğun yazmaç kullanımı ile Rename/Physical Register File yönetimi. \\
+\midrule
+Bit Manipülasyonu ve XOR Lineer Baz & Karmaşık mantıksal işlem dizileri ve veri yolu bütünlüğü. \\
+\midrule
+Minimax (Tic-Tac-Toe) & Derin özyinelemeli fonksiyon çağrıları (call/return) ile RAS (Return Address Stack) başarımı. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 Bu algoritmalar, birbirinden farklı hesaplama karakteristikleri sergilemektedir. Graf algoritmaları yoğun bellek erişimi ve düzensiz dallanma desenleri içerirken, dinamik programlama algoritmaları matris tabanlı erişim kalıpları ve yoğun bağımlılık zincirleri oluşturmaktadır. Sıralama algoritmaları karşılaştırma ve değiştirme işlemlerinin yoğun tekrarını gerektirmekte, metin işleme algoritmaları ise döngü tabanlı karakter karşılaştırmaları içermektedir.
 
@@ -112,7 +128,25 @@ Fonksiyonel doğruluğun sağlanması, sıra dışı yürütme yapısının teme
 
 \subsection{IPC Başarımı ve Karşılaştırmalı Analiz}
 
-Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artışını nicelleştirmek adına, aynı mimarinin tek yollu (scalar) versiyonu ile karşılaştırmalı testler yapılmıştır. Tablo \ref{tab:ipc_results}, farklı kategorideki test programları için her iki konfigürasyonda elde edilen ortalama IPC değerlerini sunmaktadır. Üç yollu paralel yürütme yapısının, özellikle bağımsız aritmetik işlemlerin yoğun olduğu kod bloklarında tek yollu yapıya göre sağladığı hızlanma faktörü analiz edilmiştir.
+Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artışını nicelleştirmek adına, aynı mimarinin tek yollu (scalar) versiyonu ile karşılaştırmalı testler yapılmıştır. Simülasyonlar, doğrulama ortamında 10 ns (100 MHz) saat periyodu kullanılarak gerçekleştirilmiştir. Tablo \ref{tab:ipc_results}, Bölüm \ref{subsec:algoritma_testleri}'de tanımlanan deterministik algoritma seti üzerinde elde edilen ortalama performans metriklerini sunmaktadır.
+
+\begin{table}[htbp]
+\centering
+\caption{1-Yollu ve 3-Yollu Konfigürasyonların Performans Karşılaştırması}
+\label{tab:ipc_results}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Mimari Yapı} & \textbf{Yürütme Süresi ($\mu$s)} & \textbf{Toplam Çevrim} & \textbf{Ortalama IPC} \\
+\midrule
+1-Yollu (Scalar) & 705,5 & 70.550 & 0,84 \\
+3-Yollu (Süperölçekli) & 345,8 & 34.580 & 1,71 \\
+\midrule
+\textbf{İyileşme Oranı} & \textbf{2,04x} & \textbf{2,04x} & \textbf{%103} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Elde edilen sonuçlara göre, üç yollu paralel yürütme yapısı sayesinde scalar çekirdeğe göre yaklaşık 2,04 kat hızlanma elde edilmiştir. Ortalama IPC değerinin 0,84'ten 1,71'e yükselmesi, süperölçekli mimarinin komut seviyesi paralelliğini (ILP) verimli bir şekilde sömürdüğünü kanıtlamaktadır.
 
 \subsection{Boru Hattı Tıkanıklık ve Darboğaz Analizi}
 
@@ -133,6 +167,8 @@ Performans analizinde korelasyon değerleri şu yaklaşımla elde edilmektedir:
     \item \textbf{Pearson Korelasyonu:} IPC ile belirli bir metrik (örneğin bellek erişimi) arasındaki doğrudan doğrusal ilişkiyi ölçmektedir.
     \item \textbf{Kısmi Korelasyon (Partial Correlation):} Bir faktörün etkisini (örneğin dal tahmin hatası) sabit tutarak, diğer bir faktörün (örneğin bellek gecikmesi) performans üzerindeki saf etkisini izole etmektedir.
 \end{itemize}
+
+Yapılan istatistiksel analizler sonucunda, süperölçekli mimarinin en temel performans kısıtının dal tahmin hataları olduğu teyit edilmiştir. Pearson korelasyonu, 3-yollu yapıda dal yanlış tahmini oranı ile IPC arasında $-0,74$ düzeyinde güçlü bir negatif ilişki ortaya koymuştur. Daha dikkat çekici bir bulgu ise kısmi korelasyon analizinden elde edilmiştir; bellek operasyonlarının saf performans etkisi, dal tahmin hataları arındırıldığında scalar çekirdekte $-0,21$ iken süperölçekli çekirdekte $-0,80$ seviyesine çıkmaktadır. Bu durum, mimari genişledikçe bellek sisteminin performans üzerindeki etkisinin (Memory Wall) çok daha belirgin hale geldiğini ve dal tahminci iyileştirilmelerinin ardından bellek gecikmelerinin ana darboğaz olacağını göstermektedir.
 
 \subsection{Performans İzleme Arayüzü (GUI)}
 

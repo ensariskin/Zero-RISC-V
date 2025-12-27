@@ -25,6 +25,8 @@ module superscalar_execute_stage #(
     )(
         input logic clk,
         input logic rst_n,
+        input  logic enable_pipe_1,
+        input  logic enable_pipe_2,
 
         output logic update_predictor_0,
         output logic update_predictor_1,
@@ -142,7 +144,7 @@ module superscalar_execute_stage #(
     // Functional Unit 1 (FU1)
     //=======================================================================
 
-    assign rs_to_exec_1.issue_ready = !fu1_busy;
+    assign rs_to_exec_1.issue_ready = !fu1_busy & enable_pipe_1;
     assign fu1_func_sel = rs_to_exec_1.control_signals[10:7];
     assign fu1_data_a = rs_to_exec_1.data_a;
     assign fu1_data_b = rs_to_exec_1.data_b;
@@ -175,7 +177,7 @@ module superscalar_execute_stage #(
     // Functional Unit 2 (FU2)
     //=======================================================================
 
-    assign rs_to_exec_2.issue_ready = !fu2_busy;
+    assign rs_to_exec_2.issue_ready = !fu2_busy & enable_pipe_2;
     assign fu2_func_sel = rs_to_exec_2.control_signals[10:7];
     assign fu2_data_a = rs_to_exec_2.data_a;
     assign fu2_data_b = rs_to_exec_2.data_b;

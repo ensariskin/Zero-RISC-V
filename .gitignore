@@ -84,3 +84,4 @@ dvt_build.log
 digital/sim/run/ss_risc_dv/*
 
 #ignaore thesis for now
+digital/sim/run/thesis_final_results/*

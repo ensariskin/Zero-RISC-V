@@ -29,6 +29,8 @@ module dispatch_stage #(
       input logic clk,
       input logic reset,
       input logic secure_mode,
+      input logic enable_pipe_1,    // Enable second pipe for LSQ
+      input logic enable_pipe_2,    // Enable third pipe for LSQ
 
       // Pipeline Control
       //input logic flush,
@@ -599,8 +601,10 @@ module dispatch_stage #(
    lsq_simple_top lsq (
       // Clock and reset
       .clk(clk),
-      .rst_n(reset ),
-      //.single_pipe_mode_i(1'b0), // todo make it port
+      .rst_n(reset),
+      .secure_mode(secure_mode),
+      .enable_pipe_1(enable_pipe_1),
+      .enable_pipe_2(enable_pipe_2),
 
       // Eager misprediction inputs (from BRAT in-order resolution)
       .eager_misprediction_i(brat_eager_misprediction),
@@ -694,7 +698,6 @@ module dispatch_stage #(
       .lsq_flush_valid_o(lsq_flush_valid_o),
 
       // TMR ports
-      .secure_mode(secure_mode),
       .head_ptr_0_fatal_o(),  // LSQ head_ptr fatal - can be aggregated later
       .head_ptr_1_fatal_o(),  // LSQ head_ptr_1 fatal
       .head_ptr_2_fatal_o(),  // LSQ head_ptr_2 fatal
