@@ -105,6 +105,66 @@ Doğrulama sonuçları, tasarlanan işlemcinin RV32I komut seti mimarisini fonks
 Fonksiyonel doğruluğun sağlanması, sıra dışı yürütme yapısının temel mekanizmalarının doğru çalıştığını göstermektedir. Bu mekanizmalar; yazmaç yeniden adlandırma ile veri bağımlılıklarının çözümlenmesi, spekülatif yürütme sırasında mimari durumun korunması, dal yanlış tahmini durumunda doğru kurtarma noktasına geri dönülmesi ve yükleme-saklama işlemlerinin bellek sıralamasını ihlal etmeden tamamlanmasıdır.
 
 %------------------------------------------------------------------------
+\section{Performans Analizi}\label{sec:performans_analizi}
+%------------------------------------------------------------------------
+
+İşlemcinin süperölçekli mimarisinin verimliliğini değerlendirmek amacıyla, farklı iş yükleri altında çevrim başına yürütülen ortalama komut sayısı (IPC) ve boru hattındaki performans darboğazları analiz edilmiştir. Geliştirilen test ortamı, simülasyon sırasında işlemcinin performans parametrelerini eşzamanlı olarak raporlayabilme yeteneğine sahiptir.
+
+\subsection{IPC Başarımı ve Karşılaştırmalı Analiz}
+
+Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artışını nicelleştirmek adına, aynı mimarinin tek yollu (scalar) versiyonu ile karşılaştırmalı testler yapılmıştır. Tablo \ref{tab:ipc_results}, farklı kategorideki test programları için her iki konfigürasyonda elde edilen ortalama IPC değerlerini sunmaktadır. Üç yollu paralel yürütme yapısının, özellikle bağımsız aritmetik işlemlerin yoğun olduğu kod bloklarında tek yollu yapıya göre sağladığı hızlanma faktörü analiz edilmiştir.
+
+\subsection{Boru Hattı Tıkanıklık ve Darboğaz Analizi}
+
+İşlemcinin performansını sınırlayan unsurları (bottleneck) mikromimari seviyesinde tespit etmek amacıyla, boru hattının her bir aşamasında oluşan tıkanıklıklar detaylı olarak incelenmiştir. Bu analiz kapsamında izlenen temel performans parametreleri şunlardır:
+
+\begin{itemize}
+    \item \textbf{Kaynak Doluluğu:} Yeniden sıralama tamponu (ROB) ve yükleme-saklama kuyruğunun (LSQ) doluluk oranları, komut dağıtım aşamasını (dispatch) durduran temel unsurlar olarak takip edilmektedir.
+    \item \textbf{Rezervasyon İstasyonu (RS) Duraklamaları:} Komutların yürütme birimlerine gönderilememesinin nedenleri; getirme birimi boşalması (instruction starvation), çözümleme (decode) aşaması gecikmeleri veya dal yanlış tahmini sonrası boru hattının temizlenmesi (flush) gibi kategorilere ayrılmıştır.
+    \item \textbf{Bağımlılık Duraklamaları:} Komutların kaynak operandlarının hazır olmaması nedeniyle döngü bazlı bekleme süreleri ve Ortak Veri Yolu (CDB) üzerindeki veri iletim yoğunluğu analiz edilmektedir.
+\end{itemize}
+
+\subsection{Korelasyon Analizi ve Performans Tahmini}
+
+İşlemci performansını etkileyen faktörlerin birbirleriyle olan ilişkisini anlamak amacıyla istatistiksel bir analiz yöntemi izlenmiştir. Simülasyonlardan elde edilen veriler üzerinde Pearson korelasyon katsayısı kullanılarak, IPC değeri ile dal yanlış tahmini (misprediction) ve bellek operasyonları arasındaki ilinti hesaplanmıştır.
+
+Performans analizinde korelasyon değerleri şu yaklaşımla elde edilmektedir:
+\begin{itemize}
+    \item \textbf{Pearson Korelasyonu:} IPC ile belirli bir metrik (örneğin bellek erişimi) arasındaki doğrudan doğrusal ilişkiyi ölçmektedir.
+    \item \textbf{Kısmi Korelasyon (Partial Correlation):} Bir faktörün etkisini (örneğin dal tahmin hatası) sabit tutarak, diğer bir faktörün (örneğin bellek gecikmesi) performans üzerindeki saf etkisini izole etmektedir.
+\end{itemize}
+
+\subsection{Performans İzleme Arayüzü (GUI)}
+
+Boru hattı aktivitelerini, istatistiksel verileri ve darboğaz analizlerini görselleştirmek amacıyla özel bir grafik kullanıcı arayüzü (GUI) geliştirilmiştir. Bu arayüz, simülasyon sırasında üretilen performans kayıtlarını anlamlandırarak; IPC değişim grafiği, stall dağılım yüzdeleri ve dal tahmin başarımı gibi kritik verileri canlı veya simülasyon sonrası analiz için sunmaktadır (Şekil \ref{fig:perf_gui}).
+
+\begin{figure}[htbp]
+    \centering
+    %\includegraphics[width=0.8\textwidth]{figures/perf_gui.png}
+    \caption{Geliştirilen Performans İzleme ve Darboğaz Analiz Arayüzü}
+    \label{fig:perf_gui}
+\end{figure}
+
+Geliştirilen bu araç, mimari üzerindeki optimizasyon çalışmalarında darboğazların hızlıca tespit edilmesini ve gerçekleştirilen değişikliklerin sisteme etkisinin doğrudan gözlemlenmesini sağlamıştır.
+
+%------------------------------------------------------------------------
+\section{Hata Enjeksiyonu ve Güvenilirlik Doğrulaması}\label{sec:fault_injection}
+%------------------------------------------------------------------------
+
+Bölüm \ref{ch:redundancy}'de açıklanan donanımsal yedeklilik mekanizmalarının etkinliğini doğrulamak için özel bir güvenilirlik analiz süreci işletilmiştir. Tasarımın fiziksel hatalara karşı direnci, mikromimari seviyesinde gerçekleştirilen hata enjeksiyon testleri ile ölçülmüştür.
+
+\subsection{Hata Enjeksiyon Metodolojisi}
+
+Hata enjeksiyon doğrulamasında başlangıçta Cadence Safety Simulation araçlarının kullanılması planlanmış, ancak uygulama sürecinde karşılaşılan lisans kısıtlamaları nedeniyle özel bir hata enjeksiyon modülü geliştirilerek test ortamına entegre edilmiştir. Bu modül, işlemcinin çalışma zamanındaki davranışını bozmadan, dinamik olarak hata üretme ve izleme yeteneğine sahiptir.
+
+Geliştirilen enjeksiyon mekanizması, tasarım içerisinde ECC (Error Correction Code) gibi yöntemlerle korunduğu varsayılan bellek yapıları dışındaki herhangi bir fiziksel yazmacı (register) hedef alabilmektedir. Hata modeli olarak "bit-flipping" yöntemi kullanılmış; seçilen yazmaçlardaki rastgele bir bitin değeri anlık olarak tersine çevrilerek tekil olay bozulmaları (SEU) taklit edilmiştir. Bu yöntemle, hata tolerans altyapısının bu tip anlık bozulmaları ne ölçüde maskeleyebildiği ve sistemin bütünlüğünü nasıl koruduğu test edilmiştir.
+
+\subsection{Hata Tolerans ve Kurtarma Sonuçları}
+
+Hata enjeksiyon testlerinde, korunan modüller üzerindeki oylama mekanizmalarının hatalı veriyi sistemin geri kalanına sızdırmadan temizlediği teyit edilmiştir. Testbench tarafından canlı olarak yayınlanan istatistikler, enjekte edilen toplam hata sayısı ile oylayıcılar tarafından yakalanarak düzeltilen hata sayılarını karşılaştırmalı olarak raporlamaktadır. [HATA KURTARMA ORANLARI VE TABLOLAR BURAYA GELECEK]
+
+
+%------------------------------------------------------------------------
 \section{Lojik Sentez Sonuçları}\label{sec:sentez}
 %------------------------------------------------------------------------
 
@@ -267,12 +327,9 @@ Güç tüketimi açısından fiziksel tasarım sonrası elde edilen 131.6 mW de�
 
 Bu çalışmanın bazı kısıtlamaları bulunmakta olup, gelecek çalışmalarda ele alınması öngörülmektedir:
 
-\begin{enumerate}
-    \item \textbf{Zamanlama İhlali:} Fiziksel tasarım sonrası 1 GHz hedef frekansına tam olarak ulaşılamamıştır. Kritik yolun yeniden yapılandırılması, ardışık düzen aşamalarının eklenmesi veya daha agresif sentez stratejilerinin uygulanması ile bu ihlal giderilebilir.
+    \item \textbf{Zamanlama İhlali:} Fiziksel tasarım sonrası 1 GHz hedef frekansına tam olarak ulaşılamamıştır. Kritik yolun yeniden yapılandırılması, ardışık düzen aşamalarının eklenmesi veya daha agresif sentez kısıtlamalarının uygulanması ile bu ihlal giderilebilir.
     
     \item \textbf{Bellek Entegrasyonu:} Mevcut gerçekleme ideal bellek modelleri kullanmaktadır. Gerçek SRAM makrolarının entegrasyonu, ek gecikme ve alan maliyeti getirecek olup, zamanlama analizi bu koşullar altında yeniden değerlendirilmelidir.
     
-    \item \textbf{Bilgi Yedekliliği Eksikliği:} Bellek yapıları için hata düzeltme kodları (ECC) bu aşamada gerçeklenmemiştir. Bölüm \ref{ch:redundancy}'de açıklanan üçlü modüler yedeklilik (TMR) koruması yazmaç seviyesinde sağlanmakta olup, bellek yapılarının korunması gelecek çalışmalara bırakılmıştır.
-    
-    \item \textbf{Performans Analizi:} Çevrim başına komut (IPC) metrikleri ve dal tahmini doğruluğu gibi performans göstergeleri bu bölümde sunulmamıştır. Ayrıntılı performans analizi, farklı iş yükleri altında işlemcinin verimlilik karakterizasyonunu içerecek biçimde ileride ele alınabilir.
+    \item \textbf{Genişletilmiş Güvenilirlik:} Mevcut çalışmada kritik kontrol işaretçileri TMR ile korunmuştur. Gelecek çalışmalarda, bellek yapılarının korunması için kullanılan ECC yöntemlerinin fiziksel tasarımı ve sistem geneline yayılmış daha kapsamlı hata tespit mekanizmaları ele alınabilir.
 \end{enumerate}
