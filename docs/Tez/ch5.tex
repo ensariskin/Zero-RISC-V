@@ -127,25 +127,7 @@ Fonksiyonel doğruluğun sağlanması, sıra dışı yürütme yapısının teme
 
 \subsection{IPC Karşılaştırması ve Hızlanma Oranları}
 
-Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artışını nicelleştirmek adına, aynı mimarinin tek yollu (scalar) versiyonu ile karşılaştırmalı testler yapılmıştır. Tablo \ref{tab:ipc_results_deterministik}, Bölüm \ref{subsec:test_vektorleri}'de tanımlanan deterministik algoritma seti üzerinde elde edilen ortalama performans metriklerini sunmaktadır.
-
-\begin{table}[htbp]
-\centering
-\caption{Deterministik Testler Altında 1-Yollu ve 3-Yollu Konfigürasyonların Karşılaştırması}
-\label{tab:ipc_results_deterministik}
-\begin{tabular}{l c c}
-\toprule
-\textbf{Mimari Yapı} & \textbf{Toplam Çevrim} & \textbf{Ortalama IPC} \\
-\midrule
-1-Yollu (Scalar) & 70.550 & 0,84 \\
-3-Yollu (Süperölçekli) & 34.580 & 1,71 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Elde edilen sonuçlara göre, üç yollu paralel yürütme yapısı sayesinde scalar çekirdeğe göre yaklaşık 2,04 kat hızlanma elde edilmiştir. Ortalama IPC değerinin 0,84'ten 1,71'e yükselmesi, süperölçekli mimarinin komut seviyesi paralelliğini (ILP) verimli bir şekilde kullandığını kanıtlamaktadır.
-
-Sentetik stres testleri altında mimarinin davranışını gözlemlemek amacıyla RISC-V DV çerçevesi ile üretilen rastgele testlerin sonuçları Tablo \ref{tab:random_ipc_results} üzerinde özetlenmiştir.
+Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artışını nicelleştirmek adına, aynı mimarinin tek yollu (scalar) versiyonu ile karşılaştırmalı testler yapılmıştır. Sentetik stres testleri altında mimarinin davranışını gözlemlemek amacıyla RISC-V DV çerçevesi ile üretilen rastgele testlerin sonuçları Tablo \ref{tab:random_ipc_results} üzerinde özetlenmiştir.
 
 \begin{table}[htbp]
 \centering
@@ -168,23 +150,43 @@ Karma Test & 0,85 & 1,65 & 1,94x \\
 \end{tabular}
 \end{table}
 
-Rastgele test sonuçları incelendiğinde, işlemcinin aritmetik ağırlıklı iş yüklerinde 2,90 IPC değerine erişerek \%97 gibi oldukça yüksek bir teorik verimlilik elde ettiği görülmektedir. Ancak dallanma ve bellek yoğunluklu senaryolarda IPC değerlerinde düşüşler gözlemlenmiştir.
+Rastgele test sonuçları incelendiğinde, işlemcinin aritmetik ağırlıklı iş yüklerinde 2,90 IPC değerine erişerek \%97 gibi oldukça yüksek bir teorik verimlilik elde ettiği görülmektedir. Ancak dallanma ve bellek yoğunluklu senaryolarda IPC değerlerinde düşüşler gözlemlenmiştir. Bu düşüşün temel nedeni dal tahminci başarımındaki farklılıktır. Rastgele üretilen komut dizilerinin herhangi bir istatistiksel patern veya döngüsel yapı içermemesi, dal tahmincisinin \%32-\%43 bandında düşük bir başarı sergilemesine yol açmıştır.
 
-Bu düşüşün temel nedeni dal tahminci başarımındaki farklılıktır. Deterministik algoritma testlerinde (gerçek dünya iş yüklerini temsil eden) \%80'den fazla tahmin doğruluğuna ulaşan mimari, rastgele test setlerinde \%32-\%43 bandında bir başarı sergilemiştir. Bu keskin düşüş, dal tahmincisinin yapısal yetersizliğinden ziyade, rastgele üretilen komut dizilerinin herhangi bir istatistiksel patern veya döngüsel yapı içermemesinden kaynaklanmaktadır. 
+Bölüm \ref{subsec:test_vektorleri}'de tanımlanan deterministik algoritma seti üzerinde elde edilen ortalama performans metrikleri Tablo \ref{tab:ipc_results_deterministik} üzerinde sunulmaktadır.
+
+\begin{table}[htbp]
+\centering
+\caption{Deterministik Testler Altında 1-Yollu ve 3-Yollu Konfigürasyonların Karşılaştırması}
+\label{tab:ipc_results_deterministik}
+\begin{tabular}{l c c}
+\toprule
+\textbf{Mimari Yapı} & \textbf{Toplam Çevrim} & \textbf{Ortalama IPC} \\
+\midrule
+1-Yollu (Scalar) & 70.550 & 0,84 \\
+3-Yollu (Süperölçekli) & 34.580 & 1,71 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Deterministik testlerde elde edilen sonuçlara göre, üç yollu paralel yürütme yapısı sayesinde scalar çekirdeğe göre yaklaşık 2,04 kat hızlanma elde edilmiştir. Ortalama IPC değerinin 0,84'ten 1,71'e yükselmesi, süperölçekli mimarinin komut seviyesi paralelliğini (ILP) verimli bir şekilde kullandığını kanıtlamaktadır. Deterministik algoritma testlerinde (gerçek dünya iş yüklerini temsil eden) dal tahmincisi \%80'den fazla tahmin doğruluğuna ulaşmış olup, bu durum dal tahmincisinin gerçek uygulamalarda yüksek verimlilik sunduğunu göstermektedir. 
 
 \subsection{Boru Hattı Tıkanıklık ve Darboğaz Analizi}
 
-İşlemcinin performansını sınırlayan unsurları (bottleneck) mikromimari seviyesinde tespit etmek amacıyla, boru hattının her bir aşamasında oluşan tıkanıklıklar detaylı olarak incelenmiştir. Bu analiz kapsamında izlenen temel performans parametreleri şunlardır:
+İşlemcinin performansını sınırlayan unsurları (bottleneck) mikromimari seviyesinde tespit etmek amacıyla, boru hattının her bir aşamasında oluşan tıkanıklıklar detaylı olarak incelenmiştir. Bu analiz kapsamında rezervasyon istasyonlarının (RS) yürütme birimlerini besleyememesinin nedenleri iki ana kategoride ele alınmaktadır:
 
 \begin{itemize}
-    \item \textbf{Kaynak Doluluğu:} Yeniden sıralama tamponu (ROB) ve yükleme-saklama kuyruğunun (LSQ) doluluk oranları, komut dağıtım aşamasını (dispatch) durduran temel unsurlar olarak takip edilmektedir.
-    \item \textbf{Rezervasyon İstasyonu (RS) Duraklamaları:} Komutların yürütme birimlerine gönderilememesinin nedenleri; komut açlığı (instruction starvation), çözümleme (decode) aşaması gecikmeleri veya dal yanlış tahmini sonrası boru hattının temizlenmesi (flush) gibi kategorilere ayrılmıştır.
-    \item \textbf{Bağımlılık Duraklamaları:} Komutların kaynak operandlarının hazır olmaması nedeniyle döngü bazlı bekleme süreleri ve Ortak Veri Yolu (CDB) üzerindeki veri iletim yoğunluğu analiz edilmektedir.
+    \item \textbf{Komut Yokluğu (Not Occupied):} Rezervasyon istasyonunun boş kaldığı durumları kapsamaktadır. Bu durum üç farklı senaryodan kaynaklanabilmektedir:
+    \begin{itemize}
+        \item \textbf{Dal Yanlış Tahmini Cezası:} Misprediction sonrasında boru hattı temizlenmiş olup doğru komutlar henüz rezervasyon istasyonuna ulaşmamıştır.
+        \item \textbf{Komut Tamponu Boşalması:} Dal yanlış tahmini olmaksızın komut tamponunun (instruction buffer) boşalması nedeniyle yeni komut akışı kesilmiştir.
+        \item \textbf{Önceki Aşama Darboğazı:} Komut tamponunda bekleyen komutlar mevcut olmasına rağmen, yeniden sıralama tamponu (ROB) veya yükleme-saklama kuyruğu (LSQ) gibi yapıların doluluk oranları nedeniyle yeni komutlar dağıtılamamaktadır.
+    \end{itemize}
+    \item \textbf{Operand Hazır Değil (Operands Not Ready):} Rezervasyon istasyonu bir komuta sahip olmasına rağmen, komutun kaynak operandlarından biri veya birden fazlası henüz hesaplanmamış olduğundan yürütme birimine gönderilemez durumdadır.
 \end{itemize}
 
 Bu darboğaz analizlerini görselleştirmek amacıyla özel bir grafik kullanıcı arayüzü (GUI) geliştirilmiştir. Bu arayüz, simülasyon sırasında üretilen performans kayıtlarını anlamlandırarak; IPC değişim grafiği, stall dağılım yüzdeleri ve dal tahmin başarımı gibi kritik verileri canlı veya simülasyon sonrası analiz için sunmaktadır.
 
-Şekil \ref{fig:perf_gui}, geliştirilen performans izleme arayüzünün hiyerarşik duraklama analizi ekranını göstermektedir. Bu ekranda her bir rezervasyon istasyonu (RS0, RS1, RS2) için duraklama nedenleri kategorize edilmiş olarak sunulmaktadır. ``Not Occupied'' kategorisi, rezervasyon istasyonunun boş kaldığı çevrimleri; ``Operands Not Ready'' kategorisi ise komutların kaynak operandlarının hazır olmaması nedeniyle bekletildiği çevrimleri göstermektedir. Hiyerarşik yapı sayesinde her kategorinin alt nedenleri de detaylı olarak incelenebilmektedir.
+Şekil \ref{fig:perf_gui}, geliştirilen performans izleme arayüzünün hiyerarşik duraklama analizi ekranını göstermektedir. Bu ekranda her bir rezervasyon istasyonu (RS0, RS1, RS2) için duraklama nedenleri yukarıda açıklanan kategorilere göre sunulmaktadır. Hiyerarşik yapı sayesinde her kategorinin alt nedenleri de detaylı olarak incelenebilmektedir.
 
 \begin{figure}[htbp]
     \centering
@@ -301,8 +303,6 @@ Tasarım, Cadence Genus 23.11 lojik sentez aracı kullanılarak endüstriyel bir
 
 Sentez işlemi, tipik çalışma koşulları (TT köşesi) altında, 0.8V besleme voltajı ve 25$^\circ$C sıcaklık değerleri için gerçekleştirilmiştir. Zamanlama kısıtı olarak 1 ns saat periyodu belirlenmiş olup, bu değer 1 GHz çalışma frekansına karşılık gelmektedir.
 
-\subsection{Zamanlama ve Hücre Kullanımı}\label{subsec:timing_syn}
-
 Lojik sentez sonucunda elde edilen zamanlama sonuçları, belirlenen 1 GHz hedef frekansının karşılandığını göstermektedir. Tablo \ref{tab:synthesis_results}, sentez aşamasında elde edilen temel metrikleri özetlemektedir.
 
 \begin{table}[htbp]
@@ -330,7 +330,6 @@ Toplam Güç Tüketimi & 150.4 mW \\
 
 Sentez aşamasında tespit edilen kritik yol, dispatch aşamasındaki yükleme-saklama kuyruğu (LSQ) baş işaretçisinden dal yanlış tahmini kurtarma tablosu (BRAT) içindeki RAT anlık görüntü belleğine uzanan sinyal yolunda oluşmaktadır. Bu yolun toplam kombinasyonel gecikmesi 937 ps olarak ölçülmüş olup, kalan 63 ps kurulum zamanı (setup time) ve zamanlama belirsizliği (uncertainty) için ayrılmıştır.
 
-\subsection{Güç Tüketimi Analizi}\label{subsec:power_syn}
 
 Sentez aşamasında gerçekleştirilen güç analizi, rastgele test aktivitesi varsayımı altında toplam güç tüketimini ortaya koymaktadır. Tablo \ref{tab:power_syn}, güç bileşenlerinin dağılımını göstermektedir.
 
@@ -361,7 +360,24 @@ Güç dağılımı analiz edildiğinde, dahili gücün baskın bileşen olduğu 
 
 Lojik sentez çıktısı, Cadence Innovus 22.31 fiziksel tasarım aracı kullanılarak yerleştirme ve yönlendirme (Place and Route) aşamasından geçirilmiştir. Fiziksel tasarım sürecinde saat ağacı sentezi, yerleştirme optimizasyonu ve sinyal yönlendirmesi gerçekleştirilmiştir.
 
-\subsection{Zamanlama Analizi}\label{subsec:pnr_timing}
+Şekil \ref{fig:innovus_layout}, tasarımın yerleştirme aşaması sonrasındaki fiziksel görünümünü sunmaktadır. Yaklaşık 400 $\mu m$ $\times$ 400 $\mu m$ boyutlarındaki çip alanı üzerinde, temel fonksiyonel birimlerin (fetch, issue, rat/brat, vb.) yerleşimi ve kapladıkları alanlar görülmektedir.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{fig/innovus_placement.png}
+    \caption{Cadence Innovus Ortamında İşlemci Çekirdeğinin Fiziksel Yerleşim Görünümü}
+    \label{fig:innovus_layout}
+\end{figure}
+
+Şekil \ref{fig:innovus_routing} ise, sinyal yönlendirme (routing) işlemi tamamlandıktan sonraki karmaşıklığı ve metal katmanlarının yoğunluğunu göstermektedir. Bu aşamada, tasarımın tüm sinyal ağları ve bağlantıları, belirlenen geometrik tasarım kurallarına (DRC) uygun olarak gerçekleştirilmiştir.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{fig/innovus_routing.jpg}
+    \caption{Sinyal Yönlendirme (Routing) Sonrası Kritik Bağlantı Yoğunluğu ve Metal Katmanları}
+    \label{fig:innovus_routing}
+\end{figure}
+
 
 Fiziksel tasarım sonrası zamanlama analizi, gerçek tel gecikmelerinin hesaba katılmasıyla lojik senteze göre farklı sonuçlar ortaya koymaktadır. Tablo \ref{tab:pnr_results}, fiziksel tasarım sonuçlarını özetlemektedir.
 
@@ -390,7 +406,6 @@ Fiziksel tasarım sonrası kritik yol, dal yanlış tahmini kurtarma tablosu (BR
 
 Bu sonuç, tasarımın 1 GHz hedef frekansını tam olarak karşılayamadığını, ancak yaklaşık 900 MHz civarında güvenli biçimde çalışabileceğini göstermektedir. Zamanlama ihlalinin giderilmesi için kritik yol üzerindeki kombinasyonel mantığın yeniden yapılandırılması veya daha agresif sentez kısıtlamalarının uygulanması değerlendirilebilir.
 
-\subsection{Güç Tüketimi Analizi}\label{subsec:power_pnr}
 
 Fiziksel tasarım sonrası güç analizi, lojik sentez aşamasına göre daha düşük toplam güç tüketimi göstermektedir. Bu fark, yerleştirme optimizasyonunun daha kısa tel uzunlukları sağlaması ve dolayısıyla kapasitif yükün azalmasından kaynaklanmaktadır. Tablo \ref{tab:power_pnr}, fiziksel tasarım sonrası güç dağılımını göstermektedir.
 
