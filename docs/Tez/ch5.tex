@@ -3,7 +3,15 @@
 \chapter{DOĞRULAMA VE SONUÇLAR}\label{ch:dogrulama}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Bu bölümde, tasarlanan üç yollu süperölçekli sıra dışı yürütme özellikli RISC-V işlemcisinin doğrulama metodolojisi, fonksiyonel test sonuçları, lojik sentez ve fiziksel tasarım sonuçları kapsamlı olarak ele alınmaktadır. Doğrulama sürecinde referans model tabanlı karşılaştırma yöntemi kullanılmış, sentez ve fiziksel tasarım aşamalarında endüstri standardı araçlar ile gerçek silikon üretim kütüphaneleri kullanılarak sonuçlar elde edilmiştir.
+Bu bölümde, tasarlanan üç yollu süperölçekli sıra dışı yürütme özellikli RISC-V işlemcisinin kapsamlı doğrulama süreci, performans analizi, hata enjeksiyonu testleri ve fiziksel gerçekleme sonuçları sunulmaktadır.
+
+Fonksiyonel doğrulama kapsamında, Google RISC-V DV çerçevesi ile üretilen dokuz farklı rastgele test senaryosu ve sekiz farklı algoritmayı içeren deterministik test programı olmak üzere toplamda yaklaşık 260.000 komut yürütülmüştür. Tüm testler, Berkeley Spike referans modeli ile çevrim bazında (cycle-by-cycle) karşılaştırılarak doğrulanmıştır.
+
+Performans değerlendirmesinde, işlemcinin tek yollu (scalar) versiyonu ile karşılaştırmalı IPC analizleri gerçekleştirilmiş; boru hattı darboğazları, dal tahmini başarımı ve bellek erişim gecikmelerinin performansa etkileri istatistiksel yöntemlerle incelenmiştir.
+
+Güvenilirlik doğrulaması kapsamında, TMR ile korunan kritik yazmaçlara hata enjeksiyonu testleri uygulanmış ve tek bit hatalarına karşı \%100 maskeleme oranı elde edilmiştir.
+
+Son olarak, tasarım Cadence araçları kullanılarak TSMC 16nm FinFET teknolojisine sentezlenmiş ve fiziksel tasarım sonuçları raporlanmıştır.
 
 %------------------------------------------------------------------------
 \section{Doğrulama Metodolojisi}\label{sec:metodoloji}
@@ -13,11 +21,15 @@ Süperölçekli işlemci tasarımlarının doğrulanması, tek yollu tasarımlar
 
 \subsection{Simülasyon Ortamı ve Araçları}\label{subsec:sim_ortami}
 
-Tasarımın fonksiyonel doğrulaması için Metrics Design Automation firmasının geliştirdiği DSIM simülasyon aracı kullanılmıştır. DSIM, SystemVerilog dilinin tüm özelliklerini destekleyen, yüksek performanslı bir dijital simülasyon ortamı sağlamaktadır. Simülasyon süresince işlemcinin davranışını izlemek ve kayıt altına almak amacıyla özel bir izleme altyapısı geliştirilmiştir.
+Tasarımın fonksiyonel doğrulaması için Metrics Design Automation firmasının geliştirdiği DSIM simülasyon aracı kullanılmıştır. Simülasyon süresince işlemcinin davranışını izlemek ve kayıt altına almak amacıyla özel bir izleme altyapısı geliştirilmiştir.
 
-Geliştirilen izleme altyapısı, işlemcinin üç yollu commit aşamasından çıkan her komutu kayıt altına almaktadır. Her bir tamamlanan komut için program sayacı değeri, komut kodu, hedef yazmaç adresi ile yazılan değer ve bellek yazma işlemlerinde adres ile veri bilgileri kaydedilmektedir. Bu kayıtlar, referans model ile karşılaştırma amacıyla kullanılmaktadır.
+Doğrulama ortamında işlemci çekirdeği, özel olarak tasarlanmış bir test ortamı içerisinde test edilmektedir. Test ortamı, süperölçekli mimarinin paralel erişim gereksinimlerini karşılamak üzere tasarlanmış çok portlu bellek alt sistemini içermektedir. Komut belleği için beş portlu bir SRAM modeli kullanılmakta olup, bu yapı üç yollu komut getirme işlemini desteklemektedir. Veri belleği tarafında ise üç portlu bir yapı tercih edilmiş olup, bu sayede aynı çevrimde üç bağımsız yükleme veya saklama işlemi gerçekleştirilebilmektedir. Bellek erişim işlemleri Wishbone protokolü üzerinden yönetilmektedir. İşlemci çekirdeği ile bellek modülleri arasında özel adaptör modülleri konumlandırılmış olup, bu adaptörler çekirdeğin basitleştirilmiş bellek arayüzünü Wishbone sinyallerine dönüştürmektedir.
 
-Referans model olarak Berkeley Üniversitesi tarafından geliştirilen ve RISC-V komut seti mimarisinin resmi referans gerçeklemesi olarak kabul edilen Spike komut seti simülatörü kullanılmıştır \cite{spike_iss}. Spike, RISC-V komutlarının davranışını tam olarak tanımlayan altın model (golden model) niteliğindedir. Tasarlanan işlemci ile Spike aynı test programlarını çalıştırmakta ve her iki tarafın ürettiği izleme kayıtları satır satır karşılaştırılmaktadır. Bu karşılaştırma otomatikleştirilmiş Python betikleri aracılığıyla gerçekleştirilmekte olup, herhangi bir uyumsuzluk tespit edildiğinde ilgili komutun adresi, beklenen ve gerçekleşen değerler ile birlikte raporlanmaktadır.
+Geliştirilen izleme altyapısı, işlemcinin üç yollu commit aşamasından çıkan her komutu kayıt altına almaktadır. Her bir tamamlanan komut için program sayacı değeri, komut kodu, hedef yazmaç adresi ile yazılan değer ve bellek yazma işlemlerinde adres ile veri bilgileri kaydedilmektedir. Bu kayıtlar, referans model ile karşılaştırma amacıyla kullanılmaktadır. İzleme modülü, işlemci çekirdeğinden gelen üç ayrı commit kanalını dinleyerek, tamamlanan komutları program sırasına göre kaydetmektedir.
+
+Kullanılan bellek modelleri ideal davranış sergilemekte olup, tek çevrimlik erişim gecikmesi sunmaktadır. Bu yaklaşım, işlemci mikro mimarisinin fonksiyonel doğruluğunun önbellek veya DRAM gecikmelerinden bağımsız olarak test edilmesini sağlamaktadır.
+
+Referans model olarak Berkeley Üniversitesi tarafından geliştirilen ve RISC-V komut seti mimarisinin resmi referans gerçeklemesi olarak kabul edilen Spike komut seti simülatörü kullanılmıştır \cite{spike_iss}. Spike, RISC-V komutlarının davranışını tam olarak tanımlayan altın model (golden model) niteliğindedir. Tasarlanan işlemci ile Spike aynı test programlarını çalıştırmakta ve her iki tarafın ürettiği izleme kayıtları satır satır karşılaştırılmaktadır. 
 
 \subsection{Test Programları ve Kapsam}\label{subsec:test_vektorleri}
 
@@ -37,22 +49,28 @@ Tablo \ref{tab:riscv_dv_tests}, kullanılan rastgele test programlarını, her b
 \toprule
 \textbf{Test Programı} & \textbf{Komut} & \textbf{Hedeflenen Senaryo ve Açıklama} \\
 \midrule
-Temel Aritmetik Testi & 30.000 & Yalnızca aritmetik ve mantıksal komutlar içermekte olup dallanma ve bellek erişim komutları devre dışı bırakılmıştır. Aritmetik mantık birimi performansı ve veri bağımlılığı çözümlemesi test edilmektedir. \\
+Temel Aritmetik & 30.000 & Yalnızca aritmetik ve mantıksal komutlar içermekte olup dallanma ve bellek erişim komutları devre dışı bırakılmıştır. ALU performansı ve veri bağımlılığı çözümlemesi test edilmektedir. \\
 \midrule
-Karmaşık Aritmetik Testi & 10.000 & Tamsayı aritmetiğinin sınır değer durumlarını (taşma, alt taşma, maksimum ve minimum değerler) içeren özel komut akışları kullanılmaktadır. Aritmetik birimlerin köşe durumlarındaki davranışı doğrulanmaktadır. \\
+Karmaşık Aritmetik & 10.000 & Tamsayı aritmetiğinin sınır değer durumlarını (taşma, alt taşma, maksimum ve minimum değerler) yoğun biçimde içeren özel komut akışları kullanılmaktadır. \\
 \midrule
-Temel Dallanma Testi & 30.000 & Koşullu dallanma ve koşulsuz atlama komutlarını içeren rastgele komut dizileri üretilmektedir. Dal tahmini mekanizmasının temel doğruluğu test edilmektedir. \\
+Temel Dallanma & 30.000 & Koşullu dallanma ve koşulsuz atlama komutlarını içeren rastgele komut dizileri üretilmektedir. Dal tahmini mekanizmasının temel doğruluğu test edilmektedir. \\
 \midrule
-Karmaşık Dallanma Testi & 30.000 & Yoğun döngü yapıları ve iç içe dallanma desenlerini içeren komut akışları kullanılmaktadır. Dal tahmini güncelleme mekanizması ve yanlış tahmin kurtarma yolu stres altına alınmaktadır. \\
+Döngü ve Dallanma & 10.000 & Sınır değer aritmetiği ile birlikte döngü yapıları içeren komut akışları üretilmektedir. Döngü tabanlı dal tahmini desenleri test edilmektedir. \\
 \midrule
-Temel Bellek Testi & 10.000 & Yükleme ve saklama komutlarını yoğun biçimde içeren rastgele bellek erişim desenleri üretilmektedir. Yükleme-saklama kuyruğu ve bellek alt sistemi test edilmektedir. \\
+Karmaşık Dallanma & 30.000 & Yoğun döngü yapıları, sınır değer aritmetiği ve iç içe dallanma desenlerini birlikte içeren komut akışları kullanılmaktadır. Dal tahmini güncelleme mekanizması stres altına alınmaktadır. \\
 \midrule
-Karma Test & 30.000 & Tüm yönlendirilmiş akış türlerinin kombinasyonunu içermektedir. Gerçek uygulama iş yüklerine benzer karmaşık senaryolar oluşturulmaktadır. \\
+Temel Bellek & 10.000 & Dallanma komutları devre dışı bırakılarak yalnızca yükleme ve saklama komutlarını içeren rastgele bellek erişim desenleri üretilmektedir. LSQ test edilmektedir. \\
+\midrule
+Karmaşık Bellek & 10.000 & Sayfa sınırı geçişleri, bellek bölgesi stres testleri ve çoklu sayfa erişim desenlerini içeren yoğun bellek operasyonları gerçekleştirilmektedir. \\
+\midrule
+Basit Karma Test & 30.000 & Döngü yapıları, atlama komutları ve rastgele bellek erişimlerini birlikte içeren temel kombinasyon testi uygulanmaktadır. \\
+\midrule
+Karma Test & 30.000 & Sınır değer aritmetiği, döngüler, atlamalar, rastgele bellek erişimleri ve çoklu sayfa operasyonlarını kapsayan kapsamlı stres testi gerçekleştirilmektedir. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Rastgele test programları toplamda yaklaşık 140.000 komut içermekte olup, işlemcinin temel fonksiyonel bloklarının büyük çoğunluğunu kapsamaktadır. Süperölçekli bir mimari için kritik olan veri bağımlılığı (RAW, WAW, WAR) ve ardışık atlama (back-to-back jump) gibi karmaşık senaryolar bu rastgele akışlar sayesinde stres altına alınmıştır. Test kapsamı; boru hattındaki kaynakların (ROB, RS, LSQ) sınır değerlerdeki davranışını ve spekülatif yürütme sonrası kurtarma mekanizmalarının doğruluğunu kanıtlamak için yeterli seviyeye ulaştırılmıştır.
+Rastgele test programları toplamda yaklaşık 200.000 komut içermekte olup, işlemcinin temel fonksiyonel bloklarının büyük çoğunluğunu kapsamaktadır. Süperölçekli bir mimari için kritik olan veri bağımlılığı (RAW, WAW, WAR) ve ardışık dallanma (back-to-back branch) gibi karmaşık senaryolar bu rastgele akışlar sayesinde stres altına alınmıştır. Test kapsamı; boru hattındaki kaynakların (ROB, RS, LSQ) sınır değerlerdeki davranışını ve spekülatif yürütme sonrası kurtarma mekanizmalarının doğruluğunu kanıtlamak için yeterli seviyeye ulaştırılmıştır.
 
 \subsubsection{Algoritma Tabanlı Deterministik Test Programları}
 
@@ -95,28 +113,9 @@ Bu algoritmalar, birbirinden farklı hesaplama karakteristikleri sergilemektedir
 \section{Fonksiyonel Doğrulama Sonuçları}\label{sec:test_sonuclari}
 %------------------------------------------------------------------------
 
-\subsection{Test Geçme Oranları ve Karşılaştırma Sonuçları}\label{subsec:fonk_dogruluk}
+Tüm test programları Spike referans modeli ile karşılaştırmalı olarak çalıştırılmış ve sonuçlar analiz edilmiştir. Kısıtlama tabanlı rastgele testler kapsamında yaklaşık 200.000 komut, algoritma tabanlı deterministik testler kapsamında ise yaklaşık 60.000 komut olmak üzere toplamda 260.000 komut yürütülmüştür. Her iki test kategorisinde de tasarlanan sıra dışı yürütme özellikli işlemci, Spike referans modeli ile çevrim bazında tam uyum sağlamıştır.
 
-Tüm test programları Spike referans modeli ile karşılaştırmalı olarak çalıştırılmış ve sonuçlar analiz edilmiştir. Tablo \ref{tab:test_results}, elde edilen sonuçları özetlemektedir.
-
-\begin{table}[htbp]
-\centering
-\caption{Fonksiyonel Doğrulama Sonuçları}
-\label{tab:test_results}
-\begin{tabular}{p{6cm} r r}
-\toprule
-\textbf{Test Kategorisi} & \textbf{Komut Sayısı} & \textbf{Geçme Oranı} \\
-\midrule
-Kısıtlama Tabanlı Rastgele Testler & $\sim$140.000 & \%100 \\
-\midrule
-Algoritma Tabanlı Deterministik Test & $\sim$60.000 & \%100 \\
-\midrule
-\textbf{Toplam Test Kapsamı} & $\sim$200.000 & \textbf{\%100} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Doğrulama sonuçları, tasarlanan işlemcinin RV32I komut seti mimarisini fonksiyonel olarak eksiksiz ve doğru biçimde gerçeklediğini ortaya koymaktadır. Yaklaşık 200.000 komutluk test kapsamında, Spike referans modeli ile tam uyumluluk sağlanmıştır. Her bir test komutunun tamamlanma sırası, hesaplanan sonuç değerleri ve bellek yazma işlemleri referans model ile birebir örtüşmektedir.
+Doğrulama sonuçları, tasarlanan işlemcinin RV32I komut seti mimarisini fonksiyonel olarak eksiksiz ve doğru biçimde gerçeklediğini ortaya koymaktadır. Her bir test komutunun tamamlanma sırası, hesaplanan sonuç değerleri ve bellek yazma işlemleri referans model ile birebir örtüşmektedir.
 
 Fonksiyonel doğruluğun sağlanması, sıra dışı yürütme yapısının temel mekanizmalarının doğru çalıştığını göstermektedir. Bu mekanizmalar; yazmaç yeniden adlandırma ile veri bağımlılıklarının çözümlenmesi, spekülatif yürütme sırasında mimari durumun korunması, dal yanlış tahmini durumunda doğru kurtarma noktasına geri dönülmesi ve yükleme-saklama işlemlerinin bellek sıralamasını ihlal etmeden tamamlanmasıdır.
 
@@ -126,25 +125,25 @@ Fonksiyonel doğruluğun sağlanması, sıra dışı yürütme yapısının teme
 
 İşlemcinin süperölçekli mimarisinin verimliliğini değerlendirmek amacıyla, farklı iş yükleri altında çevrim başına yürütülen ortalama komut sayısı (IPC) ve boru hattındaki performans darboğazları analiz edilmiştir. Geliştirilen test ortamı, simülasyon sırasında işlemcinin performans parametrelerini eşzamanlı olarak raporlayabilme yeteneğine sahiptir.
 
-Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artışını nicelleştirmek adına, aynı mimarinin tek yollu (scalar) versiyonu ile karşılaştırmalı testler yapılmıştır. Simülasyonlar, doğrulama ortamında 10 ns (100 MHz) saat periyodu kullanılarak gerçekleştirilmiştir. Tablo \ref{tab:ipc_results_deterministik}, Bölüm \ref{subsec:test_vektorleri}'de tanımlanan deterministik algoritma seti üzerinde elde edilen ortalama performans metriklerini sunmaktadır.
+\subsection{IPC Karşılaştırması ve Hızlanma Oranları}
+
+Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artışını nicelleştirmek adına, aynı mimarinin tek yollu (scalar) versiyonu ile karşılaştırmalı testler yapılmıştır. Tablo \ref{tab:ipc_results_deterministik}, Bölüm \ref{subsec:test_vektorleri}'de tanımlanan deterministik algoritma seti üzerinde elde edilen ortalama performans metriklerini sunmaktadır.
 
 \begin{table}[htbp]
 \centering
 \caption{Deterministik Testler Altında 1-Yollu ve 3-Yollu Konfigürasyonların Karşılaştırması}
 \label{tab:ipc_results_deterministik}
-\begin{tabular}{l c c c}
+\begin{tabular}{l c c}
 \toprule
-\textbf{Mimari Yapı} & \textbf{Yürütme Süresi ($\mu$s)} & \textbf{Toplam Çevrim} & \textbf{Ortalama IPC} \\
+\textbf{Mimari Yapı} & \textbf{Toplam Çevrim} & \textbf{Ortalama IPC} \\
 \midrule
-1-Yollu (Scalar) & 705,5 & 70.550 & 0,84 \\
-3-Yollu (Süperölçekli) & 345,8 & 34.580 & 1,71 \\
+1-Yollu (Scalar) & 70.550 & 0,84 \\
+3-Yollu (Süperölçekli) & 34.580 & 1,71 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Elde edilen sonuçlara göre, üç yollu paralel yürütme yapısı sayesinde scalar çekirdeğe göre yaklaşık 2,04 kat hızlanma elde edilmiştir. Ortalama IPC değerinin 0,84'ten 1,71'e yükselmesi, süperölçekli mimarinin komut seviyesi paralelliğini (ILP) verimli bir şekilde kullandığını kanıtlamaktadır.
-
-\subsection{Rastgele Test Serisi (RISC-V DV) Performans Sonuçları}
 
 Sentetik stres testleri altında mimarinin davranışını gözlemlemek amacıyla RISC-V DV çerçevesi ile üretilen rastgele testlerin sonuçları Tablo \ref{tab:random_ipc_results} üzerinde özetlenmiştir.
 
@@ -156,22 +155,22 @@ Sentetik stres testleri altında mimarinin davranışını gözlemlemek amacıyl
 \toprule
 \textbf{Test Senaryosu} & \textbf{1-Yollu IPC} & \textbf{3-Yollu IPC} & \textbf{Hızlanma Faktörü} \\
 \midrule
-Temel Aritmetik (Basic Arithmetic) & 1,00 & 2,90 & 2,90x \\
-Karmaşık Aritmetik (Complex Arithmetic) & 1,00 & 2,80 & 2,80x \\
-Temel Dallanma (Basic Branch) & 0,80 & 1,59 & 1,99x \\
-Döngü ve Dallanma (Branch Loop) & 0,93 & 2,23 & 2,40x \\
-Karmaşık Dallanma (Combo Branch) & 0,94 & 2,33 & 2,48x \\
-Temel Bellek (Basic Memory) & 0,95 & 1,87 & 1,97x \\
-Karmaşık Bellek (Complex Memory) & 0,76 & 1,47 & 1,93x \\
+Temel Aritmetik & 1,00 & 2,90 & 2,90x \\
+Karmaşık Aritmetik & 1,00 & 2,80 & 2,80x \\
+Temel Dallanma & 0,80 & 1,59 & 1,99x \\
+Döngü ve Dallanma & 0,93 & 2,23 & 2,40x \\
+Karmaşık Dallanma & 0,94 & 2,33 & 2,48x \\
+Temel Bellek & 0,95 & 1,87 & 1,97x \\
+Karmaşık Bellek & 0,76 & 1,47 & 1,93x \\
 Basit Karma Test & 0,83 & 1,54 & 1,85x \\
-Karma Test (Complex Combo) & 0,85 & 1,65 & 1,94x \\
+Karma Test & 0,85 & 1,65 & 1,94x \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Rastgele test sonuçları incelendiğinde, işlemcinin aritmetik ağırlıklı iş yüklerinde 2,90 IPC değerine erişerek \%97 gibi oldukça yüksek bir teorik verimlilik elde ettiği görülmektedir. Ancak dallanma ve bellek yoğunluklu senaryolarda IPC değerlerinde düşüşler gözlemlenmiştir.
 
-Bu düşüşün temel nedeni dal tahminci başarımındaki farklılıktır. Deterministik algoritma testlerinde (gerçek dünya iş yüklerini temsil eden) \%80'den fazla tahmin doğruluğuna ulaşan mimari, rastgele test setlerinde \%32-\%43 bandında bir başarı sergilemiştir. Bu keskin düşüş, dal tahmincisinin yapısal yetersizliğinden ziyade, rastgele üretilen komut dizilerinin herhangi bir istatistiksel patern veya döngüsel yapı içermemesinden kaynaklanmaktadır. Bu durum, dal tahmincisinin gerçek uygulamalarda yüksek verimlilik sunarken, tahmin edilemez sentetik stres testleri altında dahi boru hattını güvenli bir şekilde temizleyip (flush) doğru yürütme akışını sürdürebildiğini kanıtlamaktadır.
+Bu düşüşün temel nedeni dal tahminci başarımındaki farklılıktır. Deterministik algoritma testlerinde (gerçek dünya iş yüklerini temsil eden) \%80'den fazla tahmin doğruluğuna ulaşan mimari, rastgele test setlerinde \%32-\%43 bandında bir başarı sergilemiştir. Bu keskin düşüş, dal tahmincisinin yapısal yetersizliğinden ziyade, rastgele üretilen komut dizilerinin herhangi bir istatistiksel patern veya döngüsel yapı içermemesinden kaynaklanmaktadır. 
 
 \subsection{Boru Hattı Tıkanıklık ve Darboğaz Analizi}
 
@@ -179,27 +178,11 @@ Bu düşüşün temel nedeni dal tahminci başarımındaki farklılıktır. Dete
 
 \begin{itemize}
     \item \textbf{Kaynak Doluluğu:} Yeniden sıralama tamponu (ROB) ve yükleme-saklama kuyruğunun (LSQ) doluluk oranları, komut dağıtım aşamasını (dispatch) durduran temel unsurlar olarak takip edilmektedir.
-    \item \textbf{Rezervasyon İstasyonu (RS) Duraklamaları:} Komutların yürütme birimlerine gönderilememesinin nedenleri; getirme birimi boşalması (instruction starvation), çözümleme (decode) aşaması gecikmeleri veya dal yanlış tahmini sonrası boru hattının temizlenmesi (flush) gibi kategorilere ayrılmıştır.
+    \item \textbf{Rezervasyon İstasyonu (RS) Duraklamaları:} Komutların yürütme birimlerine gönderilememesinin nedenleri; komut açlığı (instruction starvation), çözümleme (decode) aşaması gecikmeleri veya dal yanlış tahmini sonrası boru hattının temizlenmesi (flush) gibi kategorilere ayrılmıştır.
     \item \textbf{Bağımlılık Duraklamaları:} Komutların kaynak operandlarının hazır olmaması nedeniyle döngü bazlı bekleme süreleri ve Ortak Veri Yolu (CDB) üzerindeki veri iletim yoğunluğu analiz edilmektedir.
 \end{itemize}
 
-\subsection{Korelasyon Analizi ve Performans Tahmini}
-
-İşlemci performansını etkileyen faktörlerin birbirleriyle olan ilişkisini anlamak amacıyla istatistiksel bir analiz yöntemi izlenmiştir. Simülasyonlardan elde edilen veriler üzerinde Pearson korelasyon katsayısı kullanılarak, IPC değeri ile dal yanlış tahmini (misprediction) ve bellek operasyonları arasındaki ilinti hesaplanmıştır.
-
-Performans analizinde korelasyon değerleri şu yaklaşımla elde edilmektedir:
-\begin{itemize}
-    \item \textbf{Pearson Korelasyonu:} IPC ile belirli bir metrik (örneğin bellek erişimi) arasındaki doğrudan doğrusal ilişkiyi ölçmektedir.
-    \item \textbf{Kısmi Korelasyon (Partial Correlation):} Bir faktörün etkisini (örneğin dal tahmin hatası) sabit tutarak, diğer bir faktörün (örneğin bellek gecikmesi) performans üzerindeki saf etkisini izole etmektedir.
-\end{itemize}
-
-Yapılan istatistiksel analizler sonucunda, süperölçekli mimarinin en temel performans kısıtının dal tahmin hataları olduğu teyit edilmiştir. Pearson korelasyonu, 3-yollu yapıda dal yanlış tahmini oranı ile IPC arasında $-0,74$ düzeyinde güçlü bir negatif ilişki ortaya koymuştur.
-
-Daha dikkat çekici bir bulgu ise kısmi korelasyon analizinden elde edilmiştir; bellek operasyonlarının saf performans etkisi, dal tahmin hataları arındırıldığında scalar çekirdekte $-0,21$ iken süperölçekli çekirdekte $-0,80$ seviyesine çıkmaktadır. Bu durum, mimari genişledikçe bellek sisteminin performans üzerindeki etkisinin (Memory Wall) çok daha belirgin hale geldiğini ve dal tahminci iyileştirilmelerinin ardından bellek gecikmelerinin ana darboğaz olacağını göstermektedir.
-
-\subsection{Performans İzleme Arayüzü (GUI)}
-
-Boru hattı aktivitelerini, istatistiksel verileri ve darboğaz analizlerini görselleştirmek amacıyla özel bir grafik kullanıcı arayüzü (GUI) geliştirilmiştir. Bu arayüz, simülasyon sırasında üretilen performans kayıtlarını anlamlandırarak; IPC değişim grafiği, stall dağılım yüzdeleri ve dal tahmin başarımı gibi kritik verileri canlı veya simülasyon sonrası analiz için sunmaktadır.
+Bu darboğaz analizlerini görselleştirmek amacıyla özel bir grafik kullanıcı arayüzü (GUI) geliştirilmiştir. Bu arayüz, simülasyon sırasında üretilen performans kayıtlarını anlamlandırarak; IPC değişim grafiği, stall dağılım yüzdeleri ve dal tahmin başarımı gibi kritik verileri canlı veya simülasyon sonrası analiz için sunmaktadır.
 
 Şekil \ref{fig:perf_gui}, geliştirilen performans izleme arayüzünün hiyerarşik duraklama analizi ekranını göstermektedir. Bu ekranda her bir rezervasyon istasyonu (RS0, RS1, RS2) için duraklama nedenleri kategorize edilmiş olarak sunulmaktadır. ``Not Occupied'' kategorisi, rezervasyon istasyonunun boş kaldığı çevrimleri; ``Operands Not Ready'' kategorisi ise komutların kaynak operandlarının hazır olmaması nedeniyle bekletildiği çevrimleri göstermektedir. Hiyerarşik yapı sayesinde her kategorinin alt nedenleri de detaylı olarak incelenebilmektedir.
 
@@ -247,6 +230,22 @@ Boru hattı aktivitelerini, istatistiksel verileri ve darboğaz analizlerini gö
 \end{figure}
 
 Geliştirilen bu araç, mimari üzerindeki optimizasyon çalışmalarında darboğazların hızlıca tespit edilmesini ve gerçekleştirilen değişikliklerin sisteme etkisinin doğrudan gözlemlenmesini sağlamıştır.
+
+
+\subsection{Korelasyon Analizi ve Performans Tahmini}
+
+İşlemci performansını etkileyen faktörlerin birbirleriyle olan ilişkisini anlamak amacıyla istatistiksel bir analiz yöntemi izlenmiştir. Simülasyonlardan elde edilen veriler üzerinde Pearson korelasyon katsayısı kullanılarak, IPC değeri ile dal yanlış tahmini (misprediction) ve bellek operasyonları arasındaki ilinti hesaplanmıştır.
+
+Performans analizinde korelasyon değerleri şu yaklaşımla elde edilmektedir:
+\begin{itemize}
+    \item \textbf{Pearson Korelasyonu:} IPC ile belirli bir metrik (örneğin bellek erişimi) arasındaki doğrudan doğrusal ilişkiyi ölçmektedir.
+    \item \textbf{Kısmi Korelasyon (Partial Correlation):} Bir faktörün etkisini (örneğin dal tahmin hatası) sabit tutarak, diğer bir faktörün (örneğin bellek gecikmesi) performans üzerindeki saf etkisini izole etmektedir.
+\end{itemize}
+
+Yapılan istatistiksel analizler sonucunda, süperölçekli mimarinin en temel performans kısıtının dal tahmin hataları olduğu teyit edilmiştir. Pearson korelasyonu, 3-yollu yapıda dal yanlış tahmini oranı ile IPC arasında $-0,74$ düzeyinde güçlü bir negatif ilişki ortaya koymuştur.
+
+Daha dikkat çekici bir bulgu ise kısmi korelasyon analizinden elde edilmiştir; bellek operasyonlarının saf performans etkisi, dal tahmin hataları arındırıldığında scalar çekirdekte $-0,21$ iken süperölçekli çekirdekte $-0,80$ seviyesine çıkmaktadır. Bu durum, mimari genişledikçe bellek sisteminin performans üzerindeki etkisinin (bellek duvarı problemi) çok daha belirgin hale geldiğini ve dal tahminci iyileştirilmelerinin ardından bellek gecikmelerinin ana darboğaz olacağını göstermektedir.
+
 
 %------------------------------------------------------------------------
 \section{Hata Enjeksiyonu ve Güvenilirlik Doğrulaması}\label{sec:fault_injection}
