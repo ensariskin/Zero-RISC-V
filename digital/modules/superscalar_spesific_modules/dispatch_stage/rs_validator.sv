@@ -78,17 +78,31 @@ module rs_validator #(
    logic [2:0]  voted_operand_b_tag;
 
    // Mismatch flags for exec signals
-   logic iv_mm, iv_fatal, da_mm, da_fatal, db_mm, db_fatal;
-   logic ctrl_mm, ctrl_fatal, rd_mm, rd_fatal, pc_mm, pc_fatal;
-   logic pc_pred_mm, pc_pred_fatal, bs_mm, bs_fatal, bp_mm, bp_fatal, sd_mm, sd_fatal;
+   logic issue_valid_mismatch, issue_valid_fatal;
+   logic data_a_mismatch, data_a_fatal;
+   logic data_b_mismatch, data_b_fatal;
+   logic control_signals_mismatch, control_signals_fatal;
+   logic rd_phys_addr_mismatch, rd_phys_addr_fatal;
+   logic pc_mismatch, pc_fatal;
+   logic pc_value_at_prediction_mismatch, pc_value_at_prediction_fatal;
+   logic branch_sel_mismatch, branch_sel_fatal;
+   logic branch_prediction_mismatch, branch_prediction_fatal;
+   logic store_data_mismatch, store_data_fatal;
 
    // Mismatch flags for internal registers
-   logic en_mm, en_fatal;
-   logic occ_mm, occ_fatal, ctrl_int_mm, ctrl_int_fatal, pc_int_mm, pc_int_fatal;
-   logic rd_int_mm, rd_int_fatal, pc_pred_int_mm, pc_pred_int_fatal;
-   logic bs_int_mm, bs_int_fatal, bp_int_mm, bp_int_fatal, sd_int_mm, sd_int_fatal;
-   logic oa_data_mm, oa_data_fatal, oa_tag_mm, oa_tag_fatal;
-   logic ob_data_mm, ob_data_fatal, ob_tag_mm, ob_tag_fatal;
+   logic enable_mismatch, enable_fatal;
+   logic occupied_mismatch, occupied_fatal;
+   logic stored_control_signals_mismatch, stored_control_signals_fatal;
+   logic stored_pc_mismatch, stored_pc_fatal;
+   logic stored_rd_phys_addr_mismatch, stored_rd_phys_addr_fatal;
+   logic stored_pc_value_at_prediction_mismatch, stored_pc_value_at_prediction_fatal;
+   logic stored_branch_sel_mismatch, stored_branch_sel_fatal;
+   logic stored_branch_prediction_mismatch, stored_branch_prediction_fatal;
+   logic stored_store_data_mismatch, stored_store_data_fatal;
+   logic operand_a_data_mismatch, operand_a_data_fatal;
+   logic operand_a_tag_mismatch, operand_a_tag_fatal;
+   logic operand_b_data_mismatch, operand_b_data_fatal;
+   logic operand_b_tag_mismatch, operand_b_tag_fatal;
 
    //==========================================================================
    // TMR VOTERS FOR EXEC SIGNALS
@@ -97,61 +111,61 @@ module rs_validator #(
    tmr_voter #(.DATA_WIDTH(1)) issue_valid_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(exec_in_0.issue_valid), .data_1_i(exec_in_1.issue_valid), .data_2_i(exec_in_2.issue_valid),
-      .data_o(voted_issue_valid), .mismatch_detected_o(iv_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(iv_fatal)
+      .data_o(voted_issue_valid), .mismatch_detected_o(issue_valid_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(issue_valid_fatal)
    );
 
    tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) data_a_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(exec_in_0.data_a), .data_1_i(exec_in_1.data_a), .data_2_i(exec_in_2.data_a),
-      .data_o(voted_data_a), .mismatch_detected_o(da_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(da_fatal)
+      .data_o(voted_data_a), .mismatch_detected_o(data_a_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(data_a_fatal)
    );
 
    tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) data_b_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(exec_in_0.data_b), .data_1_i(exec_in_1.data_b), .data_2_i(exec_in_2.data_b),
-      .data_o(voted_data_b), .mismatch_detected_o(db_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(db_fatal)
+      .data_o(voted_data_b), .mismatch_detected_o(data_b_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(data_b_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(11)) ctrl_voter (
+   tmr_voter #(.DATA_WIDTH(11)) control_signals_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(exec_in_0.control_signals), .data_1_i(exec_in_1.control_signals), .data_2_i(exec_in_2.control_signals),
-      .data_o(voted_exec_ctrl), .mismatch_detected_o(ctrl_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(ctrl_fatal)
+      .data_o(voted_exec_ctrl), .mismatch_detected_o(control_signals_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(control_signals_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(PHYS_REG_ADDR_WIDTH)) rd_voter (
+   tmr_voter #(.DATA_WIDTH(PHYS_REG_ADDR_WIDTH)) rd_phys_addr_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(exec_in_0.rd_phys_addr), .data_1_i(exec_in_1.rd_phys_addr), .data_2_i(exec_in_2.rd_phys_addr),
-      .data_o(voted_exec_rd), .mismatch_detected_o(rd_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(rd_fatal)
+      .data_o(voted_exec_rd), .mismatch_detected_o(rd_phys_addr_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(rd_phys_addr_fatal)
    );
 
    tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) pc_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(exec_in_0.pc), .data_1_i(exec_in_1.pc), .data_2_i(exec_in_2.pc),
-      .data_o(voted_exec_pc), .mismatch_detected_o(pc_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(pc_fatal)
+      .data_o(voted_exec_pc), .mismatch_detected_o(pc_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(pc_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) pc_pred_voter (
+   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) pc_value_at_prediction_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(exec_in_0.pc_value_at_prediction), .data_1_i(exec_in_1.pc_value_at_prediction), .data_2_i(exec_in_2.pc_value_at_prediction),
-      .data_o(voted_exec_pc_pred), .mismatch_detected_o(pc_pred_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(pc_pred_fatal)
+      .data_o(voted_exec_pc_pred), .mismatch_detected_o(pc_value_at_prediction_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(pc_value_at_prediction_fatal)
    );
 
    tmr_voter #(.DATA_WIDTH(3)) branch_sel_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(exec_in_0.branch_sel), .data_1_i(exec_in_1.branch_sel), .data_2_i(exec_in_2.branch_sel),
-      .data_o(voted_exec_branch_sel), .mismatch_detected_o(bs_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(bs_fatal)
+      .data_o(voted_exec_branch_sel), .mismatch_detected_o(branch_sel_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(branch_sel_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(1)) branch_pred_voter (
+   tmr_voter #(.DATA_WIDTH(1)) branch_prediction_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(exec_in_0.branch_prediction), .data_1_i(exec_in_1.branch_prediction), .data_2_i(exec_in_2.branch_prediction),
-      .data_o(voted_exec_branch_pred), .mismatch_detected_o(bp_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(bp_fatal)
+      .data_o(voted_exec_branch_pred), .mismatch_detected_o(branch_prediction_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(branch_prediction_fatal)
    );
 
    tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) store_data_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(exec_in_0.store_data), .data_1_i(exec_in_1.store_data), .data_2_i(exec_in_2.store_data),
-      .data_o(voted_exec_store_data), .mismatch_detected_o(sd_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(sd_fatal)
+      .data_o(voted_exec_store_data), .mismatch_detected_o(store_data_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(store_data_fatal)
    );
 
    //==========================================================================
@@ -161,79 +175,79 @@ module rs_validator #(
    tmr_voter #(.DATA_WIDTH(1)) enable_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.enable), .data_1_i(rs_1_internal.enable), .data_2_i(rs_2_internal.enable),
-      .data_o(voted_enable), .mismatch_detected_o(en_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(en_fatal)
+      .data_o(voted_enable), .mismatch_detected_o(enable_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(enable_fatal)
    );
 
    tmr_voter #(.DATA_WIDTH(1)) occupied_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.occupied), .data_1_i(rs_1_internal.occupied), .data_2_i(rs_2_internal.occupied),
-      .data_o(voted_occupied), .mismatch_detected_o(occ_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(occ_fatal)
+      .data_o(voted_occupied), .mismatch_detected_o(occupied_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(occupied_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(11)) ctrl_int_voter (
+   tmr_voter #(.DATA_WIDTH(11)) stored_control_signals_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.control_signals), .data_1_i(rs_1_internal.control_signals), .data_2_i(rs_2_internal.control_signals),
-      .data_o(voted_control_signals), .mismatch_detected_o(ctrl_int_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(ctrl_int_fatal)
+      .data_o(voted_control_signals), .mismatch_detected_o(stored_control_signals_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(stored_control_signals_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) pc_int_voter (
+   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) stored_pc_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.pc), .data_1_i(rs_1_internal.pc), .data_2_i(rs_2_internal.pc),
-      .data_o(voted_pc), .mismatch_detected_o(pc_int_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(pc_int_fatal)
+      .data_o(voted_pc), .mismatch_detected_o(stored_pc_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(stored_pc_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(PHYS_REG_ADDR_WIDTH)) rd_int_voter (
+   tmr_voter #(.DATA_WIDTH(PHYS_REG_ADDR_WIDTH)) stored_rd_phys_addr_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.rd_phys_addr), .data_1_i(rs_1_internal.rd_phys_addr), .data_2_i(rs_2_internal.rd_phys_addr),
-      .data_o(voted_rd_phys_addr), .mismatch_detected_o(rd_int_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(rd_int_fatal)
+      .data_o(voted_rd_phys_addr), .mismatch_detected_o(stored_rd_phys_addr_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(stored_rd_phys_addr_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) pc_pred_int_voter (
+   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) stored_pc_value_at_prediction_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.pc_value_at_prediction), .data_1_i(rs_1_internal.pc_value_at_prediction), .data_2_i(rs_2_internal.pc_value_at_prediction),
-      .data_o(voted_pc_value_at_prediction), .mismatch_detected_o(pc_pred_int_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(pc_pred_int_fatal)
+      .data_o(voted_pc_value_at_prediction), .mismatch_detected_o(stored_pc_value_at_prediction_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(stored_pc_value_at_prediction_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(3)) bs_int_voter (
+   tmr_voter #(.DATA_WIDTH(3)) stored_branch_sel_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.branch_sel), .data_1_i(rs_1_internal.branch_sel), .data_2_i(rs_2_internal.branch_sel),
-      .data_o(voted_branch_sel), .mismatch_detected_o(bs_int_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(bs_int_fatal)
+      .data_o(voted_branch_sel), .mismatch_detected_o(stored_branch_sel_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(stored_branch_sel_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(1)) bp_int_voter (
+   tmr_voter #(.DATA_WIDTH(1)) stored_branch_prediction_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.branch_prediction), .data_1_i(rs_1_internal.branch_prediction), .data_2_i(rs_2_internal.branch_prediction),
-      .data_o(voted_branch_prediction), .mismatch_detected_o(bp_int_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(bp_int_fatal)
+      .data_o(voted_branch_prediction), .mismatch_detected_o(stored_branch_prediction_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(stored_branch_prediction_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) sd_int_voter (
+   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) stored_store_data_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.store_data), .data_1_i(rs_1_internal.store_data), .data_2_i(rs_2_internal.store_data),
-      .data_o(voted_store_data), .mismatch_detected_o(sd_int_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(sd_int_fatal)
+      .data_o(voted_store_data), .mismatch_detected_o(stored_store_data_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(stored_store_data_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) oa_data_voter (
+   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) operand_a_data_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.operand_a_data), .data_1_i(rs_1_internal.operand_a_data), .data_2_i(rs_2_internal.operand_a_data),
-      .data_o(voted_operand_a_data), .mismatch_detected_o(oa_data_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(oa_data_fatal)
+      .data_o(voted_operand_a_data), .mismatch_detected_o(operand_a_data_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(operand_a_data_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(3)) oa_tag_voter (
+   tmr_voter #(.DATA_WIDTH(3)) operand_a_tag_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.operand_a_tag), .data_1_i(rs_1_internal.operand_a_tag), .data_2_i(rs_2_internal.operand_a_tag),
-      .data_o(voted_operand_a_tag), .mismatch_detected_o(oa_tag_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(oa_tag_fatal)
+      .data_o(voted_operand_a_tag), .mismatch_detected_o(operand_a_tag_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(operand_a_tag_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) ob_data_voter (
+   tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) operand_b_data_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.operand_b_data), .data_1_i(rs_1_internal.operand_b_data), .data_2_i(rs_2_internal.operand_b_data),
-      .data_o(voted_operand_b_data), .mismatch_detected_o(ob_data_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(ob_data_fatal)
+      .data_o(voted_operand_b_data), .mismatch_detected_o(operand_b_data_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(operand_b_data_fatal)
    );
 
-   tmr_voter #(.DATA_WIDTH(3)) ob_tag_voter (
+   tmr_voter #(.DATA_WIDTH(3)) operand_b_tag_voter (
       .secure_mode_i(secure_mode),
       .data_0_i(rs_0_internal.operand_b_tag), .data_1_i(rs_1_internal.operand_b_tag), .data_2_i(rs_2_internal.operand_b_tag),
-      .data_o(voted_operand_b_tag), .mismatch_detected_o(ob_tag_mm), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(ob_tag_fatal)
+      .data_o(voted_operand_b_tag), .mismatch_detected_o(operand_b_tag_mismatch), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(operand_b_tag_fatal)
    );
 
    //==========================================================================
@@ -355,12 +369,22 @@ module rs_validator #(
    //==========================================================================
    // COMBINED ERROR FLAGS
    //==========================================================================
-   assign exec_mismatch_o = iv_mm | da_mm | db_mm | ctrl_mm | rd_mm | pc_mm | pc_pred_mm | bs_mm | bp_mm | sd_mm;
-   assign exec_fatal_o = iv_fatal | da_fatal | db_fatal | ctrl_fatal | rd_fatal | pc_fatal | pc_pred_fatal | bs_fatal | bp_fatal | sd_fatal;
+   assign exec_mismatch_o = issue_valid_mismatch | data_a_mismatch | data_b_mismatch |
+      control_signals_mismatch | rd_phys_addr_mismatch | pc_mismatch |
+      pc_value_at_prediction_mismatch | branch_sel_mismatch | branch_prediction_mismatch | store_data_mismatch;
 
-   assign internal_mismatch_o = occ_mm | ctrl_int_mm | pc_int_mm | rd_int_mm | pc_pred_int_mm |
-      bs_int_mm | bp_int_mm | sd_int_mm | oa_data_mm | oa_tag_mm | ob_data_mm | ob_tag_mm;
-   assign internal_fatal_o = occ_fatal | ctrl_int_fatal | pc_int_fatal | rd_int_fatal | pc_pred_int_fatal |
-      bs_int_fatal | bp_int_fatal | sd_int_fatal | oa_data_fatal | oa_tag_fatal | ob_data_fatal | ob_tag_fatal;
+   assign exec_fatal_o = issue_valid_fatal | data_a_fatal | data_b_fatal |
+      control_signals_fatal | rd_phys_addr_fatal | pc_fatal |
+      pc_value_at_prediction_fatal | branch_sel_fatal | branch_prediction_fatal | store_data_fatal;
+
+   assign internal_mismatch_o = occupied_mismatch | stored_control_signals_mismatch | stored_pc_mismatch |
+      stored_rd_phys_addr_mismatch | stored_pc_value_at_prediction_mismatch |
+      stored_branch_sel_mismatch | stored_branch_prediction_mismatch | stored_store_data_mismatch |
+      operand_a_data_mismatch | operand_a_tag_mismatch | operand_b_data_mismatch | operand_b_tag_mismatch;
+
+   assign internal_fatal_o = occupied_fatal | stored_control_signals_fatal | stored_pc_fatal |
+      stored_rd_phys_addr_fatal | stored_pc_value_at_prediction_fatal |
+      stored_branch_sel_fatal | stored_branch_prediction_fatal | stored_store_data_fatal |
+      operand_a_data_fatal | operand_a_tag_fatal | operand_b_data_fatal | operand_b_tag_fatal;
 
 endmodule

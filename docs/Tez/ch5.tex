@@ -52,13 +52,13 @@ Karma Test & 30.000 & Tüm yönlendirilmiş akış türlerinin kombinasyonunu i�
 \end{tabular}
 \end{table}
 
-Rastgele test programları toplamda yaklaşık 140.000 komut içermekte olup, işlemcinin temel fonksiyonel bloklarının büyük çoğunluğunu kapsamaktadır. Süperölçekli bir mimari için kritik olan veri bağımlılığı (RAW, WAW, WAR), ardışık atlama (back-to-back jump) ve hizalanmamış bellek erişimi gibi karmaşık senaryolar bu rastgele akışlar sayesinde stres altına alınmıştır. Test kapsamı; boru hattındaki kaynakların (ROB, RS, LSQ) sınır değerlerdeki davranışını ve spekülatif yürütme sonrası kurtarma mekanizmalarının doğruluğunu kanıtlamak için yeterli seviyeye ulaştırılmıştır.
+Rastgele test programları toplamda yaklaşık 140.000 komut içermekte olup, işlemcinin temel fonksiyonel bloklarının büyük çoğunluğunu kapsamaktadır. Süperölçekli bir mimari için kritik olan veri bağımlılığı (RAW, WAW, WAR) ve ardışık atlama (back-to-back jump) gibi karmaşık senaryolar bu rastgele akışlar sayesinde stres altına alınmıştır. Test kapsamı; boru hattındaki kaynakların (ROB, RS, LSQ) sınır değerlerdeki davranışını ve spekülatif yürütme sonrası kurtarma mekanizmalarının doğruluğunu kanıtlamak için yeterli seviyeye ulaştırılmıştır.
 
 \subsubsection{Algoritma Tabanlı Deterministik Test Programları}
 
 Rastgele test programlarının yanı sıra, gerçek uygulama senaryolarını modelleyen karmaşık algoritmik C programları da geliştirilmiştir. Bu programlar RISC-V GCC derleyicisi kullanılarak derlenmiş ve işlemci üzerinde çalıştırılmıştır.
 
-En kapsamlı test programı, derleme opsiyonlarına bağlı olarak yaklaşık 67.000 ile 70.000 arasında komut üretmektedir. Bu program, bilgisayar bilimlerinin temel algoritmalarından oluşan bir koleksiyon içermekte olup, işlemcinin farklı hesaplama desenleri, bellek erişim kalıpları ve kontrol akışı yapıları altındaki davranışını test etmektedir.
+En kapsamlı test programı, yaklaşık 60.000 komut üretmektedir. Bu program, bilgisayar bilimlerinin temel algoritmalarından oluşan bir koleksiyon içermekte olup, işlemcinin farklı hesaplama desenleri, bellek erişim kalıpları ve kontrol akışı yapıları altındaki davranışını test etmektedir.
 
 Programa dahil edilen algoritmalar ve bunların mikromimari seviyesinde hedeflediği işlemci karakteristiği Tablo \ref{tab:algorithm_tests} üzerinde gösterilmektedir:
 
@@ -109,14 +109,14 @@ Tüm test programları Spike referans modeli ile karşılaştırmalı olarak ça
 \midrule
 Kısıtlama Tabanlı Rastgele Testler & $\sim$140.000 & \%100 \\
 \midrule
-Algoritma Tabanlı Deterministik Test & $\sim$67.000-70.000 & \%100 \\
+Algoritma Tabanlı Deterministik Test & $\sim$60.000 & \%100 \\
 \midrule
-\textbf{Toplam Test Kapsamı} & $\sim$207.000-210.000 & \textbf{\%100} \\
+\textbf{Toplam Test Kapsamı} & $\sim$200.000 & \textbf{\%100} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Doğrulama sonuçları, tasarlanan işlemcinin RV32I komut seti mimarisini fonksiyonel olarak eksiksiz ve doğru biçimde gerçeklediğini ortaya koymaktadır. Yaklaşık 210.000 komutluk test kapsamında, Spike referans modeli ile tam uyumluluk sağlanmıştır. Her bir test komutunun tamamlanma sırası, hesaplanan sonuç değerleri ve bellek yazma işlemleri referans model ile birebir örtüşmektedir.
+Doğrulama sonuçları, tasarlanan işlemcinin RV32I komut seti mimarisini fonksiyonel olarak eksiksiz ve doğru biçimde gerçeklediğini ortaya koymaktadır. Yaklaşık 200.000 komutluk test kapsamında, Spike referans modeli ile tam uyumluluk sağlanmıştır. Her bir test komutunun tamamlanma sırası, hesaplanan sonuç değerleri ve bellek yazma işlemleri referans model ile birebir örtüşmektedir.
 
 Fonksiyonel doğruluğun sağlanması, sıra dışı yürütme yapısının temel mekanizmalarının doğru çalıştığını göstermektedir. Bu mekanizmalar; yazmaç yeniden adlandırma ile veri bağımlılıklarının çözümlenmesi, spekülatif yürütme sırasında mimari durumun korunması, dal yanlış tahmini durumunda doğru kurtarma noktasına geri dönülmesi ve yükleme-saklama işlemlerinin bellek sıralamasını ihlal etmeden tamamlanmasıdır.
 
@@ -138,15 +138,13 @@ Tasarlanan üç yollu süperölçekli işlemcinin sağladığı başarım artı�
 \midrule
 1-Yollu (Scalar) & 705,5 & 70.550 & 0,84 \\
 3-Yollu (Süperölçekli) & 345,8 & 34.580 & 1,71 \\
-\midrule
-\textbf{İyileşme Oranı} & \textbf{2,04x} & \textbf{2,04x} & \textbf{\%103} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Elde edilen sonuçlara göre, üç yollu paralel yürütme yapısı sayesinde scalar çekirdeğe göre yaklaşık 2,04 kat hızlanma elde edilmiştir. Ortalama IPC değerinin 0,84'ten 1,71'e yükselmesi, süperölçekli mimarinin komut seviyesi paralelliğini (ILP) verimli bir şekilde sömürdüğünü kanıtlamaktadır.
+Elde edilen sonuçlara göre, üç yollu paralel yürütme yapısı sayesinde scalar çekirdeğe göre yaklaşık 2,04 kat hızlanma elde edilmiştir. Ortalama IPC değerinin 0,84'ten 1,71'e yükselmesi, süperölçekli mimarinin komut seviyesi paralelliğini (ILP) verimli bir şekilde kullandığını kanıtlamaktadır.
 
-\subsubsection{Rastgele Test Serisi (RISC-V DV) Performans Sonuçları}
+\subsection{Rastgele Test Serisi (RISC-V DV) Performans Sonuçları}
 
 Sentetik stres testleri altında mimarinin davranışını gözlemlemek amacıyla RISC-V DV çerçevesi ile üretilen rastgele testlerin sonuçları Tablo \ref{tab:random_ipc_results} üzerinde özetlenmiştir.
 
@@ -165,12 +163,15 @@ Döngü ve Dallanma (Branch Loop) & 0,93 & 2,23 & 2,40x \\
 Karmaşık Dallanma (Combo Branch) & 0,94 & 2,33 & 2,48x \\
 Temel Bellek (Basic Memory) & 0,95 & 1,87 & 1,97x \\
 Karmaşık Bellek (Complex Memory) & 0,76 & 1,47 & 1,93x \\
+Basit Karma Test & 0,83 & 1,54 & 1,85x \\
 Karma Test (Complex Combo) & 0,85 & 1,65 & 1,94x \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Rastgele test sonuçları incelendiğinde, işlemcinin aritmetik ağırlıklı iş yüklerinde 2,90 IPC değerine ulaşarak %97 gibi oldukça yüksek bir teorik verimliliğe ulaştığı görülmektedir. Ancak dallanma ve bellek yoğunluklu senaryolarda IPC değerlerinde düşüşler gözlemlenmiştir.
+Rastgele test sonuçları incelendiğinde, işlemcinin aritmetik ağırlıklı iş yüklerinde 2,90 IPC değerine erişerek \%97 gibi oldukça yüksek bir teorik verimlilik elde ettiği görülmektedir. Ancak dallanma ve bellek yoğunluklu senaryolarda IPC değerlerinde düşüşler gözlemlenmiştir.
+
+Bu düşüşün temel nedeni dal tahminci başarımındaki farklılıktır. Deterministik algoritma testlerinde (gerçek dünya iş yüklerini temsil eden) \%80'den fazla tahmin doğruluğuna ulaşan mimari, rastgele test setlerinde \%32-\%43 bandında bir başarı sergilemiştir. Bu keskin düşüş, dal tahmincisinin yapısal yetersizliğinden ziyade, rastgele üretilen komut dizilerinin herhangi bir istatistiksel patern veya döngüsel yapı içermemesinden kaynaklanmaktadır. Bu durum, dal tahmincisinin gerçek uygulamalarda yüksek verimlilik sunarken, tahmin edilemez sentetik stres testleri altında dahi boru hattını güvenli bir şekilde temizleyip (flush) doğru yürütme akışını sürdürebildiğini kanıtlamaktadır.
 
 \subsection{Boru Hattı Tıkanıklık ve Darboğaz Analizi}
 
@@ -192,21 +193,57 @@ Performans analizinde korelasyon değerleri şu yaklaşımla elde edilmektedir:
     \item \textbf{Kısmi Korelasyon (Partial Correlation):} Bir faktörün etkisini (örneğin dal tahmin hatası) sabit tutarak, diğer bir faktörün (örneğin bellek gecikmesi) performans üzerindeki saf etkisini izole etmektedir.
 \end{itemize}
 
-Yapılan istatistiksel analizler sonucunda, süperölçekli mimarinin en temel performans kısıtının dal tahmin hataları olduğu teyit edilmiştir. Pearson korelasyonu, 3-yollu yapıda dal yanlış tahmini oranı ile IPC arasında $-0,74$ düzeyinde güçlü bir negatif ilişki ortaya koymuştur. 
-
-Bu noktada, dal tahminci başarımı üzerine önemli bir gözlem yapılmıştır. Deterministik algoritma testlerinde (gerçek dünya iş yüklerini temsil eden) **\%80'den fazla** tahmin doğruluğuna ulaşan mimari, rastgele test setlerinde \%32-\%43 bandında bir başarı sergilemiştir. Bu keskin düşüş, dal tahmincisinin yapısal yetersizliğinden ziyade, rastgele üretilen komut dizilerinin herhangi bir istatistiksel patern veya döngüsel yapı içermemesinden kaynaklanmaktadır. Bu durum, dal tahmincisinin gerçek uygulamalarda yüksek verimlilik sunarken, tahmin edilemez sentetik stres testleri altında dahi boru hattını güvenli bir şekilde temizleyip (flush) doğru yürütme akışını sürdürebildiğini kanıtlamaktadır.
+Yapılan istatistiksel analizler sonucunda, süperölçekli mimarinin en temel performans kısıtının dal tahmin hataları olduğu teyit edilmiştir. Pearson korelasyonu, 3-yollu yapıda dal yanlış tahmini oranı ile IPC arasında $-0,74$ düzeyinde güçlü bir negatif ilişki ortaya koymuştur.
 
 Daha dikkat çekici bir bulgu ise kısmi korelasyon analizinden elde edilmiştir; bellek operasyonlarının saf performans etkisi, dal tahmin hataları arındırıldığında scalar çekirdekte $-0,21$ iken süperölçekli çekirdekte $-0,80$ seviyesine çıkmaktadır. Bu durum, mimari genişledikçe bellek sisteminin performans üzerindeki etkisinin (Memory Wall) çok daha belirgin hale geldiğini ve dal tahminci iyileştirilmelerinin ardından bellek gecikmelerinin ana darboğaz olacağını göstermektedir.
 
 \subsection{Performans İzleme Arayüzü (GUI)}
 
-Boru hattı aktivitelerini, istatistiksel verileri ve darboğaz analizlerini görselleştirmek amacıyla özel bir grafik kullanıcı arayüzü (GUI) geliştirilmiştir. Bu arayüz, simülasyon sırasında üretilen performans kayıtlarını anlamlandırarak; IPC değişim grafiği, stall dağılım yüzdeleri ve dal tahmin başarımı gibi kritik verileri canlı veya simülasyon sonrası analiz için sunmaktadır (Şekil \ref{fig:perf_gui}).
+Boru hattı aktivitelerini, istatistiksel verileri ve darboğaz analizlerini görselleştirmek amacıyla özel bir grafik kullanıcı arayüzü (GUI) geliştirilmiştir. Bu arayüz, simülasyon sırasında üretilen performans kayıtlarını anlamlandırarak; IPC değişim grafiği, stall dağılım yüzdeleri ve dal tahmin başarımı gibi kritik verileri canlı veya simülasyon sonrası analiz için sunmaktadır.
+
+Şekil \ref{fig:perf_gui}, geliştirilen performans izleme arayüzünün hiyerarşik duraklama analizi ekranını göstermektedir. Bu ekranda her bir rezervasyon istasyonu (RS0, RS1, RS2) için duraklama nedenleri kategorize edilmiş olarak sunulmaktadır. ``Not Occupied'' kategorisi, rezervasyon istasyonunun boş kaldığı çevrimleri; ``Operands Not Ready'' kategorisi ise komutların kaynak operandlarının hazır olmaması nedeniyle bekletildiği çevrimleri göstermektedir. Hiyerarşik yapı sayesinde her kategorinin alt nedenleri de detaylı olarak incelenebilmektedir.
 
 \begin{figure}[htbp]
     \centering
-    %\includegraphics[width=0.8\textwidth]{figures/perf_gui.png}
-    \caption{Geliştirilen Performans İzleme ve Darboğaz Analiz Arayüzü}
+    \includegraphics[width=0.95\textwidth]{fig/rs_stall_analysis.png}
+    \caption{Geliştirilen Performans İzleme Arayüzü: Rezervasyon İstasyonu Duraklama Analizi}
     \label{fig:perf_gui}
+\end{figure}
+
+Şekil \ref{fig:prev_stage_bottleneck}, ``Previous Stage Bottleneck'' olarak adlandırılan önceki aşama darboğazlarının detaylandırılmasını sunmaktadır. Bu analiz, komut dağıtım aşamasının (dispatch) neden durakladığını ortaya koymaktadır. ROB (Reorder Buffer) doluluk oranının \%2,6 gibi düşük bir seviyede kalması, yeniden sıralama tamponunun mevcut iş yükleri için yeterli kapasiteye sahip olduğunu göstermektedir. LSQ (Load/Store Queue) doluluk oranları da benzer şekilde düşük seviyelerde seyretmektedir.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig/prev_stage_bottleneck.png}
+    \caption{Önceki Aşama Darboğazı Detayları: ROB ve LSQ Doluluk Analizi}
+    \label{fig:prev_stage_bottleneck}
+\end{figure}
+
+Şekil \ref{fig:instruction_mix}, zaman içinde komut karışımının değişimini göstermektedir. Her 100 çevrimde tamamlanan komut sayısı (commit), yanlış tahmin sayısı ve bellek operasyonu sayısı izlenmektedir. Commit oranındaki ani düşüşler, yoğun dal yanlış tahmini veya bellek gecikmesi dönemlerine işaret etmektedir. Bu grafik, işlemcinin farklı iş yükü karakteristiklerine nasıl tepki verdiğini anlamak için kritik öneme sahiptir.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig/instruction_mix_timeline.png}
+    \caption{Zaman İçinde Komut Karışımı: Her 100 çevrimde tamamlanan komut (commit), yanlış tahmin ve bellek operasyonu sayıları}
+    \label{fig:instruction_mix}
+\end{figure}
+
+Şekil \ref{fig:operands_not_ready}, her bir rezervasyon istasyonu için operand bağımlılık durakslamalarının kümülatif olarak nasıl biriktiğini göstermektedir. RS2'nin en yüksek bekleme süresine sahip olması, bu istasyona atanan komutların daha uzun veri bağımlılık zincirleri içerdiğini ortaya koymaktadır. Bu durum, RS2'ye atanan komut türlerinin (örneğin bellek operasyonları veya karmaşık aritmetik işlemler) doğası gereği daha fazla bağımlılık içerdiğini göstermektedir.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig/operands_not_ready_timeline.png}
+    \caption{Zaman İçinde Operand Bağımlılık Duraklamaları: Her bir rezervasyon istasyonu için kümülatif bekleme çevrimleri}
+    \label{fig:operands_not_ready}
+\end{figure}
+
+Şekil \ref{fig:misprediction_trend}, en kritik performans bulgularından birini ortaya koymaktadır: rezervasyon istasyonlarının boş kalma süresinin (Not Occupied) büyük çoğunluğu dal yanlış tahmini cezasından kaynaklanmaktadır. Simülasyon ilerledikçe bu oran \%80'in üzerine çıkmaktadır. Bu sonuç, mevcut iş yükleri altında işlemci performansının ağırlıklı olarak dal tahminci doğruluğu tarafından belirlendiğini kanıtlamaktadır. Dal tahminci iyileştirmeleri, doğrudan IPC artışına dönüşecek en etkili optimizasyon alanı olarak öne çıkmaktadır.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig/misprediction_penalty_trend.png}
+    \caption{Dal Yanlış Tahmini Cezası Trendi: Not Occupied süresinin yüzde kaçının misprediction penalty olduğu}
+    \label{fig:misprediction_trend}
 \end{figure}
 
 Geliştirilen bu araç, mimari üzerindeki optimizasyon çalışmalarında darboğazların hızlıca tespit edilmesini ve gerçekleştirilen değişikliklerin sisteme etkisinin doğrudan gözlemlenmesini sağlamıştır.
@@ -217,15 +254,44 @@ Geliştirilen bu araç, mimari üzerindeki optimizasyon çalışmalarında darbo
 
 Bölüm \ref{ch:redundancy}'de açıklanan donanımsal yedeklilik mekanizmalarının etkinliğini doğrulamak için özel bir güvenilirlik analiz süreci işletilmiştir. Tasarımın fiziksel hatalara karşı direnci, mikromimari seviyesinde gerçekleştirilen hata enjeksiyon testleri ile ölçülmüştür.
 
-\subsection{Hata Enjeksiyon Metodolojisi}
+\subsection{Hata Enjeksiyon Mekanizması}
 
-Hata enjeksiyon doğrulamasında başlangıçta Cadence Safety Simulation araçlarının kullanılması planlanmış, ancak uygulama sürecinde karşılaşılan lisans kısıtlamaları nedeniyle özel bir hata enjeksiyon modülü geliştirilerek test ortamına entegre edilmiştir. Bu modül, işlemcinin çalışma zamanındaki davranışını bozmadan, dinamik olarak hata üretme ve izleme yeteneğine sahiptir.
+Donanımsal yedeklilik altyapısının etkinliğini doğrulamak amacıyla, tasarım içerisine özel bir hata enjeksiyon modülü entegre edilmiştir. Lisans kısıtlamaları nedeniyle ticari güvenlik simülasyon araçları yerine tercih edilen bu modül, geçici donanım hatalarını (transient faults) simülasyon seviyesinde taklit etme yeteneğine sahiptir.
 
-Geliştirilen enjeksiyon mekanizması, tasarım içerisinde ECC (Error Correction Code) gibi yöntemlerle korunduğu varsayılan bellek yapıları dışındaki herhangi bir fiziksel yazmacı (register) hedef alabilmektedir. Hata modeli olarak "bit-flipping" yöntemi kullanılmış; seçilen yazmaçlardaki rastgele bir bitin değeri anlık olarak tersine çevrilerek tekil olay bozulmaları (SEU) taklit edilmiştir. Bu yöntemle, hata tolerans altyapısının bu tip anlık bozulmaları ne ölçüde maskeleyebildiği ve sistemin bütünlüğünü nasıl koruduğu test edilmiştir.
+Geliştirilen hata enjeksiyon mekanizması aşağıdaki özelliklere sahiptir:
 
-\subsection{Hata Tolerans ve Kurtarma Sonuçları}
+\begin{itemize}
+    \item \textbf{Hedef Kapsamı:} ECC ile korunduğu varsayılan bellek yapıları hariç olmak üzere, tasarımdaki tüm kontrol ve veri yazmaçları hata enjeksiyonuna tabi tutulabilmektedir.
+    \item \textbf{Hata Modeli:} Enjekte edilen hata, hedef yazmaca anlık olarak yerleştirilmekte ancak bir sonraki saat kenarında bu yazmaca yapılacak normal yazma işlemini engellemeyecek şekilde tasarlanmıştır. Bu davranış, gerçek geçici hata karakteristiğini yansıtmaktadır.
+    \item \textbf{Hata Türleri:} Modül, hem tekil bit hataları (single-bit error) hem de çoklu bit hataları (multi-bit error) üretebilme kapasitesine sahiptir. Ayrıca bir çevrimde oluşabilecek maksimum çoklu bit hata sayısı da ayarlanabilmektedir.
+    \item \textbf{Hata Oranı Kontrolü:} Her bin saat çevriminde enjekte edilecek hata sayısı simülasyon parametresi olarak ayarlanabilmektedir.
+\end{itemize}
 
-Hata enjeksiyon testlerinde, korunan modüller üzerindeki oylama mekanizmalarının hatalı veriyi sistemin geri kalanına sızdırmadan temizlediği teyit edilmiştir. Testbench tarafından canlı olarak yayınlanan istatistikler, enjekte edilen toplam hata sayısı ile oylayıcılar tarafından yakalanarak düzeltilen hata sayılarını karşılaştırmalı olarak raporlamaktadır. [HATA KURTARMA ORANLARI VE TABLOLAR BURAYA GELECEK]
+Korunmayan bir yazmaca enjekte edilen hata, bir sonraki yazma işlemine kadar yazmacta kalacak ve bu süre zarfında aynı TMR grubundaki diğer replikalardan birinde de hata oluşması durumunda oylama mekanizması başarısız olarak kurtarılamaz bir hataya (fatal error) yol açacaktır. Tasarlanan işlemcideki tüm korunan yazmaçlar, enjekte edilen hataları bir saat çevrimi içerisinde TMR oylama sonucu ile elimine edecek şekilde yapılandırılmıştır.
+
+\subsection{Tekil Bit Hata Testleri}
+
+Tekil bit hata testlerinde, bin çevrimde \%10 ve \%100 hata oranları ile simülasyonlar gerçekleştirilmiştir. Tablo \ref{tab:seu_results}, elde edilen sonuçları özetlemektedir.
+
+\begin{table}[htbp]
+\centering
+\caption{Tekil Bit Hata Enjeksiyonu Test Sonuçları}
+\label{tab:seu_results}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Hata Oranı} & \textbf{Maskeleme Oranı} & \textbf{Fonksiyonel Doğruluk} & \textbf{IPC Etkisi} \\
+\midrule
+\%10 (100/1000 çevrim) & \%100 & Spike ile tam uyum & Değişim yok (1-way ile aynı) \\
+\%100 (1000/1000 çevrim) & \%100 & Spike ile tam uyum & Değişim yok (1-way ile aynı) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Her iki senaryoda da işlemci, enjekte edilen tüm tekil bit hatalarını TMR oylama mekanizması aracılığıyla başarıyla maskeleyerek fonksiyonel doğruluğunu korumuştur. Spike referans modeli ile yapılan karşılaştırmalarda herhangi bir uyumsuzluk tespit edilmemiş olup, program akışı kesintisiz olarak tamamlanmıştır. Özellikle dikkat çekici olan nokta, yoğun hata enjeksiyonu altında dahi işlemcinin tek yollu (1-way) konfigürasyondaki IPC değerini koruyarak performans kaybı yaşamamasıdır.
+
+\subsection{Çoklu Bit Hata Testleri}
+
+[ÇOKLU BİT HATA TESTLERİ SONUÇLARI BURAYA EKLENECEK]
 
 
 %------------------------------------------------------------------------
@@ -263,7 +329,7 @@ Toplam Güç Tüketimi & 150.4 mW \\
 \end{tabular}
 \end{table}
 
-Sentez aşamasında tespit edilen kritik yol, yürütme aşamasından spekülatif yürütme kurtarma altyapısına uzanan sinyal yolunda oluşmaktadır. Bu yolun toplam kombinasyonel gecikmesi 937 ps olarak ölçülmüş olup, kalan 63 ps kurulum zamanı (setup time) ve zamanlama belirsizliği (uncertainty) için ayrılmıştır.
+Sentez aşamasında tespit edilen kritik yol, dispatch aşamasındaki yükleme-saklama kuyruğu (LSQ) baş işaretçisinden dal yanlış tahmini kurtarma tablosu (BRAT) içindeki RAT anlık görüntü belleğine uzanan sinyal yolunda oluşmaktadır. Bu yolun toplam kombinasyonel gecikmesi 937 ps olarak ölçülmüş olup, kalan 63 ps kurulum zamanı (setup time) ve zamanlama belirsizliği (uncertainty) için ayrılmıştır.
 
 \subsection{Güç Tüketimi Analizi}\label{subsec:power_syn}
 
@@ -288,7 +354,7 @@ Kaçak Güç (Leakage Power) & 0.2 & \%0.1 \\
 \end{tabular}
 \end{table}
 
-Güç dağılımı analiz edildiğinde, dahili gücün baskın bileşen olduğu görülmektedir. Bu durum, işlemci içindeki ardışık elemanların (flip-flop) yoğunluğunu yansıtmaktadır. Süperölçekli yapıda yazmaç dosyası, yeniden sıralama tamponu, dal tahmini geçmişi tablosu ve yükleme-saklama kuyruğu gibi yapılar önemli miktarda ardışık eleman içermektedir.
+Güç dağılımı analiz edildiğinde, dahili gücün baskın bileşen olduğu görülmektedir. Bu durum, işlemci içindeki ardışık elemanların (flip-flop) yoğunluğunu yansıtmaktadır. Süperölçekli yapıda yazmaç dosyası, yeniden sıralama tamponu, dal tahmini geçmiş tablosu ve yükleme-saklama kuyruğu gibi yapılar önemli miktarda ardışık eleman içermektedir.
 
 %------------------------------------------------------------------------
 \section{Fiziksel Tasarım Sonuçları}\label{sec:pnr}
@@ -321,7 +387,7 @@ Toplam Güç Tüketimi & 131.6 mW \\
 
 Fiziksel tasarım aşamasında hücre sayısının lojik senteze göre artış göstermesinin temel nedeni, zamanlama optimizasyonu amacıyla eklenen tampon hücreleri ve saat ağacı sentezi sırasında yerleştirilen saat tamponlarıdır.
 
-Fiziksel tasarım sonrası kritik yol, spekülatif yürütme kurtarma altyapısındaki işaretçi yazmaçlarından yürütme aşamasındaki kaynak yönetimi işaretçilerine uzanan sinyal yolunda tespit edilmiştir. Fiziksel tasarım sonucunda 1 GHz hedef frekans tutturulamamış olup, kritik yolda 106 ps zamanlama ihlali (timing violation) oluşmuştur.
+Fiziksel tasarım sonrası kritik yol, dal yanlış tahmini kurtarma tablosu (BRAT) içindeki baş imlecinden dispatch aşamasındaki yükleme-saklama kuyruğu (LSQ) baş işaretçisine uzanan sinyal yolunda tespit edilmiştir. Fiziksel tasarım sonucunda 1 GHz hedef frekans tutturulamamış olup, kritik yolda 106 ps zamanlama ihlali (timing violation) oluşmuştur.
 
 Bu sonuç, tasarımın 1 GHz hedef frekansını tam olarak karşılayamadığını, ancak yaklaşık 900 MHz civarında güvenli biçimde çalışabileceğini göstermektedir. Zamanlama ihlalinin giderilmesi için kritik yol üzerindeki kombinasyonel mantığın yeniden yapılandırılması veya daha agresif sentez kısıtlamalarının uygulanması değerlendirilebilir.
 
@@ -348,7 +414,7 @@ Kaçak Güç (Leakage Power) & 0.24 & \%0.2 \\
 \end{tabular}
 \end{table}
 
-Bu güç analizi sonuçları, tasarım aracının varsayılan \%20 anahtarlama aktivitesi kabulüne dayandığından kapsamlı bir analiz niteliği taşımamaktadır. Daha doğru güç tahminleri için gerçek iş yüklerinden elde edilen anahtarlama aktivitesi bilgisinin (Value Change Dump - VCD dosyası) güç analizi aracına beslenmesi gerekmektedir.
+Bu güç analizi sonuçları, tasarım aracının varsayılan \%20 anahtarlama aktivitesi kabulüne dayanmaktadır. Daha doğru güç tahminleri için gerçek iş yüklerinden elde edilen anahtarlama aktivitesi bilgisinin (Value Change Dump - VCD dosyası) güç analizi aracına beslenmesi gerekmektedir.
 
 %------------------------------------------------------------------------
 \section{Kritik Yol Analizi ve Değerlendirme}\label{sec:critical_path}
@@ -364,9 +430,9 @@ Her iki tasarım aşamasında da kritik yol, spekülatif yürütme altyapısın�
 \toprule
 \textbf{Aşama} & \textbf{Kritik Yol Tanımı} & \textbf{Gecikme} & \textbf{Slack} \\
 \midrule
-Lojik Sentez & Kuyruk yazmacından spekülatif kurtarma belleğine & 937 ps & 0 ps \\
+Lojik Sentez & LSQ baş işaretçisinden BRAT anlık görüntüsüne & 937 ps & 0 ps \\
 \midrule
-Fiziksel Tasarım & Kurtarma işaretçisinden kaynak işaretçisine & 1054 ps & -106 ps \\
+Fiziksel Tasarım & BRAT baş imlecinden LSQ baş işaretçisine & 1054 ps & -106 ps \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -381,7 +447,7 @@ Kritik yolun her iki aşamada da spekülatif yürütme mekanizması içinde olu�
 
 Bu çalışmada sunulan doğrulama ve gerçekleme sonuçları, tasarlanan üç yollu süperölçekli RISC-V işlemcisinin hem fonksiyonel doğruluk hem de fiziksel gerçeklenebilirlik açısından değerlendirilmesine olanak tanımaktadır.
 
-Fonksiyonel doğrulama açısından, yaklaşık 210.000 komutluk test kapsamı hem rastgele hem de deterministik test programlarını içermektedir. Tüm testlerin Spike referans modeli ile tam uyumu, işlemcinin RV32I komut seti mimarisini eksiksiz olarak gerçeklediğini doğrulamaktadır. Özellikle karmaşık algoritma testlerinin başarılı tamamlanması, spekülatif yürütme ve kurtarma mekanizmalarının farklı hesaplama desenleri altında doğru çalıştığını göstermektedir.
+Fonksiyonel doğrulama açısından, yaklaşık 200.000 komutluk test kapsamı hem rastgele hem de deterministik test programlarını içermektedir. Tüm testlerin Spike referans modeli ile tam uyumu, işlemcinin RV32I komut seti mimarisini eksiksiz olarak gerçeklediğini doğrulamaktadır. Özellikle karmaşık algoritma testlerinin başarılı tamamlanması, spekülatif yürütme ve kurtarma mekanizmalarının farklı hesaplama desenleri altında doğru çalıştığını göstermektedir.
 
 Lojik sentez sonuçları, 16nm FinFET teknolojisinde yaklaşık 142.000 hücre kullanılarak 1 GHz frekansın ulaşılabilir olduğunu ortaya koymaktadır. Ancak fiziksel tasarım aşamasında gerçek tel gecikmelerinin hesaba katılmasıyla 106 ps'lik zamanlama ihlali oluşmakta, bu durum ulaşılabilir frekansı yaklaşık 900 MHz seviyesine çekmektedir.
 
@@ -390,7 +456,7 @@ Güç tüketimi açısından fiziksel tasarım sonrası elde edilen 131.6 mW de�
 \subsection{Kısıtlamalar ve Gelecek Çalışmalar}\label{subsec:kisitlamalar}
 
 Bu çalışmanın bazı kısıtlamaları bulunmakta olup, gelecek çalışmalarda ele alınması öngörülmektedir:
-
+\begin{enumerate}
     \item \textbf{Zamanlama İhlali:} Fiziksel tasarım sonrası 1 GHz hedef frekansına tam olarak ulaşılamamıştır. Kritik yolun yeniden yapılandırılması, ardışık düzen aşamalarının eklenmesi veya daha agresif sentez kısıtlamalarının uygulanması ile bu ihlal giderilebilir.
     
     \item \textbf{Bellek Entegrasyonu:} Mevcut gerçekleme ideal bellek modelleri kullanmaktadır. Gerçek SRAM makrolarının entegrasyonu, ek gecikme ve alan maliyeti getirecek olup, zamanlama analizi bu koşullar altında yeniden değerlendirilmelidir.

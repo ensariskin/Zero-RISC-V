@@ -9,7 +9,7 @@ module fault_injector (
       input  logic rst_n
    );
 
-   localparam int NUM_TARGETS = 171;
+   localparam int NUM_TARGETS = 141;
 
    // Runtime configuration
    int fault_rate_per_mille;
@@ -23,6 +23,13 @@ module fault_injector (
    int faults_per_target[NUM_TARGETS];
 
    logic initialized;
+
+   int roll;
+   int num_faults_this_cycle;
+   int target_id;
+   logic [31:0] fault_value;
+   logic fault_occurred_this_cycle;
+
 
    //==========================================================================
    // INITIALIZATION
@@ -64,13 +71,14 @@ module fault_injector (
    // FAULT INJECTION LOGIC
    //==========================================================================
    always @(posedge clk) begin
+      if(!rst_n) begin
+         fault_occurred_this_cycle = 0;
+         roll = 0;
+         target_id = 0;
+         num_faults_this_cycle = 0;
+         fault_value = 0;
+      end
       if (rst_n && enable_injection && initialized) begin
-         automatic int roll;
-         automatic int num_faults_this_cycle;
-         automatic int target_id;
-         automatic logic [31:0] fault_value;
-         automatic logic fault_occurred_this_cycle;
-
          #2;
          fault_occurred_this_cycle = 1'b0;
          roll = $urandom_range(0, 999);

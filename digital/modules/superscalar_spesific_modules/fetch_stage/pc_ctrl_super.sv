@@ -71,7 +71,10 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 		output logic [size-1 : 0] pc_save_1,
 		output logic [size-1 : 0] pc_save_2,
 		output logic [size-1 : 0] pc_save_3,
-		output logic [size-1 : 0] pc_save_4
+		output logic [size-1 : 0] pc_save_4,
+
+		// TMR Fatal Error
+		output logic fatal_o
 	);
 
 	localparam D = 1; // Delay for simulation purposes
@@ -271,5 +274,8 @@ module pc_ctrl_super #(parameter size = 32, parameter RESET_PC = 32'h80000000)
 	assign current_pc_4 = pc_current_val + 32'd16;
 
 	// TODO : We can store some pc values in case of JAL, JALR instruction then we can use them in case of new JALR calculation
+
+
+	assign fatal_o = fatal_error;
 
 endmodule

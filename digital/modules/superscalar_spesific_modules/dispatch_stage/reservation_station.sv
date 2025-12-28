@@ -309,7 +309,13 @@ module reservation_station #(
                     end else if (cdb_if_port.cdb_valid_3_0 && effective_operand_a_tag == 3'b011 && effective_operand_a_data == cdb_if_port.cdb_dest_reg_3_0) begin
                         stored_operand_a_data <= #D cdb_if_port.cdb_data_3_0;
                         stored_operand_a_tag <= #D TAG_READY;
+                    end else begin
+                        stored_operand_a_data <= #D effective_operand_a_data;
+                        stored_operand_a_tag  <= #D effective_operand_a_tag;
                     end
+                end else begin
+                    stored_operand_a_data <= #D effective_operand_a_data;
+                    stored_operand_a_tag  <= #D effective_operand_a_tag;
                 end
 
                 // Update operand B from CDB if still waiting
@@ -332,8 +338,37 @@ module reservation_station #(
                     end else if (cdb_if_port.cdb_valid_3_0 && effective_operand_b_tag == 3'b011 && effective_operand_b_data == cdb_if_port.cdb_dest_reg_3_0) begin
                         stored_operand_b_data <= #D cdb_if_port.cdb_data_3_0;
                         stored_operand_b_tag <= #D TAG_READY;
+                    end else begin
+                        stored_operand_b_data <= #D effective_operand_b_data;
+                        stored_operand_b_tag <= #D effective_operand_b_tag;
                     end
+                end else begin
+                    stored_operand_b_data <= #D effective_operand_b_data;
+                    stored_operand_b_tag <= #D effective_operand_b_tag;
                 end
+
+                occupied <= #D effective_occupied;
+                stored_control_signals <= #D effective_control_signals;
+                stored_pc <= #D effective_pc;
+                stored_rd_phys_addr <= #D effective_rd_phys_addr;
+                stored_pc_value_at_prediction <= #D effective_pc_value_at_prediction;
+                stored_branch_sel <= #D effective_branch_sel;
+                stored_branch_prediction <= #D effective_branch_prediction;
+                stored_store_data <= #D effective_store_data;
+
+            end else begin
+                occupied <= #D 1'b0;
+                stored_operand_a_tag <= #D 0;
+                stored_operand_b_tag <= #D 0;
+                stored_operand_a_data <= #D 0;
+                stored_operand_b_data <= #D 0;
+                stored_control_signals <= #D 0;
+                stored_pc <= #D 0;
+                stored_rd_phys_addr <= #D 0;
+                stored_pc_value_at_prediction <= #D 0;
+                stored_branch_sel <= #D 0;
+                stored_branch_prediction <= #D 0;
+                stored_store_data <= #D 0;
             end
 
             // Clear occupied when instruction is issued from storage
@@ -341,6 +376,15 @@ module reservation_station #(
                 occupied <= #D 1'b0;
                 stored_operand_a_tag <= #D 0;
                 stored_operand_b_tag <= #D 0;
+                stored_operand_a_data <= #D 0;
+                stored_operand_b_data <= #D 0;
+                stored_control_signals <= #D 0;
+                stored_pc <= #D 0;
+                stored_rd_phys_addr <= #D 0;
+                stored_pc_value_at_prediction <= #D 0;
+                stored_branch_sel <= #D 0;
+                stored_branch_prediction <= #D 0;
+                stored_store_data <= #D 0;
             end
 
             // EAGER MISPREDICTION FLUSH: Clear RS if stored instruction is speculative
@@ -348,6 +392,15 @@ module reservation_station #(
                 occupied <= #D 1'b0;
                 stored_operand_a_tag <= #D 0;
                 stored_operand_b_tag <= #D 0;
+                stored_operand_a_data <= #D 0;
+                stored_operand_b_data <= #D 0;
+                stored_control_signals <= #D 0;
+                stored_pc <= #D 0;
+                stored_rd_phys_addr <= #D 0;
+                stored_pc_value_at_prediction <= #D 0;
+                stored_branch_sel <= #D 0;
+                stored_branch_prediction <= #D 0;
+                stored_store_data <= #D 0;
             end
         end
     end
@@ -419,7 +472,7 @@ module reservation_station #(
     generate
         if (ALU_TAG == 3'b000) begin : gen_alu0_cdb
             // ALU0 broadcasts on channel 0
-            assign cdb_if_port.cdb_valid_0 = exec_if.issue_valid && exec_if.issue_ready; // Result valid when FU completes
+            assign cdb_if_port.cdb_valid_0 = exec_if.issue_valid && exec_if.issue_ready; // Result valid when FU completes todo make it exec_valid !!!
             assign cdb_if_port.cdb_tag_0 = ALU_TAG;
             assign cdb_if_port.cdb_data_0 = exec_if.data_result;
             assign cdb_if_port.cdb_dest_reg_0 = exec_if.rd_phys_addr;

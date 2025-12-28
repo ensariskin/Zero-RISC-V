@@ -97,8 +97,10 @@ module multi_fetch #(
       // RAS checkpoint/restore interface
       output logic [2:0] ras_tos_checkpoint_o, // RAS TOS pointers at fetch time for each instruction
       input  logic ras_restore_en_i,
-      input  logic [2:0] ras_restore_tos_i
+      input  logic [2:0] ras_restore_tos_i,
 
+      // TMR Fatal Error
+      output logic fatal_o
    );
 
    //localparam D = 1; // Delay for simulation purposes
@@ -354,7 +356,9 @@ module multi_fetch #(
       .pc_save_1(pc_o_1),
       .pc_save_2(pc_o_2),
       .pc_save_3(pc_o_3),
-      .pc_save_4(pc_o_4)
+      .pc_save_4(pc_o_4),
+
+      .fatal_o(fatal_o)
    );
 
    assign instruction_o_0 =  instruction_i_0;

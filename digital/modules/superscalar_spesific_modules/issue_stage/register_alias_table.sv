@@ -121,10 +121,8 @@ module register_alias_table #(
         output logic ras_restore_valid_o,
         output logic [2:0] ras_restore_tos_o,
 
-        // TMR Fatal Error Outputs (from BRAT)
-        output logic brat_head_ptr_fatal_o,
-        output logic brat_tail_ptr_fatal_o
-
+        // TMR Fatal Error Outputs (consolidated)
+        output logic fatal_o
     );
 
     localparam D = 1;
@@ -150,6 +148,10 @@ module register_alias_table #(
     logic [PHYS_ADDR_WIDTH-1:0] brat_resolved_phys_0, brat_resolved_phys_1, brat_resolved_phys_2;
     logic brat_is_jalr_0, brat_is_jalr_1, brat_is_jalr_2;
     logic [DATA_WIDTH-1:0] brat_pc_at_prediction_0, brat_pc_at_prediction_1, brat_pc_at_prediction_2;
+    logic brat_head_ptr_fatal;
+    logic brat_tail_ptr_fatal;
+    logic free_list_fatal;
+    logic rat_lsq_buffer_fatal;
     logic [INDEX_WIDTH+2:0] brat_global_history_0, brat_global_history_1, brat_global_history_2;
 
 
@@ -178,6 +180,10 @@ module register_alias_table #(
     logic need_lsq_alloc_0, need_lsq_alloc_1, need_lsq_alloc_2;
 
     logic brat_restore_en;
+
+    // TMR Fatal Internal Signals
+    assign fatal_o = free_list_fatal | rat_lsq_buffer_fatal |
+        brat_head_ptr_fatal | brat_tail_ptr_fatal;
 
     //==========================================================================
     // Connect BRAT outputs to module outputs
@@ -246,7 +252,8 @@ module register_alias_table #(
         .buffer_full(),
         .buffer_count(free_count),
         .set_read_ptr_en(free_addr_set_en),
-        .set_read_ptr_value(free_addr_set_value[ARCH_ADDR_WIDTH-1:0])
+        .set_read_ptr_value(free_addr_set_value[ARCH_ADDR_WIDTH-1:0]),
+        .fatal_error_o(free_list_fatal)
     );
 
     circular_buffer_3port #(.BUFFER_DEPTH(32)) lsq_address_buffer(
@@ -271,7 +278,8 @@ module register_alias_table #(
         .buffer_count(lsq_free_count),
         // Eager misprediction flush - set read pointer to first invalid LSQ index
         .set_read_ptr_en(lsq_flush_valid_i),
-        .set_read_ptr_value(first_invalid_lsq_idx_i)
+        .set_read_ptr_value(first_invalid_lsq_idx_i),
+        .fatal_error_o(rat_lsq_buffer_fatal)
     );
 
     // Count free registers
@@ -475,8 +483,8 @@ module register_alias_table #(
         .buffer_count(),
 
         // TMR Fatal Error Outputs
-        .head_ptr_fatal_o(brat_head_ptr_fatal_o),
-        .tail_ptr_fatal_o(brat_tail_ptr_fatal_o)
+        .head_ptr_fatal_o(brat_head_ptr_fatal),
+        .tail_ptr_fatal_o(brat_tail_ptr_fatal)
     );
 
     //==========================================================================

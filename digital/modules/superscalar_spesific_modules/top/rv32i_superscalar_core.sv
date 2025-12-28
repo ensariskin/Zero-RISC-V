@@ -76,37 +76,14 @@ module rv32i_superscalar_core #(
 
     );
 
-    // TMR Fatal Error Signals (internal - for recovery logic)
-    logic brat_head_ptr_fatal;
-    logic brat_tail_ptr_fatal;
-    logic rob_head_ptr_fatal;
-    logic rob_tail_ptr_fatal;
+    // TMR Fatal Error Signals (consolidated from sub-modules)
+    logic fetch_fatal;
+    logic issue_fatal;
+    logic dispatch_fatal;
 
-    // Instruction Buffer fatal
-    logic inst_buffer_fatal;
-
-    // LSQ fatal signals (7)
-    logic lsq_head_ptr_0_fatal;
-    logic lsq_head_ptr_1_fatal;
-    logic lsq_head_ptr_2_fatal;
-    logic lsq_tail_ptr_fatal;
-    logic lsq_last_commit_ptr_0_fatal;
-    logic lsq_last_commit_ptr_1_fatal;
-    logic lsq_last_commit_ptr_2_fatal;
-
-    // RS Validator fatal signals (2)
-    logic rs_exec_fatal;
-    logic rs_internal_fatal;
-
-    // Combined fatal error signal (all 13 sources)
+    // Combined fatal error signal
     logic tmr_fatal_error;
-    assign tmr_fatal_error = brat_head_ptr_fatal | brat_tail_ptr_fatal |
-        rob_head_ptr_fatal | rob_tail_ptr_fatal |
-        inst_buffer_fatal |
-        lsq_head_ptr_0_fatal | lsq_head_ptr_1_fatal | lsq_head_ptr_2_fatal |
-        lsq_tail_ptr_fatal | lsq_last_commit_ptr_0_fatal |
-        lsq_last_commit_ptr_1_fatal | lsq_last_commit_ptr_2_fatal |
-        rs_exec_fatal | rs_internal_fatal;
+    assign tmr_fatal_error = fetch_fatal | issue_fatal | dispatch_fatal;
 
     // Fetch Buffer Interface
     logic [2:0] decode_valid;
@@ -286,7 +263,7 @@ module rv32i_superscalar_core #(
         .ras_restore_tos_i(ras_restore_tos),
 
         // TMR Fatal Error
-        .inst_buffer_fatal_o(inst_buffer_fatal)
+        .fatal_o(fetch_fatal)
     );
 
 
@@ -419,8 +396,7 @@ module rv32i_superscalar_core #(
         .first_invalid_lsq_idx_i(first_invalid_lsq_idx),
 
         // TMR Fatal Error Outputs
-        .brat_head_ptr_fatal_o(brat_head_ptr_fatal),
-        .brat_tail_ptr_fatal_o(brat_tail_ptr_fatal)
+        .fatal_o(issue_fatal)
 
     );
 

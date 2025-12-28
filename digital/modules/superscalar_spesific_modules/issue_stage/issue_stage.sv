@@ -111,9 +111,8 @@ module issue_stage #(
         issue_to_dispatch_if.issue issue_to_dispatch_1,
         issue_to_dispatch_if.issue issue_to_dispatch_2,
 
-        // TMR Fatal Error Outputs (from BRAT)
-        output logic brat_head_ptr_fatal_o,
-        output logic brat_tail_ptr_fatal_o
+        // TMR Fatal Error Output (consolidated)
+        output logic fatal_o
     );
 
     localparam D = 1; // Delay for simulation
@@ -135,6 +134,12 @@ module issue_stage #(
     logic [PHYS_REG_ADDR_WIDTH-1:0] old_rd_phys_0, old_rd_phys_1, old_rd_phys_2;
     logic [2:0] rename_valid_internal;
     logic [2:0] rename_ready;
+
+    // TMR Fatal Internal Signals
+    logic rat_fatal;
+    logic [12:0] dispatch_voter_fatals;
+
+    assign fatal_o = rat_fatal | (|dispatch_voter_fatals);
 
     // Write enable signals for destinations
     logic rd_write_enable_0, rd_write_enable_1, rd_write_enable_2;
@@ -335,9 +340,8 @@ module issue_stage #(
         .lsq_flush_valid_i(lsq_flush_valid_i),
         .first_invalid_lsq_idx_i(first_invalid_lsq_idx_i),
 
-        // TMR Fatal Error Outputs
-        .brat_head_ptr_fatal_o(brat_head_ptr_fatal_o),
-        .brat_tail_ptr_fatal_o(brat_tail_ptr_fatal_o)
+        // TMR Fatal Error Output
+        .fatal_o(rat_fatal)
     );
 
     //==========================================================================
@@ -506,9 +510,21 @@ module issue_stage #(
                     rd_arch_reg_0 <= #D decode_valid_i[0] ? rd_arch_0 : {ARCH_REG_ADDR_WIDTH{1'b0}};
                     lsq_alloc_0_valid_reg <= #D decode_valid_i[0] ? lsq_alloc_0_valid : 1'b0;
                 end
-                else
+                else begin
                     decode_valid_reg[0] <= #D 0;
-                // If dispatch_ready[0] is 0, channel 0 registers maintain their values (no update)
+                    pc_reg_0 <= #D {DATA_WIDTH{1'b0}};
+                    control_signal_reg_0 <= #D 26'h0;
+                    pc_prediction_reg_0 <= #D {DATA_WIDTH{1'b0}};
+                    branch_sel_reg_0 <= #D 3'b000;
+                    branch_prediction_reg_0 <= #D 1'b0;
+                    immediate_reg_0 <= #D {DATA_WIDTH{1'b0}};
+                    rd_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs1_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs2_phys_reg_0 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    alloc_tag_reg_0 <= #D 3'b000;
+                    rd_arch_reg_0 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
+                    lsq_alloc_0_valid_reg <= #D 1'b0;
+                end
 
                 // Channel 1: In secure mode, replicate Channel 0 data for lockstep TMR
                 if (issue_to_dispatch_1.dispatch_ready) begin
@@ -544,8 +560,21 @@ module issue_stage #(
                         lsq_alloc_1_valid_reg <= #D decode_valid_i[1] ? lsq_alloc_1_valid : 1'b0;
                     end
                 end
-                else
+                else begin
                     decode_valid_reg[1] <= #D 0;
+                    pc_reg_1 <= #D {DATA_WIDTH{1'b0}};
+                    control_signal_reg_1 <= #D 26'h0;
+                    pc_prediction_reg_1 <= #D {DATA_WIDTH{1'b0}};
+                    branch_sel_reg_1 <= #D 3'b000;
+                    branch_prediction_reg_1 <= #D 1'b0;
+                    immediate_reg_1 <= #D {DATA_WIDTH{1'b0}};
+                    rd_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs1_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs2_phys_reg_1 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    alloc_tag_reg_1 <= #D 3'b000;
+                    rd_arch_reg_1 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
+                    lsq_alloc_1_valid_reg <= #D 1'b0;
+                end
                 // If dispatch_ready[1] is 0, channel 1 registers maintain their values (no update)
 
                 // Channel 2: In secure mode, replicate Channel 0 data for lockstep TMR
@@ -582,8 +611,21 @@ module issue_stage #(
                         lsq_alloc_2_valid_reg <= #D decode_valid_i[2] ? lsq_alloc_2_valid : 1'b0;
                     end
                 end
-                else
+                else begin
                     decode_valid_reg[2] <= #D 0;
+                    pc_reg_2 <= #D {DATA_WIDTH{1'b0}};
+                    control_signal_reg_2 <= #D 26'h0;
+                    pc_prediction_reg_2 <= #D {DATA_WIDTH{1'b0}};
+                    branch_sel_reg_2 <= #D 3'b000;
+                    branch_prediction_reg_2 <= #D 1'b0;
+                    immediate_reg_2 <= #D {DATA_WIDTH{1'b0}};
+                    rd_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs1_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    rs2_phys_reg_2 <= #D {PHYS_REG_ADDR_WIDTH{1'b0}};
+                    alloc_tag_reg_2 <= #D 3'b000;
+                    rd_arch_reg_2 <= #D {ARCH_REG_ADDR_WIDTH{1'b0}};
+                    lsq_alloc_2_valid_reg <= #D 1'b0;
+                end
                 // If dispatch_ready[2] is 0, channel 2 registers maintain their values (no update)
             end
         end
@@ -598,6 +640,8 @@ module issue_stage #(
     logic [10:0] voted_control_signals;
     logic [DATA_WIDTH-1:0] voted_pc;
     logic [DATA_WIDTH-1:0] voted_pc_prediction;
+
+
     logic [DATA_WIDTH-1:0] voted_immediate;
     logic [PHYS_REG_ADDR_WIDTH-1:0] voted_rs1_phys;
     logic [PHYS_REG_ADDR_WIDTH-1:0] voted_rs2_phys;
@@ -612,79 +656,79 @@ module issue_stage #(
     tmr_voter #(.DATA_WIDTH(1)) issue_valid_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(decode_valid_reg[0]), .data_1_i(decode_valid_reg[1]), .data_2_i(decode_valid_reg[2]),
-        .data_o(voted_dispatch_valid), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_dispatch_valid), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[0])
     );
 
     tmr_voter #(.DATA_WIDTH(11)) issue_ctrl_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(control_signal_reg_0[10:0]), .data_1_i(control_signal_reg_1[10:0]), .data_2_i(control_signal_reg_2[10:0]),
-        .data_o(voted_control_signals), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_control_signals), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[1])
     );
 
     tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) issue_pc_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(pc_reg_0), .data_1_i(pc_reg_1), .data_2_i(pc_reg_2),
-        .data_o(voted_pc), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_pc), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[2])
     );
 
     tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) issue_pc_pred_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(pc_prediction_reg_0), .data_1_i(pc_prediction_reg_1), .data_2_i(pc_prediction_reg_2),
-        .data_o(voted_pc_prediction), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_pc_prediction), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[3])
     );
 
     tmr_voter #(.DATA_WIDTH(DATA_WIDTH)) issue_imm_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(immediate_reg_0), .data_1_i(immediate_reg_1), .data_2_i(immediate_reg_2),
-        .data_o(voted_immediate), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_immediate), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[4])
     );
 
     tmr_voter #(.DATA_WIDTH(PHYS_REG_ADDR_WIDTH)) issue_rs1_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(rs1_phys_reg_0), .data_1_i(rs1_phys_reg_1), .data_2_i(rs1_phys_reg_2),
-        .data_o(voted_rs1_phys), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_rs1_phys), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[5])
     );
 
     tmr_voter #(.DATA_WIDTH(PHYS_REG_ADDR_WIDTH)) issue_rs2_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(rs2_phys_reg_0), .data_1_i(rs2_phys_reg_1), .data_2_i(rs2_phys_reg_2),
-        .data_o(voted_rs2_phys), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_rs2_phys), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[6])
     );
 
     tmr_voter #(.DATA_WIDTH(PHYS_REG_ADDR_WIDTH)) issue_rd_phys_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(rd_phys_reg_0), .data_1_i(rd_phys_reg_1), .data_2_i(rd_phys_reg_2),
-        .data_o(voted_rd_phys), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_rd_phys), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[7])
     );
 
     tmr_voter #(.DATA_WIDTH(ARCH_REG_ADDR_WIDTH)) issue_rd_arch_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(rd_arch_reg_0), .data_1_i(rd_arch_reg_1), .data_2_i(rd_arch_reg_2),
-        .data_o(voted_rd_arch), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_rd_arch), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[8])
     );
 
     tmr_voter #(.DATA_WIDTH(3)) issue_alloc_tag_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(alloc_tag_reg_0), .data_1_i(alloc_tag_reg_1), .data_2_i(alloc_tag_reg_2),
-        .data_o(voted_alloc_tag), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_alloc_tag), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[9])
     );
 
     tmr_voter #(.DATA_WIDTH(3)) issue_branch_sel_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(branch_sel_reg_0), .data_1_i(branch_sel_reg_1), .data_2_i(branch_sel_reg_2),
-        .data_o(voted_branch_sel), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_branch_sel), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[10])
     );
 
     tmr_voter #(.DATA_WIDTH(1)) issue_branch_pred_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(branch_prediction_reg_0), .data_1_i(branch_prediction_reg_1), .data_2_i(branch_prediction_reg_2),
-        .data_o(voted_branch_prediction), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_branch_prediction), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[11])
     );
 
     tmr_voter #(.DATA_WIDTH(1)) issue_lsq_alloc_voter (
         .secure_mode_i(secure_mode),
         .data_0_i(lsq_alloc_0_valid_reg), .data_1_i(lsq_alloc_1_valid_reg), .data_2_i(lsq_alloc_2_valid_reg),
-        .data_o(voted_lsq_alloc_valid), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o()
+        .data_o(voted_lsq_alloc_valid), .mismatch_detected_o(), .error_0_o(), .error_1_o(), .error_2_o(), .fatal_error_o(dispatch_voter_fatals[12])
     );
 
     //==========================================================================

@@ -85,7 +85,7 @@ module fetch_buffer_top #(
         output logic [$clog2(BUFFER_DEPTH):0] occupancy_o,
 
         // TMR Fatal Error
-        output logic inst_buffer_fatal_o
+        output logic fatal_o
     );
 
     // Internal connections between multi_fetch and instruction_buffer
@@ -98,6 +98,10 @@ module fetch_buffer_top #(
     logic fetch_branch_pred_0, fetch_branch_pred_1, fetch_branch_pred_2, fetch_branch_pred_3, fetch_branch_pred_4;
     logic [2:0] ras_tos_checkpoint;
     logic [INDEX_WIDTH+2:0] global_history_0, global_history_1, global_history_2, global_history_3, global_history_4;
+    logic multi_fetch_fatal;
+    logic inst_buffer_fatal;
+
+    assign fatal_o = multi_fetch_fatal | inst_buffer_fatal;
 
     // Multi-Fetch Unit
     multi_fetch #(.size(DATA_WIDTH), .ENTRIES(ENTRIES)) fetch_unit (
@@ -194,7 +198,8 @@ module fetch_buffer_top #(
         //RAS checkpoint/restore interface
         .ras_tos_checkpoint_o(ras_tos_checkpoint),
         .ras_restore_en_i(ras_restore_en_i),
-        .ras_restore_tos_i(ras_restore_tos_i)
+        .ras_restore_tos_i(ras_restore_tos_i),
+        .fatal_o(multi_fetch_fatal)
     );
 
     // Generate combined eager flush signal (any misprediction triggers flush)
@@ -211,7 +216,7 @@ module fetch_buffer_top #(
         .reset(reset),
         .flush_i(eager_flush),
         .secure_mode(secure_mode),
-        .fatal_error_o(inst_buffer_fatal_o),
+        .fatal_error_o(inst_buffer_fatal),
         // Input from multi_fetch
         .fetch_valid_i(fetch_valid),
         .fetch_ready_o(fetch_ready),
