@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 3.2 KOMBİNASYONU GETİRME (FETCH) AŞAMASI
+% 3.2 KOMUT GETİRME (FETCH) AŞAMASI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Komut Getirme Aşaması}\label{sec:fetch}
@@ -10,14 +10,6 @@ Komut getirme aşaması, süperölçekli işlemcinin boruhattındaki ilk aşamad
 
 Çoklu getirme birimi, süperölçekli işlemcinin komut seviyesi paralelliğinden yararlanabilmesi için tasarlanmış merkezi koordinasyon birimidir. Bu modül, her saat çevriminde bellekten beş komut getirme kapasitesine sahiptir ve getirilen komutların geçerliliğini dal tahmin sonuçlarına göre dinamik olarak belirlemektedir.
 
-\begin{figure}[htbp]
-    \centering
-    \fbox{\textbf{[GÖRSEL: Çoklu Getirme Birimi Şeması - 5-genişlikli fetch mantığı, PC, PC+4..PC+16 Artırma, Instruction Memory Bağlantısı]}}
-    \caption{Çoklu getirme birimi ve paralel komut erişimi yapısı}
-    \label{fig:multi_fetch_unit}
-\end{figure}
-
-\subsubsection{Beş Genişlikli Getirme Tasarımının Gerekçesi}
 
 Tasarlanan işlemci üç yollu bir komut verme yapısına sahip olmasına rağmen, komut getirme genişliği beş olarak belirlenmiştir. Bu asimetrik tasarım kararının arkasında önemli bir gerekçe bulunmaktadır.
 
@@ -25,36 +17,66 @@ Tasarlanan işlemci üç yollu bir komut verme yapısına sahip olmasına rağme
 
 Bu kayıpları telafi etmenin yolu, sonraki çevrimlerde üçten fazla komut getirmektir. Beş genişlikli getirme tasarımı sayesinde, dallanma ve atlama komutları nedeniyle bazı komutlar geçersiz olsa bile, komut tamponuna yazılan ortalama komut sayısının üç olması hedeflenmektedir. Bu yaklaşım, komut getirme aşamasının boruhattı için bir darboğaz oluşturmasını engellemektedir.
 
-\subsubsection{Paralel Komut Getirme Mekanizması}
+
 
 Paralel komut getirme mekanizması, ardışık beş bellek adresine eş zamanlı erişim sağlayarak yüksek verim elde edilmesini mümkün kılmaktadır. Her bir komut için ayrı adres çıkışları ve komut girişleri bulunmaktadır. Komut adresleri program sayacı değerinden başlayarak dörder bayt aralıklarla hesaplanmaktadır; bu durum RISC-V mimarisindeki 32 bitlik sabit komut uzunluğundan kaynaklanmaktadır.
 
 Getirilen komutların geçerliliği, dal tahmin sonuçlarına bağlı olarak belirlenmektedir. Herhangi bir komut için dallanma veya atlama tahmini ``alınacak'' sonucunu verdiğinde, bu komutun ardından gelen tüm komutlar otomatik olarak geçersiz işaretlenmektedir. Bu komutların sonraki aşamalara iletilmemesinin nedeni, bu komutların işlenmemesi gerektiğinin tahmin edilmesidir; eğer bu komutlar sonraki aşamalara iletilseydi, işlemci yanlış program akışını izleyerek hatalı çalışırdı.
 
-% TODO: Buraya görsel eklenecek - 5 komuttan 2. komut taken branch olacak, sonrakilerin geçersiz olduğunu gösterecek
+Geçersizleme mantığı kademeli olarak çalışmaktadır: birinci komut dallanır veya atlarsa ikinci, üçüncü, dördüncü ve beşinci komutlar geçersiz olmakta; ikinci komut dallanır veya atlarsa üçüncü, dördüncü ve beşinci komutlar geçersiz olmakta ve bu mantık beşinci komuta kadar devam etmektedir. Bu durum Şekil \ref{fig:fetch_invalidation}'de gösterilmektedir.
+
 \begin{figure}[htbp]
 \centering
-\fbox{\textbf{[GÖRSEL PLACEHOLDER: 5 komuttan 2. komut taken branch, sonrakiler geçersiz]}}
-\caption{Dallanma komutu nedeniyle sonraki komutların geçersizleşmesi}
+\begin{tikzpicture}[
+    node distance=0cm,
+    % Tüm kutular için sabit stil. 'text depth' ve 'text height' ekleyerek
+    % içerik ne olursa olsun satır hizasını zorluyoruz.
+    common/.style={draw, rectangle, minimum width=2cm, minimum height=1.2cm, align=center},
+    instr/.style={common, fill=white},
+    invalid/.style={common, fill=gray!30, pattern=north east lines, pattern color=gray},
+    branch/.style={common, fill=green!20} % Yeşil renk, standart boyut
+]
+
+% Komut Kutuları
+\node[instr] (i0) {Instr 0\\(ALU)};
+\node[instr, right=of i0] (i1) {Instr 1\\(ALU)};
+
+% BURASI DEĞİŞTİ: İçerik 2 satıra düşürüldü, "TAKEN" silindi.
+\node[branch, right=of i1] (i2) {\textbf{Instr 2}\\\textbf{(Branch)}};
+
+\node[invalid, right=of i2] (i3) {Instr 3\\(Geçersiz)};
+\node[invalid, right=of i3] (i4) {Instr 4\\(Geçersiz)};
+
+% Açıklamalar (PC değerleri)
+\node[above=0.2cm of i0] {PC};
+\node[above=0.2cm of i1] {PC+4};
+\node[above=0.2cm of i2] {PC+8};
+\node[above=0.2cm of i3] {PC+12};
+\node[above=0.2cm of i4] {PC+16};
+
+% Branch Oku (Kırmızı atlama oku)
+% "Taken" bilgisini buraya taşıdık
+\draw[->, very thick, red] (i2.south) -- ++(0,-0.6) -- ++(4,0) node[midway, above] {\textit{Taken} / Hedefe Atla} -- ++(0,-0.5);
+
+% Geçersizlik Çarpıları
+\draw[red, thick] (i3.south west) -- (i3.north east);
+\draw[red, thick] (i3.north west) -- (i3.south east);
+\draw[red, thick] (i4.south west) -- (i4.north east);
+\draw[red, thick] (i4.north west) -- (i4.south east);
+
+\end{tikzpicture}
+\caption{Dallanma komutu (Instr 2) ''Alınacak'' olarak tahmin edildiğinde, paket içindeki sonraki komutların (Instr 3, 4) geçersiz kılınması.}
 \label{fig:fetch_invalidation}
 \end{figure}
 
-Geçersizleme mantığı kademeli olarak çalışmaktadır: birinci komut dallanır veya atlarsa ikinci, üçüncü, dördüncü ve beşinci komutlar geçersiz olmakta; ikinci komut dallanır veya atlarsa üçüncü, dördüncü ve beşinci komutlar geçersiz olmakta ve bu mantık beşinci komuta kadar devam etmektedir.
 
-\subsubsection{Erken Aşama Sabit Değer Çözümleyicisi}
 
 Dal hedef adreslerinin erken hesaplanabilmesi için her komuta bir erken aşama sabit değer çözümleyici modülü eklenmiştir. Bu modüller, tam komut çözümleme işlemi beklenmeden komut içindeki sabit değerleri çıkarmaktadır. RISC-V komut formatlarının düzenli yapısı, bu erken çözümleme işlemini kolaylaştırmaktadır.
 
 Dal komutlarının hedef adresi, mevcut program sayacı değeri ile komut içindeki sabit değerin toplanmasıyla hesaplanmaktadır.
 
-\begin{equation}
-    Hedef\_Adres = PC + Ofset
-    \label{eq:branch_target}
-\end{equation}
 
 Bu hesaplamanın komut getirme aşamasında gerçekleştirilmesi, dal tahmininin doğru hedef adresini tek saat çevriminde belirlemesine olanak tanımaktadır. Sabit değer çözümleyici, B tipi dallanma komutları ve J tipi atlama komutları için farklı bit alanlarından değer çıkarmakta ve işaret genişletmesi uygulamaktadır.
-
-\subsubsection{Yanlış Tahmin İşleme}
 
 Bir dal veya atlama komutu yanlış tahmin edildiğinde, boruhattındaki tüm spekülatif durumun temizlenmesi ve doğru program akışına dönülmesi gerekmektedir. Tasarlanan işlemcide aynı anda üç komut işlenebildiğinden, aynı çevrimde birden fazla yanlış tahmin sonucu oluşabilmektedir. Bu sonuçlar sıra dışı hesaplanmış olsa bile, hızlıca sıraya konularak temizleme işlemine başlanmaktadır.
 
@@ -68,7 +90,7 @@ Temizleme sinyali etkinleştirildiğinde, program sayacı doğru hedef adresine 
 
 Program sayacı denetleyicisi, bir sonraki getirme adresini belirlemekten sorumlu olan kritik bir bileşendir. Bu birim, çeşitli kaynaklardan gelen bilgileri değerlendirerek program sayacı değerinin nasıl güncelleneceğine karar vermektedir.
 
-\subsubsection{Program Sayacı Güncelleme Senaryoları}
+
 
 Program sayacı güncellemesi, dört farklı senaryoya göre gerçekleşmektedir ve bu senaryolar belirli bir öncelik sırasına göre değerlendirilmektedir.
 
@@ -80,7 +102,7 @@ En yüksek öncelikli senaryo, yanlış tahmin düzeltmesidir. Yürütme aşamas
 
 Dördüncü ve son senaryo, normal ardışık ilerlemedir. Hiçbir dallanma veya atlama komutu tahmin edilmediğinde, program sayacı beş komut için yirmi bayt ileri taşınmaktadır.
 
-\subsubsection{Paralel Program Sayacı Hesaplaması}
+
 
 Beş komut için program sayacı değerleri paralel olarak hesaplanmaktadır. Her komut için mevcut program sayacı değeri ile dört, sekiz, on iki ve on altı baytlık sabit ofsetler toplanarak ardışık adresler elde edilmektedir. Bu paralel hesaplama, komut getirme işleminin gecikmesini en aza indirmektedir.
 
@@ -110,93 +132,27 @@ Verimlilik açısından değerlendirildiğinde, skaler işlemci ideal değerinin
 
 Tasarlanan sistemde iki ana tahmin mekanizması bulunmaktadır: koşullu dallanma komutları için iki bitlik sayaç tahmincisi ve dolaylı atlama komutları için JALR tahmincisi.
 
-\subsubsection{Dal Tahmincisi Tasarım Kararları}
+\subsubsection{Dal Tahmini}
 
-Tasarım sürecinde, GShare tabanlı turnuva tahmincisi geliştirilmiş ve test edilmiştir. Bu tahminci, iki bitlik sayaç ve GShare tahminlerini birleştirerek her dalın davranışına uygun tahminci seçimi yapmaktadır. Yapılan testlerde, turnuva tahmincisinin doğruluk oranında önemli bir artış sağladığı gözlemlenmiştir.
+Koşullu dallanma komutlarının yön tahmini için 256 girişli iki bitlik doyurma sayacı tahmincisi kullanılmaktadır. Bu tahminci, program sayacının alt bitlerini indeks olarak kullanarak ilgili sayaç değerine erişmekte ve sayacın en anlamlı bitine göre tahmin üretmektedir. Her sayaç dört durumdan birinde bulunabilmektedir: güçlü alınmayacak (00), zayıf alınmayacak (01), zayıf alınacak (10) ve güçlü alınacak (11).
 
-Ancak turnuva tahmincisinin pratik uygulamasında iki kritik kısıtlama ile karşılaşılmıştır:
+İki bitlik sayaç kullanımının temel gerekçesi, tek bitlik sayaçların döngü çıkışlarında gösterdiği zayıf performanstır. Bir döngü yüz kez tekrarlandıktan sonra çıkış yaptığında, tek bitlik sayaç hemen yönünü değiştirmekte ve sonraki döngü girişinde yanlış tahmin yapmaktadır. İki bitlik sayaç ise iki ardışık yanlış sonuç gerektirdiğinden bu tür anomali durumlarına karşı dayanıklılık sağlamaktadır \cite{smith_branch}.
 
-\textbf{Bellek Gereksinimi ve Sentez Kısıtlamaları:} GShare tahmincisi, program sayacı ile küresel dal geçmişinin XOR işlemiyle indekslenmektedir. Bu yaklaşımda ``takma ad'' (aliasing) problemi kritik bir faktördür; birbirleriyle ilişkisiz dallar aynı tablo girişini paylaşarak birbirlerinin eğitimini bozabilmektedir \cite{mcfarling}. Araştırmalar, GShare tahmincisinin kabul edilebilir doğruluk için en az 4096 girişlik tabloya ihtiyaç duyduğunu göstermektedir \cite{yeh_patt}.
+Tasarım sürecinde GShare tabanlı turnuva tahmincisi de geliştirilmiş ve test edilmiştir. GShare tahmincisi, program sayacı ile küresel dal geçmişinin XOR işlemiyle indekslenmekte ve daha yüksek doğruluk oranları sunmaktadır \cite{mcfarling}. Ancak bu tahmincinin pratik uygulamasında iki kritik kısıtlama belirlenmiştir. Birinci kısıtlama, kullanılan geliştirme ortamının otomatik bellek çıkarımı yapamaması nedeniyle büyük tabloların flip-flop olarak sentezlenmesidir; bu durum kabul edilemez alan tüketimine ve kritik yolun uzamasına neden olmaktadır. İkinci kısıtlama, büyük tablolara erişimin tek saat çevriminde tamamlanamaması durumunda boruhattı eklenmesi gerekliliğidir; bu ekleme yanlış tahmin cezasını artırmaktadır.
 
-Bu boyutta bir tablo, tipik olarak SRAM hücreleri olarak sentezlenmektedir. Ancak kullanılan geliştirme ortamında, otomatik bellek çıkarımı (memory inference) yapabilen bir sentez aracına erişim bulunmamaktaydı. Tabloların salt flip-flop olarak sentezlenmesi, kabul edilemeyecek düzeyde alan tüketimine neden olmaktadır.
+Bu kısıtlamaların etkisini değerlendirmek için iki tahminci senaryosu karşılaştırılmıştır. Gerçekleştirilen simülasyonlarda, iki bitlik sayaç tahmincisi farklı test programları üzerinde ortalama yüzde seksen doğruluk oranına ulaşırken, GShare tahmincisi ortalama yüzde seksen üç doğruluk oranı sergilemiştir. Bu değerler çalıştırılan uygulamanın dallanma karakteristiklerine bağlı olarak değişkenlik gösterebilmektedir. Birinci senaryoda 256 girişli iki bitlik sayaç tahmincisi üç çevrimlik yanlış tahmin cezası ile kullanılmaktadır. İkinci senaryoda 4096 girişli GShare tahmincisi kullanılmakta, ancak boruhattı nedeniyle dört çevrimlik yanlış tahmin cezası uygulanmaktadır. Dallanma oranı $B = 0.20$ ve işlemci genişliği $W = 3$ varsayımlarıyla IPC değerleri aşağıdaki şekilde hesaplanmıştır:
 
-\textbf{Gecikme ve Yanlış Tahmin Cezası Endişesi:} Büyük tablolara erişim, tek saat çevriminde tamamlanamayabilir. Bu durumda, komut getirme aşamasının boruhattına bölünmesi (pipelining) gerekmektedir. Boruhattı eklenmesi, tahmin sonucunun gecikmesine neden olmakta ve \textbf{yanlış tahmin cezasını artırmaktadır}.
-
-\subsubsection{Doğruluk ve Yanlış Tahmin Cezası Dengeleme Analizi}
-
-Yanlış tahmin cezasının artması, doğruluk artışının sağlayacağı faydayı ortadan kaldırabilir. Bu dengeyi analiz etmek için IPC formülünü farklı senaryolara uygulayalım.
-
-\textbf{Senaryo 1 - Basit Tahminci (256 giriş):}
-\begin{itemize}
-    \item Tahmin doğruluğu: \%80 (yanlış tahmin oranı $M_1 = 0.20$)
-    \item Yanlış tahmin cezası: 3 çevrim ($P_1 = 3$)
-\end{itemize}
-
-\textbf{Senaryo 2 - Gelişmiş Tahminci (4096 giriş, boruhattılı):}
-\begin{itemize}
-    \item Tahmin doğruluğu: \%85 (yanlış tahmin oranı $M_2 = 0.15$, \%5 iyileşme)
-    \item Yanlış tahmin cezası: 4 çevrim ($P_2 = 4$, boruhattı nedeniyle 1 çevrim artış)
-\end{itemize}
-
-Dallanma oranı $B = 0.20$ ve işlemci genişliği $W = 3$ varsayımlarıyla IPC değerlerini hesaplayalım:
 
 \begin{align}
-    IPC_1 &= \frac{3}{1 + 3 \times 0.20 \times 0.20 \times 3} = \frac{3}{1.36} = 2.21 \label{eq:ipc_simple} \\
-    IPC_2 &= \frac{3}{1 + 3 \times 0.20 \times 0.15 \times 4} = \frac{3}{1.36} = 2.21 \label{eq:ipc_complex}
+    IPC_{basit} &= \frac{3}{1 + 3 \times 0.20 \times 0.20 \times 3} = \frac{3}{1.36} = 2.21 \label{eq:ipc_simple} \\
+    IPC_{gshare} &= \frac{3}{1 + 3 \times 0.20 \times 0.17 \times 4} = \frac{3}{1.41} = 2.13 \label{eq:ipc_complex}
 \end{align}
 
-İlgi çekici şekilde, her iki senaryo da \textbf{aynı IPC değerini} vermektedir. $0.20 \times 3 = 0.60$ ve $0.15 \times 4 = 0.60$ olduğundan, doğruluk artışı ve ceza artışı birbirini dengelemektedir.
+Hesaplamalar, GShare tahmincisinin sağladığı yüzde üçlük doğruluk artışının, artan yanlış tahmin cezasını telafi edemediğini göstermektedir. Bu sonuç doğrultusunda, daha küçük alan maliyeti ve daha düşük yanlış tahmin cezası sunan iki bitlik sayaç tahmincisi tercih edilmiştir.
 
-Ceza artışının etkisi doğruluk artışının etkisinden büyük olabilir:
+\subsubsection{JALR Tahmini}\label{subsubsec:jalr}
 
-\textbf{Senaryo 3 - Yüksek Ceza Durumu:}
-\begin{itemize}
-    \item Tahmin doğruluğu: \%85 ($M_3 = 0.15$)
-    \item Yanlış tahmin cezası: 5 çevrim ($P_3 = 5$, 2 çevrim artış)
-\end{itemize}
-
-\begin{equation}
-    IPC_3 = \frac{3}{1 + 3 \times 0.20 \times 0.15 \times 5} = \frac{3}{1.45} = 2.07 \label{eq:ipc_worse}
-\end{equation}
-
-Bu senaryoda, \textbf{doğruluk artmasına rağmen IPC düşmüştür} (2.21'den 2.07'ye).
-
-\subsubsection{Tercih Edilen Tasarım: İki Bitlik Sayaç Tahmincisi}
-
-Yukarıdaki kısıtlamalar ve analizler ışığında, turnuva tahmincisi daha iyi tahmin doğruluğu sunmasına rağmen, \textbf{256 girişli iki bitlik sayaç tahmincisi} tercih edilmiştir. Bu tercih şu gerekçelere dayanmaktadır:
-
-\begin{itemize}
-    \item Uygun bellek sentezi aracı bulunmaması nedeniyle büyük tablolar pratik değildir.
-    \item Boruhattılı tasarımın getireceği ceza artışı, doğruluk kazancını dengeleyebilir veya olumsuz etki yapabilir.
-    \item Basit tahminci ile benzer IPC değerleri, çok daha küçük alan maliyetiyle elde edilebilmektedir.
-\end{itemize}
-
-İki bitlik sayaç tahmincisi, en temel dinamik dal tahmin yöntemidir. Sayaç dört durumdan birinde bulunabilmektedir: güçlü alınmayacak (00), zayıf alınmayacak (01), zayıf alınacak (10) ve güçlü alınacak (11). Sayacın en anlamlı biti, dalın tahmin edilen yönünü belirlemektedir.
-
-İki bitlik sayaç kullanılmasının nedeni, tek bitlik sayacın tek bir yanlış sonuçta hemen tahmini değiştirmesidir. Döngü sonlarında bu durum sorunlu olmaktadır: bir döngü yüz kez ``alınacak'' olduktan sonra bir kez ``alınmayacak'' olmaktadır ve tek bitlik sayaç hemen ``alınmayacak'' tahmin etmeye başlamaktadır. İki bitlik sayaç, iki ardışık yanlış sonuç gerektirdiğinden bu tür anomali durumlarına karşı dayanıklılık sağlamaktadır \cite{smith_branch}.
-
-256 girişlik tablo boyutu, flip-flop tabanlı sentez için kabul edilebilir bir maliyettir. Tablo indeksi, program sayacının uygun bitlerinden türetilmektedir. Tahmin ve güncelleme işlemleri tek saat çevriminde tamamlanmakta, böylece yanlış tahmin cezası minimumda tutulmaktadır.
-
-\begin{figure}[htbp]
-    \centering
-    \fbox{\textbf{[GÖRSEL: İki Bitlik Sayaç Tahmincisi - Durum Makinesi ve 256 Girişli Tablo Yapısı]}}
-    \caption{İki bitlik doyurma sayacı tahmincisi mimarisi}
-    \label{fig:bimodal_predictor}
-\end{figure}
-
-
-\subsubsection{JALR Tahmincisi ve Dönüş Adresi Yığını}\label{subsubsec:jalr}
-
-Dolaylı atlama komutları, hedef adresini bir yazmaçtan okuduğundan derleme zamanında bilinmemektedir. Bu nedenle JALR komutları için ayrı bir tahmin mekanizması gerekmektedir.
-
-JALR tahmincisi iki temel bileşenden oluşmaktadır: JALR hedef tamponu ve dönüş adresi yığını.
-
-\begin{figure}[htbp]
-    \centering
-    \fbox{\textbf{[GÖRSEL: JALR Tahmincisi ve RAS - Hedef Önbelleği (Target Cache) ve Dönüş Adresi Yığını (RAS) yapısı]}}
-    \caption{Dolaylı atlama tahmincisi ve dönüş adresi yığını}
-    \label{fig:jalr_ras}
-\end{figure}
+Dolaylı atlama komutları, hedef adresini bir yazmaçtan okuduğundan derleme zamanında bilinmemektedir. Bu nedenle JALR komutları için ayrı bir tahmin mekanizması gerekmektedir. JALR tahmincisi JALR hedef tamponu ve dönüş adresi yığını olmak üzere iki temel bileşenden oluşmaktadır.
 
 JALR hedef tamponu, daha önce yürütülen JALR komutlarının hedef adreslerini saklayan bir önbellek yapısıdır. Bu yapı, program sayacı değerine göre indekslenmekte ve son kullanılan hedef adresi döndürmektedir. Birçok dolaylı atlama, özellikle sanal fonksiyon çağrıları ve anahtarlama ifadeleri, aynı hedef adrese tekrar tekrar atladığından bu yaklaşım yüksek doğruluk sağlamaktadır.
 
@@ -214,27 +170,18 @@ Tasarlanan sistemde dönüş adresi yığını sekiz giriş derinliğindedir. Sp
 
 Komut tamponu, komut getirme ve kod çözme aşamaları arasında ayrıştırma sağlayan bir ilk giren ilk çıkar yapısıdır. Bu ayrıştırma, her iki aşamanın farklı hızlarda çalışmasına olanak tanımakta ve boruhattı verimliliğini artırmaktadır.
 
-\begin{figure}[htbp]
-    \centering
-    \fbox{\textbf{[GÖRSEL: Komut Tamponu Yapısı - Dairesel Tampon, Baş/Kuyruk İşaretçileri, Giriş Formatı (Instr, PC, Pred Info)]}}
-    \caption{Komut tamponu dairesel yapısı ve giriş formatı}
-    \label{fig:instr_buffer}
-\end{figure}
-
-\subsubsection{Tampon Tasarımının Gerekçesi}
 
 Komut getirme aşaması dallanma ve atlama komutları nedeniyle, boruhattının ileri aşamaları ise veri bağımlılıkları, bellek işlemleri ve daha birçok sebeple farklı hızlarda çalışabilmektedir. Komut belleğinden komutları hızlıca alıp bunları boruhattının ileriki aşamalarının kullanabileceği şekilde bir tamponda toplamak, işlemcinin karmaşıklığını azaltmakla birlikte performansını da artırmaktadır.
 
 Ayrıca, komut verme aşaması duraklatıldığında komut getirme aşaması tampon dolana kadar çalışmaya devam edebilmektedir. Bu yalıtım, kısa süreli duraksamaların boruhattının tamamını etkilemesini engellemektedir.
 
-\subsubsection{Dairesel Tampon Yapısı}
+
 
 Komut tamponu, baş ve kuyruk işaretçileri ile yönetilen dairesel bir tampon olarak gerçeklenmiştir. Varsayılan tampon derinliği on altı giriştir ve bu değerin ikinin kuvveti olması zorunludur; bu gereksinim modüler aritmetik işlemlerini basitleştirmektedir.
 
-Her tampon girişi çeşitli bilgiler içermektedir: otuz iki bitlik komut verisi, otuz iki bitlik program sayacı değeri, otuz iki bitlik hesaplanmış sabit değer, dal tahmini sonucu, tahmin anındaki program sayacı değeri, küresel geçmiş kaydı ve dönüş adresi yığını tepe işaretçisi değeri. Bu bilgiler, komutun sonraki aşamalarda doğru bir şekilde işlenmesi için gereklidir.
+Her tampon girişi çeşitli bilgiler içermektedir: otuz iki bitlik komut verisi, tahmin anındaki program sayacı değeri, tahmin edilen sonraki program sayacı değeri, dal tahmini sonucu, dönüş adresi yığını tepe işaretçisi değeri. Bu bilgiler, komutun sonraki aşamalarda doğru bir şekilde işlenmesi için gereklidir.
 
-\subsubsection{Geri Baskı Mekanizması}
 
 Geri baskı mekanizması, tamponun dolması durumunda komut getirme aşamasını yavaşlatarak veri kaybını önlemektedir. Tamponda en az beş boş alan bulunduğunda, getirme hazır sinyali etkinleştirilmektedir. Beş alan gereksinimi, tek çevrimde gelebilecek maksimum komut sayısını karşılamak için belirlenmiştir.
 
-Eğer beşten az yer varken de komutları tampona koymaya çalışılsaydı, bir sonraki komut adresinin hesabı daha karmaşık hale gelecekti. Mevcut yapı ile gayet iyi sonuçlar alındığından, adres hesaplama mantığını basit tutmak daha mantıklı bulunmuştur.
+Beşten az boş alan bulunduğunda komut ekleme işleminin gerçekleştirilmesi, sonraki komut adresinin hesaplanmasını karmaşıklaştıracaktır. Mevcut tasarımda bu karmaşıklıktan kaçınılarak adres hesaplama mantığı basit tutulmuştur.

@@ -1,10 +1,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 3.4 DAĞITIM AŞAMASI
+% 3.4 VERİ KONTROL VE YAYINLAMA AŞAMASI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Dağıtım Aşaması}\label{sec:data_control}
+\section{Veri Kontrol ve Yayınlama Aşaması}\label{sec:data_control}
 
-Dağıtım aşaması, Tomasulo algoritmasının operand çözümleme ve komut gönderme mekanizmalarını içermektedir \cite{tomasulo}. Bu aşama, kod çözme ve yeniden adlandırma aşamasından gelen komutların operand değerlerini okumakta, operandlar hazır değilse etiket tabanlı bekleme yapmakta, tüm operandlar hazır olduğunda işlevsel birimlere göndermekte ve ortak veri yolu üzerinden sonuçları yayınlayarak yeniden sıralama arabelleğini güncellemektedir.
+Veri kontrol ve yayınlama aşaması, Tomasulo algoritmasının operand çözümleme ve komut gönderme mekanizmalarını içermektedir \cite{tomasulo}. Bu aşama, kod çözme ve yeniden adlandırma aşamasından gelen komutların operand değerlerini okumakta, operandlar hazır değilse etiket tabanlı bekleme yapmakta, tüm operandlar hazır olduğunda işlevsel birimlere göndermekte ve ortak veri yolu üzerinden sonuçları yayınlayarak yeniden sıralama arabelleğini güncellemektedir.
 
 Bu aşama, komut arabelleğinden üç komut almakta ve her biri için aşağıdaki işlemleri paralel olarak gerçekleştirmektedir:
 \begin{enumerate}
@@ -14,13 +14,13 @@ Bu aşama, komut arabelleğinden üç komut almakta ve her biri için aşağıda
     \item Ortak veri yolu üzerinden sonuçları yayınlama ve yeniden sıralama arabelleğini güncelleme
 \end{enumerate}
 
-Tasarlanan sistemde dağıtım aşaması üç ana bileşenden oluşmaktadır: yeniden sıralama arabelleği, rezervasyon istasyonları ve fiziksel yazmaç dosyası.
+Tasarlanan sistemde bu aşama üç ana bileşenden oluşmaktadır: yeniden sıralama arabelleği, rezervasyon istasyonları ve fiziksel yazmaç dosyası.
 
 \begin{figure}[htbp]
     \centering
-    \fbox{\textbf{[GÖRSEL: Dağıtım Aşaması Genel Yapısı - RS, ROB, PRF ve CDB Bağlantıları]}}
-    \caption{Dağıtım aşaması ve veri kontrol mekanizmaları}
-    \label{fig:dispatch_overview}
+    \fbox{\textbf{[GÖRSEL: Veri Kontrol Aşaması Genel Yapısı - RS, ROB, PRF ve CDB Bağlantıları]}}
+    \caption{Veri kontrol ve yayınlama aşaması mekanizmaları}
+    \label{fig:data_control_overview}
 \end{figure}
 
 \subsection{Fiziksel Yazmaç Alanı}\label{subsec:phys_reg_space}
