@@ -1,17 +1,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 3.3 DECODE & RENAME AŞAMASI (YENİDEN YAPILANDIRILMIŞ)
+% 3.3 KOD ÇÖZME VE YENİDEN ADLANDIRMA AŞAMASI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Decode \& Rename Aşaması}\label{sec:decode_rename}
+\section{Kod Çözme ve Yeniden Adlandırma Aşaması}\label{sec:decode_rename}
 
 
-Decode \& Rename aşaması, komut arabelleğinden alınan komutların işlenmesinden sorumludur ve iki temel görev üstlenmektedir: komut kod çözme ve yazmaç yeniden adlandırma. Komut kod çözme, RV32I komut formatlarını analiz ederek kontrol sinyallerini üretmektedir. Yazmaç yeniden adlandırma ise sıra dışı yürütme için gerekli olan yalancı bağımlılıkları ortadan kaldırmaktadır \cite{keller,tomasulo}.
+Kod çözme ve yeniden adlandırma aşaması, komut arabelleğinden alınan komutların işlenmesinden sorumludur ve iki temel görev üstlenmektedir: komut kod çözme ve yazmaç yeniden adlandırma. Komut kod çözme, RV32I komut formatlarını analiz ederek kontrol sinyallerini üretmektedir. Yazmaç yeniden adlandırma ise sıra dışı yürütme için gerekli olan yalancı bağımlılıkları ortadan kaldırmaktadır \cite{keller,tomasulo}.
 
 Bu aşamada üç temel yapı kullanılmaktadır: mimari yazmaçları fiziksel yazmaçlara eşleyen Yazmaç Takma Ad Tablosu (RAT), kullanılabilir fiziksel yazmaç ve kuyruk adreslerini yöneten Serbest Liste yapıları ve dal spekülasyonu için anlık görüntüleri saklayan Dal Çözümleme Takma Ad Tablosu (BRAT).
 
 \begin{figure}[htbp]
     \centering
-    \fbox{\textbf{[GÖRSEL: Decode \& Rename Akış Diyagramı - 3 Paralel Kod Çözücü, RAT Okuma/Yazma, Free List Etkileşimi]}}
+    \fbox{\textbf{[GÖRSEL: Kod Çözme ve Yeniden Adlandırma Akış Diyagramı - 3 Paralel Kod Çözücü, RAT Okuma/Yazma, Free List Etkileşimi]}}
     \caption{Kod çözme ve yeniden adlandırma aşaması genel akışı}
     \label{fig:decode_rename_flow}
 \end{figure}
@@ -42,7 +42,7 @@ Her kod çözücü, otuz iki bitlik RISC-V komutunu analiz ederek mimari yazmaç
 
 Yazmaç yeniden adlandırma, sıra dışı yürütmenin temelini oluşturan kritik bir mekanizmadır. Bu teknik, mimari yazmaçları daha büyük bir fiziksel yazmaç havuzuna eşleyerek Yazma Sonrası Yazma (WAW) ve Okuma Sonrası Yazma (WAR) türündeki sahte bağımlılıkları ortadan kaldırmaktadır \cite{johnson}. Bu eliminasyon sayesinde, yalnızca gerçek veri bağımlılıkları olan Yazma Sonrası Okuma (RAW) durumu kalmaktadır.
 
-RISC-V mimarisi otuz iki mimari yazmaç tanımlamaktadır, ancak tasarlanan işlemcide altmış dört fiziksel yazmaç bulunmaktadır. Fiziksel yazmaç alanının yapısı ve yönetimi, Bölüm~\ref{subsec:phys_reg_space}'te detaylı olarak açıklanmaktadır.
+RISC-V mimarisi otuz iki mimari yazmaç tanımlamaktadır, ancak tasarlanan işlemcide altmış dört fiziksel yazmaç bulunmaktadır. Fiziksel yazmaç alanının yapısı ve yönetimi, Bölüm~\ref{sec:data_control}'de detaylı olarak açıklanmaktadır.
 
 %--- 3.3.2.1 RAT ---
 \subsubsection{Yazmaç Takma Ad Tablosu}\label{subsubsec:rat}
@@ -98,7 +98,7 @@ Geleneksel serbest liste yaklaşımında, üç bağımsız boş kaynak bulmak ka
     \label{fig:free_list}
 \end{figure}
 
-Şekil~\ref{fig:free_list}'te gösterilen bu yapıda tahsis işlemi basitçe okuma işaretçisinden okuma ile yapılmaktadır. İlk tahsis edilen kimlik okuma işaretçisinin değeridir; ikinci ve üçüncü tahsisler sırasıyla bir ve iki fazlasıdır. Bu yaklaşımın üstünlüğü, serbest adres bulmak için karısık mantık işleme gerek olmamasıdır; yalnızca işaretçinin değeri okunmaktadır. Ayrıca üç tahsis aynı anda gerçekleştirilebilmekte ve yanlış tahmin durumunda işaretçi sıfırlaması ile tüm tahsisler tek çevrimde geri alınabilmektedir.
+Şekil~\ref{fig:free_list}'te gösterilen bu yapıda tahsis işlemi basitçe okuma işaretçisinden okuma ile yapılmaktadır. İlk tahsis edilen kimlik okuma işaretçisinin değeridir; ikinci ve üçüncü tahsisler sırasıyla bir ve iki fazlasıdır. Bu yaklaşımın üstünlüğü, serbest adres bulmak için karmaşık mantık işleme gerek olmamasıdır; yalnızca işaretçinin değeri okunmaktadır. Ayrıca üç tahsis aynı anda gerçekleştirilebilmekte ve yanlış tahmin durumunda işaretçi sıfırlaması ile tüm tahsisler tek çevrimde geri alınabilmektedir.
 
 Serbest bırakma işlemi, tahsisin tersi olarak yazma işaretçisi üzerinden gerçekleştirilmektedir. Bir komut kesinleştirildiğinde, o komutun hedef yazmacı için daha önce kullanılan eski fiziksel yazmaç serbest listeye geri eklenmektedir. Kesinleştirme sırasında önemli bir kontrol yapılmaktadır: aynı mimari yazmaç için birden fazla bekleyen yazma olabilmektedir. Örneğin, birinci komut x1 yazmacına yazıyor ve henüz kesinleştirilmeden ikinci komut da x1 yazmacına yazıyorsa, birinci komut kesinleştirildiğinde yazmaç takma ad tablosundaki x1 eşlemesi hâlâ ikinci komutun fiziksel yazmacına işaret etmektedir. Bu durumda, yalnızca en son yazma kesinleştirildiğinde yazmaç takma ad tablosu yazmaç dosyası eşlemesine geri döndürülmektedir.
 
@@ -167,7 +167,7 @@ Yanlış tahmin tespit edildiğinde, anlık görüntüdeki bilgiler kullanılara
     \item Yükleme saklama kuyruğu işaretçisi, LSQ'dan gelen değere göre ayarlanmaktadır.
     \item Doğru program sayacı değeri komut getirme aşamasına iletilmektedir.
     \item Dönüş adresi yığını tepe işaretçisi geri yüklenmektedir.
-    \item GShare kullanıyorsa global history table, program counter değeri, yapılan tahmin gibi bilgiler de predictor'ün güncellenmesi için yollanmaktadır. İki bitlik predictor kullnılıyorken bunlara gerek yoktur. 
+    \item GShare kullanılıyorsa global history table, program counter değeri, yapılan tahmin gibi bilgiler de predictor'ün güncellenmesi için yollanmaktadır. İki bitlik tahminci kullanılıyorken bunlara gerek yoktur. 
 \end{enumerate}
 
 Bu işlemler tek saat çevriminde tamamlanmakta ve bir sonraki çevrimde doğru yoldaki komutlar getirilebilmektedir.

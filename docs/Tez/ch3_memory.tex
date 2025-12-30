@@ -4,131 +4,150 @@
 
 \section{Bellek Aşaması}\label{sec:memory}
 
-Bellek aşaması, yükleme ve saklama işlemlerinin yönetildiği boruhattı aşamasıdır. Sıra dışı yürütme ortamında bellek işlemlerinin tutarlılığını korumak ve bağımlılıkları doğru yönetmek kritik öneme sahiptir.
+Bellek aşaması, yükleme ve saklama işlemlerinin yönetildiği boruhattı aşamasıdır. Sıra dışı yürütme ortamında bellek işlemlerinin tutarlılığını korumak ve bağımlılıkları doğru yönetmek kritik öneme sahiptir. Saklama işlemleri program sırasında görünmelidir, bir yükleme önceki bir saklamaya bağımlı olabilmektedir ve yanlış tahmin durumunda spekülatif saklama işlemleri geri alınabilmelidir.
 
-Bu aşama, yükleme ve saklama komutlarının bellek erişimini yönetmektedir. Sıra dışı süperölçekli işlemcilerde bellek işlemleri özel dikkat gerektirmektedir çünkü bellek tutarlılığı için saklama işlemleri program sırasında görünmelidir, bir yükleme önceki bir saklamaya bağımlı olabilmektedir ve yanlış tahmin durumunda saklama işlemleri geri alınabilmelidir.
+Bölüm~\ref{ch:dogrulama}'de sunulan performans analizlerinde, bellek işlemlerinin yanlış tahmin sonrası IPC değerini en çok düşüren mekanizma olduğu gözlemlenmiştir. Bu sebeple bellek aşaması tasarlanırken gereksiz karmaşıklıktan kaçınılmış, ancak performans optimizasyonlarından da vazgeçilmemiştir. Tasarlanan sistemde yükleme saklama kuyruğu (LSQ), bellek işlemlerinin sıra dışı yürütülmesini mümkün kılarken tutarlılığı korumaktadır.
 
-Tasarlanan sistemde yükleme saklama kuyruğu, bellek işlemlerinin sıralanmasını ve yürütülmesini yönetmektedir. Bu yapı, her çevrimde üç yükleme veya saklama işleminin paralel olarak gönderilmesine olanak tanıyan üç bağımsız baş işaretçisi ile çalışmaktadır.
+%------------------------------------------------------------------------
 
 \subsection{Yükleme Saklama Kuyruğu Yapısı}\label{subsec:lsq}
 
-Yükleme saklama kuyruğu, otuz iki girişlik bir dairesel tampon olarak gerçeklenmiştir. Karmaşık adres belirsizliği çözme mekanizmaları yerine basitleştirilmiş bir tasarım tercih edilerek gömülü uygulamalar için yeterli performans sağlanmaktadır \cite{sfb_illinois_2005}.
+LSQ, otuz iki girişlik bir dairesel tampon olarak gerçeklenmiştir. Üç yollu süperölçekli işlemcide her çevrimde üç bellek komutu tahsis edilebilmektedir. Bu komutların bellek işlemlerinin de aynı verimde gerçekleştirilebilmesi için LSQ üç bağımsız bellek portu ile çalışmaktadır. Aksi takdirde bellek hattı sayısı IPC'yi sınırlayan darboğaz haline gelmektedir.
+
+Her bellek portuna karşılık gelen bir baş işaretçisi bulunmaktadır. Bu üç baş işaretçisi, LSQ'daki farklı girişleri aynı anda izlemekte ve her biri kendi bellek portuna hangi girişin işleneceğini belirlemektedir.
 
 \begin{figure}[htbp]
     \centering
-    \fbox{\textbf{[GÖRSEL: LSQ Dairesel Yapısı - 3 Baş İşaretçisi (Head Pointers), Kuyruk (Tail), 3-port paralel erişim]}}
+    \fbox{\textbf{[GÖRSEL: LSQ Dairesel Yapısı - 3 Baş İşaretçisi, Kuyruk İşaretçisi, CDB Bağlantıları]}}
     \caption{Yükleme saklama kuyruğu dairesel tampon yapısı}
     \label{fig:lsq_structure}
 \end{figure}
 
-\subsubsection{Kuyruk Girişi Formatı}\label{subsubsec:lsq_entry}
+Her LSQ girişi, bellek işleminin yürütülmesi için gerekli tüm bilgileri içermektedir. Bu alanlar Çizelge~\ref{tab:lsq_entry}'de listelenmiştir.
 
-Her kuyruk girişi çeşitli alanlar içermektedir. Geçerlilik bayrağı, girişin geçerli olup olmadığını göstermektedir. Tür bayrağı, işlemin saklama mı yoksa yükleme mi olduğunu belirtmektedir. Fiziksel yazmaç alanı, hedef yeniden sıralama arabelleği kimliğini tutmaktadır.
+\begin{table}[htbp]
+    \centering
+    \caption{Yükleme saklama kuyruğu giriş alanları.}
+    \label{tab:lsq_entry}
+    \begin{tabular}{|l|c|l|}
+        \hline
+        \textbf{Alan Adı} & \textbf{Boyut (bit)} & \textbf{Açıklama} \\
+        \hline
+        Geçerlilik & 1 & Giriş geçerli mi \\
+        \hline
+        Tür & 1 & Saklama (1) veya Yükleme (0) \\
+        \hline
+        Fiziksel Yazmaç & 6 & Hedef ROB kimliği \\
+        \hline
+        Adres Geçerliliği & 1 & Adres hesaplandı mı \\
+        \hline
+        Adres & 32 & Hesaplanan bellek adresi \\
+        \hline
+        Adres Etiketi & 3 & Adres üreticisinin etiketi \\
+        \hline
+        Veri Geçerliliği & 1 & Saklama verisi hazır mı \\
+        \hline
+        Veri & 32 & Saklama verisi \\
+        \hline
+        Veri Etiketi & 3 & Veri üreticisinin etiketi \\
+        \hline
+        Boyut & 2 & Bayt (00), Yarım kelime (01), Kelime (10) \\
+        \hline
+        İşaretli Yükleme & 1 & İşaretli (1) veya işaretsiz (0) \\
+        \hline
+        Belleğe Gönderildi & 1 & Bellek isteği yapıldı mı \\
+        \hline
+        Bellek Tamamlandı & 1 & Bellek yanıtı alındı mı \\
+        \hline
+    \end{tabular}
+\end{table}
 
-Adres bilgileri için adres geçerliliği bayrağı, adresin hesaplanıp hesaplanmadığını göstermekte ve adres alanı hesaplanmış bellek adresini tutmaktadır. Saklama işlemleri için veri geçerliliği bayrağı ve veri alanı bulunmaktadır.
-
-İşlem özellikleri olarak boyut alanı bayt, yarım kelime veya kelime işlemini belirtmekte ve işaret genişletme bayrağı yüklemeler için işaret genişletmesinin gerekip gerekmediğini göstermektedir. Yürütme durumu için belleğe gönderildi ve bellek yanıt verdi bayrakları bulunmaktadır.
-
-Bellek işlem boyutu, RISC-V mimarisinin desteklediği üç boyutu içermektedir: bayt yükleme ve saklama için tek bayt, yarım kelime yükleme ve saklama için iki bayt ve kelime yükleme ve saklama için dört bayt.
-
-\subsubsection{Üç Baş İşaretçisi Mimarisi}\label{subsubsec:3head}
-
-Kuyruk, üç bağımsız baş işaretçisi ile çalışmaktadır. Bu tasarım, her çevrimde üç bellek işleminin paralel olarak gönderilmesini sağlamaktadır.
-
-Geleneksel yükleme saklama kuyruklarında tek baş işaretçisi bulunmakta ve işlemler sırayla gönderilmektedir. Bu tasarımda üç baş işaretçisi üç farklı girişi aynı anda izlemekte, her baş bağımsız olarak belleğe gönderilebilmekte, serbest bırakma sonrası başlar en yeni işaretçinin bir sonrasına kaymakta ve yaş tabanlı sıralama ile doğru sıralama korunmaktadır. Bu yaklaşım, üç yollu süperölçekli boruhattı ile uyumlu bellek verimi sağlamaktadır.
+Bir bellek işlemi tamamlandığında ilgili baş işaretçisi güncellenmektedir. Her baş işaretçisi, diğer iki baş işaretçisinin konumlarını da dikkate alarak en eski tamamlanmamış girişe kaydırılmaktadır. Örneğin, üç baş işaretçisi sırasıyla 5, 7 ve 9 indekslerini gösteriyorken 5. girişteki işlem tamamlandığında, bu baş işaretçisi 10. girişe (en yeni işaretçinin bir sonrasına) taşınmaktadır. Bu mekanizma, baş işaretçilerinin her zaman farklı girişleri göstermesini ve tüm girişlere tahsis edilme sırasına göre öncelik vereceğini garanti etmektedir. Bununla birlikte önceliğe sahip işlem eğer diğer işlemleri engellemiyorsa, daha geç tahsis edilmesine rağmen işlemler sıradışı çalışabilmektedir ve bu da bellek operasyonlarını hızlandırmaktadır. 
 
 %------------------------------------------------------------------------
 
-\subsection{Kuyruk İşlemleri}\label{subsec:lsq_ops}
+\subsection{LSQ İşlemleri}\label{subsec:lsq_ops}
 
-\subsubsection{Tahsis İşlemi}\label{subsubsec:lsq_alloc}
+Kod çözme aşamasından gelen yükleme ve saklama komutları için LSQ girişi tahsis edilmektedir. Tahsis sırasında geçerlilik bayrağı aktif edilmekte, işlem türü ve fiziksel yazmaç adresi kaydedilmekte, adres geçerliliği sıfırlanmakta, boyut ve işaretli yükleme bilgileri saklanmaktadır. Saklama komutları için veri hazır olabilir veya olmayabilir; hazır değilse veri etiketi kaydedilerek ortak veri yolundan beklenecek şekilde işaretlenmektedir. Adres bilgisi ise en iyi ihtimalle bir sonraki saat çevriminde hesaplanacağı için adres bilgisi de ortak veri yolundan beklenecek şekilde işaretlenmektedir. 
 
-Kod çözme aşamasından gelen yükleme ve saklama komutları için kuyruk girişi tahsis edilmektedir. Tahsis sırasında geçerlilik bayrağı aktif edilmekte, işlem türü ve fiziksel yazmaç adresi kaydedilmekte, adres geçerliliği sıfır olarak ayarlanmakta ve veri etiketi ile boyut bilgileri saklanmaktadır. Adres, yürütme aşamasından gelecek şekilde beklemektedir.
+Yürütme aşaması adresi hesapladığında, sonuç ortak veri yolu üzerinden yayınlanmaktadır. LSQ altı ortak veri yolu kanalını izlemektedir. Adres güncellemesi tüm LSQ girişlerinde paralel olarak gerçekleştirilmektedir: her giriş için ortak veri yolundaki hedef yazmaç adresi ile girişin fiziksel yazmaç adresi karşılaştırılmakta, eşleşme durumunda adres geçerliliği aktif edilmekte ve hesaplanan adres saklanmaktadır.
 
-\subsubsection{Adres Güncellemesi}\label{subsubsec:addr_update}
+Saklama işlemleri için veri güncellemesi de aynı paralel yapıda gerçekleştirilmektedir. Tüm saklama girişlerinin veri etiketleri ortak veri yolu kanallarıyla paralel olarak karşılaştırılmakta, eşleşme durumunda veri geçerliliği aktif edilmekte ve veri saklanmaktadır.
 
-Yürütme aşaması adresi hesapladığında, ortak veri yolu üzerinden yükleme saklama kuyruğuna bildirilmektedir. Kuyruk, ortak veri yolunu izlemekte ve bekleyen girişler için adres güncellemesi yapmaktadır. Giriş geçerli ve adres henüz hesaplanmamışsa, ortak veri yolundaki hedef yazmaç ile eşleşme kontrolü yapılmaktadır. Eşleşme durumunda adres geçerliliği aktif edilmekte ve hesaplanan adres saklanmaktadır.
+Herhangi bir baş işaretçisinin gösterdiği işlem hazır olduğunda ve önünde onu engelleyecek tamamlanmamış bir saklama işlemi bulunmadığında, işlem ilgili bellek portuna gönderilebilmektedir. Yükleme işlemleri için giriş geçerli ve adres hesaplanmış olmalıdır. Saklama işlemleri için ek olarak veri hazır olmalı ve yeniden sıralama arabelleğinden izin alınmış olmalıdır.
 
-\subsubsection{Saklama Verisi Güncellemesi}\label{subsubsec:store_data_update}
-
-Saklama işlemleri için veri hazır değilse, ortak veri yolundan beklenmektedir. Kuyruk, saklama girişlerinin veri etiketlerini ortak veri yolu kanallarıyla karşılaştırmaktadır. Eşleşme durumunda veri geçerliliği aktif edilmekte ve veri saklanmaktadır.
-
-\subsubsection{Bellek Gönderimi}\label{subsubsec:mem_issue}
-
-Baştaki işlem hazır olduğunda belleğe gönderilmektedir. Hazırlık koşulları olarak giriş geçerli olmalı, adres hesaplanmış olmalı ve saklama işlemleri için veri hazır olmalıdır.
-
-Saklama işlemleri için ek olarak yeniden sıralama arabelleği izni gerekmektedir. Saklama işlemleri spekülatif olarak yürütülememektedir çünkü belleğe yazıldıktan sonra geri alınamamaktadır. Bu nedenle saklama yeniden sıralama arabelleğinin başına ulaşmalı, kesinleştirme kesinleşmeli ve ancak o zaman belleğe yazılabilmektedir. Saklama gönderim izni sinyali yeniden sıralama arabelleğinden gelmekte ve ilgili saklamanın kesinleştirilebileceğini göstermektedir.
+Saklama izni mekanizması Bölüm~\ref{subsubsec:store_perm}'de açıklanmıştır. Kısaca, ROB belirli bir fiziksel yazmaç adresine sahip saklama işleminin güvenli olduğunu bildirmektedir. LSQ, bu adresi kendi girişleriyle karşılaştırmakta ve eşleşen saklama işlemini belleğe gönderebilmektedir. Bu mekanizma, yalnızca kesinleşeceği garanti altına alınmış saklama işlemlerinin belleği değiştirmesine izin vermektedir.
 
 %------------------------------------------------------------------------
 
 \subsection{Saklamadan Yüklemeye İletme}\label{subsec:stl_forward}
 
-Yükleme saklama kuyruğu, belleğe gitmeden saklama verisini yüklemeye iletebilmektedir. Bu mekanizma, bellek gecikmesini atlayarak performansı önemli ölçüde artırmaktadır.
+LSQ, belleğe gitmeden saklama verisini yüklemeye iletebilmektedir. Bu mekanizma, bellek gecikmesini atlayarak performansı önemli ölçüde artırmaktadır.
 
-İletme için dört koşulun sağlanması gerekmektedir. Birinci olarak, yükleme program sırasında saklamadan sonra gelmelidir ve yaş karşılaştırması ile kontrol edilmektedir. İkinci olarak, saklamanın adresi ve verisi hazır olmalıdır. Üçüncü olarak, adresler eşleşmelidir. Dördüncü olarak, saklama boyutu yükleme boyutuna eşit veya büyük olmalıdır.
+İletme kararı, üç baş işaretçisindeki işlemler arasındaki ilişkiye dayanarak verilmektedir. Bir yükleme işlemi, program sırasında kendisinden önce gelen ve aynı adrese yazan bir saklama işleminden veri alabilmektedir. İletme için dört koşulun sağlanması gerekmektedir: yükleme saklamadan sonra gelmelidir (yaş karşılaştırması ile kontrol edilir), saklamanın adresi ve verisi hazır olmalıdır, adresler eşleşmelidir ve saklama boyutu yükleme boyutuna eşit veya büyük olmalıdır.
 
-Boyut kontrolünün gerekliliği, saklamanın yüklemenin ihtiyaç duyduğu tüm baytları içermesinin zorunlu olmasından kaynaklanmaktadır. Örneğin, dört baytlık saklamadan tek baytlık yüklemeye iletme mümkündür. Ancak tek baytlık saklamadan dört baytlık yüklemeye iletme mümkün değildir çünkü saklama, yüklemenin ihtiyaç duyduğu tüm baytları içermemektedir. Bu durumda yükleme bellekten okumalıdır.
+Boyut kontrolünün gerekliliği, saklamanın yüklemenin ihtiyaç duyduğu tüm baytları içermesinin zorunlu olmasından kaynaklanmaktadır. Örneğin, dört baytlık saklamadan tek baytlık yüklemeye iletme mümkündür. Ancak tek baytlık saklamadan dört baytlık yüklemeye iletme mümkün değildir çünkü saklama, yüklemenin ihtiyaç duyduğu tüm baytları içermemektedir.
 
-İletme yapılamıyorsa ancak potansiyel bir bağımlılık varsa yükleme beklemektedir. Bekleme koşulları arasında eski saklamanın verisinin hazır olmaması veya adres eşleşmesi olup boyutun yetersiz ve saklamanın henüz gönderilmemiş olması bulunmaktadır. Saklamadan yüklemeye iletme ve bekleme koşulları Çizelge \ref{tab:fwd_stall_rules}'de özetlenmiştir.
+İletme yapılamıyorsa ancak potansiyel bir bağımlılık varsa, yükleme bekletilmektedir. Bekleme koşulları ve iletme kuralları Çizelge~\ref{tab:fwd_stall_rules}'de özetlenmiştir.
 
 \begin{table}[htbp]
     \centering
     \caption{Saklamadan yüklemeye iletme ve bekleme kuralları.}
     \label{tab:fwd_stall_rules}
-    \begin{tabular}{|l|l|l|l|}
+    \begin{tabular}{|l|c|c|l|}
         \hline
-        \textbf{Adres Eşleşmesi} & \textbf{Boyut (Saklama $\ge$ Yükleme)} & \textbf{Veri Hazır} & \textbf{Aksiyon} \\
+        \textbf{Adres Eşleşmesi} & \textbf{Boyut Yeterli} & \textbf{Veri Hazır} & \textbf{Karar} \\
         \hline
-        Yok & Farketmez & Farketmez & Normal (Bellekten Oku) \\
+        Yok & - & - & Bellekten oku \\
         \hline
-        Var & Evet & Evet & İletme (Forwarding) \\
+        Var & Evet & Evet & İlet \\
         \hline
-        Var & Evet & Hayır & Bekle (Stall) \\
+        Var & Evet & Hayır & Bekle \\
         \hline
-        Var & Hayır & Farketmez & Bekle (Kısmi çakışma riski) \\
+        Var & Hayır & - & Bekle \\
         \hline
     \end{tabular}
 \end{table}
 
+Tüm LSQ girişleri arasında iletme kontrolü yapmak, çok sayıda karşılaştırıcı gerektireceğinden yüksek alan maliyeti getirmektedir. Bu sebeple iletme kontrolü yalnızca üç baş işaretçisinin gösterdiği girişler arasında yapılmaktadır. Her baştaki yükleme işlemi, diğer iki baştaki saklama işlemlerini kontrol etmektedir. Yaş karşılaştırması, LSQ işaretçilerinden hesaplanan uzaklık değerleri ile yapılmakta olup adresi eşleşen en yeni saklama öncelikli olarak değerlendirilmekte ve adres eşleşmesi durumunda iletme kaynağı olarak seçilmektedir. Bu yaklaşım, iletme mantığının karmaşıklığını kabul edilebilir seviyede tutmaktadır.
+
 \begin{figure}[htbp]
     \centering
-    \fbox{\textbf{[GÖRSEL: Saklamadan Yüklemeye İletme - Adres CAM (Content Addressable Memory) yapısı, Çakışma tespiti ve Veri MUX'lama]}}
+    \fbox{\textbf{[GÖRSEL: Üç Baş İşaretçisi Arasında İletme Mantığı - Yaş Karşılaştırması, Adres Eşleştirme]}}
     \caption{Saklamadan yüklemeye iletme mantığı}
     \label{fig:stl_forwarding}
 \end{figure}
 
 %------------------------------------------------------------------------
 
+\subsection{Hevesli Yanlış Tahmin Temizleme}\label{subsec:lsq_flush}
+
+Yanlış tahmin durumunda spekülatif yükleme ve saklama girişleri temizlenmektedir. LSQ'daki temizleme mekanizması, rezervasyon istasyonlarındaki mekanizmaya benzer şekilde çalışmakta ancak ek karmaşıklıklar içermektedir.
+
+Her LSQ girişinin fiziksel yazmaç alanı, aynı zamanda ilgili yeniden sıralama arabelleği indeksini de taşımaktadır. Bu indeks kullanılarak, her giriş için yeniden sıralama arabelleğinin baş işaretçisinden olan uzaklık hesaplanmaktadır. Uzaklık hesabı, dairesel tampon yapısını dikkate alarak gerçekleştirilmektedir.
+
+Yanlış tahmin sinyali ve yanlış tahmin edilen komutun uzaklığı yeniden sıralama arabelleğinden alınmaktadır. Her LSQ girişinin uzaklığı, yanlış tahmin edilen komutun uzaklığı ile karşılaştırılmaktadır. Uzaklığı daha büyük olan girişler, yanlış tahmin edilen daldan sonra gelmiş demektir ve temizlenmelidir.
+
+Temizleme işlemi aynı çevrimde tüm girişlerde paralel olarak gerçekleştirilmektedir. Her giriş için bir karşılaştırıcı devresi bulunmakta olup sonuç bir öncelik kodlayıcısına beslenmektedir. Öncelik kodlayıcısı, temizlenmesi gereken ilk (en eski) girişin indeksini bulmaktadır. LSQ kuyruk işaretçisi bu indekse güncellenerek, spekülatif girişler mantıksal olarak geçersiz kılınmaktadır. Bölüm~\ref{ch:dogrulama}'de sunulan sentez sonuçlarında bu paralel karşılaştırma yapısının kritik yolu oluşturduğu görülmektedir.
+
+Üç baş işaretçisinin de güncellenmesi gerekmektedir. Eğer bir baş işaretçisi, temizlenen bölgede kalıyorsa, bu baş işaretçisi de yeni LSQ kuyruk konumuna taşınmaktadır. Bu kontrol, dairesel tamponun sarma durumunu dikkate alarak yapılmaktadır.
+
+%------------------------------------------------------------------------
+
 \subsection{Bellek Arayüzü}\label{subsec:mem_interface}
 
-Yükleme saklama kuyruğu, üç bağımsız bellek portu desteklemektedir. Her port için istek geçerlilik sinyali, yazma etkinleştirme sinyali, bellek adresi, yazma verisi ve bayt etkinleştirme sinyalleri çıkış olarak bulunmaktadır. Giriş olarak bellek hazır sinyali, yanıt geçerlilik sinyali ve okuma verisi bulunmaktadır.
+LSQ, üç bağımsız bellek portu desteklemektedir. Her port, bağımsız olarak bellek istekleri gönderebilmekte ve yanıtlar alabilmektedir.
 
 \begin{figure}[htbp]
     \centering
-    \fbox{\textbf{[GÖRSEL: Bellek Arayüzü Sinyalleri - LSQ ile Veri Belleği (D-Cache) arasındaki Request/Ready/Response sinyalleri]}}
-    \caption{İşlemci ve bellek arayüzü sinyalleri}
+    \fbox{\textbf{[GÖRSEL: Bellek Arayüzü - LSQ ile Veri Belleği Arasındaki 3 Portlu Bağlantı, İstek/Yanıt Sinyalleri]}}
+    \caption{LSQ ve bellek arayüzü}
     \label{fig:mem_interface}
 \end{figure}
 
-Bayt etkinleştirme sinyali, farklı boyutlu işlemler için hangi baytların etkileneceğini belirtmektedir. Bayt işlemleri için adrese göre kaydırılmış tek bit, yarım kelime işlemleri için iki bit ve kelime işlemleri için dört bit etkinleştirilmektedir.
+Her port için istek sinyalleri arasında geçerlilik sinyali, yazma/okuma seçimi, bellek adresi, yazma verisi ve bayt etkinleştirme sinyalleri bulunmaktadır. Yanıt sinyalleri arasında hazır sinyali, yanıt geçerliliği ve okuma verisi bulunmaktadır.
 
-\subsubsection{Yükleme Verisi İşleme}\label{subsubsec:load_data}
+Bayt etkinleştirme sinyali, farklı boyutlu işlemler için hangi baytların etkileneceğini belirtmektedir. Bayt işlemleri için adrese göre konumlandırılmış tek bit, yarım kelime işlemleri için iki bit ve kelime işlemleri için dört bit etkinleştirilmektedir.
 
-Yükleme verisi, boyut ve işaret genişletmesine göre işlenmektedir. Bayt işlemleri için bellekten gelen dört baytlık veriden ilgili bayt çıkarılmakta, işaret genişletme gerekiyorsa yedinci bit ile doldurulmaktadır. Yarım kelime işlemleri için iki bayt çıkarılmakta ve on beşinci bit ile işaret genişletme uygulanmaktadır. Kelime işlemleri için veri doğrudan kullanılmaktadır.
-
-%------------------------------------------------------------------------
-
-\subsection{Hevesli Yanlış Tahmin Temizleme}\label{subsec:lsq_flush}
-
-Yanlış tahmin durumunda spekülatif yükleme ve saklama girişleri temizlenmektedir. Her giriş için yeniden sıralama arabelleği baş işaretçisinden uzaklık hesaplanmaktadır. Yanlış tahmin edilen dallanma komutunun uzaklığından büyük uzaklığa sahip girişler temizlenmektedir.
-
-Temizleme, yanlış tahmin edilen daldan sonra tahsis edilen tüm kuyruk girişlerini etkilemektedir. Bu hevesli temizleme mekanizması, yanlış tahmin toparlanmasını hızlandırmaktadır.
-
-%------------------------------------------------------------------------
-
-\subsection{Saklama Kesinleştirme}\label{subsec:store_commit}
-
-Saklama işlemleri özel bir kesinleştirme akışına sahiptir. Saklama yeniden sıralama arabelleğinin başına ulaşmakta, saklama gönderim izni sinyali aktif olmakta, kuyruk saklamayı belleğe göndermekte, bellek yazma işlemi tamamlanmakta ve kuyruk girişi serbest bırakılmaktadır.
-
-Bu akış, spekülatif saklama işlemlerinin belleği değiştirmesini engellemekte ve bellek tutarlılığını korumaktadır.
+Yükleme verisi, bellek yanıtından boyut ve işaretli yükleme bilgisine göre işlenmektedir. Bayt işlemleri için bellekten gelen dört baytlık veriden ilgili bayt çıkarılmakta ve işaretli yüklemeler için yedinci bit ile doldurma yapılmaktadır. Yarım kelime işlemleri için iki bayt çıkarılmakta ve on beşinci bit ile doldurma uygulanmaktadır. Kelime işlemleri için veri doğrudan kullanılmaktadır.
 

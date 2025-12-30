@@ -4,100 +4,101 @@
 
 \section{Geri Yazma Aşaması}\label{sec:writeback}
 
-Geri yazma aşaması, sıra dışı yürütmenin son aşaması olup komutların program sırasına göre kesinleştirilmesini ve sonuçların mimari duruma kalıcı olarak yazılmasını sağlamaktadır. Bu aşama, hassas kesme desteği için kritik öneme sahiptir.
+Geri yazma aşaması, sıra dışı yürütmenin son aşaması olup komutların program sırasına göre kesinleştirilmesini sağlamaktadır. Kesinleştirme işlemi sırasında, yeniden sıralama arabelleğinin (ROB) başındaki komutların sonuçları mimari duruma yansıtılmakta ve ilgili kaynaklar yeniden kullanıma açılmaktadır.
 
-Bu aşamada yeniden sıralama arabelleğinin başındaki komutlar sıralı olarak işlenmekte, hesaplanan değerler yazmaç dosyasına yazılmakta, eski fiziksel yazmaçlar serbest listeye eklenmekte ve yükleme saklama kuyruğundaki saklama işlemleri belleğe yazılmaktadır.
+%------------------------------------------------------------------------
 
-\subsection{Sıralı Kesinleştirme}\label{subsec:commit}
+\subsection{Kesinleştirme İşlemi}\label{subsec:commit}
 
-Kesinleştirme, yeniden sıralama arabelleğinin başındaki komutların program sırasıyla işlenmesidir. Bir komutun kesinleştirilmesi için yürütülmüş ve istisnasız olması gerekmektedir.
+Kesinleştirme, ROB'un başındaki komutların program sırasıyla işlenmesidir. Her saat çevriminde, ROB'un başındaki en fazla üç komut kesinleştirme için değerlendirilmektedir.
 
-\subsubsection{Kesinleştirme Koşulları}\label{subsubsec:commit_cond}
+Bir komutun kesinleştirilmesi için yürütülmüş olması gerekmektedir. ROB girişindeki yürütüldü bayrağı kontrol edilerek bu koşul sağlanmaktadır. Yükleme işlemleri için verinin bellekten alınmış olması, saklama işlemleri için ise LSQ'ya gönderim izninin verilmiş olması gerekmektedir.
 
-Her saat çevriminde, yeniden sıralama arabelleğinin başındaki en fazla üç komut kesinleştirme için değerlendirilmektedir. Birinci komutun kesinleştirilebilmesi için yürütülmüş olması ve istisna bayrağının aktif olmaması gerekmektedir. İkinci komut ancak birinci komut kesinleştirilecekse kesinleştirilebilmektedir. Üçüncü komut ise ancak hem birinci hem de ikinci komut kesinleştirilecekse kesinleştirilebilmektedir.
-
-Bu zincirleme bağımlılık, kesinleştirmenin sıralı olduğunu ifade etmekte ve program sırasının korunmasını sağlamaktadır.
+Üç yollu kesinleştirmede zincirleme bağımlılık bulunmaktadır. Birinci komutun kesinleştirilebilmesi için yalnızca yürütülmüş olması yeterlidir. İkinci komut ancak birinci komut kesinleştirilecekse değerlendirilmektedir. Üçüncü komut ise ancak hem birinci hem de ikinci komut kesinleştirilecekse değerlendirilmektedir. Bu zincirleme yapı, program sırasının korunmasını garanti etmektedir.
 
 \begin{figure}[htbp]
     \centering
-    \fbox{\textbf{[GÖRSEL: Sıralı Kesinleştirme (Commit) Akışı - ROB başındaki komutların incelenmesi, Retire işlemi ve Mimari Durum güncellemesi]}}
+    \fbox{\textbf{[GÖRSEL: Kesinleştirme Akışı - ROB başındaki 3 komutun değerlendirilmesi, Zincirleme bağımlılık]}}
     \caption{Sıralı kesinleştirme süreci}
     \label{fig:commit_process}
 \end{figure}
 
-Yükleme ve saklama işlemleri için ek koşullar gerekmektedir. Yüklemeler için verinin bellekten alınmış olması gerekmektedir. Saklamalar için yükleme saklama kuyruğundan kesinleştirme onayının alınmış olması gerekmektedir.
-
-\subsubsection{Mimari Durum Güncelleme}\label{subsubsec:arch_update}
-
-Kesinleştirme sırasında spekülatif durum mimari duruma dönüşmektedir. Hesaplanan değerler fiziksel yazmaç dosyasına yazılmaktadır. Eski fiziksel yazmaçlar serbest listeye eklenmektedir. Yeniden sıralama arabelleği girişleri serbest bırakılmaktadır. Yükleme saklama kuyruğundaki saklama işlemleri belleğe yazılmaktadır.
-
-Kesinleştirme sonrasında ilgili komutun sonuçları kalıcı hale gelmekte ve geri alınamamaktadır.
+Her çevrimde kesinleştirilen komut sayısı hesaplanmakta ve ROB baş işaretçisi bu sayı kadar ilerletilmektedir. Örneğin, üç komut da kesinleştirildiyse baş işaretçisi üç artırılmaktadır.
 
 %------------------------------------------------------------------------
 
-\subsection{Yazmaç Dosyası Güncelleme}\label{subsec:prf_update}
+\subsection{Yazmaç Takma Ad Tablosu Güncelleme}\label{subsec:rat_update}
 
-\subsubsection{Kesinleştirme Yazma Mantığı}\label{subsubsec:commit_write}
+Kesinleştirme sırasında yazmaç takma ad tablosu (RAT) güncellenmektedir. Bu güncelleme, mimari yazmacın yeniden sıralama arabelleğinden yazmaç dosyasına işaret etmesini sağlamaktadır.
 
-Kesinleştirme sırasında yeniden sıralama arabelleğindeki değerler fiziksel yazmaç dosyasına yazılmaktadır. Üç paralel yazma portu, her çevrimde üç komutun eş zamanlı kesinleştirilmesine olanak tanımaktadır.
+Güncelleme koşulu önemlidir: RAT'taki mimari yazmacın mevcut eşlemesi, kesinleştirilen komutun ROB indeksine işaret ediyorsa güncelleme yapılmaktadır. Bu kontrol, aynı mimari yazmaca yazan daha yeni bir komut varsa eski komutun güncelleme yapmamasını sağlamaktadır.
 
-Her kesinleştirme için fiziksel yazmaç adresi ve veri çifti yazmaç dosyasına gönderilmektedir. Yazma işlemi saat yükselen kenarında gerçekleşmektedir.
+Örneğin, x5 yazmacına yazan iki komut düşünülürse: ilk komut ROB[3]'e, ikinci komut ROB[7]'ye tahsis edilmiştir. İlk komut kesinleştirildiğinde, RAT[x5] değeri kontrol edilmektedir. Eğer RAT[x5] hala 3'ü gösteriyorsa, x5'in yazmaç dosyasındaki konumuna (0,5) güncellenmektedir. Ancak RAT[x5] artık 7'yi gösteriyorsa (ikinci komut tahsis edildiğinden), güncelleme yapılmamaktadır.
 
-\subsubsection{Serbest Liste Güncelleme}\label{subsubsec:free_update}
-
-Bir komut kesinleştirildiğinde, mimari yazmacın önceki fiziksel eşlemesi artık gerekli değildir ve serbest listeye geri eklenmektedir. Bu işlem, fiziksel yazmaç havuzunun tükenmesini önlemekte ve sürekli yeniden adlandırma yapılabilmesini sağlamaktadır.
-
-Önemli bir ayrıntı olarak, sıfırıncı yazmaç hedef alan komutlar için serbest bırakma yapılmamaktadır çünkü sıfırıncı yazmaç hiçbir zaman yeniden adlandırılmamaktadır.
+Bu mekanizma, aynı mimari yazmaca ardışık yazmaların doğru şekilde yönetilmesini sağlamaktadır.
 
 %------------------------------------------------------------------------
 
-\subsection{İstisna Yönetimi}\label{subsec:exception_handling}
+\subsection{Serbest Liste Güncelleme}\label{subsec:free_list}
 
-\subsubsection{Hassas İstisna Desteği}\label{subsubsec:precise}
+Kesinleştirme sırasında, kullanılan ROB giriş adresleri serbest listeye geri eklenmektedir. Serbest liste, dairesel tampon yapısında tutulmakta olup yeni komutlar için kullanılabilir ROB adreslerini sağlamaktadır.
 
-Sıralı kesinleştirme sayesinde herhangi bir istisna durumunda işlemci tutarlı bir durumda olmaktadır. İstisnadan önceki tüm komutlar kesinleştirilmiş durumdadır. İstisna yaratan komut kesinleştirilmemiş durumdadır. İstisnadan sonraki tüm komutlar spekülatif durumda kalmıştır.
+Her kesinleştirme sinyali, serbest listenin yazma portuna bağlıdır. Kesinleştirme geçerli olduğunda, ilgili ROB indeksi serbest listeye eklenmektedir. Üç paralel yazma portu sayesinde her çevrimde üç adres serbest bırakılabilmektedir. Burada gerçek bir yazma işlemi yoktur, bu yapılan işlem sonucunda sadece serbest listeyi tutan dairesel tamponun pointer değeri arttırılmış olur.
 
-Bu özellik, işletim sisteminin istisna nedenini belirlemesini ve uygun işlemi yapmasını mümkün kılmaktadır. Hassas istisnalar, hata ayıklama ve kesme yönetimi için kritik öneme sahiptir.
+Yanlış tahmin durumunda serbest liste işaretçisi de güncellenmektedir. Yanlış tahmin edilen dalın ROB indeksi artı bir değerine ayarlanarak, spekülatif olarak ayrılan adresler otomatik olarak geri kazanılmaktadır.
 
-\subsubsection{Boruhattı Temizleme}\label{subsubsec:flush}
+%------------------------------------------------------------------------
 
-İstisna veya yanlış tahmin durumunda boruhattı temizleme işlemi gerçekleştirilmektedir. Bu işlem birkaç adımdan oluşmaktadır.
+\subsection{Bellek İşlemleri Kesinleştirme}\label{subsec:mem_commit}
 
-Yeniden sıralama arabelleği temizlenmekte ve istisnadan sonraki tüm girişler geçersiz kılınmaktadır. Tüm rezervasyon istasyonları boşaltılmaktadır. Yükleme saklama kuyruğundaki spekülatif bellek işlemleri iptal edilmektedir. Dal çözümleme takma ad tablosundan uygun yazmaç takma ad tablosu anlık görüntüsü yüklenmektedir. Tahsis edilen fiziksel yazmaçlar serbest listeye geri alınmaktadır. Program sayacı doğru adrese ayarlanmakta ve komut getirme aşamasına yönlendirme sinyali gönderilmektedir.
+Bellek işlemleri için kesinleştirme, saklama izni ve LSQ adres serbest bırakmasını içermektedir.
 
-Temizleme sinyalleri tüm boruhattı aşamalarına eş zamanlı olarak gönderilmektedir.
+Saklama izni mekanizması Bölüm~\ref{subsec:lsq_ops}'de detaylandırılmıştır. ROB, başındaki saklama işlemi için izin sinyali ve izin verilen saklama adresini üretmektedir. LSQ bu bilgileri kullanarak yalnızca kesinleşeceği garanti altına alınmış saklama işlemlerini belleğe yazmaktadır. Saklama izni vermeden önce, önceki komutların dal durumu kontrol edilmektedir; eğer saklama işleminden önce bir dal komutu varsa, bu dal komutunun yürütülmüş ve yanlış tahmin edilmemiş olması gerekmektedir.
+
+LSQ adres serbest bırakması, kesinleştirme sırasında gerçekleştirilmektedir. LSQ sıra dışı çalışsa da serbest bırakma işlemi sıralı yapılmaktadır. Bunun sebebi, LSQ adres tahsisinin dairesel tampon ile yapılmasıdır; tahsis sıralı olduğundan serbest bırakma da sıralı olmalıdır. LSQ, veri bağımlılıklarını sıra dışı çalışarak hızlıca çözmekte, serbest bırakma işlemi ise ROB'a bırakılarak sıralılık sağlanmaktadır.
+
+ROB, bir bellek komutu kesinleştirildiğinde LSQ kesinleştirme sinyali üretmektedir. Bu sinyal hem LSQ'ya hem de RAT içindeki LSQ serbest adres dairesel tamponuna iletilmektedir. LSQ bu sinyali alarak ilgili girişi serbest bırakmakta, RAT ise yeni bellek komutları için kullanılabilir LSQ adresi sağlamaktadır.
+
+%------------------------------------------------------------------------
+
+\subsection{Boruhattı Temizleme}\label{subsec:flush}
+
+Sıralı kesinleştirme yapısı, gelecekte istisna ve kesme yönetiminin eklenebilmesine olanak tanımaktadır. Mevcut tasarımda yalnızca dal yanlış tahmini tespiti ve boruhattı temizleme işlemleri gerçeklenmektedir.
+
+Yanlış tahmin tespit edildiğinde boruhattı temizleme işlemi gerçekleştirilmektedir. Temizleme sinyalleri tüm boruhattı aşamalarına eş zamanlı olarak gönderilmektedir. ROB'un kuyruk işaretçisi yanlış tahmin edilen dalın bir sonrasına ayarlanarak spekülatif girişler geçersiz kılınmaktadır. Tüm rezervasyon istasyonları ve LSQ'daki spekülatif girişler temizlenmektedir.
+
+Dal çözümleme takma ad tablosundan (BRAT) doğru yazmaç eşleme anlık görüntüsü yüklenerek RAT durumu geri alınmaktadır. Bu mekanizma Bölüm~\ref{subsec:brat}'de açıklanmıştır. Program sayacı doğru adrese ayarlanmakta ve komut getirme aşamasına yönlendirme sinyali gönderilmektedir.
 
 \begin{figure}[htbp]
     \centering
-    \fbox{\textbf{[GÖRSEL: Hassas İstisna ve Temizleme (Flush) - İstisna anında Pipeline flush, PC yönlendirme ve ROB/LSQ temizliği]}}
-    \caption{Hassas istisna yönetimi ve boruhattı temizleme}
+    \fbox{\textbf{[GÖRSEL: Boruhattı Temizleme - Yanlış tahmin sonrası tüm aşamalara paralel temizleme sinyalleri]}}
+    \caption{Boruhattı temizleme mekanizması}
     \label{fig:flush_mechanism}
 \end{figure}
 
 %------------------------------------------------------------------------
 
-\subsection{Kesinleştirme Yanıt Döngüsü}\label{subsec:commit_response}
+\subsection{Kesinleştirme Sinyalleri}\label{subsec:commit_signals}
 
-Yeniden sıralama arabelleği kesinleştirme çıkış sinyalleri diğer modüllere durum güncellemeleri sağlamaktadır.
+ROB kesinleştirme çıkış sinyalleri, diğer modüllere durum güncellemeleri sağlamaktadır. Her çevrimde üç komut için paralel olarak üretilen sinyaller Çizelge~\ref{tab:commit_signals}'de listelenmiştir.
 
-Yazmaç takma ad tablosuna eski fiziksel yazmaçları serbest bırakmak için sinyaller gönderilmektedir. Yükleme saklama kuyruğuna saklama işlemlerini belleğe yazmak için izin sinyalleri gönderilmektedir. Fiziksel yazmaç dosyasına sonuçları kalıcı olarak saklamak için yazma sinyalleri gönderilmektedir.
-
-Bu sinyaller her çevrimde üç komut için paralel olarak üretilmektedir. Her kanal için kesinleştirme geçerliliği, fiziksel yazmaç adresi, veri ve yükleme saklama kuyruğu kesinleştirme bilgileri bulunmaktadır.
-
-%------------------------------------------------------------------------
-
-\subsection{Performans Metrikleri}\label{subsec:perf_metrics}
-
-Geri yazma aşaması, işlemci performansının ölçülmesi için kritik noktadır. Bu aşamada kesinleştirilen komut sayısı, işlemcinin gerçek verimini göstermektedir.
-
-Çevrim başına komut değeri, her saat çevriminde kesinleştirilen ortalama komut sayısını ifade etmektedir.
-
-\begin{equation}
-    IPC = \frac{Toplam\_Kesinlestirilen\_Komut}{Toplam\_Cevrim}
-    \label{eq:ipc_calc}
-\end{equation}
-
-Kesinleştirme bant genişliği, maksimum teorik kesinleştirme hızını göstermekte ve tasarlanan sistemde çevrim başına üç komuttur. Yeniden sıralama arabelleği kullanım oranı, arabellek doluluk yüzdesini göstermektedir.
-
-Tasarlanan üç yollu süperölçekli yapıda maksimum teorik çevrim başına komut değeri üçtür. Gerçek değer, dal tahmin doğruluğu, bellek gecikmesi ve veri bağımlılıklarına bağlı olarak değişmektedir.
-
+\begin{table}[htbp]
+    \centering
+    \caption{Kesinleştirme çıkış sinyalleri.}
+    \label{tab:commit_signals}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Sinyal} & \textbf{Hedef} & \textbf{Açıklama} \\
+        \hline
+        commit\_valid & RAT & Komut kesinleştirildi \\
+        \hline
+        commit\_addr & RAT & Mimari yazmaç adresi \\
+        \hline
+        commit\_rob\_idx & RAT & Kesinleştirilen ROB indeksi \\
+        \hline
+        lsq\_commit\_valid & LSQ, RAT & LSQ kesinleştirme sinyali \\
+        \hline
+        commit\_is\_branch & Dal tahmincisi & Tahmin güncellemesi \\
+        \hline
+    \end{tabular}
+\end{table}
