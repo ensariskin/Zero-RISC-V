@@ -325,7 +325,7 @@
 % ================================================================
 
 % Politecnico di Milano - RISC-V Superscalar Thesis
-@mastersthesis{polimi_superscalar_2023,
+@phdthesis{polimi_superscalar_2023,
   author = {M. Antonacci},
   title = {Design and Implementation of a Superscalar RISC-V Processor},
   school = {Politecnico di Milano},
@@ -334,12 +334,15 @@
 }
 
 % Fast branch misprediction recovery - checkpoint tabanlı (2023 güncel kaynak)
-@inproceedings{akkary_checkpoint_2003,
-  author = {A. Josipović and others},
+@article{akkary_checkpoint_2003,
+  author = {Lana Josipović and Philip Brisk and Paolo Ienne},
   title = {An Out-of-Order Load-Store Queue for Spatial Computing},
-  booktitle = {Proc. ACM/IEEE Design Automation Conference (DAC)},
-  year = {2023},
-  note = {EPFL - Load-store queue with checkpoint-based recovery}
+  journal = {ACM Transactions on Embedded Computing Systems},
+  volume = {16},
+  number = {5s},
+  pages = {125:1--125:19},
+  year = {2017},
+  note = {EPFL - Load-store queue for spatial computing}
 }
 
 % Copy-Free Checkpointed Renaming - FPGA-friendly register renaming
@@ -347,15 +350,17 @@
   author = {A. González and J. Tubella},
   title = {Copy-Free Checkpointed Renaming: A FPGA-friendly Register Renaming Design},
   booktitle = {Proc. Design, Automation and Test in Europe Conference (DATE)},
-  year = {2022}
+  year = {2022},
+  doi = {10.23919/DATE54114.2022.9774640}
 }
 
 % BOOM v3 - Modern out-of-order RISC-V
 @inproceedings{boom_v3_2023,
-  author = {J. Zhao and B. Korpan and A. Waterman and K. Asanović},
+  author = {Jerry Zhao and Ben Korpan and Abraham Gonzalez and Krste Asanović},
   title = {SonicBOOM: The 3rd Generation Berkeley Out-of-Order Machine},
-  booktitle = {Fourth Workshop on Computer Architecture Research with RISC-V},
-  year = {2020}
+  booktitle = {Fourth Workshop on Computer Architecture Research with RISC-V (CARRV)},
+  year = {2020},
+  note = {Co-located with ISCA 2020, May 29, 2020}
 }
 
 % High-performance RISC-V evaluation - BOOM, NOEL-V, CVA6
@@ -371,7 +376,9 @@
   author = {Y. Xu and others},
   title = {Towards Developing High Performance RISC-V Processors Using Agile Methodology},
   booktitle = {Proc. 55th IEEE/ACM International Symposium on Microarchitecture (MICRO)},
-  year = {2022}
+  pages = {1178--1199},
+  year = {2022},
+  doi = {10.1109/MICRO56248.2022.00080}
 }
 
 % SupeRFIVe - Superscalar verification methodology
@@ -411,12 +418,11 @@
   note = {UVM-based constrained random test generation framework}
 }
 
-@inproceedings{rocket_power,
+@article{rocket_power,
   author = {Yunsup Lee and Andrew Waterman and Henry Cook and Brian Zimmer and Ben Keller and Alberto Puggelli and Jaehwa Kwak and Ruzica Jevtic and Stevo Bailey and Milovan Blagojevic and Pi-Feng Chiu and Hanh-Phuc Le and Krste Asanovic and Bora Nikolic},
   title = {An Agile Approach to Building RISC-V Microprocessors},
-  booktitle = {IEEE Micro},
+  journal = {IEEE Micro},
   volume = {36},
-  number = {2},
   pages = {8--20},
   year = {2016},
   note = {Rocket core: 0.034 mW/MHz dynamic power in TSMC 40GPLUS}

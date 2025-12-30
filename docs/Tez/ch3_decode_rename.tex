@@ -167,7 +167,7 @@ Yanlış tahmin tespit edildiğinde, anlık görüntüdeki bilgiler kullanılara
     \item Yükleme saklama kuyruğu işaretçisi, LSQ'dan gelen değere göre ayarlanmaktadır.
     \item Doğru program sayacı değeri komut getirme aşamasına iletilmektedir.
     \item Dönüş adresi yığını tepe işaretçisi geri yüklenmektedir.
-    \item GShare kullanılıyorsa global history table, program counter değeri, yapılan tahmin gibi bilgiler de predictor'ün güncellenmesi için yollanmaktadır. İki bitlik tahminci kullanılıyorken bunlara gerek yoktur. 
+    \item GShare kullanılıyorsa küresel tarihçe tablosu (global history table), program sayacı değeri ve yapılan tahmin gibi bilgiler de tahmincinin (predictor) güncellenmesi için yollanmaktadır. İki bitlik tahminci kullanılırken bu bilgilere ihtiyaç duyulmamaktadır. 
 \end{enumerate}
 
 Bu işlemler tek saat çevriminde tamamlanmakta ve bir sonraki çevrimde doğru yoldaki komutlar getirilebilmektedir.

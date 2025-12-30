@@ -43,7 +43,7 @@ Bu mekanizma, aynı mimari yazmaca ardışık yazmaların doğru şekilde yönet
 
 Kesinleştirme sırasında, kullanılan ROB giriş adresleri serbest listeye geri eklenmektedir. Serbest liste, dairesel tampon yapısında tutulmakta olup yeni komutlar için kullanılabilir ROB adreslerini sağlamaktadır.
 
-Her kesinleştirme sinyali, serbest listenin yazma portuna bağlıdır. Kesinleştirme geçerli olduğunda, ilgili ROB indeksi serbest listeye eklenmektedir. Üç paralel yazma portu sayesinde her çevrimde üç adres serbest bırakılabilmektedir. Burada gerçek bir yazma işlemi yoktur, bu yapılan işlem sonucunda sadece serbest listeyi tutan dairesel tamponun pointer değeri arttırılmış olur.
+Her kesinleştirme sinyali, serbest listenin yazma portuna bağlıdır. Kesinleştirme geçerli olduğunda, ilgili ROB indeksi serbest listeye eklenmektedir. Üç paralel yazma portu sayesinde her çevrimde üç adres serbest bırakılabilmektedir. Burada gerçek bir yazma işlemi yoktur; bu işlem sonucunda sadece serbest listeyi tutan dairesel tamponun işaretçi değeri artırılmaktadır.
 
 Yanlış tahmin durumunda serbest liste işaretçisi de güncellenmektedir. Yanlış tahmin edilen dalın ROB indeksi artı bir değerine ayarlanarak, spekülatif olarak ayrılan adresler otomatik olarak geri kazanılmaktadır.
 

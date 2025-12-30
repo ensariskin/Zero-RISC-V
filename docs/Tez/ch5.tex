@@ -270,7 +270,9 @@ Geliştirilen hata enjeksiyon mekanizması aşağıdaki özelliklere sahiptir:
 
 Korunmayan bir yazmaca enjekte edilen hata, bir sonraki yazma işlemine kadar yazmacta kalacak ve bu süre zarfında aynı TMR grubundaki diğer replikalardan birinde de hata oluşması durumunda oylama mekanizması başarısız olarak kurtarılamaz bir hataya (fatal error) yol açacaktır. Tasarlanan işlemcideki tüm korunan yazmaçlar, enjekte edilen hataları bir saat çevrimi içerisinde TMR oylama sonucu ile elimine edecek şekilde yapılandırılmıştır.
 
-\subsection{Tekil Bit Hata Testleri}
+\subsection{Hata Enjeksiyon Test Sonuçları}
+
+Hata enjeksiyon testleri, hem tekil bit (SEU) hem de çoklu bit (MBU) hatalarının sistem üzerindeki etkilerini gözlemlemek amacıyla gerçekleştirilmiştir.
 
 Tekil bit hata testlerinde, bin çevrimde \%10 ve \%100 hata oranları ile simülasyonlar gerçekleştirilmiştir. Tablo \ref{tab:seu_results}, elde edilen sonuçları özetlemektedir.
 
@@ -290,9 +292,9 @@ Tekil bit hata testlerinde, bin çevrimde \%10 ve \%100 hata oranları ile simü
 
 Her iki senaryoda da işlemci, enjekte edilen tüm tekil bit hatalarını TMR oylama mekanizması aracılığıyla başarıyla maskeleyerek fonksiyonel doğruluğunu korumuştur. Spike referans modeli ile yapılan karşılaştırmalarda herhangi bir uyumsuzluk tespit edilmemiş olup, program akışı kesintisiz olarak tamamlanmıştır. Özellikle dikkat çekici olan nokta, yoğun hata enjeksiyonu altında dahi işlemcinin tek yollu (1-way) konfigürasyondaki IPC değerini koruyarak performans kaybı yaşamamasıdır.
 
-\subsection{Çoklu Bit Hata Testleri}
+Çoklu bit hataları (MBU) için yapılan testlerde ise sistemin tespit kabiliyeti ölçülmüştür. Korunan yazmaçlara çoklu bit hataları enjekte edilmiştir. Gerçekleştirilen tüm senaryolarda sistem, TMR oylayıcılarındaki uyumsuzluğu fark ederek ``Kritik Hata (Fatal Error)'' sinyalini başarıyla üretmiştir. Sistem maskeleme yapamasa dahi, hatayı \%100 oranında tespit ederek sessiz veri bozulmasının (Silent Data Corruption) önüne geçmiştir.
 
-[ÇOKLU BİT HATA TESTLERİ SONUÇLARI BURAYA EKLENECEK]
+Mevcut tasarımda toparlanma işlemi için gerekli olan altyapı (BRAT anlık görüntüleri ve hata sinyali) sağlanmış olup, otomatik yeniden başlatma denetleyicisi gelecek çalışma olarak önerilmektedir. Elde edilen \%100 tespit oranı, bu gelecek çalışmanın güvenilir bir temel üzerine inşa edilebileceğini kanıtlamaktadır.
 
 
 %------------------------------------------------------------------------

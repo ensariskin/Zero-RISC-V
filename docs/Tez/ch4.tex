@@ -11,7 +11,7 @@ Bu bölümde, tasarlanan süperölçekli RISC-V işlemcisine uygulanan isteğe b
 
 Modern elektronik sistemlerin güvenilirliği, özellikle uzay, havacılık ve otomotiv gibi kritik uygulamalarda, hataların etkilerinin minimize edilmesiyle doğrudan ilişkilidir. Bu alanlarda çevresel faktörlerden kaynaklanan hatalar, sistemin kararlılığını tehdit edebilmektedir. Bu tür uygulamalarda hata toleransı, hem sistem güvenilirliğini hem de kullanıcı güvenliğini sağlamak için vazgeçilmez bir gereklilik haline gelmiştir \cite{rogenmoser_hmr_2023}.
 
-\subsection{Hata Türleri}\label{subsec:fault_types}
+\subsection{Hata Türleri}\label{subsec:ch4_fault_types}
 
 Hata toleranslı sistemlerin geliştirilmesinde, hata türlerinin sınıflandırılması büyük önem taşımaktadır. Farklı hata türleri farklı düzeltme yöntemleri gerektirmektedir.
 
@@ -19,7 +19,7 @@ Hata toleranslı sistemlerin geliştirilmesinde, hata türlerinin sınıflandır
 
 \textbf{Kalıcı Hatalar (Permanent Faults):} Fiziksel donanım arızalarından kaynaklanan ve donanım çalıştığı sürece etkisini sürdüren hatalardır. Bu hatalar, mantık değerlerinin sabit olarak 0 veya 1'de kalmasına (stuck-at fault) neden olmaktadır \cite{vigli_2024}.
 
-Santos ve arkadaşları tarafından gerçekleştirilen radyasyon testlerinde, hataların yüzde 78'inin belleklerde, yüzde 15'inin ise yazmaç dosyasında meydana geldiği gözlemlenmiştir \cite{santos_2023}. Bu sonuçlar, bellek yapılarının ve yazmac dosyasının korunmasının kritik önemini ortaya koymaktadır.
+Santos ve arkadaşları tarafından gerçekleştirilen radyasyon testlerinde, hataların yüzde 78'inin belleklerde, yüzde 15'inin ise yazmaç dosyasında meydana geldiği gözlemlenmiştir \cite{santos_2023}. Bu sonuçlar, bellek yapılarının ve yazmaç dosyasının korunmasının kritik önemini ortaya koymaktadır.
 
 \subsection{Mevcut Hata Toleransı Yöntemleri}\label{subsec:existing_methods}
 
@@ -164,7 +164,7 @@ Bu özellik, uygulama ihtiyaçlarına göre hızlı mod değişikliklerini mümk
 
 \subsection{Dinamik Mod Geçişi Altyapısı}\label{subsec:contribution_dynamic}
 
-Tasarlanan mimari, gelecekte otomatik mod geçişini destekleyecek şekilde planlanmıştır. Bu özellik henüz implemente edilmemiş olsa da, altyapı şu senaryoyu destekleyecek şekilde tasarlanmıştır:
+Tasarlanan mimari, gelecekte otomatik mod geçişini destekleyecek şekilde planlanmıştır. Bu özellik henüz gerçeklenmemiş olsa da, altyapı şu senaryoyu destekleyecek şekilde tasarlanmıştır:
 
 \begin{enumerate}
     \item İşlemci süperölçekli modda çalışırken bile oylayıcılar uyumsuzlukları izlemektedir.
@@ -251,10 +251,10 @@ Tasarımda aşağıdaki büyük bellek yapılarının ECC korumalı olduğu vars
     \item Yeniden sıralama arabelleği (ROB) veri alanları
     \item Rezervasyon istasyonları (RS) veri alanları
     \item Yükleme-saklama kuyruğu (LSQ) veri alanları
-    \item Fiziksel yazmaç dosyası (PRF)
+    \item Yazmaç dosyası
 \end{itemize}
 
-\textbf{Not:} ECC implementasyonu bu tez kapsamı dışındadır ve gelecek çalışma olarak önerilmektedir.
+ECC uygulamasının bu tez kapsamı dışında tutulması kararlaştırılmış olup, bu konu gelecek çalışmalar için önemli bir araştırma başlığı olarak önerilmektedir.
 
 %------------------------------------------------------------------------
 \section{BRAT ile Kritik Hata Toparlanması}\label{sec:brat_recovery}
@@ -266,39 +266,39 @@ Bölüm \ref{subsec:brat}'te açıklanan Dal Çözümleme Takma Ad Tablosu (BRAT
 
 BRAT, normal modda her dallanma komutu için checkpoint almaktadır. Ancak güvenli modda hatalar yalnızca yanlış tahmin kaynaklı değil, aynı zamanda SEU ve MBU gibi radyasyon etkilerinden de kaynaklanabilmektedir.
 
-BRAT, diğer hevesli yanlış tahmin toparlanma yöntemlerine göre daha fazla alan gerektirmektedir. Bununla birlikte, aynı yapının radyasyon kaynaklı hataların toparlanmasında da kullanılabilmesi, bu ek alan maliyetini haklı kılmaktadır. Tek bir donanım yapısı ile hem dal spekülasyonu hem de hata toleransı sağlanmaktadır.
+BRAT, diğer hevesli yanlış tahmin toparlanma yöntemlerine göre daha fazla alan gerektirmektedir. Bununla birlikte, aynı yapının radyasyon kaynaklı hataların toparlanmasında da kullanılabilmesi, bu ek alan maliyetini haklı çıkarmaktadır. Tek bir donanım yapısı ile hem dal spekülasyonu hem de hata toleransı sağlanmaktadır.
 
 \subsection{Güvenli Mod Checkpoint Stratejisi}\label{subsec:secure_checkpoint}
 
-Normal modda yalnızca dallanma ve atlama komutları için checkpoint alınmaktadır. Güvenli modda ise önerilen yaklaşım, \textbf{her komut için checkpoint almaktır}. Bu strateji sayesinde:
+Normal modda yalnızca dallanma ve atlama komutları için anlık görüntü alınmaktadır. Güvenli modda ise önerilen yaklaşım, \textbf{her komut için anlık görüntü almaktır}. Bu strateji sayesinde:
 
 \begin{itemize}
     \item Herhangi bir komutta kritik hata tespit edildiğinde, o komutun durumuna geri dönülebilmektedir.
-    \item Toparlanma gecikmesi minimize edilmektedir çünkü en güncel checkpoint her zaman mevcuttur.
+    \item Toparlanma gecikmesi minimize edilmektedir çünkü en güncel anlık görüntü her zaman mevcuttur.
     \item Yanlış tahmin toparlanması ile aynı mekanizma kullanılmaktadır.
 \end{itemize}
 
 On altı girişlik BRAT kapasitesi, bu strateji için yeterlidir. Güvenli modda IPC değeri 1 olduğundan ve komutlar sıralı olarak işlendiğinden, boruhattı derinliği kadar checkpoint yeterli olmaktadır.
 
-\subsection{Kritik Hata Tespit ve Toparlanma Akışı}\label{subsec:fatal_recovery_flow}
+\subsection{Kritik Hata Tespit Mekanizması ve Önerilen Toparlanma Akışı}\label{subsec:fatal_recovery_flow}
 
 İşlemci güvenli modda çalışırken, TMR mekanizması tek bitlik hataları maskeleyebilmektedir. Ancak birden fazla biti etkileyen veya ilişkili sinyalleri bozan hatalar, üç kopyanın da farklı değerler üretmesine neden olabilmektedir. Bu durum, TMR tarafından düzeltilemeyen ``kritik hata'' (fatal error) olarak sınıflandırılmaktadır.
 
-Tasarımda, boruhattının farklı aşamalarına dağılmış TMR modülleri kritik hata tespit ettiğinde bir sinyal üretmektedir. Bu sinyal, toparlanma mekanizmasını tetiklemektedir. Toparlanma akışı şu şekilde gerçekleşmektedir:
+Tasarımda, boruhattının farklı aşamalarına dağılmış TMR modülleri kritik hata tespit ettiğinde bir sinyal üretmektedir. Mevcut tasarımda bu sinyal, hatanın raporlanmasını sağlamakta ve önerilen toparlanma mekanizması için bir tetikleyici görevi görmektedir. Önerilen toparlanma akışı şu şekilde tasarlanmıştır:
 
 \begin{enumerate}
     \item \textbf{Kritik hata tespiti:} Herhangi bir aşamadaki TMR modülü, üç kopyanın da farklı olduğunu tespit eder ve kritik hata sinyalini aktifleştirir.
     
-    \item \textbf{İlgili komutun belirlenmesi:} Hatalı komuta atanmış fiziksel yazmaç adresi, BRAT'teki ilgili checkpoint'a erişmek için kullanılır.
+    \item \textbf{İlgili komutun belirlenmesi:} Hatalı komuta atanmış fiziksel yazmaç adresi, BRAT'taki ilgili anlık görüntüye erişmek için kullanılır.
     
-    \item \textbf{Checkpoint'tan geri yükleme:} BRAT'ten yazmaç takma ad tablosu anlık görüntüsü ve program sayacı değeri alınır.
+    \item \textbf{Anlık görüntüden geri yükleme:} BRAT'ten yazmaç takma ad tablosu anlık görüntüsü ve program sayacı değeri alınır.
     
     \item \textbf{Boruhattı temizleme:} Hatalı komuttan sonra işlenen tüm spekülatif komutlar temizlenir.
     
     \item \textbf{Yeniden başlatma:} Program sayacı, hatalı komutun adresine ayarlanır ve komut bellekten yeniden getirilir.
 \end{enumerate}
 
-Bu mekanizma, yanlış tahmin toparlanmasıyla aynı donanım yollarını kullanmaktadır. Dolayısıyla, \textbf{kritik hata toparlanma cezası, yanlış tahmin cezasına eşit veya daha düşüktür}.
+Bu mekanizmanın tam otonom çalışması için gereken merkezi denetleyici, bu tez kapsamında gerçeklenmemiş olup tespit ve raporlama altyapısı tamamlanmıştır. Mevcut sistemde kritik hata sinyali başarıyla üretilmekte ve simülasyon ortamına iletilmektedir. Tam otomatik toparlanma, gelecek çalışma olarak planlanmıştır.
 
 \subsection{Boruhattı Seviyesi Korumanın Avantajı}\label{subsec:pipeline_protection_advantage}
 
@@ -316,17 +316,17 @@ Bu yaklaşım, hata algılama ve toparlanmanın boruhattı seviyesinde yapılmas
 
 \subsection{Fiziksel Adres Bozulması Durumu}\label{subsec:address_corruption}
 
-Nadir durumlarda, hatalı komuta ait fiziksel yazmaç adresi de bozulabilmektedir. Bu durumda, hangi checkpoint'a dönüleceği belirlenememektedir. Bu senaryoya karşı alternatif bir mekanizma tasarlanmıştır:
+Nadir durumlarda, hatalı komuta ait fiziksel yazmaç adresi de bozulabilmektedir. Bu durumda, hangi anlık görüntüye dönüleceği belirlenememektedir. Bu senaryoya karşı alternatif bir mekanizma tasarlanmıştır:
 
 BRAT girişleri, büyük bellek yapılarıyla birlikte ECC koruması altında olduğu varsayılmaktadır. Ayrıca, BRAT'ın baş işaretçisinde bulunan ve belirli bir zaman aşımı süresince sonuçlanmayan komutlar, potansiyel olarak bozulmuş kabul edilebilmektedir.
 
-Bu durumda bile, BRAT'teki en eski geçerli checkpoint ve doğru program sayacı değeri kullanılarak program en az kayıpla yeniden başlatılabilmektedir. Bu yaklaşım, tamamen sistem yeniden başlatmasına kıyasla çok daha hızlı ve verimli bir toparlanma sağlamaktadır.
+Bu durumda bile, BRAT'teki en eski geçerli anlık görüntü ve doğru program sayacı değeri kullanılarak program en az kayıpla yeniden başlatılabilmektedir. Bu yaklaşım, tamamen sistem yeniden başlatmasına kıyasla çok daha hızlı ve verimli bir toparlanma sağlamaktadır.
 
-\textbf{Not:} Zaman aşımı tabanlı mekanizma henüz test edilmemiştir ve gelecek çalışma olarak önerilmektedir.
+Zaman aşımı tabanlı mekanizmanın testi henüz gerçekleştirilmemiş olmakla birlikte, bu konu gelecek çalışmalar için önerilmektedir.
 
 \subsection{Dinamik Mod Geçişi Potansiyeli}\label{subsec:dynamic_mode_potential}
 
-Tasarlanan mimari, henüz implemente edilmemiş olsa da, gelecekte dışarıdan müdahale gerektirmeden otomatik mod geçişini destekleyecek şekilde planlanmıştır:
+Tasarlanan mimari, henüz gerçeklenmemiş olsa da, gelecekte dışarıdan müdahale gerektirmeden otomatik mod geçişini destekleyecek şekilde planlanmıştır:
 
 \begin{enumerate}
     \item İşlemci süperölçekli modda çalışırken bile, oylayıcılar uyumsuzlukları algılayabilmektedir (baypas modunda bile karşılaştırma yapılabilmektedir).

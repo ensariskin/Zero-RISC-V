@@ -121,7 +121,7 @@ Yanlış tahmin cezasının süperölçekli işlemcilere etkisi, skaler işlemci
     \label{eq:ipc_mispred}
 \end{equation}
 
-Bu denklemde $W$ işlemci genişliğini (skaler için 1, üç yollu süperölçekli için 3), $B$ dallanma komut oranını, $M = (1 - Doğruluk)$ yanlış tahmin oranını ve $P$ yanlış tahmin cezası çevrim sayısını ifade etmektedir. Yüzde yirmi dallanma oranı ($B = 0.20$), yüzde seksen tahmin doğruluğu ($M = 0.20$) ve üç çevrimlik ceza ($P = 3$) varsayımlarıyla:
+Bu denklemde $W$ işlemci genişliğini (skaler için 1, üç yollu süperölçekli için 3), $B$ dallanma komut oranını, $M = (1 - \text{Doğruluk})$ yanlış tahmin oranını ve $P$ yanlış tahmin cezası çevrim sayısını ifade etmektedir. Yüzde yirmi dallanma oranı ($B = 0.20$), yüzde seksen tahmin doğruluğu ($M = 0.20$) ve üç çevrimlik ceza ($P = 3$) varsayımlarıyla:
 
 \begin{align}
     IPC_{skaler} &= \frac{1}{1 + 1 \times 0.20 \times 0.20 \times 3} = \frac{1}{1.12} = 0.89 \label{eq:ipc_scalar} \\
@@ -171,7 +171,7 @@ Tasarlanan sistemde dönüş adresi yığını sekiz giriş derinliğindedir. Sp
 Komut tamponu, komut getirme ve kod çözme aşamaları arasında ayrıştırma sağlayan bir ilk giren ilk çıkar yapısıdır. Bu ayrıştırma, her iki aşamanın farklı hızlarda çalışmasına olanak tanımakta ve boruhattı verimliliğini artırmaktadır.
 
 
-Komut getirme aşaması dallanma ve atlama komutları nedeniyle, boruhattının ileri aşamaları ise veri bağımlılıkları, bellek işlemleri ve daha birçok sebeple farklı hızlarda çalışabilmektedir. Komut belleğinden komutları hızlıca alıp bunları boruhattının ileriki aşamalarının kullanabileceği şekilde bir tamponda toplamak, işlemcinin karmaşıklığını azaltmakla birlikte performansını da artırmaktadır.
+Komut getirme aşaması dallanma ve atlama komutları nedeniyle, boruhattının ileri aşamaları ise veri bağımlılıkları ve bellek işlemleri gibi sebeplerle farklı hızlarda çalışabilmektedir. Bu nedenle, komut belleğinden alınan komutların bir tamponda toplanması ve boruhattının ileri aşamalarına buradan sunulması gerekmektedir. Bu yaklaşım, işlemcinin karmaşıklığını yönetilebilir düzeye indirmekle birlikte performans artışı da sağlamaktadır.
 
 Ayrıca, komut verme aşaması duraklatıldığında komut getirme aşaması tampon dolana kadar çalışmaya devam edebilmektedir. Bu yalıtım, kısa süreli duraksamaların boruhattının tamamını etkilemesini engellemektedir.
 
