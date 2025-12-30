@@ -1,12 +1,16 @@
 % Türkçe Özet
 % 300+ kelime, 1-3 sayfa olmalıdır
 
-% TODO: Problem tanımı (superscalar + güvenlik ihtiyacı)
-% TODO: Çözüm yaklaşımı (on-demand redundancy)
-% TODO: Tasarlanan sistem özeti (6-stage pipeline)
-% TODO: Elde edilen sonuçlar
-% TODO: Ana katkılar
+Yarı iletken teknolojisindeki minyatürleşme, işlemcilerin çevresel faktörlere karşı duyarlılığını önemli ölçüde artırmıştır. Özellikle uzay, havacılık ve otomotiv uygulamalarında kullanılan sistemlerin radyasyon kaynaklı geçici hatalara karşı korunması kritik önem taşımaktadır. Geleneksel hata toleransı yöntemleri olan Üçlü Modüler Yedeklilik (TMR) ve kilitli adım (lock-step) yaklaşımları yüksek güvenilirlik sağlamakla birlikte, sürekli aktif olmaları nedeniyle önemli performans ve alan maliyetlerine neden olmaktadır.
 
-Bu tez, süperölçekli işlemcilere isteğe bağlı yedeklilik tekniğinin uygulanmasını ele almaktadır.
+Bu tez çalışmasında, hata toleranslı süperölçekli sıra dışı yürütme özellikli bir RISC-V işlemci tasarlanmış ve gerçeklenmiştir. Tasarlanan işlemci, RV32I taban komut setini desteklemekte olup üç yollu süperölçekli yapısı sayesinde yüksek performans sunmaktadır. İsteğe Bağlı Modüler Yedeklilik (ODMR) yaklaşımı kullanılarak, sistem görev kritikliğine göre yüksek performans modu ile güvenli mod arasında dinamik geçiş yapabilmektedir.
 
-% Özet içeriği buraya yazılacak...
+İşlemci mimarisi, altı aşamalı boruhattı yapısına sahiptir: komut getirme, kod çözme ve yeniden adlandırma, dağıtım, yürütme, bellek erişimi ve geri yazma. Sıra dışı yürütme, Tomasulo algoritmasının modern bir uyarlaması olarak gerçeklenmiştir. Yazmaç yeniden adlandırma için Yazmaç Takma Ad Tablosu (RAT), spekülatif yürütme yönetimi için Yeniden Sıralama Arabelleği (ROB) kullanılmaktadır. RAT Checkpoint mekanizması, yanlış dal tahmini durumunda tek çevrimde durum geri yüklemesi sağlamaktadır.
+
+Güvenli modda, üç paralel yürütme kanalı TMR yapısını oluşturarak tek bit hatalarını maskelemektedir. Boruhattı seviyesinde uygulanan yedeklilik, çekirdek seviyesi kilitli adım yöntemlerine göre daha hızlı hata tespiti ve toparlanma imkanı sunmaktadır. Mod geçişi için boruhattı boşaltma veya durum senkronizasyonu gerekmemektedir.
+
+Doğrulama çalışmaları, Google RISC-V DV çerçevesi ve Berkeley Spike referans modeli kullanılarak gerçekleştirilmiştir. Tüm test sonuçları referans model ile tam uyum sağlamıştır. Performans analizinde ortalama 1,71 IPC değeri ve maksimum 2,90 IPC değeri elde edilmiştir. Üç yollu yapı, tek yollu yapıya göre 2,04 kat ortalama hızlanma sağlamıştır. Hata enjeksiyonu testlerinde, TMR korumalı yazmaçlara enjekte edilen tüm tek bit hataları başarıyla maskelenmiş, çoklu bit hataları için yüzde yüz tespit oranı elde edilmiştir.
+
+Fiziksel tasarım, TSMC 16nm FinFET teknolojisinde gerçekleştirilmiştir. Lojik sentez sonuçları yaklaşık yüz kırk iki bin hücre kullanıldığını ve 1 GHz frekansın ulaşılabilir olduğunu göstermektedir. Fiziksel tasarım sonrası yüzde yirmi aktivite varsayımı altında toplam güç tüketimi 131,6 mW olarak ölçülmüştür.
+
+Bu çalışma, süperölçekli sıra dışı yürütme kapasitesi ile çekirdek içi hata toleransını ODMR yöntemiyle birleştiren özgün bir RISC-V işlemci mimarisi sunmaktadır. Elde edilen sonuçlar, yüksek güvenilirlik gerektiren uygulamalar için esnek ve verimli bir çözüm sağlandığını ortaya koymaktadır.

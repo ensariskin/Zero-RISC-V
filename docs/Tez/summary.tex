@@ -1,12 +1,81 @@
 % English Extended Summary (SUMMARY)
 % 3-5 pages required
 
-% TODO: Extended introduction
-% TODO: Methodology overview  
-% TODO: System architecture summary (6-stage pipeline)
-% TODO: Key results
-% TODO: Conclusions
+The continuous miniaturization of semiconductor technology has significantly increased the susceptibility of integrated circuits to environmental factors. Cosmic rays and high-energy particles can interact with semiconductor materials, causing Single Event Upsets (SEU) that result in bit-flips in memory cells and registers. As technology scales to smaller nodes, the probability of Multiple Bit Upsets (MBU), where a single particle affects multiple adjacent cells, also increases. These phenomena pose critical challenges for systems deployed in space, aviation, and automotive applications where reliability is paramount.
 
-This thesis presents the application of on-demand redundancy technique to superscalar processors.
+Traditional fault tolerance techniques such as Triple Modular Redundancy (TMR) and lock-step execution provide robust protection against transient faults. TMR uses three redundant copies of hardware with majority voting to mask single-bit errors, while lock-step methods synchronize multiple processor cores to detect discrepancies. However, these approaches impose significant area and power overhead, and more critically, they remain active even when fault protection is not required, resulting in performance degradation during normal operation.
 
-% Summary content will be written here...
+On-Demand Modular Redundancy (ODMR) has emerged as a flexible alternative that addresses these limitations. In ODMR systems, redundancy can be dynamically enabled or disabled based on mission criticality. During critical operations, the system operates in a protected mode with full redundancy, while during normal operations, the redundant resources can function independently to maximize performance. This thesis applies the ODMR concept to superscalar out-of-order processors, a combination that has not been previously explored in the literature.
+
+The primary objective of this thesis is to design and implement a fault-tolerant superscalar out-of-order RISC-V processor that supports on-demand redundancy. The specific goals include:
+
+\begin{itemize}
+    \item Designing a three-way superscalar architecture suitable for ODMR operation, where the three execution channels can operate independently for high performance or collectively as a TMR unit for fault tolerance.
+    \item Implementing intra-core spatial redundancy at the pipeline level rather than at the core level, enabling faster fault detection and recovery compared to traditional lock-step methods.
+    \item Developing a low-latency mode transition mechanism that does not require pipeline flushing or state synchronization.
+    \item Creating a dual-purpose RAT Checkpoint structure that serves both for branch misprediction recovery and as infrastructure for radiation-induced fault recovery.
+\end{itemize}
+
+The processor supports the RV32I base integer instruction set and operates in machine mode only. The design excludes multiply/divide (M) and floating-point (F) extensions, cache hierarchy, and multi-core configurations, which are identified as future work.
+
+The designed processor employs a six-stage pipeline architecture: Fetch, Decode/Rename, Dispatch, Execute, Memory, and Writeback. This structure represents a modern implementation of the Tomasulo algorithm with additional enhancements for superscalar operation and fault tolerance.
+
+The fetch stage retrieves up to six instructions per cycle from an aligned instruction buffer, providing sufficient bandwidth for three-way superscalar operation. A tournament branch predictor combines bimodal and GShare predictors to achieve over 80\% prediction accuracy on realistic workloads. The Return Address Stack (RAS) provides accurate predictions for function returns.
+
+The decode/rename stage handles up to three instructions simultaneously. Each instruction undergoes immediate decoding to extract control signals and operand information. The Register Alias Table (RAT) performs register renaming to eliminate false dependencies (WAW and WAR hazards). Architectural registers are dynamically mapped to a larger physical register file containing 64 entries.
+
+The dispatch stage allocates resources for each decoded instruction. Three parallel channels distribute instructions to reservation stations, the Reorder Buffer (ROB), and the Load/Store Queue (LSQ). The ROB maintains program order for in-order retirement and precise exception handling. Resource allocation considers both ROB and LSQ availability to prevent deadlocks.
+
+The execute stage contains three Arithmetic Logic Units (ALUs), each capable of handling integer arithmetic and logical operations. Instructions are issued from reservation stations when all source operands become available. The Common Data Bus (CDB) broadcasts results to waiting instructions, implementing the Tomasulo algorithm's result forwarding mechanism.
+
+The memory stage handles load and store operations through the LSQ. Store-to-load forwarding is implemented to reduce memory access latency. Memory ordering constraints are maintained to ensure correct program execution.
+
+The writeback stage commits completed instructions in program order. Upon commitment, results are written to the architectural register file, and physical registers are freed for reuse. Branch misprediction detection triggers pipeline recovery using the RAT Checkpoint mechanism.
+
+The RAT Checkpoint mechanism enables eager misprediction recovery with single-cycle latency. Unlike lazy recovery methods that wait for the mispredicted branch to reach the ROB head, eager recovery immediately restores the correct processor state from a saved checkpoint. A 16-entry circular buffer stores RAT snapshots along with Global History Register (GHR) values, Return Address Stack Top-of-Stack pointers, and Program Counter values for each in-flight branch.
+
+When a branch misprediction is detected, the corresponding checkpoint is retrieved, and the RAT is restored in a single cycle. This mechanism significantly reduces the misprediction penalty compared to traditional approaches that require sequential state reconstruction.
+
+In secure mode, the three superscalar channels execute the same instruction stream simultaneously, forming a TMR configuration. Majority voters compare the outputs from all three channels and produce the correct result even if one channel experiences a fault. Critical control signals and register values are protected using this approach.
+
+The TMR implementation focuses on protecting the most vulnerable structures identified in radiation testing studies. According to Santos et al., 78\% of radiation-induced errors occur in memories, while 15\% occur in register files. Accordingly, the register file, ROB entries, and critical pipeline registers are protected with TMR voters.
+
+Large memory structures such as the physical register file and instruction buffer are assumed to be protected by Error Correcting Codes (ECC), which can correct single-bit errors and detect double-bit errors. The physical ECC implementation is outside the scope of this work.
+
+A key advantage of implementing redundancy at the pipeline level rather than the core level is the simplified mode transition. Traditional lock-step systems require synchronizing multiple cores before entering redundant mode, which may involve flushing pipelines and copying register states. In contrast, the proposed architecture enables mode transition by simply activating the TMR voters and modifying the instruction dispatch logic. No pipeline flushing or state synchronization is required.
+
+The mode transition is controlled by a secure mode enable signal that can be set by software through a dedicated control register. This allows the operating system or application to dynamically adjust the protection level based on mission phase or environmental conditions.
+
+The processor was verified using a comprehensive test suite including both constrained-random and deterministic tests. The Google RISC-V DV framework generated random instruction sequences that exercise various corner cases and stress conditions. Deterministic tests consisted of algorithm implementations covering diverse computational patterns: graph algorithms (Dijkstra, topological sort), dynamic programming (knapsack, edit distance), sorting (heapsort), string matching (KMP), and mathematical computations (Sieve of Eratosthenes, matrix exponentiation).
+
+All test results were compared against the Berkeley Spike reference simulator on a cycle-by-cycle basis. Complete agreement was achieved across all tests, confirming correct implementation of the RV32I instruction set and the superscalar out-of-order execution mechanisms.
+
+Performance measurements demonstrated the effectiveness of the superscalar architecture. In arithmetic-intensive random tests, the processor achieved a maximum IPC of 2.90, representing 97\% of the theoretical maximum. Deterministic algorithm tests yielded an average IPC of 1.71, corresponding to a 2.04x speedup compared to a single-issue scalar processor.
+
+The branch predictor achieved over 80\% accuracy on deterministic tests representing realistic workloads. Random tests exhibited lower prediction accuracy (32-43\%) due to the absence of statistical patterns in randomly generated instruction sequences.
+
+Fault injection tests validated the effectiveness of the TMR protection. Single-bit errors injected into TMR-protected registers were successfully masked by the majority voters, with no corruption propagating to architectural state. Multi-bit errors were detected with 100\% accuracy, preventing silent data corruption.
+
+The processor was synthesized and placed-and-routed using TSMC 16nm FinFET technology with standard-VT cells. Logic synthesis produced approximately 142,000 cells and indicated that 1~GHz operation was achievable. Post-place-and-route timing analysis revealed a 106~ps timing violation on the critical path, reducing the achievable frequency to approximately 900~MHz.
+
+The critical path passes through the RAT Checkpoint structure, specifically the multiplexer selecting among checkpoint entries during misprediction recovery. Future work may address this through additional pipeline stages or more aggressive synthesis constraints.
+
+Power analysis assuming 20\% switching activity yielded a total power consumption of 131.6~mW at the post-layout stage. This includes both dynamic and leakage power components.
+
+This thesis presents the following original contributions:
+
+\begin{enumerate}
+    \item A three-way superscalar architecture designed for ODMR compatibility, where the same three channels provide either parallel instruction execution or TMR protection depending on the operating mode.
+    
+    \item Pipeline-level spatial redundancy implementation that enables faster fault detection and recovery compared to core-level lock-step methods, with minimal area overhead limited to voter circuits.
+    
+    \item A low-latency mode transition mechanism that requires only activation of voters and modification of dispatch logic, without pipeline flushing or state synchronization.
+    
+    \item A dual-purpose RAT Checkpoint structure that provides single-cycle branch misprediction recovery and serves as infrastructure for radiation-induced fault recovery.
+\end{enumerate}
+
+This thesis has demonstrated the feasibility of combining superscalar out-of-order execution with intra-core fault tolerance using the ODMR approach. The designed RISC-V processor achieves high performance in normal mode through three-way superscalar execution while providing robust SEU protection in secure mode through TMR voting.
+
+The experimental results validate both the functional correctness and physical realizability of the proposed architecture. Performance measurements confirm effective exploitation of instruction-level parallelism, while fault injection tests demonstrate complete SEU masking in TMR-protected structures.
+
+Future work directions include: implementing the automatic fault recovery controller based on the RAT Checkpoint mechanism; adding physical ECC protection for memory structures; extending support to RV32M and RV32F instruction set extensions; integrating cache hierarchy with realistic memory models; resolving the timing violation through critical path optimization; and exploring multi-core configurations with inter-core ODMR grouping.

@@ -468,14 +468,3 @@ Fonksiyonel doğrulama açısından, yaklaşık 200.000 komutluk test kapsamı h
 Lojik sentez sonuçları, 16nm FinFET teknolojisinde yaklaşık 142.000 hücre kullanılarak 1 GHz frekansın ulaşılabilir olduğunu ortaya koymaktadır. Ancak fiziksel tasarım aşamasında gerçek tel gecikmelerinin hesaba katılmasıyla 106 ps'lik zamanlama ihlali oluşmakta, bu durum ulaşılabilir frekansı yaklaşık 900 MHz seviyesine çekmektedir.
 
 Güç tüketimi açısından fiziksel tasarım sonrası elde edilen 131.6 mW değeri değerlendirilmelidir. Karşılaştırma amacıyla, Berkeley'in tek yollu sıralı Rocket çekirdeği TSMC 40nm teknolojide 0.034 mW/MHz dinamik güç tüketimi göstermektedir \cite{rocket_power}. Teknoloji farkı göz önünde bulundurulduğunda doğrudan karşılaştırma yapılamamakla birlikte, tasarlanan işlemcinin üç yollu paralel yürütme kapasitesi, spekülatif yürütme altyapısı ve yeniden sıralama mekanizmaları güç artışının temel kaynakları olarak değerlendirilebilir.
-
-\subsection{Kısıtlamalar ve Gelecek Çalışmalar}\label{subsec:kisitlamalar}
-
-Bu çalışmanın bazı kısıtlamaları bulunmakta olup, gelecek çalışmalarda ele alınması öngörülmektedir:
-\begin{enumerate}
-    \item \textbf{Zamanlama İhlali:} Fiziksel tasarım sonrası 1 GHz hedef frekansına tam olarak ulaşılamamıştır. Kritik yolun yeniden yapılandırılması, ardışık düzen aşamalarının eklenmesi veya daha agresif sentez kısıtlamalarının uygulanması ile bu ihlal giderilebilir.
-    
-    \item \textbf{Bellek Entegrasyonu:} Mevcut gerçekleme ideal bellek modelleri kullanmaktadır. Gerçek SRAM makrolarının entegrasyonu, ek gecikme ve alan maliyeti getirecek olup, zamanlama analizi bu koşullar altında yeniden değerlendirilmelidir.
-    
-    \item \textbf{Genişletilmiş Güvenilirlik:} Mevcut çalışmada kritik kontrol işaretçileri TMR ile korunmuştur. Gelecek çalışmalarda, bellek yapılarının korunması için kullanılan ECC yöntemlerinin fiziksel tasarımı ve sistem geneline yayılmış daha kapsamlı hata tespit mekanizmaları ele alınabilir.
-\end{enumerate}

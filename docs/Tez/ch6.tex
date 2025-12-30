@@ -3,31 +3,94 @@
 \chapter{SONUÇLAR VE ÖNERİLER}\label{ch:sonuclar}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Sonuçların Değerlendirilmesi}\label{sec:sonuc_degerlendirme}
-
-% TODO: Tezin ana bulgularının özeti
+Bu bölümde, tez çalışmasının sonuçları özetlenmekte, elde edilen bulgular değerlendirilmekte ve gelecek çalışmalar için öneriler sunulmaktadır.
 
 %------------------------------------------------------------------------
-
-\section{Katkılar}\label{sec:ch6_katkilar}
-
-% TODO: 3-way superscalar + on-demand TMR kombinasyonu
-% TODO: Orijinal katkıların listesi
-
+\section{Çalışmanın Özeti}\label{sec:calisma_ozeti}
 %------------------------------------------------------------------------
 
+Bu tez çalışmasında, hata toleranslı süperölçekli sıra dışı yürütme özellikli bir RISC-V işlemci tasarlanmış ve gerçeklenmiştir. Tasarlanan işlemci, üç yollu süperölçekli yapısı sayesinde yüksek performans sunarken, İsteğe Bağlı Modüler Yedeklilik (ODMR) yaklaşımı ile esnek hata toleransı sağlamaktadır.
+
+İşlemci, RV32I taban komut setini desteklemekte olup Tomasulo algoritmasının modern bir uyarlaması olarak tasarlanmıştır. Altı aşamalı boruhattı yapısı, spekülatif yürütme ve dinamik zamanlama özellikleri ile komut seviyesi paralelliğinden etkin biçimde yararlanmaktadır. Güvenli modda, üç paralel yürütme kanalı Üçlü Modüler Yedeklilik (TMR) yapısını oluşturarak tek bit hatalarını maskelemektedir.
+
+%------------------------------------------------------------------------
+\section{Elde Edilen Sonuçlar}\label{sec:sonuclar_degerlendirme}
+%------------------------------------------------------------------------
+
+Gerçekleştirilen kapsamlı doğrulama ve fiziksel tasarım çalışmaları, işlemcinin hem fonksiyonel doğruluk hem de fiziksel gerçeklenebilirlik açısından başarılı sonuçlar ürettiğini ortaya koymaktadır.
+
+\subsection{Fonksiyonel Doğrulama}
+
+İşlemci, Google RISC-V DV çerçevesi ve Berkeley Spike referans modeli kullanılarak kapsamlı biçimde doğrulanmıştır. Hem rastgele hem de deterministik test programları başarıyla tamamlanmış olup, tüm test sonuçları referans model ile tam uyum göstermiştir. Bu sonuçlar, RV32I komut seti mimarisinin eksiksiz olarak gerçeklendiğini doğrulamakla birlikte, süperölçekli sıra dışı yürütme yapısı, hevesli yanlış tahmin toparlanması (eager misprediction recovery), dinamik zamanlama ve spekülatif yürütme gibi hedeflenen tüm mimari kararların başarıyla uygulandığını göstermektedir.
+
+\subsection{Performans Analizi}
+
+Süperölçekli mimari, beklenen performans kazanımlarını sağlamaktadır. Rastgele test senaryolarında maksimum 2,90 IPC değerine ulaşılmış olup bu değer teorik maksimumun yüzde doksan yedisine karşılık gelmektedir. Deterministik algoritma testlerinde ise ortalama 1,71 IPC elde edilmiştir.
+
+Hızlanma oranları incelendiğinde, aritmetik ağırlıklı iş yüklerinde 2,90x maksimum hızlanma, karma iş yüklerinde ise 1,85x minimum hızlanma gözlemlenmiştir. Deterministik testlerde üç yollu yapı, tek yollu yapıya göre 2,04x ortalama hızlanma sağlamıştır. 
+
+Dal tahmincisi basit bir yapıda tutulmasına rağmen gerçek dünya iş yüklerini temsil eden deterministik testlerde yüzde seksenin üzerinde tahmin doğruluğuna ulaşmıştır. 
+
+\subsection{Hata Toleransı}
+
+Hata enjeksiyonu testleri, TMR korumasının etkinliğini doğrulamıştır. ECC ile korunduğu varsayılan büyük bellek yapıları hariç, TMR ile korunan tüm yazmaçlara enjekte edilen tek bit hataları (SEU) başarıyla maskelenmiştir. Çoklu bit hataları (MBU) için ise yüzde yüz tespit oranı elde edilmiş olup, sessiz veri bozulmasının önüne geçilmiştir.
+
+\subsection{Fiziksel Gerçekleme}
+
+Lojik sentez sonuçları, TSMC 16nm FinFET teknolojisinde yaklaşık yüz kırk iki bin hücre kullanıldığını ve 1 GHz frekansın ulaşılabilir olduğunu göstermektedir. Fiziksel tasarım aşamasında gerçek tel gecikmeleri hesaba katıldığında yüz altı pikosaniyelik zamanlama ihlali oluşmuş olup, bu durum ulaşılabilir frekansı yaklaşık dokuz yüz megahertze çekmektedir. Yüzde yirmi değiştirme aktivitesi varsayımı altında fiziksel tasarım sonrası toplam güç tüketimi 131,6 mW olarak ölçülmüştür.
+
+%------------------------------------------------------------------------
+\section{Tezin Katkıları}\label{sec:ch6_katkilar}
+%------------------------------------------------------------------------
+
+Bu tez çalışması, aşağıdaki özgün katkıları sunmaktadır:
+
+\begin{enumerate}
+    \item ODMR'a uygun üç yollu süperölçekli mimari tasarımı gerçeklenmiştir. Normal çalışmada üç kanal bağımsız komutları paralel işleyerek yüksek IPC değerine ulaşabilmekte, güvenli modda ise aynı üç kanal TMR yapısını oluşturmaktadır.
+    
+    \item Boruhattı seviyesinde uzaysal yedeklilik uygulanmıştır. Çekirdek seviyesi kilitli adım yöntemlerinden farklı olarak, TMR koruması boruhattının içinde gerçeklenmiş olup ek alan maliyeti yalnızca oylayıcı devreleriyle sınırlı kalmıştır.
+    
+    \item Düşük gecikmeli mod geçişi sağlanmıştır. Yedekliliğin boruhattı seviyesinde uygulanması, modlar arası geçiş için boruhattı boşaltma veya durum senkronizasyonu gerektirmemektedir.
+    
+    \item RAT Checkpoint yapısının çift amaçlı kullanımı önerilmiştir. Yanlış dal tahmini toparlanması için tasarlanan bu yapı, radyasyon kaynaklı kritik hatalardan toparlanma için de kullanılabilecek altyapıyı sağlamaktadır.
+\end{enumerate}
+
+%------------------------------------------------------------------------
 \section{Kısıtlamalar}\label{sec:kisitlamalar_son}
-
-% TODO: ECC implementasyonu yok
-% TODO: Sentez yapılmadı
-% TODO: Diğer sınırlamalar
-
 %------------------------------------------------------------------------
 
-\section{Gelecek Çalışmalar}\label{sec:gelecek}
+Bu çalışmanın bazı kısıtlamaları bulunmaktadır:
 
-% TODO: ECC implementasyonu
-% TODO: M/F extension desteği
-% TODO: Cache implementasyonu
-% TODO: FPGA sentezi
-% TODO: Multi-core genişleme
+\begin{enumerate}
+    \item Fiziksel tasarım sonrası 1 GHz hedef frekansına tam olarak ulaşılamamıştır. Kritik yolda yüz altı pikosaniyelik zamanlama ihlali oluşmuştur.
+    
+    \item Bellek entegrasyonu ideal modeller kullanılarak gerçekleştirilmiştir. Gerçek SRAM makrolarının entegrasyonu ek gecikme ve alan maliyeti getirecektir.
+    
+    \item Büyük bellek yapıları için ECC koruması varsayılmakta olup, ECC'nin fiziksel gerçeklemesi bu çalışmanın kapsamı dışındadır.
+    
+    \item Yalnızca RV32I taban komut seti desteklenmektedir. Bununla birlikte, mevcut mikromimari çok çevrimli işlemleri destekleyecek şekilde tasarlanmış olup, çarpma, bölme ve kayan nokta uzantılarının entegrasyonu görece düşük karmaşıklıkla gerçekleştirilebilecektir.
+\end{enumerate}
+
+%------------------------------------------------------------------------
+\section{Gelecek Çalışmalar}\label{sec:gelecek}
+%------------------------------------------------------------------------
+
+Bu çalışma, aşağıdaki yönlerde genişletilebilir:
+
+\begin{enumerate}
+    \item RAT Checkpoint tabanlı otomatik hata toparlanma denetleyicisinin gerçeklenmesi.
+    
+    \item ECC korumasının fiziksel gerçeklemesi ve yazmaç dosyası ile yeniden sıralama arabelleğine entegrasyonu.
+    
+    \item RV32M (çarpma/bölme) ve RV32F (kayan nokta) uzantılarının eklenmesi ile uygulama kapsamının genişletilmesi.
+    
+    \item Önbellek hiyerarşisinin tasarlanması ve bellek erişim gecikmelerinin gerçekçi modellenmesi.
+    
+    \item Zamanlama ihlalinin giderilmesi için kritik yol optimizasyonu veya ek ardışık düzen aşamalarının eklenmesi.
+    
+    \item Çoklu çekirdekli yapıya genişleme ve çekirdekler arası ODMR gruplandırması.
+    
+    \item FPGA prototipi üzerinde gerçek zamanlı doğrulama ve performans ölçümü.
+\end{enumerate}
+
+Sonuç olarak, bu tez çalışması süperölçekli sıra dışı yürütme kapasitesi ile çekirdek içi hata toleransını birleştiren özgün bir RISC-V işlemci mimarisi sunmaktadır. ODMR yaklaşımı sayesinde performans ve güvenilirlik arasında dinamik denge kurulabilmekte, uzay, havacılık ve otomotiv gibi yüksek güvenilirlik gerektiren uygulamalar için esnek bir çözüm sağlanmaktadır.

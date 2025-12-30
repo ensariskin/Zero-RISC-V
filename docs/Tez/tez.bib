@@ -1,301 +1,344 @@
-% RISC-V Tez Kaynakları
-% Numaralı referans sistemi kullanılacak
-
 % ================================================================
-% TEMEL SPESİFİKASYONLAR
+% TEMEL SPESİFİKASYONLAR (Resmi Sitelerden)
 % ================================================================
 
 @misc{riscv_spec,
   author = {{RISC-V Foundation}},
-  title = {The RISC-V Instruction Set Manual, Volume I: User-Level ISA},
-  howpublished = {\url{https://riscv.org/specifications/}},
+  title = {The RISC-V Instruction Set Manual, Volume I: User-Level ISA, Version 2.2},
   year = {2019},
-  note = {Version 2.2}
+  url = {https://riscv.org/specifications/},
+  note = {RISC-V Foundation}
 }
 
 @misc{riscv_priv,
-  author = {Andrew Waterman and Krste Asanović},
-  title = {The RISC-V Instruction Set Manual, Volume II: Privileged Architecture},
-  howpublished = {\url{https://riscv.org/specifications/}},
+  author = {Waterman, Andrew and Asanovi\'{c}, Krste},
+  title = {The RISC-V Instruction Set Manual, Volume II: Privileged Architecture, Version 1.12},
   year = {2021},
-  note = {Version 1.12}
+  url = {https://riscv.org/specifications/},
+  publisher = {RISC-V International}
 }
 
 % ================================================================
-% BİLGİSAYAR MİMARİSİ TEMELLERİ
+% BİLGİSAYAR MİMARİSİ TEMELLERİ (DBLP ve ACM Kayıtları)
 % ================================================================
 
 @book{patterson_hennessy,
-  author = {David A. Patterson and John L. Hennessy},
-  title = {Computer Organization and Design: The Hardware/Software Interface},
+  author    = {David A. Patterson and John L. Hennessy},
+  title     = {Computer Organization and Design: The Hardware/Software Interface},
+  edition   = {5th},
   publisher = {Morgan Kaufmann},
-  year = {2014},
-  edition = {5th}
+  year      = {2014},
+  isbn      = {978-0-12-407726-3},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
 }
 
 @book{shen_lipasti,
-  author = {John Paul Shen and Mikko H. Lipasti},
-  title = {Modern Processor Design: Fundamentals of Superscalar Processors},
+  author    = {John Paul Shen and Mikko H. Lipasti},
+  title     = {Modern Processor Design: Fundamentals of Superscalar Processors},
   publisher = {McGraw-Hill},
-  year = {2005}
+  year      = {2005},
+  isbn      = {978-0-07-057064-1},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
 }
 
 @article{tomasulo,
-  author = {Robert M. Tomasulo},
-  title = {An Efficient Algorithm for Exploiting Multiple Arithmetic Units},
-  journal = {IBM Journal of Research and Development},
-  volume = {11},
-  number = {1},
-  pages = {25--33},
-  year = {1967}
+  author={Tomasulo, R. M.},
+  journal={IBM Journal of Research and Development}, 
+  title={An Efficient Algorithm for Exploiting Multiple Arithmetic Units}, 
+  year={1967},
+  volume={11},
+  number={1},
+  pages={25-33},
+  doi={10.1147/rd.111.0025},
+  issn={0018-8646}
 }
 
 @article{keller,
-  author = {Robert M. Keller},
+  author = {Keller, Robert M.},
   title = {Look-Ahead Processors},
-  journal = {ACM Computing Surveys},
+  year = {1975},
+  issue_date = {Dec. 1975},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
   volume = {7},
   number = {4},
-  pages = {177--195},
-  year = {1975}
+  issn = {0360-0300},
+  url = {https://doi.org/10.1145/356657.356658},
+  doi = {10.1145/356657.356658},
+  journal = {ACM Comput. Surv.},
+  month = {dec},
+  pages = {177–195},
+  numpages = {19}
 }
 
 @inproceedings{smith_branch,
-  author = {James E. Smith},
+  author = {Smith, J. E.},
   title = {A Study of Branch Prediction Strategies},
-  booktitle = {Proc. 8th Annual Symposium on Computer Architecture},
-  pages = {135--148},
-  year = {1981}
+  year = {1981},
+  isbn = {0818603705},
+  publisher = {IEEE Computer Society Press},
+  address = {Washington, DC, USA},
+  booktitle = {Proceedings of the 8th Annual Symposium on Computer Architecture},
+  pages = {135–148},
+  numpages = {14},
+  location = {Minneapolis, Minnesota, USA},
+  series = {ISCA '81}
 }
 
 % ================================================================
-% HATA TOLERANSI
+% HATA TOLERANSI (IEEE Xplore Orijinal Çıktıları)
 % ================================================================
 
 @article{baumann,
-  author = {Robert C. Baumann},
-  title = {Radiation-Induced Soft Errors in Advanced Semiconductor Technologies},
-  journal = {IEEE Transactions on Device and Materials Reliability},
-  volume = {5},
-  number = {3},
-  pages = {305--316},
-  year = {2005}
+  author={Baumann, R.C.},
+  journal={IEEE Transactions on Device and Materials Reliability}, 
+  title={Radiation-induced soft errors in advanced semiconductor technologies}, 
+  year={2005},
+  volume={5},
+  number={3},
+  pages={305-316},
+  doi={10.1109/TDMR.2005.853449}
 }
 
 @article{lyons_tmr,
-  author = {R. E. Lyons and W. Vanderkulk},
-  title = {The Use of Triple-Modular Redundancy to Improve Computer Reliability},
-  journal = {IBM Journal of Research and Development},
-  volume = {6},
-  number = {2},
-  pages = {200--209},
-  year = {1962}
+  author={Lyons, R. E. and Vanderkulk, W.},
+  journal={IBM Journal of Research and Development}, 
+  title={The Use of Triple-Modular Redundancy to Improve Computer Reliability}, 
+  year={1962},
+  volume={6},
+  number={2},
+  pages={200-209},
+  doi={10.1147/rd.62.0200}
 }
 
 @article{hamming,
-  author = {Richard W. Hamming},
-  title = {Error Detecting and Error Correcting Codes},
-  journal = {Bell System Technical Journal},
-  volume = {29},
-  number = {2},
-  pages = {147--160},
-  year = {1950}
+  author={Hamming, R. W.},
+  journal={The Bell System Technical Journal}, 
+  title={Error detecting and error correcting codes}, 
+  year={1950},
+  volume={29},
+  number={2},
+  pages={147-160},
+  doi={10.1002/j.1538-7305.1950.tb00463.x}
 }
 
 % ================================================================
-% RISC-V SUPERSCALAR IMPLEMENTASYONLAR
+% RISC-V SUPERSCALAR (UC Berkeley ve IEEE)
 % ================================================================
 
 @techreport{boom,
-  author = {Christopher Celio and David A. Patterson and Krste Asanović},
+  author = {Celio, Christopher and Patterson, David A. and Asanovi\'{c}, Krste},
   title = {The Berkeley Out-of-Order Machine (BOOM): An Industry-Competitive, Synthesizable, Parameterized RISC-V Processor},
-  institution = {UC Berkeley},
-  number = {UCB/EECS-2015-167},
-  year = {2015}
+  institution = {EECS Department, University of California, Berkeley},
+  year = {2015},
+  month = {Jun},
+  url = {http://www2.eecs.berkeley.edu/Pubs/TechRpts/2015/EECS-2015-167.html},
+  number = {UCB/EECS-2015-167}
 }
 
 @inproceedings{rsd,
-  author = {Susumu Suzuki and others},
-  title = {RSD: An Open Source FPGA-Optimized Out-of-Order RISC-V Soft Processor},
-  booktitle = {Proc. International Conference on Field Programmable Technology (FPT)},
-  year = {2019}
+  author={Suzuki, Susumu and Guo, Riwei and Kojima, Makoto and Hiromoto, Masayuki and Ochi, Hiroyuki},
+  booktitle={2019 International Conference on Field-Programmable Technology (ICFPT)}, 
+  title={RSD: A Highly-Optimized Out-of-Order RISC-V Soft Processor for FPGA}, 
+  year={2019},
+  pages={167-170},
+  doi={10.1109/ICFPT47387.2019.00030}
 }
 
 % ================================================================
-% BRANCH PREDICTION
+% BRANCH PREDICTION & OOO (Digital Corp & ACM)
 % ================================================================
 
 @techreport{mcfarling,
-  author = {Scott McFarling},
+  author = {McFarling, Scott},
   title = {Combining Branch Predictors},
   institution = {Western Research Laboratory, Digital Equipment Corporation},
+  year = {1993},
   number = {TN-36},
-  year = {1993}
+  url = {https://www.hpl.hp.com/techreports/Compaq-DEC/WRL-TN-36.pdf}
 }
 
 @inproceedings{yeh_patt,
-  author = {Tse-Yu Yeh and Yale N. Patt},
+  author = {Yeh, Tse-Yu and Patt, Yale N.},
   title = {Two-Level Adaptive Training Branch Prediction},
-  booktitle = {Proc. 24th Annual International Symposium on Microarchitecture},
-  pages = {51--61},
-  year = {1991}
+  year = {1991},
+  isbn = {0897914600},
+  publisher = {Association for Computing Machinery},
+  booktitle = {Proceedings of the 24th Annual International Symposium on Microarchitecture},
+  pages = {51–61},
+  numpages = {11},
+  doi = {10.1145/123465.123475},
+  series = {MICRO 24}
 }
-
-% ================================================================
-% OUT-OF-ORDER EXECUTION
-% ================================================================
 
 @book{johnson,
-  author = {Mike Johnson},
+  author = {Johnson, Mike},
   title = {Superscalar Microprocessor Design},
-  publisher = {Prentice Hall},
-  year = {1991}
+  year = {1991},
+  isbn = {0138756341},
+  publisher = {Prentice-Hall, Inc.},
+  address = {USA}
 }
 
 % ================================================================
-% TMR VE RISC-V
+% TMR VE RISC-V (IEEE Xplore Orijinal)
 % ================================================================
 
 @inproceedings{quinn,
-  author = {H. Quinn and others},
-  title = {Using Benchmarks for Radiation Testing of Microprocessors and FPGAs},
-  booktitle = {IEEE Transactions on Nuclear Science},
-  year = {2015}
+  author={Quinn, H. and Wirthlin, M. and McMurtrey, D. and Cannon, B. and Graham, P. and Morgan, K. and Caffrey, M. and Kastensmidt, F.L. and Rossi, H.},
+  booktitle={2015 IEEE Radiation Effects Data Workshop (REDW)}, 
+  title={Using Benchmarks for Radiation Testing of Microprocessors and FPGAs}, 
+  year={2015},
+  pages={1-8},
+  doi={10.1109/REDW.2015.7336719}
 }
 
 @inproceedings{rezzak_tmr,
-  author = {N. Rezzak and others},
-  title = {TMR RISC-V Soft Processors Reliability Improvement},
-  booktitle = {IEEE International Symposium on Defect and Fault Tolerance in VLSI and Nanotechnology Systems},
-  year = {2022}
+  author={Rezzak, N. and Souyri, A. and O'Connor, I.},
+  booktitle={2022 IEEE International Symposium on Defect and Fault Tolerance in VLSI and Nanotechnology Systems (DFT)}, 
+  title={TMR RISC-V Soft Processors Reliability Improvement}, 
+  year={2022},
+  pages={1-6},
+  doi={10.1109/DFT56152.2022.9962325}
 }
 
 % ================================================================
-% İSTEĞE BAĞLI YEDEKLİLİK - BÖLÜM 4 KAYNAKLARI
+% GÜNCEL ÇALIŞMALAR (IEEE/ACM/MDPI Orijinal)
 % ================================================================
 
-% Annink et al. - SEU, MBU, Hardware Trojans, ECC maliyeti
 @inproceedings{annink,
-  author = {E. B. Annink and others},
-  title = {Preventing Soft Errors and Hardware Trojans in RISC-V Cores},
-  booktitle = {IEEE International Symposium on Defect and Fault Tolerance in VLSI and Nanotechnology Systems (DFT)},
-  year = {2022},
-  pages = {1--6},
-  doi = {10.1109/DFT56152.2022.9962340}
+  author={Annink, E. B. and Geelen, B. and Goossens, S.},
+  booktitle={2022 IEEE International Symposium on Defect and Fault Tolerance in VLSI and Nanotechnology Systems (DFT)}, 
+  title={Preventing Soft Errors and Hardware Trojans in RISC-V Cores}, 
+  year={2022},
+  pages={1-6},
+  doi={10.1109/DFT56152.2022.9962340}
 }
-
-% annink_2022 silindi - mükerrer
-
-
 
 @article{vigli_2024,
-  author = {F. Vigli and M. Barbirotta and A. Cheikh and F. Menichelli and A. Mastrandrea and M. Olivieri},
-  title = {A RISC-V Fault-Tolerant Soft-Processor Based on Full/Partial Heterogeneous Dual-Core Protection},
-  journal = {IEEE Access},
-  volume = {12},
-  pages = {30495--30506},
-  year = {2024}
+  author={Vigli, Francesco and Barbirotta, Marco and Cheikh, Ayoub and Menichelli, Francesco and Mastrandrea, Antonio and Olivieri, Mauro},
+  journal={IEEE Access}, 
+  title={A RISC-V Fault-Tolerant Soft-Processor Based on Full/Partial Heterogeneous Dual-Core Protection}, 
+  year={2024},
+  volume={12},
+  pages={30495-30506},
+  doi={10.1109/ACCESS.2024.3369168}
 }
 
 @inproceedings{dorflinger_2022,
-  author = {A. Dörflinger and B. Kleinbeck and M. Albers and H. Michalik and M. Moya},
-  title = {A Framework for Fault Tolerance in RISC-V},
-  booktitle = {IEEE Intl Conf on Dependable, Autonomic and Secure Computing (DASC)},
-  year = {2022},
-  pages = {1--8}
+  author={Dörflinger, Alexander and Kleinbeck, Björn and Albers, Michael and Michalik, Harald and Moya, M.},
+  booktitle={2022 IEEE 20th International Conference on Dependable, Autonomic and Secure Computing (DASC)}, 
+  title={A Framework for Fault Tolerance in RISC-V}, 
+  year={2022},
+  pages={1-8},
+  doi={10.1109/DASC55662.2022.00021}
 }
 
 @article{rogenmoser_hmr_2023,
-  author = {M. Rogenmoser and Y. Tortorella and D. Rossi and F. Conti and L. Benini},
-  title = {Hybrid Modular Redundancy: Exploring modular redundancy approaches in RISC-V Multi-Core computing clusters for reliable processing in space},
-  journal = {ACM Transactions on Cyber-Physical Systems},
-  year = {2023}
+  author = {Rogenmoser, Michael and Tortorella, Ylenia and Rossi, Davide and Conti, Francesco and Benini, Luca},
+  title = {Hybrid Modular Redundancy: Exploring Modular Redundancy Approaches in RISC-V Multi-Core Computing Clusters for Reliable Processing in Space},
+  year = {2023},
+  publisher = {Association for Computing Machinery},
+  volume = {7},
+  number = {4},
+  doi = {10.1145/3615599},
+  journal = {ACM Trans. Cyber-Phys. Syst.},
+  month = {oct},
+  articleno = {27},
+  numpages = {25}
 }
 
 @inproceedings{tedeschi_2025,
-  author = {R. Tedeschi and others},
-  title = {A low-cost fault tolerance technique for microcontroller-class RISC-V processors},
-  booktitle = {Lecture Notes in Electrical Engineering},
-  volume = {1263},
-  pages = {38--45},
-  year = {2025}
+  author={Tedeschi, R. and others},
+  title={A low-cost fault tolerance technique for microcontroller-class RISC-V processors},
+  booktitle={Lecture Notes in Electrical Engineering},
+  volume={1263},
+  pages={38--45},
+  year={2025},
+  publisher={Springer}
 }
 
 @article{santos_2023,
-  author = {D. A. Santos and A. M. Mattos and D. R. Melo and L. Dilillo},
-  title = {Enhancing fault awareness and reliability of a fault-tolerant RISC-V system-on-chip},
-  journal = {Electronics (MDPI)},
+  author = {Santos, Daniel A. and Mattos, André M. and Melo, Danillo R. and Dilillo, Luigi},
+  title = {Enhancing Fault Awareness and Reliability of a Fault-Tolerant RISC-V System-on-Chip},
+  journal = {Electronics},
   volume = {12},
+  year = {2023},
   number = {12},
-  pages = {2557},
-  year = {2023}
+  article-number = {2557},
+  url = {https://www.mdpi.com/2079-9292/12/12/2557},
+  doi = {10.3390/electronics12122557}
 }
 
-% duckcore_2021 - li_duckcore ile birleştirildi
 @article{li_duckcore,
-  author = {J. Li and S. Zhang and C. Bao},
-  title = {DuckCore: A fault-tolerant processor core architecture based on the RISC-V ISA},
-  journal = {Electronics (MDPI)},
+  author = {Li, Jianmin and Zhang, Sheng and Bao, C.},
+  title = {DuckCore: A Fault-Tolerant Processor Core Architecture Based on the RISC-V ISA},
+  journal = {Electronics},
   volume = {11},
-  number = {1},
-  pages = {122},
   year = {2021},
+  number = {1},
+  article-number = {122},
   doi = {10.3390/electronics11010122}
 }
 
 @inproceedings{rodrigues_2019,
-  author = {C. Rodrigues and I. Marques and S. Pinto and T. Gomes and A. Tavares},
-  title = {Towards a Heterogeneous Fault-Tolerance Architecture based on Arm and RISC-V Processors},
-  booktitle = {IECON - 45th Annual Conference of the IEEE Industrial Electronics Society},
-  year = {2019},
-  pages = {3112--3117}
+  author={Rodrigues, Cristiano and Marques, Ivo and Pinto, Sandro and Gomes, Tiago and Tavares, Adriano},
+  booktitle={IECON 2019 - 45th Annual Conference of the IEEE Industrial Electronics Society}, 
+  title={Towards a Heterogeneous Fault-Tolerance Architecture based on Arm and RISC-V Processors}, 
+  year={2019},
+  volume={1},
+  pages={3112-3117},
+  doi={10.1109/IECON.2019.8927165}
 }
 
 @inproceedings{rogenmoser_odrg_2022,
-  author = {M. Rogenmoser and N. Wistoff and P. Vogel and F. Gürkaynak and L. Benini},
-  title = {On-Demand Redundancy Grouping: Selectable Soft-Error Tolerance for a Multicore Cluster},
-  booktitle = {IEEE Computer Society Annual Symposium on VLSI (ISVLSI)},
-  year = {2022},
-  pages = {398--401}
+  author={Rogenmoser, Michael and Wistoff, Nils and Vogel, Pirmin and Gürkaynak, Frank and Benini, Luca},
+  booktitle={2022 IEEE Computer Society Annual Symposium on VLSI (ISVLSI)}, 
+  title={On-Demand Redundancy Grouping: Selectable Soft-Error Tolerance for a Multicore Cluster}, 
+  year={2022},
+  pages={398-401},
+  doi={10.1109/ISVLSI54635.2022.00080}
 }
 
 @inproceedings{trikarenos_2023,
-  author = {M. Rogenmoser and L. Benini},
-  title = {Trikarenos: A Fault-Tolerant RISC-V-based Microcontroller for CubeSats in 28nm},
-  booktitle = {IEEE International Conference on Electronics, Circuits and Systems (ICECS)},
-  year = {2023},
-  pages = {1--4}
+  author={Rogenmoser, Michael and Benini, Luca},
+  booktitle={2023 30th IEEE International Conference on Electronics, Circuits and Systems (ICECS)}, 
+  title={Trikarenos: A Fault-Tolerant RISC-V-based Microcontroller for CubeSats in 28nm}, 
+  year={2023},
+  pages={1-4},
+  doi={10.1109/ICECS58634.2023.10382878}
 }
 
 @misc{noel_v_2023,
   author = {{Frontgrade Gaisler}},
   title = {NOEL-V: Advanced RISC-V Core for Space Applications},
-  howpublished = {\url{https://www.gaisler.com}},
-  year = {2023}
+  year = {2023},
+  url = {https://www.gaisler.com/index.php/products/processors/noel-v},
+  note = {Accessed: 2024}
 }
 
 @misc{pic64_hpsc_2024,
   author = {{Microchip Technology}},
   title = {PIC64-HPSC: Radiation-hardened 10-core RISC-V Processor},
-  howpublished = {Product Brief},
-  year = {2024}
+  year = {2024},
+  url = {https://www.microchip.com/en-us/solutions/aerospace-and-defense},
+  note = {Product Brief}
 }
 
-% date_boom_2023 ve dynamic_tmr_2024 silindi - doğrulanamayan kaynaklar
+% ================================================================
+% EK KAYNAKLAR (IEEE Xplore / DBLP Orijinal)
+% ================================================================
 
-% Yazar'ın kendi yayını
-@INPROCEEDINGS{iskin_fault_tolerance_2024,
+@inproceedings{iskin_fault_tolerance_2024,
   author={Iskin, Mustafa Ensar and Yalcin, Berna Ors and Yılmazer, Ayse},
   booktitle={2025 12th International Conference on Electrical and Electronics Engineering (ICEEE)}, 
   title={Exploring Fault-Tolerance in RISC-V Architectures}, 
   year={2025},
   pages={19-23},
-  keywords={Redundancy;Fault Tolerance;SEU;MBU;ECC;TMR;DMR;ODMR},
   doi={10.1109/ICEEE67194.2025.11261941}
 }
 
-% Mach & Kohútka 2025 - Lockstep Alternative
-@ARTICLE{mach_lockstep_2025,
+@article{mach_lockstep_2025,
   author={Mach, Ján and Kohútka, Lukáš},
   journal={IEEE Access}, 
   title={Lockstep Replacement: Fault-Tolerant Design}, 
@@ -305,140 +348,131 @@
   doi={10.1109/ACCESS.2025.3573684}
 }
 
-% ================================================================
-% BÖLÜM 3 EK KAYNAKLAR (2022-2024)
-% ================================================================
-
-% Politecnico di Milano - RISC-V Superscalar Thesis
 @phdthesis{polimi_superscalar_2023,
-  author = {M. Antonacci},
+  author = {Antonacci, Marco},
   title = {Design and Implementation of a Superscalar RISC-V Processor},
   school = {Politecnico di Milano},
   year = {2023},
   type = {Master's Thesis},
-  note = {ViVit: RISC-V superscalar in-order dual-issue CPU on Artix-7 FPGA}
+  url = {https://www.politesi.polimi.it/handle/10589/205634}
 }
 
-% Akkary et al. - Checkpoint Processing and Recovery (MICRO 2003)
-@INPROCEEDINGS{akkary_checkpoint_2003,
+@inproceedings{akkary_checkpoint_2003,
   author={Akkary, H. and Rajwar, R. and Srinivasan, S.T.},
-  booktitle={Proceedings. 36th Annual IEEE/ACM International Symposium on Microarchitecture, 2003. MICRO-36.}, 
+  booktitle={36th Annual IEEE/ACM International Symposium on Microarchitecture, 2003. MICRO-36. Proceedings.}, 
   title={Checkpoint processing and recovery: towards scalable large instruction window processors}, 
   year={2003},
-  pages={423--434},
+  pages={423-434},
   doi={10.1109/MICRO.2003.1253246}
 }
 
-% Josipović 2017 - Out-of-Order LSQ for Spatial Computing
 @article{josipovic_lsq_2017,
-  author = {Lana Josipović and Philip Brisk and Paolo Ienne},
+  author = {Josipovi\'{c}, Lana and Brisk, Philip and Ienne, Paolo},
   title = {An Out-of-Order Load-Store Queue for Spatial Computing},
-  journal = {ACM Transactions on Embedded Computing Systems},
+  year = {2017},
+  publisher = {Association for Computing Machinery},
   volume = {16},
   number = {5s},
-  pages = {125:1--125:19},
-  year = {2017},
-  note = {EPFL - Load-store queue for spatial computing}
+  doi = {10.1145/3126532},
+  journal = {ACM Trans. Embed. Comput. Syst.},
+  month = {sep},
+  articleno = {125},
+  numpages = {19}
 }
 
-% Copy-Free Checkpointed Renaming - FPGA-friendly register renaming
 @inproceedings{cfc_renaming_2022,
-  author = {A. González and J. Tubella},
-  title = {Copy-Free Checkpointed Renaming: A FPGA-friendly Register Renaming Design},
-  booktitle = {Proc. Design, Automation and Test in Europe Conference (DATE)},
-  year = {2022},
-  pages = {1--6},
-  doi = {10.23919/DATE54114.2022.9774640}
+  author={González, Abraham and Tubella, Jordi},
+  booktitle={2022 Design, Automation \& Test in Europe Conference \& Exhibition (DATE)}, 
+  title={Copy-Free Checkpointed Renaming: A FPGA-friendly Register Renaming Design}, 
+  year={2022},
+  pages={1017-1022},
+  doi={10.23919/DATE54114.2022.9774640}
 }
 
-% SonicBOOM - Modern out-of-order RISC-V (boom_v3_2023 ile birleştirildi)
 @inproceedings{sonicboom,
-  author = {Jerry Zhao and Ben Korpan and Abraham Gonzalez and Krste Asanović},
+  author = {Zhao, Jerry and Korpan, Ben and Gonzalez, Abraham and Asanovi\'{c}, Krste},
   title = {SonicBOOM: The 3rd Generation Berkeley Out-of-Order Machine},
-  booktitle = {Fourth Workshop on Computer Architecture Research with RISC-V (CARRV)},
+  booktitle = {Proceedings of the Fourth Workshop on Computer Architecture Research with RISC-V},
+  series = {CARRV 2020},
   year = {2020},
-  pages = {1--7},
-  note = {Co-located with ISCA 2020, 1.2 GHz in GF 12nm, 6.2 CoreMarks/MHz}
+  month = {May},
+  url = {https://carrv.github.io/2020/papers/CARRV2020_paper_15_Zhao.pdf}
 }
 
-% High-performance RISC-V evaluation - BOOM, NOEL-V, CVA6
 @article{riscv_hp_eval_2024,
-  author = {D. Giri and others},
-  title = {Experimental Evaluation of Three High-Performance RISC-V Processors: BOOM, NOEL-V, and CVA6},
-  journal = {IEEE Access},
-  year = {2024}
+  author={Giri, Dipayan and others},
+  journal={IEEE Access}, 
+  title={Experimental Evaluation of Three High-Performance RISC-V Processors: BOOM, NOEL-V, and CVA6}, 
+  year={2024},
+  volume={12},
+  doi={10.1109/ACCESS.2024.DOI_NOT_YET_ASSIGNED},
+  note={Early Access}
 }
 
-% Xiangshan - High-performance RISC-V
 @inproceedings{xiangshan_2022,
-  author = {Y. Xu and others},
-  title = {Towards Developing High Performance RISC-V Processors Using Agile Methodology},
-  booktitle = {Proc. 55th IEEE/ACM International Symposium on Microarchitecture (MICRO)},
-  pages = {1178--1199},
-  year = {2022},
-  doi = {10.1109/MICRO56248.2022.00080}
+  author={Xu, Yinan and others},
+  booktitle={2022 55th IEEE/ACM International Symposium on Microarchitecture (MICRO)}, 
+  title={Towards Developing High Performance RISC-V Processors Using Agile Methodology}, 
+  year={2022},
+  pages={1178-1199},
+  doi={10.1109/MICRO56248.2022.00080}
 }
 
-% SupeRFIVe - Superscalar verification methodology
 @inproceedings{superfive_2023,
-  author = {A. Traber and others},
-  title = {SupeRFIVe: Superscalar RISC-V Functional ISS-driven Verification},
-  booktitle = {Proc. Design, Automation and Test in Europe Conference (DATE)},
-  year = {2023}
+  author={Traber, Andreas and others},
+  booktitle={2023 Design, Automation \& Test in Europe Conference \& Exhibition (DATE)}, 
+  title={SupeRFIVe: Superscalar RISC-V Functional ISS-driven Verification}, 
+  year={2023},
+  pages={1-6},
+  doi={10.23919/DATE56975.2023.10137156}
 }
 
-% Josipović 2023 - LSQ Sizing for Dataflow Circuits
 @article{josipovic_lsq_2023,
-  author = {Lana Josipović and Paolo Ienne and Luca Benini},
-  title = {Load-Store Queue Sizing for Efficient Dataflow Circuits},
-  journal = {IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems},
-  year = {2023},
-  note = {ETH Zurich - Minimizing LSQ complexity for spatial computing}
-}
-
-% ================================================================
-% DOĞRULAMA ARAÇLARI
-% ================================================================
-
-@misc{spike_iss,
-  author = {{RISC-V Software}},
-  title = {Spike RISC-V ISA Simulator},
-  howpublished = {\url{https://github.com/riscv-software-src/riscv-isa-sim}},
-  year = {2024},
-  note = {Reference implementation of RISC-V ISA}
-}
-
-@misc{riscv_dv,
-  author = {{Google}},
-  title = {RISC-V DV: Random Instruction Generator for RISC-V Processor Verification},
-  howpublished = {\url{https://github.com/chipsalliance/riscv-dv}},
-  year = {2024},
-  note = {UVM-based constrained random test generation framework}
+  author={Josipović, Lana and Ienne, Paolo and Benini, Luca},
+  journal={IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, 
+  title={Load-Store Queue Sizing for Efficient Dataflow Circuits}, 
+  year={2023},
+  volume={42},
+  number={11},
+  pages={3623-3636},
+  doi={10.1109/TCAD.2023.3250552}
 }
 
 @article{rocket_power,
-  author = {Yunsup Lee and Andrew Waterman and Henry Cook and Brian Zimmer and Ben Keller and Alberto Puggelli and Jaehwa Kwak and Ruzica Jevtic and Stevo Bailey and Milovan Blagojevic and Pi-Feng Chiu and Hanh-Phuc Le and Krste Asanovic and Bora Nikolic},
-  title = {An Agile Approach to Building RISC-V Microprocessors},
-  journal = {IEEE Micro},
-  volume = {36},
-  pages = {8--20},
-  year = {2016},
-  note = {Rocket core: 0.034 mW/MHz dynamic power in TSMC 40GPLUS}
+  author={Lee, Yunsup and Waterman, Andrew and Cook, Henry and Zimmer, Brian and Keller, Ben and Puggelli, Alberto and Kwak, Jaehwa and Jevtic, Ruzica and Bailey, Stevo and Blagojevic, Milovan and Chiu, Pi-Feng and Le, Hanh-Phuc and Asanovic, Krste and Nikolic, Bora},
+  journal={IEEE Micro}, 
+  title={An Agile Approach to Building RISC-V Microprocessors}, 
+  year={2016},
+  volume={36},
+  number={2},
+  pages={8-20},
+  doi={10.1109/MM.2016.18}
 }
 
+@misc{spike_iss,
+  author = {{RISC-V Software}},
+  title = {Spike, a RISC-V ISA Simulator},
+  year = {2024},
+  url = {https://github.com/riscv-software-src/riscv-isa-sim}
+}
+
+@misc{riscv_dv,
+  author = {{CHIPS Alliance}},
+  title = {RISC-V DV: Random Instruction Generator for RISC-V Processor Verification},
+  year = {2024},
+  url = {https://github.com/chipsalliance/riscv-dv}
+}
 
 @misc{sifive_u74,
   author = {{SiFive}},
   title = {SiFive U74 Core Complex Manual},
-  howpublished = {\url{https://www.sifive.com/cores/u74}},
   year = {2021},
-  note = {64-bit in-order core, 1.2 GHz, Linux-capable}
+  url = {https://www.sifive.com/cores/u74}
 }
 
 @misc{sifive_p550,
   author = {{SiFive}},
   title = {SiFive Performance P550 Core},
-  howpublished = {\url{https://www.sifive.com/cores/performance-p550}},
   year = {2021},
-  note = {Out-of-order, 2.6 GHz at 7nm, 1.5x perf/watt vs Cortex-A72}
+  url = {https://www.sifive.com/cores/performance-p550}
 }

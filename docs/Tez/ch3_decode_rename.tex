@@ -132,7 +132,7 @@ Yükleme saklama kuyruğu adres listesi de aynı dairesel tampon yapısında ger
 
 Sıra dışı yürütme sırasında dallanma komutları henüz sonuçlanmadan spekülatif olarak yürütülmektedir. Bu yaklaşım, dallanma komutlarının sonuçlanmasını beklemeden sonraki komutların işlenmesine olanak tanımaktadır. Ancak yanlış tahmin durumunda, işlemcinin tutarlı bir duruma geri dönebilmesi için özel mekanizmalar gerekmektedir.
 
-Yanlış tahmin tespit edildiğinde işlemciyi tutarlı bir duruma döndürmenin birkaç farklı yöntemi bulunmaktadır. Geleneksel Tomasulo tabanlı işlemcilerde, dal komutu yeniden sıralama arabelleğinin başına ulaşana kadar beklenmektedir; ancak bu yöntem ciddi performans kayıplarına neden olmaktadır. Anlık görüntü tabanlı yöntemler ise her spekülatif dal için işlemci durumunun bir kopyasını saklamakta ve yanlış tahmin durumunda bu kopyayı anında geri yüklemektedir \\cite{akkary_checkpoint_2003}.
+Yanlış tahmin tespit edildiğinde işlemciyi tutarlı bir duruma döndürmenin birkaç farklı yöntemi bulunmaktadır. Geleneksel Tomasulo tabanlı işlemcilerde, dal komutu yeniden sıralama arabelleğinin başına ulaşana kadar beklenmektedir; ancak bu yöntem ciddi performans kayıplarına neden olmaktadır. Anlık görüntü tabanlı yöntemler ise her spekülatif dal için işlemci durumunun bir kopyasını saklamakta ve yanlış tahmin durumunda bu kopyayı anında geri yüklemektedir \cite{akkary_checkpoint_2003}.
 
 %--- 3.3.3.1 Anlık Görüntü Mekanizması ---
 \subsubsection{Anlık Görüntü Mekanizması}\label{subsubsec:snapshot}
