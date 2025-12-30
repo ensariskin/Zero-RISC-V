@@ -5,86 +5,58 @@
 
 \section{RISC-V Mimarisi}\label{sec:riscv}
 
-\subsection{RISC-V tarihçesi ve felsefesi}\label{subsec:riscv_tarihce}
-
-% TODO: Açık kaynak ISA konsepti
-
-\subsection{RV32I taban komut seti}\label{subsec:rv32i}
-
-% TODO: Temel komut formatları (R, I, S, B, U, J)
-
-\subsection{Ayrıcalık seviyeleri}\label{subsec:privilege}
-
-% TODO: Machine mode odaklı
+% TODO: Açık kaynak ISA konsepti, tarihçe
+% TODO: RV32I taban komut seti, temel komut formatları (R, I, S, B, U, J)
+% TODO: Machine mode odaklı kısa bilgi
 
 %------------------------------------------------------------------------
 
-\section{Pipeline Kavramları}\label{sec:pipeline}
+\section{İşlemci Mikro Mimarisi Kavramları}\label{sec:mikromimarisi}
 
-\subsection{Klasik 5-aşamalı pipeline}\label{subsec:5stage}
+\subsection{Boruhattı ve Tehlikeler}\label{subsec:pipeline_hazards}
 
-% TODO: Fetch, Decode, Execute, Memory, Writeback
-
-\subsection{Pipeline tehlikeleri}\label{subsec:hazards}
-
+% TODO: Klasik 5-aşamalı pipeline (Fetch, Decode, Execute, Memory, Writeback)
 % TODO: Data, Control, Structural hazards
-
-\subsection{Tehlike çözüm teknikleri}\label{subsec:hazard_solutions}
-
 % TODO: Forwarding, stalling, branch prediction
 
-%------------------------------------------------------------------------
+\subsection{Süperölçekli Yürütme}\label{subsec:superscalar}
 
-\section{Süperölçekli İşlemci Kavramları}\label{sec:superscalar}
+% TODO: Instruction Level Parallelism (ILP)
+% TODO: Çoklu komut getirme ve yürütme
 
-\subsection{ILP ve superscalar yaklaşım}\label{subsec:ilp}
-
-% TODO: Instruction Level Parallelism
-
-\subsection{Out-of-order execution}\label{subsec:ooo}
+\subsection{Sıra Dışı Yürütme}\label{subsec:ooo}
 
 % TODO: Dinamik zamanlama
-
-\subsection{Register renaming}\label{subsec:renaming}
-
-% TODO: WAW, WAR tehlikelerinin eliminasyonu
-
-\subsection{Spekülatif yürütme}\label{subsec:speculation}
-
-% TODO: Branch speculation
+% TODO: Register renaming, WAW/WAR eliminasyonu
+% TODO: Reorder buffer
 
 %------------------------------------------------------------------------
 
 \section{Hata Toleransı Kavramları}\label{sec:fault_tolerance}
 
-\subsection{Soft error ve radiation etkileri}\label{subsec:soft_errors}
+\subsection{Hata Türleri}\label{subsec:fault_types}
 
-% TODO: SEU, SET, MBU kavramları
+% TODO: Geçici hatalar (Transient faults)
+% TODO: SEU, MBU kavramları
+% TODO: Kalıcı hatalar (Permanent faults)
 
-\subsection{Yedeklilik teknikleri}\label{subsec:redundancy}
+\subsection{Yedeklilik Teknikleri}\label{subsec:redundancy}
 
-% TODO: DMR, TMR, NMR
-
-\subsection{Error Correction Codes (ECC)}\label{subsec:ecc}
-
-% TODO: SECDED, Hamming
-
-\subsection{On-demand redundancy}\label{subsec:on_demand}
-
-% TODO: Dinamik güvenlik seviyesi değiştirme motivasyonu
+% TODO: Uzaysal yedeklilik (DMR, TMR)
+% TODO: Zamansal yedeklilik
+% TODO: Bilgi yedekliliği (ECC)
 
 %------------------------------------------------------------------------
 
 \section{İlgili Çalışmalar}\label{sec:related_work}
 
-\subsection{RISC-V superscalar implementasyonlar}\label{subsec:riscv_impl}
+\subsection{Süperölçekli İşlemci Tasarımları}\label{subsec:superscalar_designs}
 
 % TODO: BOOM, Rocket, NaxRiscv
+% TODO: Diğer önemli süperölçekli tasarımlar
 
-\subsection{Fault-tolerant işlemci tasarımları}\label{subsec:ft_processors}
+\subsection{Hata Toleranslı İşlemci Tasarımları}\label{subsec:ft_processors}
 
 % TODO: DCLS, TMR tabanlı çalışmalar
+% TODO: DuckCore, Trikarenos gibi hibrit yaklaşımlar
 
-\subsection{Hibrit güvenlik yaklaşımları}\label{subsec:hybrid}
-
-% TODO: Literatürdeki on-demand yöntemler

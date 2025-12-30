@@ -3,22 +3,53 @@
 \chapter{GİRİŞ}\label{ch:giris}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Bu bölüm tezin giriş bölümüdür. Aşağıdaki alt başlıklar planlanmıştır.
+Modern elektronik sistemlerin güvenilirliği, özellikle uzay, havacılık ve otomotiv gibi kritik uygulamalarda giderek daha fazla önem kazanmaktadır \cite{rogenmoser_hmr_2023}. Bu alanlarda çevresel faktörlerden kaynaklanan geçici hatalar, sistemin kararlılığını tehdit edebilmekte ve ciddi güvenlik riskleri oluşturabilmektedir. Santos ve arkadaşlarının gerçekleştirdiği radyasyon testlerinde, hataların yüzde yetmiş sekizinin belleklerde, yüzde on beşinin ise yazmaç dosyasında meydana geldiği gözlemlenmiştir \cite{santos_2023}. Bu sonuçlar, kritik donanım yapılarının korunmasının önemini açıkça ortaya koymaktadır.
+
+Geleneksel hata toleransı yöntemleri, genellikle performans ve güvenilirlik arasında kesin bir tercih yapılmasını gerektirmektedir. Çekirdek seviyesinde uygulanan ikili ve üçlü kilitli adım yöntemleri, tüm işlem gücünün yedekleme amacıyla kullanılmasını gerektirdiğinden, normal koşullarda bile kaynak israfına neden olmaktadır \cite{dorflinger_2022}. Ayrıca bu yöntemler hataları yalnızca çekirdek çıkışında tespit edebildiğinden, hatanın boruhattı içinde yayılmasına ve tespit edilmeden önce birden fazla aşamayı etkilemesine neden olabilmektedir \cite{li_duckcore}.
+
+Bu kısıtlamalara çözüm olarak isteğe bağlı modüler yedeklilik yaklaşımı geliştirilmiştir. Bu yaklaşımda sistem, kritik görevlerde tam yedeklilik modunda, normal koşullarda ise bağımsız çalışma modunda çalışabilmektedir \cite{rogenmoser_odrg_2022}. Trikarenos projesi bu esnek yapının somut bir uygulamasıdır; TSMC 28nm teknolojisi ile üretilen bu mikrodenetleyici, yalnızca kritik görevler sırasında tam yedeklilik moduna geçerek enerji tasarrufu sağlamaktadır \cite{trikarenos_2023}.
+
+%------------------------------------------------------------------------
 
 \section{Tezin Amacı}\label{sec:tezin_amaci}
 
-% TODO: Superscalar işlemcilere on-demand redundancy uygulamanın motivasyonu
-% TODO: Neden RISC-V seçildiği
+Bu tez çalışmasının temel amacı, isteğe bağlı yedeklilik özelliğine sahip üç yollu süperölçekli sıra dışı yürütme özellikli bir RISC-V işlemci tasarlamaktır. Tasarlanan işlemci, çalışma moduna bağlı olarak ya üç bağımsız komut akışını paralel olarak yürüterek yüksek performans sunmakta, ya da aynı komutu üç kanalda eş zamanlı işleyerek üçlü modüler yedeklilik sağlamaktadır.
+
+Bu yaklaşımın temel motivasyonu, mevcut hata toleransı yöntemlerinin sınırlılıklarını aşmaktır. Dörflinger'in çalışmasında gösterildiği gibi, boruhattının daha derin seviyelerinde bulunan dedektörler, hataları çekirdek seviyesine kıyasla çok daha erken yakalayabilmektedir \cite{dorflinger_2022}. Li ve arkadaşlarının geliştirdiği DuckCore mimarisinde de benzer şekilde, boruhattı seviyesinde hata tespitinin önemli avantajlar sunduğu gösterilmiştir \cite{li_duckcore}. Tasarlanan işlemci bu yaklaşımı benimseyerek boruhattı seviyesinde hata tespiti yapmakta ve erken müdahale imkanı sunmaktadır.
+
+RISC-V komut seti mimarisinin tercih edilmesinin temel nedeni, açık kaynak ve telif ücretsiz yapısıdır. Bu özellik, akademik araştırma ve eğitim amaçlı kullanımı kolaylaştırmakta, ayrıca tasarımın paylaşılabilir ve tekrarlanabilir olmasını sağlamaktadır \cite{santos_2023}. RISC-V'in modüler yapısı, hata toleransı mekanizmalarının esnek bir şekilde entegre edilmesine olanak tanımaktadır.
+
+Bu çalışma, daha önce yayınlanan bir literatür taramasında önerilen araştırma yönünün uygulamasını oluşturmaktadır \cite{iskin_fault_tolerance_2024}. Söz konusu çalışmada, süperölçekli çekirdeğin boruhattı seviyesinde üçlü modüler yedeklilik ve isteğe bağlı modüler yedeklilik ile birleştirilmesinin, hem hata düzeltme yetenekleri hem de performans katkısı açısından geniş bir uygulama yelpazesini kapsayacağı öngörülmüştür.
+
+%------------------------------------------------------------------------
 
 \section{Tezin Kapsamı}\label{sec:tezin_kapsami}
 
-% TODO: Çalışmanın sınırları: 3-way superscalar, RV32I ISA
-% TODO: TMR (tüm modüllerde), ECC (varsayımlı, implementasyon kapsam dışı)
+Bu tez çalışması kapsamında gerçekleştirilen tasarım ve doğrulama faaliyetleri aşağıdaki sınırlar dahilinde yürütülmüştür:
 
-\section{Literatür Araştırması}\label{sec:literatur}
+Komut seti olarak RV32I taban komut seti desteklenmektedir. Bu komut seti, otuz iki bitlik tamsayı işlemlerini, yükleme ve saklama komutlarını, koşullu dallanma ve koşulsuz atlama komutlarını içermektedir. Çarpma, bölme ve kayan nokta uzantıları bu çalışma kapsamı dışındadır.
 
-% TODO: Kısa özet - detay Bölüm 2'de
+İşlemci mimarisi üç yollu süperölçekli yapıda tasarlanmıştır. Her saat çevriminde en fazla üç komut paralel olarak getirilebilmekte, çözümlenebilmekte ve yürütülebilmektedir. Sıra dışı yürütme desteği sayesinde, veri bağımlılıkları dinamik olarak çözümlenmekte ve hazır komutlar program sırasından bağımsız olarak yürütülmektedir.
+
+Hata toleransı mekanizması olarak üçlü modüler yedeklilik uygulanmıştır \cite{lyons_tmr}. Kritik kontrol akışı elemanları, program sayacı, tampon işaretçileri ve durum yazmaçları dahil olmak üzere üç kopya halinde tutulmakta ve çoğunluk oylaması ile korunmaktadır. Büyük bellek yapıları için hata düzeltme kodlarının uygulandığı varsayılmaktadır; Annink'in çalışmasında belirtildiği gibi, hata düzeltme kodu eklenmesi ulaşılabilir frekansı yüzde yirmi düşürmekte ve yüzde otuz üç buçuk alan ek yükü getirmektedir \cite{annink}. Ancak bu değerler, üçlü modüler yedekliliğin yüzde iki yüz alan ek yüküne kıyasla kabul edilebilir düzeydedir. Hata düzeltme kodlarının fiziksel gerçeklemesi tez kapsamı dışındadır.
+
+Doğrulama süreci, yaklaşık iki yüz altmış bin komutluk test kapsamını içermektedir. Rastgele ve deterministik test programları, Berkeley Spike referans modeli ile karşılaştırmalı olarak doğrulanmıştır \cite{spike_iss}. Fiziksel gerçekleme, TSMC on altı nanometre FinFET teknolojisine sentez ve yerleştirme aşamalarını kapsamaktadır.
+
+%------------------------------------------------------------------------
 
 \section{Tezin Organizasyonu}\label{sec:organizasyon}
 
-% TODO: Bölümlerin kısa tanıtımı
+Bu tez altı bölümden oluşmaktadır.
+
+Birinci bölümde tezin amacı, kapsamı ve organizasyonu sunulmaktadır.
+
+İkinci bölümde temel kavramlar ve literatür taraması yer almaktadır. RISC-V mimarisi, işlemci mikro mimarisi kavramları, hata toleransı yöntemleri ve ilgili çalışmalar bu bölümde açıklanmaktadır.
+
+Üçüncü bölümde tasarlanan süperölçekli işlemcinin mikro mimarisi detaylı olarak anlatılmaktadır. Komut getirme, kod çözme ve yeniden adlandırma, veri kontrol, yürütme, bellek ve geri yazma aşamaları ayrı alt bölümler halinde ele alınmaktadır.
+
+Dördüncü bölümde isteğe bağlı yedeklilik tekniği sunulmaktadır. Üç yollu süperölçekli mimarinin üçlü modüler yedeklilik için nasıl yeniden kullanıldığı, çalışma modları ve kritik hata toparlanma mekanizması bu bölümde açıklanmaktadır.
+
+Beşinci bölümde doğrulama metodolojisi, fonksiyonel test sonuçları, performans analizi, hata enjeksiyonu testleri ve fiziksel tasarım sonuçları raporlanmaktadır.
+
+Altıncı bölümde sonuçlar özetlenmekte ve gelecek çalışma önerileri sunulmaktadır.
+

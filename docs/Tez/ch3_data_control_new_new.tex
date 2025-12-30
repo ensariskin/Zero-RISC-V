@@ -1,0 +1,248 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.4 VERİ KONTROL VE YAYINLAMA AŞAMASI
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Veri Kontrol ve Yayınlama Aşaması}\label{sec:data_control}
+
+Veri kontrol ve yayınlama aşaması, Tomasulo algoritmasının modern bir uyarlaması olarak tasarlanmıştır \cite{tomasulo}. Bu aşama, kod çözme ve yeniden adlandırma aşamasından gelen komutların operand değerlerini temin etmekte, henüz hazır olmayan operandlar için dinamik bekleme mekanizması sağlamakta ve hazır komutları işlevsel birimlere göndermektedir. Ayrıca yürütme sonuçlarının tüm bekleyen birimlere eş zamanlı olarak yayınlanması bu aşamanın sorumluluğundadır.
+
+\label{subsec:phys_reg_space}
+Tasarlanan işlemcide altmış dört fiziksel yazmaç bulunmakta olup bu alan iki farklı bölgeye ayrılmaktadır. Sıfırdan otuz bire kadar olan fiziksel yazmaçlar, mimari yazmaç dosyasında yer almakta ve kesinleştirilmiş değerleri tutmaktadır; bu değerler mimari açıdan doğruluğu garanti edilmiş sonuçlardır. Otuz ikiden altmış üçe kadar olan fiziksel yazmaçlar ise yeniden sıralama arabelleğinde bulunmakta ve henüz kesinleştirilmemiş spekülatif değerleri saklamaktadır. Bu bölgelerin özellikleri Çizelge~\ref{tab:phys_reg_regions}'de özetlenmiştir.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Fiziksel yazmaç alanı bölgeleri ve özellikleri.}
+    \label{tab:phys_reg_regions}
+    \begin{tabular}{|l|c|c|l|}
+        \hline
+        \textbf{Bölge} & \textbf{Adres Aralığı} & \textbf{MSB} & \textbf{Özellik} \\
+        \hline
+        Yazmaç Dosyası & 0--31 & 0 & Kesinleşmiş, her zaman hazır \\
+        \hline
+        Yeniden Sıralama Arabelleği & 32--63 & 1 & Spekülatif, etiket kontrolü gerekli \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Kod çözme ve yeniden adlandırma aşamasından gelen altı bitlik fiziksel yazmaç adresleri, bu aşamada operand değerlerinin temininde kullanılmaktadır. Fiziksel adresin en anlamlı biti, operand değerinin hangi kaynaktan okunacağını belirlemektedir. Bu bit sıfır olduğunda değer yazmaç dosyasından okunmakta ve her zaman hazır kabul edilmektedir. Bit bir olduğunda ise değer yeniden sıralama arabelleğinden talep edilmekte ve değerin hazırlık durumu ilgili girişin etiket alanına göre belirlenmektedir. Bu ikili yapı, spekülatif ve kesinleşmiş değerlerin tek bir adresleme şeması altında tutarlı biçimde yönetilmesini sağlamaktadır.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Fiziksel Yazmaç Alanı - MSB'ye göre RF/ROB Seçimi]}}
+    \caption{Fiziksel yazmaç adresinin en anlamlı bitine göre kaynak seçimi}
+    \label{fig:phys_reg_select}
+\end{figure}
+
+Veri kontrol ve yayınlama aşaması üç temel bileşenden oluşmaktadır: operand bekleme ve komut gönderme işlevlerini üstlenen rezervasyon istasyonları, spekülatif sonuçları saklayan ve sıralı kesinleştirme altyapısını sağlayan yeniden sıralama arabelleği ve kesinleştirilmiş değerleri tutan yazmaç dosyası. Bu bileşenler, ortak veri yolu aracılığıyla birbirleriyle iletişim kurmaktadır.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Veri Kontrol Aşaması Genel Yapısı - RS, ROB, PRF ve CDB Bağlantıları]}}
+    \caption{Veri kontrol ve yayınlama aşaması bileşenleri ve aralarındaki veri akışı}
+    \label{fig:data_control_overview}
+\end{figure}
+
+%------------------------------------------------------------------------
+
+\subsection{Rezervasyon İstasyonu}\label{subsec:rs}
+
+Rezervasyon istasyonları, sıra dışı yürütme mimarisinin kritik bileşenlerinden biridir. Bu yapılar, komutların operand bağımlılıklarını dinamik olarak çözümleyerek, üretici komutlar henüz tamamlanmamış olsa bile tüketici komutlarının boruhattında ilerlemesine olanak tanımaktadır \cite{tomasulo}. Tasarlanan işlemcide her rezervasyon istasyonu, kendisine atanan komutu ve bu komutun operand bilgilerini saklamakta, operandlar hazır olana kadar ortak veri yolunu izlemekte ve tüm operandlar hazır olduğunda komutu bağlı olduğu işlevsel birime göndermektedir.
+
+Tasarlanan sistemde üç ayrı rezervasyon istasyonu bulunmakta olup her biri tek bir işlevsel birime bağlıdır. Her rezervasyon istasyonu tek komut kapasitesine sahip olacak şekilde tasarlanmıştır. Bu tasarım kararının arkasında güvenilirlik gereksinimi bulunmaktadır: tasarlanan işlemcinin birincil hedefi güvenilirlik olduğundan, kritik yapılar üçlü modüler yedekleme tekniğiyle korunmaktadır. Rezervasyon istasyonları, operand verileri ve kontrol bilgileri gibi geniş veri alanları içerdiğinden, çoklu giriş kapasitesi alan maliyetini kabul edilemez düzeyde artırmaktadır.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Rezervasyon İstasyonu Yapısı - Operand Alanları, Etiketler, Kontrol Sinyalleri]}}
+    \caption{Rezervasyon istasyonu giriş yapısı ve saklanan bilgiler}
+    \label{fig:rs_entry}
+\end{figure}
+
+\subsubsection{Etiket Sistemi ve Ortak Veri Yolu İzleme}\label{subsubsec:tag_cdb}
+
+Tomasulo algoritmasının temel yeniliği, üretici-tüketici ilişkilerinin etiketler aracılığıyla takip edilmesidir. Klasik yaklaşımda bağımlı bir komut, kaynak operandını üreten komutun tamamlanmasını beklemek zorundadır. Etiket tabanlı sistemde ise bağımlı komut, üretici komut henüz yürütülmemiş olsa bile rezervasyon istasyonuna yerleştirilebilmektedir. Bu yaklaşım, sıra dışı yürütme mimarilerinde boruhattı iletmesinin karşılığı olarak değerlendirilebilmektedir.
+
+Tasarlanan sistemde üç bitlik etiket değerleri kullanılmaktadır. Etiket değeri sıfır, bir veya iki olduğunda operandın sırasıyla sıfırıncı, birinci veya ikinci ALU'dan beklenmekte olduğu anlaşılmaktadır. Etiket değeri üç olduğunda operand yükleme saklama kuyruğundan beklenmektedir. Etiket değeri yedi olduğunda ise operand hazır durumdadır ve değeri doğrudan kullanılabilmektedir. Bu değerler Çizelge~\ref{tab:tag_encoding}'de özetlenmiştir.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Operand etiketi değerleri ve anlamları.}
+    \label{tab:tag_encoding}
+    \begin{tabular}{|c|l|}
+        \hline
+        \textbf{Etiket Değeri} & \textbf{Anlam} \\
+        \hline
+        0 (3'b000) & Sıfırıncı ALU'dan bekleniyor \\
+        \hline
+        1 (3'b001) & Birinci ALU'dan bekleniyor \\
+        \hline
+        2 (3'b010) & İkinci ALU'dan bekleniyor \\
+        \hline
+        3 (3'b011) & Yükleme saklama kuyruğundan bekleniyor \\
+        \hline
+        7 (3'b111) & Operand hazır \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Rezervasyon istasyonu, ortak veri yolunu sürekli izleyerek bekleyen operandlarını çözümlemektedir. Her operand için saklanan etiket değeri, ortak veri yolundaki geçerlilik sinyalleriyle karşılaştırılmaktadır. Örneğin, bir operandın etiketi sıfır ise ve sıfırıncı ALU kanalında geçerli bir sonuç yayınlanmışsa, bu sonuç ilgili operand alanına yazılmakta ve etiket yediye güncellenmektedir.
+
+Yükleme saklama kuyruğundan gelen sonuçlar için özel bir eşleştirme mekanizması gerekmektedir. ALU sonuçları belirli kanallara sabitlenmiş durumdadır; her ALU kendi kanalından yayın yapmaktadır. Ancak yükleme saklama kuyruğu, her çevrimde farklı girişlerden sonuç üretebilmekte ve bu sonuçları dinamik olarak üç kanaldan birine yönlendirebilmektedir (detaylar için bkz. Bölüm~\ref{sec:memory}). Bu nedenle etiket değeri üç olan bir operand için yalnızca kanal kontrolü yeterli olmamakta, ek olarak yayınlanan sonucun hedef fiziksel yazmaç adresiyle operandın beklediği adresin eşleşmesi de doğrulanmaktadır.
+
+\subsubsection{Komut Gönderme}\label{subsubsec:issue}
+
+Bir komutun işlevsel birime gönderilebilmesi için her iki operandının da hazır durumda olması gerekmektedir. Bir operandın hazır kabul edilmesi için iki koşuldan birinin sağlanması yeterlidir: operandın yazmaç dosyasından gelmiş olması (fiziksel adres MSB=0) veya yeniden sıralama arabelleğinden gelmiş ve etiket değerinin yedi olması. Rezervasyon istasyonu, iki farklı gönderme senaryosunu desteklemektedir.
+
+Doğrudan gönderme senaryosunda, kod çözme aşamasından gelen komutun operandları zaten hazır durumdadır. Bu durumda komut rezervasyon istasyonunda bekletilmeden bir sonraki saat çevriminde işlevsel birime yönlendirilmektedir. Bu senaryo, yazmaç dosyasından okunan kesinleştirilmiş değerler veya yeniden sıralama arabelleğinde hazır olarak işaretlenmiş spekülatif değerler için geçerlidir.
+
+Bekletilmiş gönderme senaryosunda, operandlardan en az biri henüz hazır değildir. Komut rezervasyon istasyonuna yerleştirilmekte ve ortak veri yolu izleme mekanizması devreye girmektedir. Bekleyen operandlar ortak veri yolundan çözümlendikçe, her iki operand da hazır hale geldikten bir sonraki saat çevriminde komut işlevsel birime gönderilmektedir.
+
+\subsubsection{Spekülatif Temizleme}\label{subsubsec:eager_flush}
+
+Dal yanlış tahmini yürütme aşamasında tespit edildiğinde, yanlış tahmin edilen daldan sonra gelen spekülatif komutların boruhattından temizlenmesi gerekmektedir. Geleneksel yaklaşımda bu temizleme işlemi, yanlış tahmin edilen dalın yeniden sıralama arabelleğinin başına ulaşmasını beklemektedir. Ancak bu bekleme süresi, özellikle derin boruhattı işlemcilerde önemli performans kayıplarına yol açmaktadır.
+
+Tasarlanan sistemde hevesli temizleme mekanizması kullanılmaktadır. Yanlış tahmin tespit edildiği anda, dal çözümleme takma ad tablosundan elde edilen bilgiler kullanılarak spekülatif komutlar tek çevrimde temizlenmektedir. Temizleme kararı, dairesel tampon üzerinde uzaklık karşılaştırmasına dayanmaktadır.
+
+Yeniden sıralama arabelleği dairesel bir tampon olarak çalıştığından, basit indeks karşılaştırması yetersiz kalmaktadır. Her komutun yaşı, yeniden sıralama arabelleğinin baş işaretçisinden olan uzaklığı ile belirlenmektedir. Uzaklık hesabı aşağıdaki denklemle gerçekleştirilmektedir:
+
+\begin{equation}
+    distance = \begin{cases}
+        idx - head\_ptr & \text{eğer } idx \geq head\_ptr \\
+        32 - head\_ptr + idx & \text{eğer } idx < head\_ptr
+    \end{cases}
+\end{equation}
+
+Bu denklemde $idx$ komutun yeniden sıralama arabelleğindeki indeksini, $head\_ptr$ ise baş işaretçisini temsil etmektedir. Yanlış tahmin edilen dalın uzaklığı ile rezervasyon istasyonundaki komutun uzaklığı karşılaştırılmakta; rezervasyon istasyonundaki komutun uzaklığı daha büyükse, bu komut yanlış tahmin edilen daldan sonra gelmiş demektir ve temizlenmelidir.
+
+Bu mekanizmayı somutlaştırmak için bir örnek senaryo ele alınabilir. Üç rezervasyon istasyonunun sırasıyla 3, 25 ve 8 indeksli komutları tuttuğu ve baş işaretçisinin 20 olduğu varsayılsın. Ayrıca indeks 5'teki dallanma komutunun yanlış tahmin edildiği tespit edilmiş olsun. Uzaklık hesaplamaları Çizelge~\ref{tab:flush_example}'de gösterilmektedir.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Spekülatif temizleme örnek senaryosu ($head\_ptr = 20$, dal indeksi = 5).}
+    \label{tab:flush_example}
+    \begin{tabular}{|l|c|c|c|l|}
+        \hline
+        \textbf{Birim} & \textbf{İndeks} & \textbf{Hesaplama} & \textbf{Uzaklık} & \textbf{Karar} \\
+        \hline
+        Dallanma & 5 & $32 - 20 + 5$ & 17 & (referans) \\
+        \hline
+        RS$_0$ & 3 & $32 - 20 + 3$ & 15 & Temizlenmez ($15 < 17$) \\
+        \hline
+        RS$_1$ & 25 & $25 - 20$ & 5 & Temizlenmez ($5 < 17$) \\
+        \hline
+        RS$_2$ & 8 & $32 - 20 + 8$ & 20 & Temizlenir ($20 > 17$) \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Bu örnekte yalnızca RS$_2$'deki komut spekülatif olarak değerlendirilmekte ve temizlenmektedir. Bu mekanizma sayesinde, yanlış tahmin toparlanması geleneksel yöntemlere kıyasla önemli ölçüde hızlandırılmaktadır.
+
+%------------------------------------------------------------------------
+
+\subsection{Yeniden Sıralama Arabelleği}\label{subsec:rob}
+
+Yeniden sıralama arabelleği, sıra dışı yürütme ile sıralı kesinleştirme arasında köprü görevi üstlenen kritik bir yapıdır \cite{johnson}. Bu yapı, işlevsel birimlerden gelen spekülatif sonuçları geçici olarak saklamakta ve komutların program sırasına göre kesinleştirilmesini koordine etmektedir. Kesinleştirme işleminin kendisi geri yazma aşamasında açıklanmakta olup bu bölümde yeniden sıralama arabelleğinin veri kontrol aşamasındaki rolleri ele alınmaktadır.
+
+Yeniden sıralama arabelleği, otuz iki girişlik bir dairesel tampon olarak gerçeklenmiştir. Her girişin içerdiği alanlar Çizelge~\ref{tab:rob_entry_fields}'de özetlenmiştir. Dairesel tampon yapısı, baş ve kuyruk işaretçileri aracılığıyla yönetilmekte olup tahsis işlemleri kuyruk tarafından, kesinleştirme işlemleri ise baş tarafından gerçekleştirilmektedir.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Yeniden sıralama arabelleği giriş alanları.}
+    \label{tab:rob_entry_fields}
+    \begin{tabular}{|l|c|l|}
+        \hline
+        \textbf{Alan Adı} & \textbf{Boyut (bit)} & \textbf{Açıklama} \\
+        \hline
+        Sonuç Değeri & 32 & Yürütme sonucu \\
+        \hline
+        Üretici Etiketi & 3 & Sonucun beklenildiği kaynak \\
+        \hline
+        Mimari Yazmaç Adresi & 5 & Hedef yazmaç \\
+        \hline
+        Yürütülmüş Bayrağı & 1 & Komut tamamlandı mı \\
+        \hline
+        İstisna Bayrağı & 1 & Yanlış tahmin/istisna \\
+        \hline
+        Dallanma Bayrağı & 1 & Dal komutu mu \\
+        \hline
+        Saklama Bayrağı & 1 & Saklama komutu mu \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[GÖRSEL: ROB Giriş Yapısı - Sonuç, Etiket, Adres ve Bayrak Alanları]}}
+    \caption{Yeniden sıralama arabelleği giriş yapısı}
+    \label{fig:rob_entry}
+\end{figure}
+
+\subsubsection{Tahsis ve Sonuç Güncellemesi}\label{subsubsec:rob_alloc_update}
+
+Kod çözme ve yeniden adlandırma aşamasından gelen her komut için yeniden sıralama arabelleğinde bir giriş tahsis edilmektedir. Üç yollu süperölçekli yapıda, her saat çevriminde en fazla üç tahsis işlemi paralel olarak gerçekleştirilebilmektedir. Tahsis sırasında girişin üretici etiketi ayarlanmakta, yürütülmüş bayrağı sıfırlanmakta ve hedef mimari yazmaç adresi kaydedilmektedir.
+
+İşlevsel birimler yürütmeyi tamamladığında, sonuçlar ortak veri yolu üzerinden yeniden sıralama arabelleğine iletilmektedir. Ortak veri yolu kanalları, sonuç verisinin yanı sıra hedef fiziksel yazmaç adresini de taşımaktadır. Bu adres, yeniden sıralama arabelleğindeki girişin konumunu doğrudan belirttiğinden, güncelleme işlemi konum tabanlı adresleme ile gerçekleştirilmektedir. Geleneksel tasarımlarda kullanılan içerik tabanlı adresleme yaklaşımı, etiket eşleştirmesi için tüm girişlerde paralel karşılaştırma gerektirmekte ve bu durum otuz iki adet karşılaştırıcı devresi anlamına gelmektedir. Tasarlanan sistemde fiziksel adresin doğrudan kullanılmasıyla bu karmaşık yapıdan kaçınılmakta ve alan maliyeti önemli ölçüde azaltılmaktadır. Eşleşen giriş bulunduğunda, sonuç değeri ilgili alana yazılmakta, etiket yediye güncellenmekte ve yürütülmüş bayrağı aktif edilmektedir.
+
+Yeni gelen komutlar için operand okuması yapılırken, yeniden sıralama arabelleği aynı anda ortak veri yolundan güncelleme alıyor olabilmektedir. Bu durumu ele almak için iletme mekanizması kullanılmaktadır. Eğer okunan adres için aynı çevrimde ortak veri yolundan güncelleme geliyorsa, tampondaki eski değer yerine ortak veri yolundaki güncel değer döndürülmektedir. Bu mekanizma, veri tutarsızlığını önlemekte ve gereksiz bekleme çevrimlerini ortadan kaldırmaktadır.
+
+Yanlış tahmin durumunda yeniden sıralama arabelleğinin toparlanması oldukça basit bir mekanizma ile gerçekleştirilmektedir. Kuyruk işaretçisi, yanlış tahmin edilen dallanma komutunun bir sonraki konumuna taşınmaktadır. Bu işlem, spekülatif olarak tahsis edilmiş tüm girişlerin mantıksal olarak geçersiz kılınmasını sağlamaktadır. Girişlerin içeriğinin ayrıca temizlenmesine gerek bulunmamakta, çünkü bu konumlar yeni komutlar tahsis edildiğinde üzerine yazılmaktadır.
+
+\subsubsection{Saklama İzni Mekanizması}\label{subsubsec:store_perm}
+
+Spekülatif yürütme ortamında saklama işlemlerinin yönetimi, yükleme işlemlerine kıyasla daha karmaşık bir sorun oluşturmaktadır. Spekülatif bir yükleme işlemi yanlış tahmin sonucunda iptal edildiğinde, okunan değer basitçe göz ardı edilebilmektedir; kesinleştirme aşamasında bu değer yazmaç dosyasına yazılmayarak sorun çözümlenmektedir. Ancak spekülatif bir saklama işlemi belleğe yazıldığında, bu yazma işleminin geri alınması çok daha karmaşık mekanizmalar gerektirmektedir.
+
+Bu karmaşıklıktan kaçınmak için tasarlanan sistemde saklama izni mekanizması kullanılmaktadır. Saklama komutları, yeniden sıralama arabelleğinin baş üç konumundan birine ulaşana kadar belleğe yazma işlemi gerçekleştirememektedir. Bir saklama komutunun belleğe yazılabilmesi için üç koşulun sağlanması gerekmektedir: komutun baş üç konumdan birinde bulunması, adres hesaplamasının tamamlanmış olması ve önünde çözümlenmemiş bir dallanma komutu bulunmaması.
+
+Bu mekanizma sayesinde, yalnızca kesinleşeceği garanti altına alınmış saklama işlemleri belleğe yazılmaktadır. Yanlış tahmin durumunda, henüz izin almamış spekülatif saklama işlemleri yeniden sıralama arabelleğinden temizlenmekte ve bellek tutarlılığı korunmaktadır.
+
+%------------------------------------------------------------------------
+
+\subsection{Ortak Veri Yolu}\label{subsec:cdb}
+
+Ortak veri yolu, Tomasulo algoritmasının sonuç yayınlama mekanizmasını gerçekleyen iletişim altyapısıdır. Bu yapı, işlevsel birimlerden gelen sonuçları tüm bekleyen birimlere eş zamanlı olarak dağıtmaktadır.
+
+Tasarlanan sistemde altı ortak veri yolu kanalı bulunmaktadır. İlk üç kanal, üç ALU'nun her birine ayrılmış durumdadır; sıfırıncı ALU sıfırıncı kanaldan, birinci ALU birinci kanaldan ve ikinci ALU ikinci kanaldan sonuçlarını yayınlamaktadır. Sonraki üç kanal ise yükleme saklama kuyruğu tarafından kullanılmaktadır. Yükleme saklama kuyruğuna üç kanal tahsis edilmesinin sebebi, tasarlanan sistemde üç ayrı bellek portunun bulunmasıdır; her bellek portu bağımsız olarak sonuç üretebilmekte ve bu sonuçlar ayrı kanallardan yayınlanmaktadır.
+
+Her ortak veri yolu kanalı standart bir sinyal kümesi taşımaktadır. Bu sinyaller Çizelge~\ref{tab:cdb_signals}'de listelenmiştir. Tüm sinyaller, rezervasyon istasyonlarına, yeniden sıralama arabelleğine ve yükleme saklama kuyruğuna paralel olarak iletilmektedir.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Ortak veri yolu kanal sinyalleri.}
+    \label{tab:cdb_signals}
+    \begin{tabular}{|l|c|l|}
+        \hline
+        \textbf{Sinyal Adı} & \textbf{Boyut (bit)} & \textbf{Açıklama} \\
+        \hline
+        Geçerlilik & 1 & Sonucun geçerli olduğunu belirtir \\
+        \hline
+        Sonuç Verisi & 32 & Yürütme sonucu değeri \\
+        \hline
+        Hedef Fiziksel Adres & 6 & Hedef fiziksel yazmaç adresi \\
+        \hline
+        Yanlış Tahmin Bayrağı & 1 & Dal yanlış tahmini tespit edildi \\
+        \hline
+        Dallanma Bayrağı & 1 & Sonuç dal komutuna aittir \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[GÖRSEL: Ortak Veri Yolu Ağı - 6 Kanal, Yayın Hedefleri]}}
+    \caption{Ortak veri yolu yayın ağı ve bileşen bağlantıları}
+    \label{fig:cdb_network}
+\end{figure}
+
+Yayın mekanizması, sonuçların tek çevrimde tüm ilgili birimlere ulaşmasını sağlamaktadır. Rezervasyon istasyonları bekleyen operandlarını çözümlemekte, yeniden sıralama arabelleği ilgili girişleri güncellemekte ve yükleme saklama kuyruğu adres hesaplama sonuçlarını almaktadır. Bu eş zamanlı dağıtım, Tomasulo algoritmasının veri bağımlılıklarını dinamik olarak çözümlemesinin temelini oluşturmaktadır.
+
+%------------------------------------------------------------------------
+
+\subsection{Yazmaç Dosyası}\label{subsec:prf}
+
+Yazmaç dosyası, kesinleştirilmiş komut sonuçlarını kalıcı olarak saklayan yapıdır. RISC-V mimarisinin tanımladığı otuz iki mimari yazmaca karşılık gelen bu yapı, otuz iki adet otuz iki bitlik yazmaç içermektedir.
+
+Üç yollu süperölçekli mimariyi desteklemek için yazmaç dosyası çok portlu bir yapıya sahiptir. Altı okuma portu, her saat çevriminde üç komutun her biri için iki kaynak operandının paralel olarak okunmasını sağlamaktadır. Üç yazma portu ise kesinleştirme aşamasında eş zamanlı yazma işlemlerine olanak tanımaktadır.
+
+Okuma işlemleri kombinasyonel olarak gerçekleştirilmekte ve aynı saat çevriminde veri döndürülmektedir. Yazma işlemleri ise saat sinyalinin yükselen kenarında gerçekleştirilmektedir. Aynı çevrimde bir adrese hem okuma hem yazma yapıldığında, atlama mantığı devreye girmekte ve yazılmakta olan yeni değerin okunmasını sağlamaktadır. Bu mekanizma, üç yazma portunun tamamı için uygulanmakta olup en yüksek öncelik program sırasında en son gelen komutun değerine verilmektedir.
+
+RISC-V mimarisinde sıfırıncı yazmaç özel bir konumdadır ve her zaman sıfır değerini taşımaktadır. Bu davranışı sağlamak için sıfırıncı fiziksel yazmaç, her saat çevriminde sıfıra zorlanmaktadır. Herhangi bir komut bu yazmaca yazma yapmaya çalışsa bile değer değişmemekte, mimari gereksinim donanım düzeyinde garanti altına alınmaktadır.
+
