@@ -117,8 +117,8 @@
 @inproceedings{rsd,
   author = {Susumu Suzuki and others},
   title = {RSD: An Open Source FPGA-Optimized Out-of-Order RISC-V Soft Processor},
-  booktitle = {Proc. IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS)},
-  year = {2023}
+  booktitle = {Proc. International Conference on Field Programmable Technology (FPT)},
+  year = {2019}
 }
 
 % ================================================================
@@ -184,25 +184,9 @@
   doi = {10.1109/DFT56152.2022.9962340}
 }
 
-% Li et al. - DuckCore, pipeline level protection, ECC power consumption
-@article{li_duckcore,
-  author = {J. Li and S. Zhang and C. Bao},
-  title = {DuckCore: A fault-tolerant processor core architecture based on the RISC-V ISA},
-  journal = {Electronics (MDPI)},
-  volume = {11},
-  number = {1},
-  pages = {122},
-  year = {2021},
-  doi = {10.3390/electronics11010122}
-}
+% annink_2022 silindi - mükerrer
 
-@inproceedings{annink_2022,
-  author = {E. B. Annink and others},
-  title = {Preventing Soft Errors and Hardware Trojans in RISC-V Cores},
-  booktitle = {IEEE International Symposium on Defect and Fault Tolerance in VLSI and Nanotechnology Systems (DFT)},
-  year = {2022},
-  pages = {1--6}
-}
+
 
 @article{vigli_2024,
   author = {F. Vigli and M. Barbirotta and A. Cheikh and F. Menichelli and A. Mastrandrea and M. Olivieri},
@@ -247,14 +231,16 @@
   year = {2023}
 }
 
-@article{duckcore_2021,
+% duckcore_2021 - li_duckcore ile birleştirildi
+@article{li_duckcore,
   author = {J. Li and S. Zhang and C. Bao},
   title = {DuckCore: A fault-tolerant processor core architecture based on the RISC-V ISA},
   journal = {Electronics (MDPI)},
   volume = {11},
   number = {1},
   pages = {122},
-  year = {2021}
+  year = {2021},
+  doi = {10.3390/electronics11010122}
 }
 
 @inproceedings{rodrigues_2019,
@@ -295,19 +281,7 @@
   year = {2024}
 }
 
-@inproceedings{date_boom_2023,
-  author = {{Design, Automation and Test in Europe Conference}},
-  title = {Fault Injection Platform for BOOM Superscalar Processor},
-  booktitle = {DATE Conference Proceedings},
-  year = {2023}
-}
-
-@inproceedings{dynamic_tmr_2024,
-  author = {{Sapienza University of Rome}},
-  title = {Dynamic TMR in Interleaved Hardware Threads},
-  booktitle = {IEEE Proceedings},
-  year = {2024}
-}
+% date_boom_2023 ve dynamic_tmr_2024 silindi - doğrulanamayan kaynaklar
 
 % Yazar'ın kendi yayını
 @INPROCEEDINGS{iskin_fault_tolerance_2024,
@@ -320,6 +294,17 @@
   doi={10.1109/ICEEE67194.2025.11261941}
 }
 
+% Mach & Kohútka 2025 - Lockstep Alternative
+@ARTICLE{mach_lockstep_2025,
+  author={Mach, Ján and Kohútka, Lukáš},
+  journal={IEEE Access}, 
+  title={Lockstep Replacement: Fault-Tolerant Design}, 
+  year={2025},
+  volume={13},
+  pages={94302-94318},
+  doi={10.1109/ACCESS.2025.3573684}
+}
+
 % ================================================================
 % BÖLÜM 3 EK KAYNAKLAR (2022-2024)
 % ================================================================
@@ -330,11 +315,22 @@
   title = {Design and Implementation of a Superscalar RISC-V Processor},
   school = {Politecnico di Milano},
   year = {2023},
+  type = {Master's Thesis},
   note = {ViVit: RISC-V superscalar in-order dual-issue CPU on Artix-7 FPGA}
 }
 
-% Fast branch misprediction recovery - checkpoint tabanlı (2023 güncel kaynak)
-@article{akkary_checkpoint_2003,
+% Akkary et al. - Checkpoint Processing and Recovery (MICRO 2003)
+@INPROCEEDINGS{akkary_checkpoint_2003,
+  author={Akkary, H. and Rajwar, R. and Srinivasan, S.T.},
+  booktitle={Proceedings. 36th Annual IEEE/ACM International Symposium on Microarchitecture, 2003. MICRO-36.}, 
+  title={Checkpoint processing and recovery: towards scalable large instruction window processors}, 
+  year={2003},
+  pages={423--434},
+  doi={10.1109/MICRO.2003.1253246}
+}
+
+% Josipović 2017 - Out-of-Order LSQ for Spatial Computing
+@article{josipovic_lsq_2017,
   author = {Lana Josipović and Philip Brisk and Paolo Ienne},
   title = {An Out-of-Order Load-Store Queue for Spatial Computing},
   journal = {ACM Transactions on Embedded Computing Systems},
@@ -351,16 +347,18 @@
   title = {Copy-Free Checkpointed Renaming: A FPGA-friendly Register Renaming Design},
   booktitle = {Proc. Design, Automation and Test in Europe Conference (DATE)},
   year = {2022},
+  pages = {1--6},
   doi = {10.23919/DATE54114.2022.9774640}
 }
 
-% BOOM v3 - Modern out-of-order RISC-V
-@inproceedings{boom_v3_2023,
+% SonicBOOM - Modern out-of-order RISC-V (boom_v3_2023 ile birleştirildi)
+@inproceedings{sonicboom,
   author = {Jerry Zhao and Ben Korpan and Abraham Gonzalez and Krste Asanović},
   title = {SonicBOOM: The 3rd Generation Berkeley Out-of-Order Machine},
   booktitle = {Fourth Workshop on Computer Architecture Research with RISC-V (CARRV)},
   year = {2020},
-  note = {Co-located with ISCA 2020, May 29, 2020}
+  pages = {1--7},
+  note = {Co-located with ISCA 2020, 1.2 GHz in GF 12nm, 6.2 CoreMarks/MHz}
 }
 
 % High-performance RISC-V evaluation - BOOM, NOEL-V, CVA6
@@ -389,11 +387,11 @@
   year = {2023}
 }
 
-% Simplified LSQ - ETH Zurich 2023
-@inproceedings{sfb_illinois_2005,
-  author = {A. Josipović and P. Ienne and L. Benini},
+% Josipović 2023 - LSQ Sizing for Dataflow Circuits
+@article{josipovic_lsq_2023,
+  author = {Lana Josipović and Paolo Ienne and Luca Benini},
   title = {Load-Store Queue Sizing for Efficient Dataflow Circuits},
-  booktitle = {IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems},
+  journal = {IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems},
   year = {2023},
   note = {ETH Zurich - Minimizing LSQ complexity for spatial computing}
 }
@@ -428,13 +426,6 @@
   note = {Rocket core: 0.034 mW/MHz dynamic power in TSMC 40GPLUS}
 }
 
-@inproceedings{sonicboom,
-  author = {Jerry Zhao and Ben Korpan and Abraham Gonzalez and Krste Asanovic},
-  title = {SonicBOOM: The 3rd Generation Berkeley Out-of-Order Machine},
-  booktitle = {Fourth Workshop on Computer Architecture Research with RISC-V (CARRV)},
-  year = {2020},
-  note = {1.2 GHz in GF 12nm, 6.2 CoreMarks/MHz}
-}
 
 @misc{sifive_u74,
   author = {{SiFive}},
@@ -444,7 +435,7 @@
   note = {64-bit in-order core, 1.2 GHz, Linux-capable}
 }
 
-@misc{sifive_u84,
+@misc{sifive_p550,
   author = {{SiFive}},
   title = {SiFive Performance P550 Core},
   howpublished = {\url{https://www.sifive.com/cores/performance-p550}},

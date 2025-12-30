@@ -7,7 +7,7 @@ Bu bölümde, tasarlanan üç yollu süperölçekli sıra dışı yürütme öze
 
 Fonksiyonel doğrulama kapsamında, Google RISC-V DV çerçevesi ile üretilen dokuz farklı rastgele test senaryosu ve sekiz farklı algoritmayı içeren deterministik test programı olmak üzere toplamda yaklaşık 260.000 komut yürütülmüştür. Tüm testler, Berkeley Spike referans modeli ile çevrim bazında (cycle-by-cycle) karşılaştırılarak doğrulanmıştır.
 
-Performans değerlendirmesinde, işlemcinin tek yollu (scalar) versiyonu ile karşılaştırmalı IPC analizleri gerçekleştirilmiş; boru hattı darboğazları, dal tahmini başarımı ve bellek erişim gecikmelerinin performansa etkileri istatistiksel yöntemlerle incelenmiştir.
+Performans değerlendirmesinde, işlemcinin tek yollu (scalar) versiyonu ile karşılaştırmalı IPC analizleri gerçekleştirilmiş; boruhattı darboğazları, dal tahmini başarımı ve bellek erişim gecikmelerinin performansa etkileri istatistiksel yöntemlerle incelenmiştir.
 
 Güvenilirlik doğrulaması kapsamında, TMR ile korunan kritik yazmaçlara hata enjeksiyonu testleri uygulanmış ve tek bit hatalarına karşı \%100 maskeleme oranı elde edilmiştir.
 
@@ -70,7 +70,7 @@ Karma Test & 30.000 & Sınır değer aritmetiği, döngüler, atlamalar, rastgel
 \end{tabular}
 \end{table}
 
-Rastgele test programları toplamda yaklaşık 200.000 komut içermekte olup, işlemcinin temel fonksiyonel bloklarının büyük çoğunluğunu kapsamaktadır. Süperölçekli bir mimari için kritik olan veri bağımlılığı (RAW, WAW, WAR) ve ardışık dallanma (back-to-back branch) gibi karmaşık senaryolar bu rastgele akışlar sayesinde stres altına alınmıştır. Test kapsamı; boru hattındaki kaynakların (ROB, RS, LSQ) sınır değerlerdeki davranışını ve spekülatif yürütme sonrası kurtarma mekanizmalarının doğruluğunu kanıtlamak için yeterli seviyeye ulaştırılmıştır.
+Rastgele test programları toplamda yaklaşık 200.000 komut içermekte olup, işlemcinin temel fonksiyonel bloklarının büyük çoğunluğunu kapsamaktadır. Süperölçekli bir mimari için kritik olan veri bağımlılığı (RAW, WAW, WAR) ve ardışık dallanma (back-to-back branch) gibi karmaşık senaryolar bu rastgele akışlar sayesinde stres altına alınmıştır. Test kapsamı; boruhattındaki kaynakların (ROB, RS, LSQ) sınır değerlerdeki davranışını ve spekülatif yürütme sonrası kurtarma mekanizmalarının doğruluğunu kanıtlamak için yeterli seviyeye ulaştırılmıştır.
 
 \subsubsection{Algoritma Tabanlı Deterministik Test Programları}
 
@@ -123,7 +123,7 @@ Fonksiyonel doğruluğun sağlanması, sıra dışı yürütme yapısının teme
 \section{Performans Analizi}\label{sec:performans_analizi}
 %------------------------------------------------------------------------
 
-İşlemcinin süperölçekli mimarisinin verimliliğini değerlendirmek amacıyla, farklı iş yükleri altında çevrim başına yürütülen ortalama komut sayısı (IPC) ve boru hattındaki performans darboğazları analiz edilmiştir. Geliştirilen test ortamı, simülasyon sırasında işlemcinin performans parametrelerini eşzamanlı olarak raporlayabilme yeteneğine sahiptir.
+İşlemcinin süperölçekli mimarisinin verimliliğini değerlendirmek amacıyla, farklı iş yükleri altında çevrim başına yürütülen ortalama komut sayısı (IPC) ve boruhattındaki performans darboğazları analiz edilmiştir. Geliştirilen test ortamı, simülasyon sırasında işlemcinin performans parametrelerini eşzamanlı olarak raporlayabilme yeteneğine sahiptir.
 
 \subsection{IPC Karşılaştırması ve Hızlanma Oranları}
 
@@ -170,14 +170,14 @@ Bölüm \ref{subsec:test_vektorleri}'de tanımlanan deterministik algoritma seti
 
 Deterministik testlerde elde edilen sonuçlara göre, üç yollu paralel yürütme yapısı sayesinde scalar çekirdeğe göre yaklaşık 2,04 kat hızlanma elde edilmiştir. Ortalama IPC değerinin 0,84'ten 1,71'e yükselmesi, süperölçekli mimarinin komut seviyesi paralelliğini (ILP) verimli bir şekilde kullandığını kanıtlamaktadır. Deterministik algoritma testlerinde (gerçek dünya iş yüklerini temsil eden) dal tahmincisi \%80'den fazla tahmin doğruluğuna ulaşmış olup, bu durum dal tahmincisinin gerçek uygulamalarda yüksek verimlilik sunduğunu göstermektedir. 
 
-\subsection{Boru Hattı Tıkanıklık ve Darboğaz Analizi}
+\subsection{Boruhattı Tıkanıklık ve Darboğaz Analizi}
 
-İşlemcinin performansını sınırlayan unsurları (bottleneck) mikromimari seviyesinde tespit etmek amacıyla, boru hattının her bir aşamasında oluşan tıkanıklıklar detaylı olarak incelenmiştir. Bu analiz kapsamında rezervasyon istasyonlarının (RS) yürütme birimlerini besleyememesinin nedenleri iki ana kategoride ele alınmaktadır:
+İşlemcinin performansını sınırlayan unsurları (bottleneck) mikromimari seviyesinde tespit etmek amacıyla, boruhattının her bir aşamasında oluşan tıkanıklıklar detaylı olarak incelenmiştir. Bu analiz kapsamında rezervasyon istasyonlarının (RS) yürütme birimlerini besleyememesinin nedenleri iki ana kategoride ele alınmaktadır:
 
 \begin{itemize}
     \item \textbf{Komut Yokluğu (Not Occupied):} Rezervasyon istasyonunun boş kaldığı durumları kapsamaktadır. Bu durum üç farklı senaryodan kaynaklanabilmektedir:
     \begin{itemize}
-        \item \textbf{Dal Yanlış Tahmini Cezası:} Misprediction sonrasında boru hattı temizlenmiş olup doğru komutlar henüz rezervasyon istasyonuna ulaşmamıştır.
+        \item \textbf{Dal Yanlış Tahmini Cezası:} Misprediction sonrasında boruhattı temizlenmiş olup doğru komutlar henüz rezervasyon istasyonuna ulaşmamıştır.
         \item \textbf{Komut Tamponu Boşalması:} Dal yanlış tahmini olmaksızın komut tamponunun (instruction buffer) boşalması nedeniyle yeni komut akışı kesilmiştir.
         \item \textbf{Önceki Aşama Darboğazı:} Komut tamponunda bekleyen komutlar mevcut olmasına rağmen, yeniden sıralama tamponu (ROB) veya yükleme-saklama kuyruğu (LSQ) gibi yapıların doluluk oranları nedeniyle yeni komutlar dağıtılamamaktadır.
     \end{itemize}
@@ -294,7 +294,7 @@ Her iki senaryoda da işlemci, enjekte edilen tüm tekil bit hatalarını TMR oy
 
 Çoklu bit hataları (MBU) için yapılan testlerde ise sistemin tespit kabiliyeti ölçülmüştür. Korunan yazmaçlara çoklu bit hataları enjekte edilmiştir. Gerçekleştirilen tüm senaryolarda sistem, TMR oylayıcılarındaki uyumsuzluğu fark ederek ``Kritik Hata (Fatal Error)'' sinyalini başarıyla üretmiştir. Sistem maskeleme yapamasa dahi, hatayı \%100 oranında tespit ederek sessiz veri bozulmasının (Silent Data Corruption) önüne geçmiştir.
 
-Mevcut tasarımda toparlanma işlemi için gerekli olan altyapı (BRAT anlık görüntüleri ve hata sinyali) sağlanmış olup, otomatik yeniden başlatma denetleyicisi gelecek çalışma olarak önerilmektedir. Elde edilen \%100 tespit oranı, bu gelecek çalışmanın güvenilir bir temel üzerine inşa edilebileceğini kanıtlamaktadır.
+Mevcut tasarımda toparlanma işlemi için gerekli olan altyapı (RAT Checkpoint anlık görüntüleri ve hata sinyali) sağlanmış olup, otomatik yeniden başlatma denetleyicisi gelecek çalışma olarak önerilmektedir. Elde edilen \%100 tespit oranı, bu gelecek çalışmanın güvenilir bir temel üzerine inşa edilebileceğini kanıtlamaktadır.
 
 
 %------------------------------------------------------------------------
@@ -330,7 +330,7 @@ Toplam Güç Tüketimi & 150.4 mW \\
 \end{tabular}
 \end{table}
 
-Sentez aşamasında tespit edilen kritik yol, dispatch aşamasındaki yükleme-saklama kuyruğu (LSQ) baş işaretçisinden dal yanlış tahmini kurtarma tablosu (BRAT) içindeki RAT anlık görüntü belleğine uzanan sinyal yolunda oluşmaktadır. Bu yolun toplam kombinasyonel gecikmesi 937 ps olarak ölçülmüş olup, kalan 63 ps kurulum zamanı (setup time) ve zamanlama belirsizliği (uncertainty) için ayrılmıştır.
+Sentez aşamasında tespit edilen kritik yol, dispatch aşamasındaki yükleme-saklama kuyruğu (LSQ) baş işaretçisinden RAT Checkpoint içindeki RAT anlık görüntü belleğine uzanan sinyal yolunda oluşmaktadır. Bu yolun toplam kombinasyonel gecikmesi 937 ps olarak ölçülmüş olup, kalan 63 ps kurulum zamanı (setup time) ve zamanlama belirsizliği (uncertainty) için ayrılmıştır.
 
 
 Sentez aşamasında gerçekleştirilen güç analizi, rastgele test aktivitesi varsayımı altında toplam güç tüketimini ortaya koymaktadır. Tablo \ref{tab:power_syn}, güç bileşenlerinin dağılımını göstermektedir.
@@ -362,7 +362,7 @@ Güç dağılımı analiz edildiğinde, dahili gücün baskın bileşen olduğu 
 
 Lojik sentez çıktısı, Cadence Innovus 22.31 fiziksel tasarım aracı kullanılarak yerleştirme ve yönlendirme (Place and Route) aşamasından geçirilmiştir. Fiziksel tasarım sürecinde saat ağacı sentezi, yerleştirme optimizasyonu ve sinyal yönlendirmesi gerçekleştirilmiştir.
 
-Şekil \ref{fig:innovus_layout}, tasarımın yerleştirme aşaması sonrasındaki fiziksel görünümünü sunmaktadır. Yaklaşık 400 $\mu m$ $\times$ 400 $\mu m$ boyutlarındaki çip alanı üzerinde, temel fonksiyonel birimlerin (fetch, issue, rat/brat, vb.) yerleşimi ve kapladıkları alanlar görülmektedir.
+Şekil \ref{fig:innovus_layout}, tasarımın yerleştirme aşaması sonrasındaki fiziksel görünümünü sunmaktadır. Yaklaşık 400 $\mu m$ $\times$ 400 $\mu m$ boyutlarındaki çip alanı üzerinde, temel fonksiyonel birimlerin (fetch, issue, RAT Checkpoint, vb.) yerleşimi ve kapladıkları alanlar görülmektedir.
 
 \begin{figure}[htbp]
     \centering
@@ -404,7 +404,7 @@ Toplam Güç Tüketimi & 131.6 mW \\
 
 Fiziksel tasarım aşamasında hücre sayısının lojik senteze göre artış göstermesinin temel nedeni, zamanlama optimizasyonu amacıyla eklenen tampon hücreleri ve saat ağacı sentezi sırasında yerleştirilen saat tamponlarıdır.
 
-Fiziksel tasarım sonrası kritik yol, dal yanlış tahmini kurtarma tablosu (BRAT) içindeki baş imlecinden dispatch aşamasındaki yükleme-saklama kuyruğu (LSQ) baş işaretçisine uzanan sinyal yolunda tespit edilmiştir. Fiziksel tasarım sonucunda 1 GHz hedef frekans tutturulamamış olup, kritik yolda 106 ps zamanlama ihlali (timing violation) oluşmuştur.
+Fiziksel tasarım sonrası kritik yol, RAT Checkpoint içindeki baş imlecinden dispatch aşamasındaki yükleme-saklama kuyruğu (LSQ) baş işaretçisine uzanan sinyal yolunda tespit edilmiştir. Fiziksel tasarım sonucunda 1 GHz hedef frekans tutturulamamış olup, kritik yolda 106 ps zamanlama ihlali (timing violation) oluşmuştur.
 
 Bu sonuç, tasarımın 1 GHz hedef frekansını tam olarak karşılayamadığını, ancak yaklaşık 900 MHz civarında güvenli biçimde çalışabileceğini göstermektedir. Zamanlama ihlalinin giderilmesi için kritik yol üzerindeki kombinasyonel mantığın yeniden yapılandırılması veya daha agresif sentez kısıtlamalarının uygulanması değerlendirilebilir.
 
@@ -446,9 +446,9 @@ Her iki tasarım aşamasında da kritik yol, spekülatif yürütme altyapısın�
 \toprule
 \textbf{Aşama} & \textbf{Kritik Yol Tanımı} & \textbf{Gecikme} & \textbf{Slack} \\
 \midrule
-Lojik Sentez & LSQ baş işaretçisinden BRAT anlık görüntüsüne & 937 ps & 0 ps \\
+Lojik Sentez & LSQ baş işaretçisinden RAT Checkpoint anlık görüntüsüne & 937 ps & 0 ps \\
 \midrule
-Fiziksel Tasarım & BRAT baş imlecinden LSQ baş işaretçisine & 1054 ps & -106 ps \\
+Fiziksel Tasarım & RAT Checkpoint baş imlecinden LSQ baş işaretçisine & 1054 ps & -106 ps \\
 \bottomrule
 \end{tabular}
 \end{table}

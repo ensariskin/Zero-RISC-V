@@ -7,7 +7,7 @@
 
 Kod çözme ve yeniden adlandırma aşaması, komut arabelleğinden alınan komutların işlenmesinden sorumludur ve iki temel görev üstlenmektedir: komut kod çözme ve yazmaç yeniden adlandırma. Komut kod çözme, RV32I komut formatlarını analiz ederek kontrol sinyallerini üretmektedir. Yazmaç yeniden adlandırma ise sıra dışı yürütme için gerekli olan yalancı bağımlılıkları ortadan kaldırmaktadır \cite{keller,tomasulo}.
 
-Bu aşamada üç temel yapı kullanılmaktadır: mimari yazmaçları fiziksel yazmaçlara eşleyen Yazmaç Takma Ad Tablosu (RAT), kullanılabilir fiziksel yazmaç ve kuyruk adreslerini yöneten Serbest Liste yapıları ve dal spekülasyonu için anlık görüntüleri saklayan Dal Çözümleme Takma Ad Tablosu (BRAT).
+Bu aşamada üç temel yapı kullanılmaktadır: mimari yazmaçları fiziksel yazmaçlara eşleyen Yazmaç Takma Ad Tablosu (RAT), kullanılabilir fiziksel yazmaç ve kuyruk adreslerini yöneten Serbest Liste yapıları ve dal spekülasyonu için anlık görüntüleri saklayan RAT Checkpoint.
 
 \begin{figure}[htbp]
     \centering
@@ -21,7 +21,7 @@ Bu aşama, komut arabelleğinden üç komut almakta ve her biri için aşağıda
     \item Komut kod çözme işlemi (RV32I format çözümleme)
     \item Yazmaç yeniden adlandırma (RAT sorgulama ve tahsis)
     \item Yeniden sıralama arabelleği ve yükleme saklama kuyruğu kaynak tahsisi
-    \item Dal komutu ise BRAT'a anlık görüntü kaydetme
+    \item Dal komutu ise RAT Checkpoint'e anlık görüntü kaydetme
 \end{enumerate}
 
 Bu işlemlerin tamamı tek bir saat çevriminde gerçekleştirilmektedir. $N$. çevrimde komut alımı, kod çözme ve yeniden adlandırma kombinasyonel olarak tamamlanmaktadır. $(N+1)$. çevrimde ise tüm bilgiler sonraki aşamaya iletilmekte ve RAT güncellenmektedir.
@@ -127,26 +127,26 @@ Yükleme saklama kuyruğu adres listesi de aynı dairesel tampon yapısında ger
 
 %------------------------------------------------------------------------
 
-\subsection{Dal Spekülasyon Desteği}\label{subsec:brat}
+\subsection{Dal Spekülasyon Desteği}\label{subsec:rat_checkpoint}
 
 
 Sıra dışı yürütme sırasında dallanma komutları henüz sonuçlanmadan spekülatif olarak yürütülmektedir. Bu yaklaşım, dallanma komutlarının sonuçlanmasını beklemeden sonraki komutların işlenmesine olanak tanımaktadır. Ancak yanlış tahmin durumunda, işlemcinin tutarlı bir duruma geri dönebilmesi için özel mekanizmalar gerekmektedir.
 
-Yanlış tahmin tespit edildiğinde işlemciyi tutarlı bir duruma döndürmenin birkaç farklı yöntemi bulunmaktadır. Geleneksel Tomasulo tabanlı işlemcilerde, dal komutu yeniden sıralama arabelleğinin başına ulaşana kadar beklenmektedir; ancak bu yöntem ciddi performans kayıplarına neden olmaktadır. Anlık görüntü tabanlı yöntemler ise her spekülatif dal için işlemci durumunun bir kopyasını saklamakta ve yanlış tahmin durumunda bu kopyayı anında geri yüklemektedir \cite{akkary_checkpoint_2003}.
+Yanlış tahmin tespit edildiğinde işlemciyi tutarlı bir duruma döndürmenin birkaç farklı yöntemi bulunmaktadır. Geleneksel Tomasulo tabanlı işlemcilerde, dal komutu yeniden sıralama arabelleğinin başına ulaşana kadar beklenmektedir; ancak bu yöntem ciddi performans kayıplarına neden olmaktadır. Anlık görüntü tabanlı yöntemler ise her spekülatif dal için işlemci durumunun bir kopyasını saklamakta ve yanlış tahmin durumunda bu kopyayı anında geri yüklemektedir \\cite{akkary_checkpoint_2003}.
 
 %--- 3.3.3.1 Anlık Görüntü Mekanizması ---
 \subsubsection{Anlık Görüntü Mekanizması}\label{subsubsec:snapshot}
 
-Dal Çözümleme Takma Ad Tablosu (BRAT), on altı girişlik bir dairesel tampon olarak gerçeklenmiştir. Her dallanma veya atlama komutu işlendiğinde, mevcut durumun bir anlık görüntüsü bu tampona kaydedilmektedir.
+RAT Checkpoint, on altı girişlik bir dairesel tampon olarak gerçeklenmiştir. Her dallanma veya atlama komutu işlendiğinde, mevcut durumun bir anlık görüntüsü bu tampona kaydedilmektedir.
 
 \begin{figure}[htbp]
     \centering
-    \fbox{\textbf{[GÖRSEL: BRAT Snapshot Yapısı - Her dal için RAT kopyası, GHR, TOS ve PC saklama]}}
-    \caption{Dal çözümleme takma ad tablosu (BRAT) ve anlık görüntü yapısı}
-    \label{fig:brat_structure}
+    \fbox{\textbf{[GÖRSEL: RAT Checkpoint Snapshot Yapısı - Her dal için RAT kopyası, GHR, TOS ve PC saklama]}}
+    \caption{RAT Checkpoint ve anlık görüntü yapısı}
+    \label{fig:rat_checkpoint_structure}
 \end{figure}
 
-Şekil~\ref{fig:brat_structure}'de gösterilen bu yapıda kaydedilen bilgiler arasında otuz iki mimari yazmacın fiziksel eşlemesi, dal komutunun fiziksel yazmaç adresi, tahmin anındaki program sayacı değeri, dolaylı atlama bayrağı ve dönüş adresi yığını tepe işaretçisi bulunmaktadır. Ayrıca, dal tahmincisinin doğru çalışması için gerekli olan küresel dal geçmişi (GHR) de saklanmaktadır; bu bilgi özellikle GShare tahmincisi tarafından kullanılmaktadır.
+Şekil~\ref{fig:rat_checkpoint_structure}'de gösterilen bu yapıda kaydedilen bilgiler arasında otuz iki mimari yazmacın fiziksel eşlemesi, dal komutunun fiziksel yazmaç adresi, tahmin anındaki program sayacı değeri, dolaylı atlama bayrağı ve dönüş adresi yığını tepe işaretçisi bulunmaktadır. Ayrıca, dal tahmincisinin doğru çalışması için gerekli olan küresel dal geçmişi (GHR) de saklanmaktadır; bu bilgi özellikle GShare tahmincisi tarafından kullanılmaktadır.
 
 Normal çalışmada daha küçük bir tampon bile yeterli olabildiği gözlemlenmiştir. Ancak güvenli modda, çoklu bit hataları sonucu oluşan çözülemez hatalar sırasında en yakın güvenli ana dönebilmek için yalnızca dallanma komutları değil her komut için anlık görüntü kaydedilmektedir. Bu nedenle daha büyük bir kapasite gerekmektedir. Üç paralel push arayüzü ile her saat çevriminde en fazla üç anlık görüntü alınabilmektedir.
 
@@ -154,7 +154,7 @@ Normal çalışmada daha küçük bir tampon bile yeterli olabildiği gözlemlen
 Anlık görüntüler alındıktan sonra, kesinleştirme işlemleri yazmaç takma ad tablosunu değiştirmektedir. Bu değişikliklerin anlık görüntülere de yansıtılması gerekmektedir. Her kesinleştirme işleminde, tüm aktif anlık görüntülerde ilgili mimari yazmacın eşlemesi kontrol edilmekte ve gerekirse güncellenmektedir.
 
 % --- Sıralı Sonuçlanma (paragraf olarak) ---
-Dallar sıra dışı yürütülse bile, sonuçlanma çıkışlarının diğer modüllere sıralı olarak iletilmesi gerekmektedir. BRAT, yürütme aşamasından gelen sıra dışı sonuçlanma sonuçlarına göre ilgili girdinin çözüldü (resolved) veya yanlış tahmin (mispredicted) bayraklarını ayarlamaktadır. Baş işaretçisindeki girdinin çözülmüş olması durumunda sonucu diğer modüllere iletilmekte ve işaretçi ilerletilmektedir. Bu sayede öncelik her zaman daha yaşlı komutta olmaktadır.
+Dallar sıra dışı yürütülse bile, sonuçlanma çıkışlarının diğer modüllere sıralı olarak iletilmesi gerekmektedir. RAT Checkpoint, yürütme aşamasından gelen sıra dışı sonuçlanma sonuçlarına göre ilgili girdinin çözüldü (resolved) veya yanlış tahmin (mispredicted) bayraklarını ayarlamaktadır. Baş işaretçisindeki girdinin çözülmüş olması durumunda sonucu diğer modüllere iletilmekte ve işaretçi ilerletilmektedir. Bu sayede öncelik her zaman daha yaşlı komutta olmaktadır.
 
 %--- 3.3.3.2 Yanlış Tahmin Toparlanması ---
 \subsubsection{Yanlış Tahmin Toparlanması}\label{subsubsec:recovery}

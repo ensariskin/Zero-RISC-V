@@ -1,0 +1,126 @@
+\phantomsection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{TEMEL KAVRAMLAR VE LİTERATÜR}\label{ch:temel_kavramlar}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Bu bölümde, tez çalışmasının temelini oluşturan kavramlar ve ilgili literatür taraması sunulmaktadır. İlk olarak RISC-V komut seti mimarisi tanıtılmakta, ardından süperölçekli işlemci tasarımının temel kavramları açıklanmaktadır. Bölümün devamında hata toleransı yöntemleri ve son olarak ilgili çalışmalar incelenmektedir.
+
+%------------------------------------------------------------------------
+\section{RISC-V Mimarisi}\label{sec:riscv}
+%------------------------------------------------------------------------
+
+RISC-V, 2010 yılında University of California, Berkeley'de geliştirilen açık kaynak kodlu bir komut seti mimarisidir \cite{riscv_spec}. Geleneksel ticari mimarilerden farklı olarak, RISC-V telif ücreti gerektirmemekte ve tasarımcılara tam özelleştirme özgürlüğü sunmaktadır. Bu özellikler, araştırma ve eğitim amaçlı kullanımların yanı sıra endüstriyel uygulamalarda da yaygın benimsenmesine yol açmıştır.
+
+\subsection{Modüler Yapı}\label{subsec:riscv_modular}
+
+RISC-V'nin temel tasarım felsefesi modülerliktir. Mimari, zorunlu bir taban komut seti ve isteğe bağlı uzantılardan oluşmaktadır. RV32I olarak adlandırılan taban komut seti, 32 bitlik tam sayı işlemlerini desteklemektedir.
+
+Taban komut seti altı farklı komut formatı kullanmaktadır: R-tipi (yazmaç-yazmaç işlemler), I-tipi (anlık değerli işlemler), S-tipi (saklama), B-tipi (dallanma), U-tipi (üst anlık) ve J-tipi (atlama). Bu düzenli format yapısı, komut kod çözme donanımının basitleştirilmesine olanak tanımaktadır \cite{patterson_hennessy}.
+
+RISC-V mimarisi, makine modu (M-mode), süpervizör modu (S-mode) ve kullanıcı modu (U-mode) olmak üzere üç ayrıcalık seviyesi tanımlamaktadır \cite{riscv_priv}. Gömülü sistemlerde genellikle yalnızca makine modu kullanılırken, işletim sistemi çalıştıran sistemlerde tüm seviyeler aktif olabilmektedir. Bu tez çalışmasında tasarlanan işlemci, yalnızca makine modunu desteklemektedir.
+
+%------------------------------------------------------------------------
+\section{İşlemci Mikro Mimarisi Kavramları}\label{sec:mikromimarisi}
+%------------------------------------------------------------------------
+
+Modern işlemciler, komut seviyesi paralelliğinden (Instruction Level Parallelism - ILP) yararlanarak performansı artırmaktadır. Bu bölümde, süperölçekli ve sıra dışı yürütme özellikli işlemcilerin temel kavramları açıklanmaktadır.
+
+\subsection{Boruhattı ve Tehlikeler}\label{subsec:pipeline_hazards}
+
+Boruhatlı işlemciler, komut yürütme sürecini bağımsız aşamalara bölerek her saat çevriminde yeni bir komut başlatabilmektedir. Klasik beş aşamalı boruhattı, komut getirme (Fetch), kod çözme (Decode), yürütme (Execute), bellek erişimi (Memory) ve geri yazma (Writeback) aşamalarından oluşmaktadır \cite{patterson_hennessy}.
+
+Boruhattı tasarımında üç temel tehlike türü bulunmaktadır. Veri tehlikeleri, bir komutun henüz hesaplanmamış bir sonuca bağımlı olması durumunda ortaya çıkmaktadır. Kontrol tehlikeleri, dallanma komutlarının sonucu belli olmadan program akışının belirlenmesi gerekliliğinden kaynaklanmaktadır. Yapısal tehlikeler ise birden fazla komutun aynı donanım kaynağına aynı anda erişmek istemesi durumunda meydana gelmektedir.
+
+Veri tehlikelerinin çözümünde ileri besleme (forwarding) ve durdurma (stalling) teknikleri kullanılmaktadır. Kontrol tehlikelerinin etkisini azaltmak için ise dal tahmini mekanizmaları geliştirilmiştir \cite{smith_branch}. İki bitlik doygun sayaç tabanlı tahmin, basit ve etkili bir yöntem olarak yaygın kullanım bulmaktadır.
+
+\subsection{Süperölçekli Yürütme}\label{subsec:superscalar}
+
+Süperölçekli işlemciler, her saat çevriminde birden fazla komut getirme, kod çözme ve yürütme kapasitesine sahiptir. N-yollu süperölçekli bir işlemci, teorik olarak çevrim başına N komut tamamlayabilmektedir. Ancak gerçek performans, veri bağımlılıkları ve kaynak çakışmaları nedeniyle bu teorik maksimumun altında kalmaktadır \cite{shen_lipasti}.
+
+Süperölçekli yürütmenin etkinliği, programdaki komut seviyesi paralelliğine bağlıdır. Tipik programlarda ILP değeri 2 ile 5 arasında değişmektedir. Daha yüksek paralellik elde etmek için spekülatif yürütme ve dinamik zamanlama teknikleri gerekmektedir.
+
+\subsection{Sıra Dışı Yürütme}\label{subsec:ooo}
+
+Sıra dışı yürütme, komutların program sırasından bağımsız olarak, operandları hazır olduğu anda yürütülmesini sağlamaktadır. Bu yaklaşım, veri bağımlılıklarının neden olduğu beklemeleri azaltarak ILP kullanımını artırmaktadır.
+
+Tomasulo algoritması, sıra dışı yürütmenin temelini oluşturan dinamik zamanlama yöntemidir \cite{tomasulo}. Algoritma, rezervasyon istasyonları aracılığıyla operand bekleme ve sonuç yayınlama mekanizmalarını gerçekleştirmektedir.
+
+Sıra dışı yürütmede yazmaç yeniden adlandırma (register renaming) kritik bir rol oynamaktadır. Bu teknik, yazılım seviyesinde var olmayan yalancı bağımlılıkları (WAW ve WAR) ortadan kaldırmaktadır. Mimari yazmaçlar, daha geniş bir fiziksel yazmaç havuzuna dinamik olarak eşlenmektedir. Yazmaç Takma Ad Tablosu (Register Alias Table - RAT), bu eşlemeyi yönetmektedir.
+
+Yeniden Sıralama Arabelleği (Reorder Buffer - ROB), sıra dışı yürütülen komutların program sırasında kesinleştirilmesini sağlamaktadır. Bu yapı, kesme ve istisnaların doğru şekilde işlenmesi için gereklidir. Ayrıca spekülatif yürütmenin yönetimi de ROB aracılığıyla gerçekleştirilmektedir.
+
+\subsection{Dal Tahmini ve Toparlanma}\label{subsec:branch_prediction}
+
+Spekülatif yürütme, dal sonuçları belli olmadan komut getirme ve yürütmeye devam edilmesini sağlamaktadır. Dal tahmincisi, dallanma kararını ve hedef adresi önceden tahmin etmektedir. Tahmin doğru çıkarsa performans kazanımı elde edilmekte, yanlış çıkarsa spekülatif komutlar iptal edilmektedir.
+
+Yanlış tahmin durumunda işlemci durumunun geri alınması için iki temel yaklaşım bulunmaktadır. Tembel toparlanma (lazy recovery) yönteminde, yanlış tahmin edilen dalın ROB başına gelmesi beklenmekte ve durum geriye doğru taranarak düzeltilmektedir. Bu yaklaşım yüksek gecikmeye neden olmaktadır.
+
+Hevesli toparlanma (eager recovery) yönteminde ise dal komutları işlenirken RAT durumunun anlık görüntüleri saklanmaktadır. Yanlış tahmin tespit edildiğinde, ilgili anlık görüntüden durum anında geri yüklenmektedir. Bu yaklaşım, RAT Checkpoint veya Shadow RAT olarak da adlandırılan ek donanım gerektirmektedir ancak toparlanma gecikmesini önemli ölçüde azaltmaktadır \cite{shen_lipasti}.
+
+%------------------------------------------------------------------------
+\section{Hata Toleransı Kavramları}\label{sec:fault_tolerance}
+%------------------------------------------------------------------------
+
+Yarı iletken teknolojisindeki minyatürleşme, devrelerin çevresel faktörlere karşı duyarlılığını artırmıştır. Bu bölümde, hata türleri ve bunlara karşı geliştirilen koruma yöntemleri açıklanmaktadır.
+
+\subsection{Hata Türleri}\label{subsec:fault_types}
+
+Donanım hataları, kalıcılıklarına göre iki ana kategoride sınıflandırılmaktadır. Kalıcı hatalar, üretim kusurları veya yaşlanma nedeniyle oluşmakta ve sistem yeniden başlatılsa bile devam etmektedir. Geçici hatalar ise genellikle çevresel faktörlerden kaynaklanmakta ve kendiliğinden düzelmektedir \cite{baumann}.
+
+Kozmik ışınlar ve yüksek enerjili parçacıklar, yarı iletken malzemelerle etkileşerek Tek Olay Bozulması (Single Event Upset - SEU) olarak adlandırılan bit değişikliklerine neden olabilmektedir. Teknoloji ölçeklendikçe, tek bir parçacığın birden fazla hücreyi etkilemesi olasılığı artmakta ve Çoklu Bit Bozulması (Multiple Bit Upset - MBU) meydana gelmektedir \cite{rogenmoser_hmr_2023, annink}.
+
+Santos ve arkadaşlarının gerçekleştirdiği radyasyon testlerinde, hataların yüzde yetmiş sekizinin belleklerde, yüzde on beşinin ise yazmaç dosyasında meydana geldiği gözlemlenmiştir \cite{santos_2023}. Bu sonuçlar, büyük bellek yapılarının ve yazmaç dosyasının korunması gerektiğini açıkça ortaya koymaktadır.
+
+\subsection{Uzaysal Yedeklilik}\label{subsec:spatial_redundancy}
+
+Uzaysal yedeklilik, donanımın birden fazla kopyasının paralel olarak çalıştırılmasını içermektedir. İkili Modüler Yedeklilik (Double Modular Redundancy - DMR), iki kopyanın sonuçlarını karşılaştırarak hata tespiti sağlamaktadır. Üçlü Modüler Yedeklilik (Triple Modular Redundancy - TMR) ise üç kopyanın çoğunluk oylaması ile hem tespit hem de maskeleme yapabilmektedir \cite{lyons_tmr}.
+
+Çekirdek seviyesinde uygulanan kilitli adım (lock-step) yöntemi, birden fazla işlemci çekirdeğini senkronize olarak çalıştırmaktadır. DCLS (Dual Core Lock-Step) hata tespiti, TCLS (Triple Core Lock-Step) ise hata maskeleme sağlamaktadır. Ancak bu yaklaşımlar, hatanın çekirdek çıkışına kadar yayılmasına izin vermekte ve toparlanma gecikmesini artırmaktadır.
+
+Boruhattı seviyesinde uygulanan uzaysal yedeklilik, hataların oluştukları aşamada tespit edilmesini sağlamaktadır. Li ve ekibi tarafından geliştirilen DuckCore, bu yaklaşımın bir örneğidir \cite{li_duckcore}. Çekirdek içi (intra-core) koruma, hata yayılımını önleyerek daha hızlı toparlanma imkanı sunmaktadır \cite{dorflinger_2022}.
+
+\subsection{Zamansal Yedeklilik}\label{subsec:temporal_redundancy}
+
+Zamansal yedeklilik, aynı işlemin farklı zamanlarda tekrarlanarak sonuçların karşılaştırılmasını içermektedir. Bu yaklaşım ek donanım gerektirmemekte ancak performansı düşürmektedir. Gömülü sistemlerde güç ve alan kısıtlamaları olduğunda tek yöntem olarak tercih edilebilmektedir.
+
+\subsection{Bilgi Yedekliliği}\label{subsec:information_redundancy}
+
+Bilgi yedekliliği, verilere ek bitler eklenerek hata tespiti ve düzeltmesi sağlamaktadır. Hata Düzeltme Kodları (Error Correcting Codes - ECC), tek bit hatalarını düzeltebilmekte ve çift bit hatalarını tespit edebilmektedir \cite{hamming}.
+
+Annink ve arkadaşlarının çalışmasına göre, ECC uygulaması bellek alanını yüzde otuz üç buçuk oranında ve güç tüketimini yüzde on dört oranında artırabilmektedir. Ancak optimizasyon teknikleri ile bu artış yüzde üç seviyesine indirilebilmektedir \cite{annink}.
+
+\subsection{İsteğe Bağlı Yedeklilik}\label{subsec:odmr}
+
+Geleneksel yedeklilik yöntemlerinin önemli bir dezavantajı, sistemin sürekli olarak yedekli modda çalışması gerekliliğidir. Bu durum, hata riski düşük olduğu dönemlerde bile kaynak israfına neden olmaktadır.
+
+İsteğe Bağlı Modüler Yedeklilik (On-Demand Modular Redundancy - ODMR), Rogenmoser ve arkadaşları tarafından önerilen esnek bir yaklaşımdır \cite{rogenmoser_odrg_2022}. ODMR'da sistem, görev kritikliğine göre yedekli mod ile bağımsız çalışma modu arasında geçiş yapabilmektedir. Kritik görevlerde hata koruması sağlanırken, normal koşullarda tam performans elde edilmektedir.
+
+Trikarenos projesi, ODMR yaklaşımının somut bir uygulamasını sunmaktadır \cite{trikarenos_2023}. 28nm teknolojide gerçeklenen bu tasarım, küp uyduları için esnek hata toleransı sağlamaktadır.
+
+%------------------------------------------------------------------------
+\section{İlgili Çalışmalar}\label{sec:related_work}
+%------------------------------------------------------------------------
+
+Bu bölümde, süperölçekli RISC-V işlemci tasarımları ve hata toleranslı işlemci çalışmaları incelenmektedir.
+
+\subsection{Süperölçekli RISC-V İşlemciler}\label{subsec:superscalar_designs}
+
+Berkeley Out-of-Order Machine (BOOM), açık kaynak kodlu süperölçekli RISC-V işlemcilerin en tanınmışıdır \cite{boom}. SonicBOOM olarak bilinen üçüncü nesil tasarım çevrim başına 6.2 CoreMark performansı sergilemiştir \cite{sonicboom}.
+
+Xiangshan projesi, Çin Bilim Akademisi tarafından geliştirilen yüksek performanslı RISC-V işlemcisidir \cite{xiangshan_2022}. Altı yollu süperölçekli ve sıra dışı yürütme özellikli bu tasarım, endüstriyel seviye performansı hedeflemektedir.
+
+\subsection{Hata Toleranslı RISC-V İşlemciler}\label{subsec:ft_processors}
+
+Li ve ekibi tarafından geliştirilen DuckCore, boruhattı seviyesinde hata koruması sağlayan ilk RISC-V tasarımlarındandır \cite{li_duckcore}. Tasarım, yazmaç dosyası ve kritik kontrol sinyalleri için TMR uygulamaktadır.
+
+Dörflinger ve arkadaşları, RISC-V için kapsamlı bir hata toleransı çerçevesi önermişlerdir \cite{dorflinger_2022}. Bu çerçeve, farklı koruma seviyelerinin modüler olarak uygulanmasına olanak tanımaktadır.
+
+Rogenmoser'in Trikarenos projesi, ODMR yaklaşımını küçük uydu uygulamaları için optimize etmiştir \cite{trikarenos_2023}. Üç adet CV32E40P çekirdeği kullanarak esnek yedeklilik sağlamaktadır.
+
+Mach ve Kohútka tarafından geliştirilen yaklaşım, geleneksel kilitli adım yöntemine alternatif olarak boruhattı bölümlemesi (pipeline splitting) tekniğini önermektedir \cite{mach_lockstep_2025}. Bu yaklaşım, yalnızca yüzde sekiz alan ek yükü ile hata toleransı sağlamakta ve dal tahmincisi gibi büyük yapıları koruma dışında bırakarak kaynak tasarrufu yapmaktadır. Tahmincilerdeki hatalar, mevcut yanlış tahmin toparlanma mekanizması tarafından doğal olarak düzeltilmektedir.
+
+\subsection{Tezin Konumlandırılması}\label{subsec:thesis_positioning}
+
+Mevcut çalışmalar incelendiğinde direkt olarak hata toleranslı süperölçekli sıra dışı yürütme özellikli RISC-V işlemci tasarımlarıyla karşılaşılmamıştır. DuckCore gibi çalışmalar boruhattı seviyesinde koruma sağlamakta ancak sıra dışı yürütme desteklememektedir. BOOM gibi yüksek performanslı tasarımlar ise hata toleransı içermemektedir.
+
+Bu tez, süperölçekli sıra dışı yürütme kapasitesi ile çekirdek içi TMR korumasını ODMR yöntemi ile birleştiren özgün bir RISC-V işlemci tasarımı sunmaktadır. ODMR yaklaşımı sayesinde performans ve güvenilirlik arasında dinamik denge kurulabilmektedir.
