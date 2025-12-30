@@ -11,33 +11,7 @@ Bu bölümde, tasarlanan süperölçekli RISC-V işlemcisine uygulanan isteğe b
 
 Modern elektronik sistemlerin güvenilirliği, özellikle uzay, havacılık ve otomotiv gibi kritik uygulamalarda, hataların etkilerinin minimize edilmesiyle doğrudan ilişkilidir. Bu alanlarda çevresel faktörlerden kaynaklanan hatalar, sistemin kararlılığını tehdit edebilmektedir. Bu tür uygulamalarda hata toleransı, hem sistem güvenilirliğini hem de kullanıcı güvenliğini sağlamak için vazgeçilmez bir gereklilik haline gelmiştir \cite{rogenmoser_hmr_2023}.
 
-\subsection{Hata Türleri}\label{subsec:ch4_fault_types}
-
-Hata toleranslı sistemlerin geliştirilmesinde, hata türlerinin sınıflandırılması büyük önem taşımaktadır. Farklı hata türleri farklı düzeltme yöntemleri gerektirmektedir.
-
-\textbf{Geçici Hatalar (Transient Faults):} Genellikle çevresel faktörlerden kaynaklanan ve kısa sürede etkisini yitiren hatalardır. Tek olay bozulması (Single Event Upset - SEU), kozmik ışınların veya yüksek enerjili parçacıkların yarı iletken malzeme ile etkileşimi sonucu oluşan bit değişikliklerini ifade etmektedir. Çoklu bit bozulması (Multiple Bit Upset - MBU) ise birden fazla bitin aynı anda etkilenmesi durumudur \cite{annink}.
-
-\textbf{Kalıcı Hatalar (Permanent Faults):} Fiziksel donanım arızalarından kaynaklanan ve donanım çalıştığı sürece etkisini sürdüren hatalardır. Bu hatalar, mantık değerlerinin sabit olarak 0 veya 1'de kalmasına (stuck-at fault) neden olmaktadır \cite{vigli_2024}.
-
-Santos ve arkadaşları tarafından gerçekleştirilen radyasyon testlerinde, hataların yüzde 78'inin belleklerde, yüzde 15'inin ise yazmaç dosyasında meydana geldiği gözlemlenmiştir \cite{santos_2023}. Bu sonuçlar, bellek yapılarının ve yazmaç dosyasının korunmasının kritik önemini ortaya koymaktadır.
-
-\subsection{Mevcut Hata Toleransı Yöntemleri}\label{subsec:existing_methods}
-
-Hataların tespit ve düzeltilmesi için üç temel yedeklilik yöntemi geliştirilmiştir:
-
-\subsubsection{Uzaysal Yedeklilik}
-
-Uzaysal yedeklilik, bir sistem bileşeninin fiziksel olarak çoğaltılması ve çıkışların karşılaştırılması esasına dayanmaktadır. İkili Modüler Yedeklilik (Dual Modular Redundancy - DMR), iki kopyanın karşılaştırılmasını sağlarken, Üçlü Modüler Yedeklilik (Triple Modular Redundancy - TMR) üç kopyanın çoğunluk oylaması ile tek bir hatanın maskelenmesini mümkün kılmaktadır \cite{lyons_tmr}.
-
-Uzaysal yedeklilik çekirdek seviyesinde veya alt modül seviyesinde uygulanabilmektedir. Çekirdek seviyesi uygulamalar, iki çekirdeğin aynı komutları paralel yürütmesine dayanan İkili Çekirdek Kilitli Adım (Dual Core Lock-Step - DCLS) veya üç çekirdeğin kullanıldığı Üçlü Çekirdek Kilitli Adım (Triple Core Lock-Step - TCLS) olarak bilinmektedir \cite{dorflinger_2022}.
-
-\subsubsection{Zamansal Yedeklilik}
-
-Zamansal yedeklilik, bir işlemin farklı zamanlarda tekrar çalıştırılarak hata tespiti yapılmasına olanak tanımaktadır \cite{rogenmoser_hmr_2023}. Bu yöntem ek donanım gerektirmemekte, ancak performansı önemli ölçüde düşürmektedir. Tedeschi ve arkadaşları, zamansal yedeklilik kullanarak düşük maliyetli hata toleransı sağlayan bir tasarım geliştirmişlerdir \cite{tedeschi_2025}.
-
-\subsubsection{Bilgi Yedekliliği}
-
-Bilgi yedekliliği, hata toleransı sağlamak için ek bitlerin kullanılmasını ifade etmektedir. Hata Düzeltme Kodları (Error Correction Codes - ECC), bu yöntemin en yaygın uygulamasıdır. ECC, uzaysal yedekliliğin mümkün olmadığı veya maliyet-etkin olmadığı büyük bellek yapılarında tercih edilmektedir \cite{li_duckcore}.
+Bölüm \ref{sec:fault_tolerance}'te açıklandığı gibi, geçici hatalar (SEU, MBU) ve kalıcı hatalar farklı koruma yöntemleri gerektirmektedir. Uzaysal yedeklilik (TMR, DCLS/TCLS), zamansal yedeklilik ve bilgi yedekliliği (ECC) bu amaçla geliştirilmiş temel yaklaşımlardır. Bu bölümde, mevcut yöntemlerin sınırlılıkları analiz edilmekte ve tasarlanan işlemcinin bu sınırlılıklara nasıl çözüm sunduğu açıklanmaktadır.
 
 %------------------------------------------------------------------------
 \section{Mevcut Yöntemlerin Sınırlılıkları}\label{sec:limitations}

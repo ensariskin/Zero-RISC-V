@@ -274,23 +274,7 @@ Korunmayan bir yazmaca enjekte edilen hata, bir sonraki yazma işlemine kadar ya
 
 Hata enjeksiyon testleri, hem tekil bit (SEU) hem de çoklu bit (MBU) hatalarının sistem üzerindeki etkilerini gözlemlemek amacıyla gerçekleştirilmiştir.
 
-Tekil bit hata testlerinde, bin çevrimde \%10 ve \%100 hata oranları ile simülasyonlar gerçekleştirilmiştir. Tablo \ref{tab:seu_results}, elde edilen sonuçları özetlemektedir.
-
-\begin{table}[htbp]
-\centering
-\caption{Tekil Bit Hata Enjeksiyonu Test Sonuçları}
-\label{tab:seu_results}
-\begin{tabular}{l c c c}
-\toprule
-\textbf{Hata Oranı} & \textbf{Maskeleme Oranı} & \textbf{Fonksiyonel Doğruluk} & \textbf{IPC Etkisi} \\
-\midrule
-\%10 (100/1000 çevrim) & \%100 & Spike ile tam uyum & Değişim yok (1-way ile aynı) \\
-\%100 (1000/1000 çevrim) & \%100 & Spike ile tam uyum & Değişim yok (1-way ile aynı) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Her iki senaryoda da işlemci, enjekte edilen tüm tekil bit hatalarını TMR oylama mekanizması aracılığıyla başarıyla maskeleyerek fonksiyonel doğruluğunu korumuştur. Spike referans modeli ile yapılan karşılaştırmalarda herhangi bir uyumsuzluk tespit edilmemiş olup, program akışı kesintisiz olarak tamamlanmıştır. Özellikle dikkat çekici olan nokta, yoğun hata enjeksiyonu altında dahi işlemcinin tek yollu (1-way) konfigürasyondaki IPC değerini koruyarak performans kaybı yaşamamasıdır.
+Tekil bit hata testlerinde, bin çevrimde \%10 ve \%100 hata oranları ile simülasyonlar gerçekleştirilmiştir. Her iki senaryoda da işlemci, enjekte edilen tüm tekil bit hatalarını TMR oylama mekanizması aracılığıyla başarıyla maskeleyerek fonksiyonel doğruluğunu korumuştur. Spike referans modeli ile yapılan karşılaştırmalarda herhangi bir uyumsuzluk tespit edilmemiş olup, program akışı kesintisiz olarak tamamlanmıştır. Özellikle dikkat çekici olan nokta, yoğun hata enjeksiyonu altında dahi işlemcinin tek yollu (1-way) konfigürasyondaki IPC değerini koruyarak performans kaybı yaşamamasıdır.
 
 Çoklu bit hataları (MBU) için yapılan testlerde ise sistemin tespit kabiliyeti ölçülmüştür. Korunan yazmaçlara çoklu bit hataları enjekte edilmiştir. Gerçekleştirilen tüm senaryolarda sistem, TMR oylayıcılarındaki uyumsuzluğu fark ederek ``Kritik Hata (Fatal Error)'' sinyalini başarıyla üretmiştir. Sistem maskeleme yapamasa dahi, hatayı \%100 oranında tespit ederek sessiz veri bozulmasının (Silent Data Corruption) önüne geçmiştir.
 

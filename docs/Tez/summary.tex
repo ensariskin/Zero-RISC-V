@@ -20,7 +20,7 @@ The processor supports the RV32I base integer instruction set and operates in ma
 
 The designed processor employs a six-stage pipeline architecture: Fetch, Decode/Rename, Dispatch, Execute, Memory, and Writeback. This structure represents a modern implementation of the Tomasulo algorithm with additional enhancements for superscalar operation and fault tolerance.
 
-The fetch stage retrieves up to six instructions per cycle from an aligned instruction buffer, providing sufficient bandwidth for three-way superscalar operation. A tournament branch predictor combines bimodal and GShare predictors to achieve over 80\% prediction accuracy on realistic workloads. The Return Address Stack (RAS) provides accurate predictions for function returns.
+The fetch stage retrieves up to five instructions per cycle from an aligned instruction buffer, providing sufficient bandwidth for three-way superscalar operation. A tournament branch predictor combines bimodal and GShare predictors to achieve over 80\% prediction accuracy on realistic workloads. The Return Address Stack (RAS) provides accurate predictions for function returns.
 
 The decode/rename stage handles up to three instructions simultaneously. Each instruction undergoes immediate decoding to extract control signals and operand information. The Register Alias Table (RAT) performs register renaming to eliminate false dependencies (WAW and WAR hazards). Architectural registers are dynamically mapped to a larger physical register file containing 64 entries.
 
@@ -38,7 +38,7 @@ When a branch misprediction is detected, the corresponding checkpoint is retriev
 
 In secure mode, the three superscalar channels execute the same instruction stream simultaneously, forming a TMR configuration. Majority voters compare the outputs from all three channels and produce the correct result even if one channel experiences a fault. Critical control signals and register values are protected using this approach.
 
-The TMR implementation focuses on protecting the most vulnerable structures identified in radiation testing studies. According to Santos et al., 78\% of radiation-induced errors occur in memories, while 15\% occur in register files. Accordingly, the register file, ROB entries, and critical pipeline registers are protected with TMR voters.
+The TMR implementation focuses on protecting the most vulnerable structures identified in radiation testing studies. Research has shown that approximately 78\% of radiation-induced errors occur in memories, while 15\% occur in register files. Accordingly, the register file, ROB entries, and critical pipeline registers are protected with TMR voters.
 
 Large memory structures such as the physical register file and instruction buffer are assumed to be protected by Error Correcting Codes (ECC), which can correct single-bit errors and detect double-bit errors. The physical ECC implementation is outside the scope of this work.
 
