@@ -1,0 +1,166 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.2 INSTRUCTION FETCH STAGE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Instruction Fetch Stage}\label{sec:fetch}
+
+The instruction fetch stage is the first stage in the superscalar processor's pipeline and plays a critical role in determining program flow. This stage performs the tasks of fetching instructions from memory in parallel, predicting branch behavior in advance, and buffering fetched instructions for subsequent stages. In the designed processor, the instruction fetch stage consists of three fundamental components: the multi-fetch unit, the branch prediction system, and the instruction buffer.
+
+\subsection{Multi-Fetch Unit}\label{subsec:multi_fetch}
+
+The multi-fetch unit is the central coordination unit designed to enable the superscalar processor to exploit instruction-level parallelism. This module has the capacity to fetch five instructions from memory per clock cycle and dynamically determines the validity of fetched instructions according to branch prediction results.
+
+Although the designed processor has a three-way issue structure, the instruction fetch width has been set to five. An important rationale exists behind this asymmetric design decision.
+
+All components of the processor attempt to bring the number of instructions per cycle close to the theoretical limit of three. In accordance with this goal, the instruction fetch stage must also feed an average of three instructions per clock cycle to the forward portions of the pipeline. However, due to branch instructions predicted as ``taken'' and direct and indirect jump instructions, not every fetched instruction can be forwarded to the forward portions of the pipeline. In this case, instructions following the predicted branch or jump instruction are considered invalid and are not written to the instruction buffer.
+
+The way to compensate for these losses is to fetch more than three instructions in subsequent cycles. Thanks to the five-wide fetch design, the goal is that even if some instructions become invalid due to branch and jump instructions, the average number of instructions written to the instruction buffer remains three. This approach prevents the instruction fetch stage from becoming a bottleneck for the pipeline.
+
+The parallel instruction fetch mechanism enables high throughput by providing simultaneous access to five consecutive memory addresses. Separate address outputs and instruction inputs exist for each instruction. Instruction addresses are calculated starting from the program counter value at four-byte intervals; this is because of the fixed 32-bit instruction length in the RISC-V architecture.
+
+The validity of fetched instructions is determined according to branch prediction results. When any instruction's branch or jump prediction yields a ``taken'' result, all instructions following this instruction are automatically marked as invalid. The reason for not forwarding these instructions to subsequent stages is that these instructions are predicted to not be executed; if these instructions were forwarded to subsequent stages, the processor would operate incorrectly by following the wrong program flow.
+
+The invalidation logic operates in a cascaded manner: if the first instruction branches or jumps, the second, third, fourth, and fifth instructions become invalid; if the second instruction branches or jumps, the third, fourth, and fifth instructions become invalid, and this logic continues through the fifth instruction. This situation is illustrated in Figure \ref{fig:fetch_invalidation}.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=0cm,
+    common/.style={draw, rectangle, minimum width=2cm, minimum height=1.2cm, align=center},
+    instr/.style={common, fill=white},
+    invalid/.style={common, fill=gray!30, pattern=north east lines, pattern color=gray},
+    branch/.style={common, fill=green!20}
+]
+
+% Instruction Boxes
+\node[instr] (i0) {Instr 0\\(ALU)};
+\node[instr, right=of i0] (i1) {Instr 1\\(ALU)};
+\node[branch, right=of i1] (i2) {\textbf{Instr 2}\\\textbf{(Branch)}};
+\node[invalid, right=of i2] (i3) {Instr 3\\(Invalid)};
+\node[invalid, right=of i3] (i4) {Instr 4\\(Invalid)};
+
+% Labels (PC values)
+\node[above=0.2cm of i0] {PC};
+\node[above=0.2cm of i1] {PC+4};
+\node[above=0.2cm of i2] {PC+8};
+\node[above=0.2cm of i3] {PC+12};
+\node[above=0.2cm of i4] {PC+16};
+
+% Branch Arrow (Red jump arrow)
+\draw[->, very thick, red] (i2.south) -- ++(0,-0.6) -- ++(4,0) node[midway, above] {\textit{Taken} / Jump to Target} -- ++(0,-0.5);
+
+% Invalidation X marks
+\draw[red, thick] (i3.south west) -- (i3.north east);
+\draw[red, thick] (i3.north west) -- (i3.south east);
+\draw[red, thick] (i4.south west) -- (i4.north east);
+\draw[red, thick] (i4.north west) -- (i4.south east);
+
+\end{tikzpicture}
+\caption{Invalidation of subsequent instructions (Instr 3, 4) in the packet when the branch instruction (Instr 2) is predicted as ``Taken''.}
+\label{fig:fetch_invalidation}
+\end{figure}
+
+An early-stage immediate decoder module has been added to each instruction to enable early calculation of branch target addresses. These modules extract immediate values from within instructions without waiting for full instruction decoding. The regular structure of RISC-V instruction formats facilitates this early decoding operation.
+
+The target address of branch instructions is calculated by adding the current program counter value and the immediate value within the instruction.
+
+Performing this calculation in the instruction fetch stage allows branch prediction to determine the correct target address in a single clock cycle. The immediate decoder extracts values from different bit fields for B-type branch instructions and J-type jump instructions and applies sign extension.
+
+When a branch or jump instruction is mispredicted, all speculative state in the pipeline must be cleared and the correct program flow must be resumed. Since up to three instructions can be processed simultaneously in the designed processor, multiple misprediction results can occur in the same cycle. Even if these results are calculated out of order, they are quickly prioritized to begin the clearing operation.
+
+The oldest among the three possible mispredictions must be considered. The reason for this is that younger branches may be on the speculative path of the older branch. When the older misprediction is corrected, younger branches will already be cleared; therefore, separately processing younger mispredictions means performing unnecessary computation. This prioritization is performed by the misprediction handling logic in the multi-fetch unit: a misprediction from channel zero has priority over channels one and two, and a misprediction from channel one has priority over channel two.
+
+When the clear signal is activated, the program counter is redirected to the correct target address and the instruction buffer is flushed.
+
+%------------------------------------------------------------------------
+
+\subsection{Program Counter Controller}\label{subsec:pc_ctrl}
+
+The program counter controller is a critical component responsible for determining the next fetch address. This unit decides how the program counter value should be updated by evaluating information from various sources.
+
+Program counter update is performed according to four different scenarios, and these scenarios are evaluated according to a specific priority order.
+
+The highest priority scenario is misprediction correction. When a misprediction signal comes from the execution stage, the program counter is redirected to the correct address obtained from the branch register table. This situation overrides all other updates because re-establishing the correct program flow has the highest priority.
+
+The second priority scenario includes indirect jump predictions. When a prediction is available for a JALR instruction, the program counter is updated to this predicted target address.
+
+The third priority scenario covers direct branch and jump instructions. When a branch or JAL instruction is predicted as ``taken,'' the program counter is updated to the target address calculated by adding the immediate value to the current value.
+
+The fourth and final scenario is normal sequential progression. When no branch or jump instruction is predicted, the program counter is advanced by twenty bytes for five instructions.
+
+Program counter values for five instructions are calculated in parallel. Consecutive addresses are obtained by adding the current program counter value with fixed offsets of four, eight, twelve, and sixteen bytes for each instruction. This parallel calculation minimizes instruction fetch latency.
+
+Additionally, return address values are also calculated for jump instructions. JAL and JALR instructions save the next address of the current instruction to the link register. This value corresponds to four bytes beyond the program counter.
+
+%------------------------------------------------------------------------
+
+\subsection{Branch Prediction System}\label{subsec:branch_pred}
+
+The branch prediction system enables early detection and high-accuracy prediction of control flow changes. In typical programs, branch and jump instructions have a ratio between fifteen and twenty-five percent \cite{patterson_hennessy}. Without effective branch prediction, each branch instruction causes a delay of several clock cycles in the pipeline; this situation significantly reduces processor performance.
+
+The impact of misprediction penalty on superscalar processors is much more devastating compared to scalar processors. The fundamental reason for this is that more speculative instructions are being processed simultaneously in the wide pipeline, and all these instructions are wasted in case of a misprediction. The effective instructions per cycle value ($IPC_{effective}$) is expressed in terms of ideal value ($W$), branch ratio ($B$), misprediction rate ($M$), and penalty cycles ($P$) as follows:
+
+\begin{equation}
+    IPC_{effective} = \frac{W}{1 + W \cdot B \cdot M \cdot P}
+    \label{eq:ipc_mispred}
+\end{equation}
+
+In this equation, $W$ represents processor width (1 for scalar, 3 for three-way superscalar), $B$ represents branch instruction ratio, $M = (1 - \text{Accuracy})$ represents misprediction rate, and $P$ represents misprediction penalty cycle count. With assumptions of twenty percent branch ratio ($B = 0.20$), eighty percent prediction accuracy ($M = 0.20$), and three-cycle penalty ($P = 3$):
+
+\begin{align}
+    IPC_{scalar} &= \frac{1}{1 + 1 \times 0.20 \times 0.20 \times 3} = \frac{1}{1.12} = 0.89 \label{eq:ipc_scalar} \\
+    IPC_{super}  &= \frac{3}{1 + 3 \times 0.20 \times 0.20 \times 3} = \frac{3}{1.36} = 2.21 \label{eq:ipc_super}
+\end{align}
+
+Evaluated in terms of efficiency, the scalar processor maintains eighty-nine percent of its ideal value ($\eta_{scalar} = 0.89/1 = 89\%$), while the superscalar processor can only maintain seventy-four percent ($\eta_{super} = 2.21/3 = 74\%$). This analysis clearly demonstrates why branch prediction accuracy is critically important in superscalar architectures.
+
+Two main prediction mechanisms exist in the designed system: a two-bit counter predictor for conditional branch instructions and a JALR predictor for indirect jump instructions.
+
+\subsubsection{Branch Prediction}
+
+A 256-entry two-bit saturating counter predictor is used for direction prediction of conditional branch instructions. This predictor accesses the relevant counter value using the lower bits of the program counter as an index and generates a prediction based on the most significant bit of the counter. Each counter can be in one of four states: strongly not taken (00), weakly not taken (01), weakly taken (10), and strongly taken (11).
+
+The fundamental rationale for using a two-bit counter is the weak performance that single-bit counters exhibit at loop exits. When a loop repeats one hundred times and then exits, a single-bit counter immediately changes its direction and makes an incorrect prediction at the next loop entry. A two-bit counter provides resilience against such anomaly situations because it requires two consecutive wrong outcomes \cite{smith_branch}.
+
+During the design process, a GShare-based tournament predictor was also developed and tested. The GShare predictor is indexed by XORing the program counter with global branch history and offers higher accuracy rates \cite{mcfarling}. However, two critical limitations were identified in the practical application of this predictor. The first limitation is that the development environment used cannot perform automatic memory inference, causing large tables to be synthesized as flip-flops; this situation causes unacceptable area consumption and critical path extension. The second limitation is that if access to large tables cannot be completed in a single clock cycle, pipeline additions are required; this addition increases misprediction penalty.
+
+To evaluate the impact of these limitations, two predictor scenarios were compared. In the simulations performed, the two-bit counter predictor achieved an average eighty percent accuracy rate across different test programs, while the GShare predictor exhibited an average eighty-three percent accuracy rate. These values may vary depending on the branching characteristics of the application being run. In the first scenario, a 256-entry two-bit counter predictor is used with a three-cycle misprediction penalty. In the second scenario, a 4096-entry GShare predictor is used, but a four-cycle misprediction penalty is applied due to the pipeline. With assumptions of branch ratio $B = 0.20$ and processor width $W = 3$, IPC values were calculated as follows:
+
+\begin{align}
+    IPC_{simple} &= \frac{3}{1 + 3 \times 0.20 \times 0.20 \times 3} = \frac{3}{1.36} = 2.21 \label{eq:ipc_simple} \\
+    IPC_{gshare} &= \frac{3}{1 + 3 \times 0.20 \times 0.17 \times 4} = \frac{3}{1.41} = 2.13 \label{eq:ipc_complex}
+\end{align}
+
+The calculations show that the three percent accuracy improvement provided by the GShare predictor cannot compensate for the increased misprediction penalty. In accordance with this result, the two-bit counter predictor offering smaller area cost and lower misprediction penalty was selected.
+
+\subsubsection{JALR Prediction}\label{subsubsec:jalr}
+
+Indirect jump instructions read their target address from a register, so it is not known at compile time. Therefore, a separate prediction mechanism is required for JALR instructions. The JALR predictor consists of two fundamental components: the JALR target buffer and the return address stack.
+
+The JALR target buffer is a cache structure that stores the target addresses of previously executed JALR instructions. This structure is indexed by the program counter value and returns the most recently used target address. Since many indirect jumps, especially virtual function calls and switch statements, repeatedly jump to the same target address, this approach provides high accuracy.
+
+In the designed system, the JALR target buffer has a capacity of thirty-two entries. Each entry contains a validity bit, tag value, and target address. Tag comparison is used to distinguish different JALR instructions.
+
+The return address stack is a specialized structure for predicting function call and return patterns. The majority of function calls occur as call-return pairs; this situation naturally matches a last-in-first-out structure.
+
+In the RISC-V architecture, call and return instructions are implemented with JAL and JALR instructions that use registers x1 or x5 as destination or source. When a call instruction is detected, the return address is pushed onto the stack; when a return instruction is detected, it is popped from the stack and used as the target address.
+
+In the designed system, the return address stack has a depth of eight entries. To support speculative execution, the stack top pointer is saved to the branch register table during each branch prediction and restored in case of misprediction.
+
+%------------------------------------------------------------------------
+
+\subsection{Instruction Buffer}\label{subsec:instr_buffer}
+
+The instruction buffer is a first-in-first-out structure that provides decoupling between the instruction fetch and decode stages. This decoupling allows both stages to operate at different speeds and increases pipeline efficiency.
+
+The instruction fetch stage can operate at different speeds due to branch and jump instructions, and the forward stages of the pipeline can operate at different speeds due to reasons such as data dependencies and memory operations. Therefore, instructions obtained from instruction memory must be collected in a buffer and served to the forward stages of the pipeline from there. This approach reduces the complexity of the processor to a manageable level while also providing performance improvement.
+
+Additionally, when the issue stage is stalled, the instruction fetch stage can continue operating until the buffer is full. This isolation prevents short-term stalls from affecting the entire pipeline.
+
+The instruction buffer has been implemented as a circular buffer managed with head and tail pointers. The default buffer depth is sixteen entries, and this value must be a power of two; this requirement simplifies modular arithmetic operations.
+
+Each buffer entry contains various information: thirty-two-bit instruction data, program counter value at prediction time, predicted next program counter value, branch prediction result, and return address stack top pointer value. This information is necessary for correct processing of the instruction in subsequent stages.
+
+The backpressure mechanism slows down the instruction fetch stage when the buffer is full, preventing data loss. When at least five empty slots exist in the buffer, the fetch ready signal is activated. The five-slot requirement was determined to accommodate the maximum number of instructions that can arrive in a single cycle.
+
+Performing instruction insertion when fewer than five empty slots exist would complicate the calculation of the next instruction address. In the current design, this complexity is avoided and address calculation logic is kept simple.

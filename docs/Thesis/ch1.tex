@@ -1,135 +1,80 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \phantomsection
-\chapter{INTRODUCTION}\label{introduction}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-First level titles must be in capitals and bold, and placed on an odd page in the direction of reading. 
+\chapter{INTRODUCTION}\label{ch:introduction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Rapid advancements in semiconductor technology have enabled transistor dimensions to shrink below ten nanometers. While this miniaturization provides significant gains in terms of performance and energy efficiency, it also brings various reliability challenges. Shrinking feature sizes increase the susceptibility of circuits to environmental factors and raise the probability of transient faults known as soft errors \cite{baumann}.
 
-\section{Purpose of Thesis}\label{purposeofthesis}
+Particularly in critical application domains such as space, aviation, and automotive, cosmic rays and high-energy particles can interact with semiconductor materials, causing bit-flips known as Single Event Upsets (SEU). When multiple bits are affected simultaneously, Multiple Bit Upsets (MBU) occur, and the adverse effects on the system increase significantly \cite{rogenmoser_hmr_2023, annink}.
 
-Second level titles must be bold and the first letter of each word in the title must be capital. 
+Various fault tolerance methods have been developed against such errors. Different approaches exist, including spatial redundancy, temporal redundancy, and information redundancy, and these methods must be used together in reliable systems. Each method has different cost, performance, and protection characteristics, and selecting the most appropriate combination according to application requirements is critically important.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
-\subsection{Third level title: Only first letter capital}
+Fault-tolerant designs can be examined in two main categories according to their implementation level. The first category comprises core-level solutions where multiple processor cores are operated together using the lock-step method. The second category consists of intra-core solutions that provide protection at the pipeline level within a single core. Intra-core solutions enable faults to be detected at the stage where they occur and prevent their propagation \cite{dorflinger_2022}. Furthermore, this approach minimizes detection latency, offering faster recovery.
 
-Third and fourth level titles must be bold and only the first letter of the word the title begins with must be capital (This is an example; you do not need to use a title of this level unless it is necessary.).
+A significant disadvantage of traditional redundancy methods is the requirement for the system to continuously operate in redundant mode. This situation causes resource waste even during periods when fault risk is low. The On-Demand Modular Redundancy (ODMR) approach provides a solution to this problem \cite{rogenmoser_odrg_2022}. In ODMR, the system can switch between redundant mode and independent operation mode as needed. Thanks to this flexibility, fault protection is provided during critical tasks while full performance is achieved under normal conditions.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.
+The RISC-V instruction set architecture, with its open-source and royalty-free nature, provides a suitable platform for fault tolerance research. Its modular structure allows different protection mechanisms to be flexibly integrated.
 
-\subsubsection{Fourth level title: Only first letter capital}
+%------------------------------------------------------------------------
+\section{Thesis Objective}\label{sec:thesis_objective}
+%------------------------------------------------------------------------
 
-Third and fourth level titles must be bold and only the first letter of the word the title begins with must be capital (This is an example; you do not need to use a title of this level unless it is necessary.).
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.
+The primary objective of this thesis is to design a RISC-V processor that combines the advantages of intra-core fault detection with the flexibility of on-demand redundancy.
 
-\subsubsubsection{Fifth level title: No numbering after fourth level titles}
+Intra-core solutions enable faults to be detected at the pipeline level and allow early intervention. The ODMR approach allows the system to dynamically adjust its redundancy level. This thesis aims to combine the advantages of these two approaches in a single architecture.
 
-(This is an example; you do not need to use a title of this level unless it is necessary.).
+The design has been planned to provide an infrastructure suitable for ODMR. Triple Modular Redundancy (TMR), which is widely used in space, aviation, and automotive sectors and has fault masking capability, has been selected as the redundancy level \cite{lyons_tmr}. TMR's fault masking capability enables single-bit errors to be corrected without affecting the system output. In accordance with this choice, the processor has been designed as three-way superscalar with out-of-order execution capability.
 
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut lab ore sit et dolore magna. Stet clita kasd gub rgren, no sea takimata sanctus est Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut lab ore sit et dolore magna.
+The designed processor can operate in three different modes depending on the operating mode. In superscalar mode, three independent instruction streams are executed in parallel, providing high performance. In secure mode, the same instruction is processed simultaneously across three channels, achieving fault tolerance. Additionally, when required, the processor can operate in low-power mode using a single lane. Mode transitions can be performed with minimum latency thanks to the pipeline-level implementation.
 
-\section{Literature Review}\label{literaturereview}
+This thesis constitutes the implementation of the research direction proposed in our previously published work as a preliminary study for this thesis. In that work, it was proposed that by implementing the ODMR method on-chip, more effective fault correction could be achieved in secure mode, while more applications could be supported in performance mode \cite{iskin_fault_tolerance_2024}.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+%------------------------------------------------------------------------
+\section{Thesis Contributions}\label{sec:contributions}
+%------------------------------------------------------------------------
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit \cite{HYP:HYP57}. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit \cite{Box:1990:TSA:574978}. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim \cite{17590413}. Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+This thesis presents a novel processor architecture that combines the advantages of intra-core fault detection with the flexibility of on-demand redundancy (ODMR). The main contributions of this work can be summarized as follows:
 
-\begin{figure}[!htb]
- \centering
- \includegraphics[width=10cm,keepaspectratio=true]{./fig/sekil1}
- % sekil1.eps: 0x0 pixel, 300dpi, 0.00x0.00 cm, bb=14 14 592 479
- \vspace*{4mm}
- \caption{Model structures.}
- \label{fig:ch1-1}
-\end{figure}
+\begin{enumerate}
+    \item Three-Way Superscalar Architecture Suitable for ODMR: The designed processor has been implemented with a superscalar structure featuring three parallel execution channels. This design decision offers a critical advantage for ODMR: during normal operation, three channels can theoretically reach an IPC value of three by processing different instructions in parallel, while in secure mode, the same three channels process a single instruction simultaneously, forming the TMR structure. The reason for choosing TMR as the redundancy level is its fault masking capability, which is critically important in space, aviation, and automotive sectors.
+    
+    \item Pipeline-Level Redundancy with Minimal Overhead: Unlike core-level lock-step methods, spatial redundancy has been implemented within the pipeline. Since the processor has been designed as three-way superscalar, many structures already exist in triplicate, keeping the additional cost required for security low. The additional area cost required for TMR is limited only to voter circuits and is kept at a minimum level.
+    
+    \item Low-Latency Mode Transition: Implementing redundancy at the pipeline level minimizes mode transition latency. Switching from superscalar mode to secure mode does not require pipeline flushing or core state synchronization. Only the activation of voter circuits and modification of instruction dispatch logic is sufficient.
+    
+    \item Dual-Purpose Recovery Mechanism with RAT Checkpoint: RAT Checkpoint has been designed to enable single-cycle restoration of processor state in case of branch misprediction. This sixteen-entry structure has been developed to provide infrastructure that can also be used for recovery from radiation-induced critical faults in secure mode. Thus, it provides infrastructure for a fast rollback mechanism to prevent multi-bit errors that cannot be masked by TMR from affecting the workflow.
+\end{enumerate}
 
+%------------------------------------------------------------------------
+\section{Thesis Scope}\label{sec:thesis_scope}
+%------------------------------------------------------------------------
 
-\section{Hypothesis}
+This thesis work has been conducted within the following limitations:
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna.
+Instruction Set: The RV32I base instruction set is supported. Multiply, divide, and floating-point extensions are out of scope.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim as shown in Figure~\ref{fig:ch1-1}. 
+Microarchitecture: The processor has been designed with a three-way superscalar structure and provides out-of-order execution support. A total of sixty-four physical registers, comprising thirty-two architectural registers plus thirty-two rename registers, and a sixteen-entry RAT checkpoint are used.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Fault Tolerance: Critical control flow elements are protected with TMR. ECC protection is assumed for large memory structures, but the physical implementation of ECC is out of scope.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit \cite{harper2007}. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim \cite{unesco}.
+Verification: Functional verification has been performed using the Google RISC-V DV framework, which is also used by many academic and industrial works, and validated against the Berkeley Spike reference model \cite{riscv_dv, spike_iss}. The effectiveness of the TMR mechanism has been measured through fault injection tests.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-Praesent imperdiet, nisi nec aliquam cursus, dui turpis mollis nisl, ac consequat 
-tellus \cite{mccaffrey88, moore91, nelson88, sisaky, simpsondvd, startrek, TS-40561, url-1, url-2, vanden2001} 
-%\cite{moore91} \cite{nelson88} \cite{sisaky} \cite{simpsondvd} \cite{startrek} \cite{TS-40561} \cite{url-1} \cite{url-2} \cite{vanden2001}.
+Physical Implementation: The design has been synthesized to TSMC 16nm FinFET technology and has undergone place-and-route stages.
 
-Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim in Table~\ref{table1_ex}.
+%------------------------------------------------------------------------
+\section{Thesis Organization}\label{sec:organization}
+%------------------------------------------------------------------------
 
+This thesis consists of six chapters.
 
-\begin{table*}[!ht]
-{\setlength{\tabcolsep}{14pt}
-\caption{Table captions must be ended with a full stop.}
-\begin{center}
-\vspace{-6mm}
-\begin{tabular}{cccc}
-\hline\hline
-Column A & Column B & Column C & Column D \\
-\hline
-Row A & Row A & Row A & Row A \\
-Row B & Row B & Row B & Row B \\
-Row C & Row C & Row C & Row C \\
-\hline
-\end{tabular}
-\vspace{-6mm}
-\end{center}
-\label{table1_ex}}
-\end{table*}
+The first chapter presents the motivation, objective, contributions, scope, and organization of the thesis.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim \cite{nelson88}.
+The second chapter contains the fundamental concepts and literature review. Fault tolerance methods, RISC-V architecture, and related works are explained in detail in this chapter.
 
+The third chapter describes the microarchitecture of the designed superscalar processor. Pipeline stages are addressed in separate subsections.
 
+The fourth chapter presents the on-demand redundancy implementation. Operating modes and the critical fault recovery mechanism are explained in this chapter.
+
+The fifth chapter reports the verification methodology, performance analysis, fault injection tests, and physical design results.
+
+The sixth chapter summarizes the conclusions and presents recommendations for future work.

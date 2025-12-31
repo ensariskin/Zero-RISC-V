@@ -1,0 +1,239 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.4 DATA CONTROL AND ISSUE STAGE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Data Control and Issue Stage}\label{sec:data_control}
+
+The data control and issue stage has been designed as a modern adaptation of the Tomasulo algorithm \cite{tomasulo}. This stage obtains operand values for instructions coming from the decode and rename stage, provides a dynamic waiting mechanism for operands that are not yet ready, and dispatches ready instructions to functional units. Additionally, broadcasting execution results to all waiting units simultaneously is the responsibility of this stage.
+
+The designed processor has sixty-four physical registers, and this space is divided into two different regions. Physical registers from zero to thirty-one are located in the architectural register file and hold committed values; these values are results whose correctness is guaranteed architecturally. Physical registers from thirty-two to sixty-three are located in the reorder buffer and store speculative values that have not yet been committed. The properties of these regions are summarized in Table~\ref{tab:phys_reg_regions}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Physical register space regions and their properties.}
+    \label{tab:phys_reg_regions}
+    \begin{tabular}{|l|c|c|l|}
+        \hline
+        \textbf{Region} & \textbf{Address Range} & \textbf{MSB} & \textbf{Property} \\
+        \hline
+        Register File & 0--31 & 0 & Committed, always ready \\
+        \hline
+        Reorder Buffer & 32--63 & 1 & Speculative, tag check required \\
+        \hline
+    \end{tabular}
+\end{table}
+
+The six-bit physical register addresses coming from the decode and rename stage are used to obtain operand values in this stage. The most significant bit of the physical address determines from which source the operand value will be read. When this bit is zero, the value is read from the register file and is always considered ready. When the bit is one, the value is requested from the reorder buffer and the readiness status of the value is determined according to the tag field of the relevant entry. This dual structure enables consistent management of speculative and committed values under a single addressing scheme.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Physical Register Space - RF/ROB Selection by MSB]}}
+    \caption{Source selection based on the most significant bit of physical register address}
+    \label{fig:phys_reg_select}
+\end{figure}
+
+The data control and issue stage consists of three fundamental components: reservation stations that handle operand waiting and instruction dispatch functions, the reorder buffer that stores speculative results and provides in-order commit infrastructure, and the register file that holds committed values. These components communicate with each other through the common data bus.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Data Control Stage General Structure - RS, ROB, PRF and CDB Connections]}}
+    \caption{Data control and issue stage components and data flow between them}
+    \label{fig:data_control_overview}
+\end{figure}
+
+%------------------------------------------------------------------------
+
+\subsection{Reservation Station}\label{subsec:rs}
+
+Reservation stations are one of the critical components of out-of-order execution architecture. These structures dynamically resolve instruction operand dependencies, allowing consumer instructions to progress in the pipeline even if producer instructions have not yet completed \cite{tomasulo}. In the designed processor, each reservation station stores the instruction assigned to it and this instruction's operand information, monitors the common data bus until operands are ready, and dispatches the instruction to the functional unit it is connected to when all operands are ready.
+
+Three separate reservation stations exist in the designed system, each connected to a single functional unit. Each reservation station has been designed with single-instruction capacity. The rationale behind this design decision is the reliability requirement: since the primary goal of the designed processor is reliability, critical structures are protected with Triple Modular Redundancy technique. Since reservation stations contain wide data fields such as operand data and control information, multi-entry capacity increases area cost to an unacceptable level.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Reservation Station Structure - Operand Fields, Tags, Control Signals]}}
+    \caption{Reservation station entry structure and stored information}
+    \label{fig:rs_entry}
+\end{figure}
+
+\subsubsection{Tag System and Common Data Bus Monitoring}\label{subsubsec:tag_cdb}
+
+The fundamental innovation of the Tomasulo algorithm is tracking producer-consumer relationships through tags. In the classical approach, a dependent instruction must wait for the instruction that produces its source operand to complete. In the tag-based system, a dependent instruction can be placed in the reservation station even if the producer instruction has not yet executed. This approach can be considered as the equivalent of pipeline forwarding in out-of-order execution architectures.
+
+Three-bit tag values are used in the designed system. When the tag value is zero, one, or two, it is understood that the operand is being awaited from the zeroth, first, or second ALU, respectively. When the tag value is three, the operand is awaited from the load store queue. When the tag value is seven, the operand is ready and its value can be used directly. These values are summarized in Table~\ref{tab:tag_encoding}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Operand tag values and their meanings.}
+    \label{tab:tag_encoding}
+    \begin{tabular}{|c|l|}
+        \hline
+        \textbf{Tag Value} & \textbf{Meaning} \\
+        \hline
+        0 (3'b000) & Awaiting from zeroth ALU \\
+        \hline
+        1 (3'b001) & Awaiting from first ALU \\
+        \hline
+        2 (3'b010) & Awaiting from second ALU \\
+        \hline
+        3 (3'b011) & Awaiting from load store queue \\
+        \hline
+        7 (3'b111) & Operand ready \\
+        \hline
+    \end{tabular}
+\end{table}
+
+The reservation station continuously monitors the common data bus to resolve its pending operands. The tag value stored for each operand is compared with validity signals on the common data bus. For example, if an operand's tag is zero and a valid result has been broadcast on the zeroth ALU channel, this result is written to the relevant operand field and the tag is updated to seven.
+
+A special matching mechanism is required for results coming from the load store queue. ALU results are fixed to specific channels; each ALU broadcasts from its own channel. However, the load store queue can produce results from different entries each cycle and can dynamically route these results to one of three channels (for details, see Section~\ref{sec:memory}). Therefore, for an operand with tag value three, channel checking alone is insufficient; additionally, the match between the broadcast result's target physical register address and the address the operand is waiting for must also be verified.
+
+\subsubsection{Instruction Issue}\label{subsubsec:issue}
+
+For an instruction to be dispatched to a functional unit, both of its operands must be in ready state. For an operand to be considered ready, one of two conditions is sufficient: the operand came from the register file (physical address MSB=0) or it came from the reorder buffer and its tag value is seven. The reservation station supports two different dispatch scenarios.
+
+In the direct dispatch scenario, the instruction's operands coming from the decode stage are already ready. In this case, the instruction is directed to the functional unit in the next clock cycle without being held in the reservation station. This scenario applies to committed values read from the register file or speculative values marked as ready in the reorder buffer.
+
+In the stalled dispatch scenario, at least one of the operands is not yet ready. The instruction is placed in the reservation station and the common data bus monitoring mechanism is activated. As pending operands are resolved from the common data bus, the instruction is dispatched to the functional unit in the clock cycle after both operands become ready.
+
+\subsubsection{Speculative Flush}\label{subsubsec:eager_flush}
+
+When branch misprediction is detected in the execution stage, speculative instructions that came after the mispredicted branch must be flushed from the pipeline. In the traditional approach, this flush operation waits for the mispredicted branch to reach the head of the reorder buffer. However, this waiting period causes significant performance losses, especially in deep-pipeline processors.
+
+An eager flush mechanism is used in the designed system. At the moment misprediction is detected, speculative instructions are flushed in a single cycle using information obtained from the branch resolution alias table. The flush decision is based on distance comparison on the circular buffer.
+
+Since the reorder buffer operates as a circular buffer, simple index comparison is insufficient. Each instruction's age is determined by its distance from the reorder buffer's head pointer. Distance calculation is performed with the following equation:
+
+\begin{equation}
+    distance = \begin{cases}
+        idx - head\_ptr & \text{if } idx \geq head\_ptr \\
+        32 - head\_ptr + idx & \text{if } idx < head\_ptr
+    \end{cases}
+\end{equation}
+
+In this equation, $idx$ represents the instruction's index in the reorder buffer, and $head\_ptr$ represents the head pointer. The distance of the mispredicted branch is compared with the distance of the instruction in the reservation station; if the instruction's distance in the reservation station is greater, this instruction came after the mispredicted branch and must be flushed.
+
+An example scenario can be considered to illustrate this mechanism. Assume three reservation stations hold instructions with indices 3, 25, and 8 respectively, and the head pointer is 20. Also assume that the branch instruction at index 5 has been detected as mispredicted. Distance calculations are shown in Table~\ref{tab:flush_example}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Speculative flush example scenario ($head\_ptr = 20$, branch index = 5).}
+    \label{tab:flush_example}
+    \begin{tabular}{|l|c|c|c|l|}
+        \hline
+        \textbf{Unit} & \textbf{Index} & \textbf{Calculation} & \textbf{Distance} & \textbf{Decision} \\
+        \hline
+        Branch & 5 & $32 - 20 + 5$ & 17 & (reference) \\
+        \hline
+        RS$_0$ & 3 & $32 - 20 + 3$ & 15 & Not flushed ($15 < 17$) \\
+        \hline
+        RS$_1$ & 25 & $25 - 20$ & 5 & Not flushed ($5 < 17$) \\
+        \hline
+        RS$_2$ & 8 & $32 - 20 + 8$ & 20 & Flushed ($20 > 17$) \\
+        \hline
+    \end{tabular}
+\end{table}
+
+In this example, only the instruction in RS$_2$ is considered speculative and is flushed. Thanks to this mechanism, misprediction recovery is significantly accelerated compared to traditional methods.
+
+%------------------------------------------------------------------------
+
+\subsection{Reorder Buffer}\label{subsec:rob}
+
+The reorder buffer is a critical structure that acts as a bridge between out-of-order execution and in-order commit \cite{johnson}. This structure temporarily stores speculative results from functional units and coordinates the commitment of instructions in program order. The commit operation itself is explained in the writeback stage; this section addresses the roles of the reorder buffer in the data control stage.
+
+The reorder buffer is implemented as a thirty-two entry circular buffer. The fields contained in each entry are summarized in Table~\ref{tab:rob_entry_fields}. The circular buffer structure is managed through head and tail pointers, with allocation operations performed by the tail and commit operations performed by the head.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Reorder buffer entry fields.}
+    \label{tab:rob_entry_fields}
+    \begin{tabular}{|l|c|l|}
+        \hline
+        \textbf{Field Name} & \textbf{Size (bits)} & \textbf{Description} \\
+        \hline
+        Result Value & 32 & Execution result \\
+        \hline
+        Producer Tag & 3 & Source from which result is expected \\
+        \hline
+        Architectural Register Address & 5 & Destination register \\
+        \hline
+        Executed Flag & 1 & Has instruction completed \\
+        \hline
+        Exception Flag & 1 & Misprediction/exception \\
+        \hline
+        Branch Flag & 1 & Is branch instruction \\
+        \hline
+        Store Flag & 1 & Is store instruction \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsubsection{Allocation and Result Update}\label{subsubsec:rob_alloc_update}
+
+For each instruction coming from the decode and rename stage, an entry is allocated in the reorder buffer. In the three-way superscalar structure, up to three allocation operations can be performed in parallel per clock cycle. During allocation, the entry's producer tag is set, the executed flag is reset, and the destination architectural register address is recorded.
+
+When functional units complete execution, results are conveyed to the reorder buffer over the common data bus. Common data bus channels carry the target physical register address in addition to result data. Since this address directly indicates the location of the entry in the reorder buffer, the update operation is performed with position-based addressing. The content-based addressing approach used in traditional designs requires parallel comparison across all entries for tag matching, and this situation means thirty-two comparator circuits. By directly using the physical address in the designed system, this complex structure is avoided and area cost is significantly reduced. When the matching entry is found, the result value is written to the relevant field, the tag is updated to seven, and the executed flag is activated.
+
+While operand reading is being performed for newly arriving instructions, the reorder buffer may simultaneously be receiving updates from the common data bus. A forwarding mechanism is used to handle this situation. If an update is coming from the common data bus for the address being read in the same cycle, the current value from the common data bus is returned instead of the old value in the buffer. This mechanism prevents data inconsistency and eliminates unnecessary wait cycles.
+
+Recovery of the reorder buffer in case of misprediction is performed with a quite simple mechanism. The tail pointer is moved to the position after the mispredicted branch instruction. This operation logically invalidates all speculatively allocated entries. There is no need to separately clear the contents of entries because these positions are overwritten when new instructions are allocated.
+
+\subsubsection{Store Permission Mechanism}\label{subsubsec:store_perm}
+
+Management of store operations in a speculative execution environment presents a more complex problem compared to load operations. When a speculative load operation is cancelled due to misprediction, the read value can simply be ignored; the problem is resolved by not writing this value to the register file at the commit stage. However, when a speculative store operation writes to memory, reversing this write operation requires much more complex mechanisms.
+
+To avoid this complexity, a store permission mechanism is used in the designed system. Store instructions cannot perform memory write operations until they reach one of the head three positions of the reorder buffer. For a store instruction to be written to memory, three conditions must be satisfied: the instruction must be in one of the head three positions, address calculation must be completed, and there must be no unresolved branch instruction ahead of it.
+
+Thanks to this mechanism, only store operations guaranteed to commit are written to memory. In case of misprediction, speculative store operations that have not yet received permission are cleared from the reorder buffer and memory consistency is preserved.
+
+%------------------------------------------------------------------------
+
+\subsection{Common Data Bus}\label{subsec:cdb}
+
+The common data bus is the communication infrastructure that implements the result broadcasting mechanism of the Tomasulo algorithm. This structure distributes results from functional units to all waiting units simultaneously.
+
+Six common data bus channels exist in the designed system. The first three channels are dedicated to each of the three ALUs; the zeroth ALU broadcasts its results from channel zero, the first ALU from channel one, and the second ALU from channel two. The next three channels are used by the load store queue. The reason for allocating three channels to the load store queue is that three separate memory ports exist in the designed system; each memory port can independently produce results and these results are broadcast from separate channels.
+
+Each common data bus channel carries a standard set of signals. These signals are listed in Table~\ref{tab:cdb_signals}. All signals are conveyed in parallel to reservation stations, the reorder buffer, and the load store queue.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Common data bus channel signals.}
+    \label{tab:cdb_signals}
+    \begin{tabular}{|l|c|l|}
+        \hline
+        \textbf{Signal Name} & \textbf{Size (bits)} & \textbf{Description} \\
+        \hline
+        Valid & 1 & Indicates result is valid \\
+        \hline
+        Result Data & 32 & Execution result value \\
+        \hline
+        Target Physical Address & 6 & Target physical register address \\
+        \hline
+        Misprediction Flag & 1 & Branch misprediction detected \\
+        \hline
+        Branch Flag & 1 & Result belongs to branch instruction \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Common Data Bus Network - 6 Channels, Broadcast Targets]}}
+    \caption{Common data bus broadcast network and component connections}
+    \label{fig:cdb_network}
+\end{figure}
+
+The broadcast mechanism ensures that results reach all relevant units in a single cycle. Reservation stations resolve their pending operands, the reorder buffer updates relevant entries, and the load store queue receives address calculation results. This simultaneous distribution forms the foundation of the Tomasulo algorithm's dynamic resolution of data dependencies.
+
+%------------------------------------------------------------------------
+
+\subsection{Register File}\label{subsec:prf}
+
+The register file is the structure that permanently stores committed instruction results. This structure, corresponding to the thirty-two architectural registers defined by the RISC-V architecture, contains thirty-two thirty-two-bit registers.
+
+To support the three-way superscalar architecture, the register file has a multi-port structure. Six read ports enable parallel reading of two source operands for each of three instructions per clock cycle. Three write ports allow simultaneous write operations at the commit stage.
+
+Read operations are performed combinationally and data is returned in the same clock cycle. Write operations are performed on the rising edge of the clock signal. When both reading and writing to an address occur in the same cycle, bypass logic is activated and enables the new value being written to be read. This mechanism is applied for all three write ports, with highest priority given to the value of the instruction that came last in program order.
+
+In the RISC-V architecture, the zeroth register has a special position and always carries the value zero. To ensure this behavior, the zeroth physical register is forced to zero every clock cycle. Even if any instruction attempts to write to this register, the value does not change and the architectural requirement is guaranteed at the hardware level.

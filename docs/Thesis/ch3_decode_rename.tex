@@ -1,0 +1,182 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.3 DECODE AND RENAME STAGE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Decode and Rename Stage}\label{sec:decode_rename}
+
+The decode and rename stage is responsible for processing instructions received from the instruction buffer and performs two fundamental tasks: instruction decoding and register renaming. Instruction decoding analyzes RV32I instruction formats to generate control signals. Register renaming eliminates false dependencies required for out-of-order execution \cite{keller,tomasulo}.
+
+Three fundamental structures are used in this stage: the Register Alias Table (RAT) that maps architectural registers to physical registers, Free List structures that manage available physical register and queue addresses, and RAT Checkpoint that stores snapshots for branch speculation.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Decode and Rename Flow Diagram - 3 Parallel Decoders, RAT Read/Write, Free List Interaction]}}
+    \caption{Decode and rename stage general flow}
+    \label{fig:decode_rename_flow}
+\end{figure}
+
+This stage receives three instructions from the instruction buffer and performs the following operations in parallel for each:
+\begin{enumerate}
+    \item Instruction decoding operation (RV32I format parsing)
+    \item Register renaming (RAT query and allocation)
+    \item Reorder buffer and load store queue resource allocation
+    \item If branch instruction, save snapshot to RAT Checkpoint
+\end{enumerate}
+
+All of these operations are completed in a single clock cycle. In cycle $N$, instruction reception, decoding, and renaming are completed combinationally. In cycle $(N+1)$, all information is forwarded to the next stage and the RAT is updated.
+
+%------------------------------------------------------------------------
+
+\subsection{Instruction Decoding}\label{subsec:decoding}
+
+The instruction decoding unit is implemented with three separate RV32I decoder modules operating in parallel. Three instructions are processed simultaneously per clock cycle and control signals are generated. The fundamental reason for preferring this parallel structure is that instruction decoding is an entirely combinational process and there is no dependency between instructions at this stage.
+
+Each decoder analyzes the thirty-two-bit RISC-V instruction to generate architectural register addresses, control signals, and instruction type information. Architectural register addresses are five bits wide each for the first source register, second source register, and destination register. Control signals determine the arithmetic logic unit operation, memory access type, branch condition, and register write permission.
+
+%------------------------------------------------------------------------
+
+\subsection{Register Renaming}\label{subsec:reg_rename}
+
+Register renaming is a critical mechanism that forms the foundation of out-of-order execution. This technique eliminates Write-After-Write (WAW) and Write-After-Read (WAR) type false dependencies by mapping architectural registers to a larger physical register pool \cite{johnson}. Thanks to this elimination, only the true data dependency Read-After-Write (RAW) condition remains.
+
+The RISC-V architecture defines thirty-two architectural registers, but the designed processor has sixty-four physical registers. The structure and management of the physical register space is explained in detail in Section~\ref{sec:data_control}.
+
+%--- 3.3.2.1 RAT ---
+\subsubsection{Register Alias Table}\label{subsubsec:rat}
+
+The Register Alias Table (RAT) is a structure that tracks which physical register each of the thirty-two architectural registers is mapped to. This table, shown in Figure~\ref{fig:rat_structure}, consists of thirty-two entries that are six bits wide. Each entry holds the current physical register address of the relevant architectural register. The most significant bit indicates whether the physical register is located in the register file or in the reorder buffer.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: RAT Mapping Structure - Architectural Registers (0-31) -> Physical Registers (0-63), Valid Bits, 3 Write / 6 Read Ports]}}
+    \caption{Register Alias Table (RAT) structure}
+    \label{fig:rat_structure}
+\end{figure}
+
+The multi-port structure of the table is designed to support three-way superscalar execution. Six read operations can be performed per clock cycle; this number corresponds to two source register queries for each of three instructions. Additionally, three write operations can also be performed in parallel.
+
+As an important design decision, the zeroth architectural register is always mapped to the zeroth physical register. In the RISC-V architecture, the zeroth register contains a fixed zero value, and this special case is handled in hardware.
+
+% --- Same Cycle Forwarding (as paragraph) ---
+During parallel renaming of three instructions, dependencies between instructions must be handled correctly. For example, if the first instruction writes to a register and the second instruction uses the same register as a source, the second instruction should receive the first instruction's new physical register address, not the old value in the table. This requirement is met with same-cycle forwarding logic.
+
+When source register addresses are queried, comparison is made with destination registers of previous instructions. If there is a match, the newly allocated physical register address is used instead of the table value. Forwarding priority is given to the most recent instruction; this prioritization is mandatory to preserve program order.
+
+\begin{table}[htbp]
+\centering
+\caption{Same-cycle forwarding example: source register resolution for three parallel instructions.}
+\label{tab:same_cycle_fwd}
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Instruction} & \textbf{Source 1} & \textbf{Source 2} & \textbf{Dest} & \textbf{S1 Fwd} & \textbf{S2 Fwd} \\
+\hline
+ADD x1, x2, x3 & x2 & x3 & p33 & -- & -- \\
+\hline
+SUB x4, x1, x5 & \textbf{p33} & x5 & p34 & Instr 0 & -- \\
+\hline
+XOR x6, x1, x4 & \textbf{p33} & \textbf{p34} & p35 & Instr 0 & Instr 1 \\
+\hline
+\end{tabular}
+\end{table}
+
+%--- 3.3.2.2 Free List + LSQ Allocation (Combined) ---
+\subsubsection{Resource Allocation Lists}\label{subsubsec:free_list}
+
+In out-of-order execution architecture, physical register and queue entry allocation for memory operations must be performed for each new instruction. These allocation operations are managed through circular buffer-based free lists.
+
+The free register list is a critical structure that manages available physical register addresses. In a three-way superscalar architecture, up to three instructions are processed per cycle and each instruction potentially requires a physical register allocation.
+
+In the traditional free list approach, finding three independent free resources requires complex priority encoder logic. In this design, the index-as-value structure has been preferred to solve this problem. Each entry in the circular buffer has a value equal to its own index: entry zero contains value zero, entry one contains value one. In this approach, the buffer does not store actual data but only manages which indices are available \cite{cfc_renaming_2022}.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Circular Buffer Free List - Read/Write Pointers, Index-as-Value Principle, 3-wide Allocation]}}
+    \caption{Circular buffer-based free list structure}
+    \label{fig:free_list}
+\end{figure}
+
+In this structure shown in Figure~\ref{fig:free_list}, allocation is performed simply by reading from the read pointer. The first allocated ID is the value of the read pointer; second and third allocations are one and two greater, respectively. The superiority of this approach is that complex logic operations are not required to find free addresses; only the pointer value is read. Additionally, three allocations can be performed simultaneously and all allocations can be reverted in a single cycle by resetting the pointer in case of misprediction.
+
+Deallocation is performed through the write pointer as the reverse of allocation. When an instruction is committed, the old physical register previously used for that instruction's destination register is returned to the free list. An important check is made during commitment: there may be multiple pending writes for the same architectural register. For example, if the first instruction writes to register x1 and the second instruction also writes to x1 before the first is committed, when the first instruction is committed, the x1 mapping in the register alias table still points to the second instruction's physical register. In this case, the register alias table returns to the register file mapping only when the most recent write is committed.
+
+A separate address allocation mechanism exists for memory operations. When load and store instructions are detected, an entry is allocated in the load store queue. This allocation operation occurs in parallel with physical register allocation.
+
+The load store queue address list is also implemented in the same circular buffer structure. This design provides the same advantages as the free register list: all speculative allocations can be instantly cancelled by returning the read pointer in case of misprediction. Up to three queue entries can be allocated per cycle for memory operations, and queue fullness is reflected back to the decode stage as backpressure.
+
+As shown in Table~\ref{tab:rename_example}, the register renaming mechanism eliminates two types of false dependencies. In Write-After-Write (WAW) dependency, two instructions writing to the same architectural register write to different physical registers and can operate independently of each other. In Write-After-Read (WAR) dependency, the read operation is from the old physical register while the write operation is to the new physical register.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Register renaming operation for an example instruction sequence.}
+    \label{tab:rename_example}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Original Instruction} & \textbf{Operation} & \textbf{Renamed Instruction} \\
+        \hline
+        ADD x1, x2, x3 & x2$\to$p2, x3$\to$p3, x1$\leftarrow$p33 & ADD p33, p2, p3 \\
+        \hline
+        SUB x4, x1, x5 & x1$\to$p33, x5$\to$p5, x4$\leftarrow$p34 & SUB p34, p33, p5 \\
+        \hline
+        XOR x1, x6, x7 & x6$\to$p6, x7$\to$p7, x1$\leftarrow$p35 & XOR p35, p6, p7 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+%------------------------------------------------------------------------
+
+\subsection{Branch Speculation Support}\label{subsec:rat_checkpoint}
+
+During out-of-order execution, branch instructions are executed speculatively before their outcomes are determined. This approach allows subsequent instructions to be processed without waiting for branch instruction outcomes. However, special mechanisms are required for the processor to return to a consistent state in case of misprediction.
+
+Several different methods exist for returning the processor to a consistent state when misprediction is detected. In traditional Tomasulo-based processors, waiting until the branch instruction reaches the head of the reorder buffer is required; however, this method causes serious performance losses. Snapshot-based methods store a copy of processor state for each speculative branch and instantly restore this copy in case of misprediction \cite{akkary_checkpoint_2003}.
+
+%--- 3.3.3.1 Snapshot Mechanism ---
+\subsubsection{Snapshot Mechanism}\label{subsubsec:snapshot}
+
+RAT Checkpoint is implemented as a sixteen-entry circular buffer. When each branch or jump instruction is processed, a snapshot of the current state is saved to this buffer.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: RAT Checkpoint Snapshot Structure - RAT copy for each branch, GHR, TOS and PC storage]}}
+    \caption{RAT Checkpoint and snapshot structure}
+    \label{fig:rat_checkpoint_structure}
+\end{figure}
+
+The information saved in this structure shown in Figure~\ref{fig:rat_checkpoint_structure} includes the physical mapping of thirty-two architectural registers, the branch instruction's physical register address, the program counter value at prediction time, the indirect jump flag, and the return address stack top pointer. Additionally, the global branch history (GHR) required for correct operation of the branch predictor is also stored; this information is specifically used by the GShare predictor.
+
+It has been observed that a smaller buffer may be sufficient during normal operation. However, in secure mode, snapshots are saved not only for branch instructions but for every instruction in order to return to the nearest safe point during unrecoverable errors resulting from multi-bit errors. Therefore, a larger capacity is required. With three parallel push interfaces, up to three snapshots can be taken per clock cycle.
+
+% --- Update Mechanism (as paragraph) ---
+After snapshots are taken, commit operations modify the register alias table. These changes must also be reflected in the snapshots. During each commit operation, the mapping of the relevant architectural register is checked in all active snapshots and updated if necessary.
+
+% --- In-Order Resolution (as paragraph) ---
+Even if branches are executed out of order, resolution outputs must be forwarded to other modules in order. RAT Checkpoint sets the resolved or mispredicted flags of the relevant entry according to out-of-order resolution results from the execution stage. When the entry at the head pointer is resolved, its result is forwarded to other modules and the pointer is advanced. This ensures priority is always given to the older instruction.
+
+%--- 3.3.3.2 Misprediction Recovery ---
+\subsubsection{Misprediction Recovery}\label{subsubsec:recovery}
+
+When misprediction is detected, the processor is returned to a consistent state using information from the snapshot. The recovery operation consists of several steps:
+
+\begin{enumerate}
+    \item The register alias table is restored from the snapshot.
+    \item The free register list pointer is set to one greater than the mispredicted branch's physical register address.
+    \item The load store queue pointer is set according to the value from the LSQ.
+    \item The correct program counter value is forwarded to the instruction fetch stage.
+    \item The return address stack top pointer is restored.
+    \item If GShare is used, information such as the global history table, program counter value, and prediction made is also sent for predictor update. This information is not needed when using the two-bit predictor.
+\end{enumerate}
+
+These operations are completed in a single clock cycle and correct-path instructions can be fetched in the next cycle.
+
+% === EXAMPLE SCENARIO (Shortened) ===
+For example, consider the following instruction sequence:
+
+\begin{verbatim}
+    BEQ x1, x2, target   ; Branch instruction (mispredicted: taken)
+    ADD x3, x4, x5       ; Speculative instruction
+    LW  x9, 0(x10)       ; Speculative load
+\end{verbatim}
+
+Suppose the branch instruction was predicted as ``taken'' but is actually ``not taken.'' As speculative instructions are executed, new physical registers have been allocated for registers x3 and x9, and a queue entry has been allocated for the load instruction.
+
+When the branch is detected as mispredicted: the register alias table is restored to the state at the branch point, free list pointers are reverted, and the program counter is set to the correct address.

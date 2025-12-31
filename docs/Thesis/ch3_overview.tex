@@ -1,0 +1,89 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.1 OVERVIEW
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Overview}\label{sec:overview}
+
+This section introduces the overall architecture of the designed three-way superscalar out-of-order execution RISC-V processor. The processor aims to achieve high performance by exploiting instruction-level parallelism and has been designed as a modern adaptation of the Tomasulo algorithm \cite{tomasulo}. Similar RISC-V superscalar designs are actively being researched in the literature \cite{xiangshan_2022, riscv_hp_eval_2024, polimi_superscalar_2023}.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Superscalar Processor Block Diagram - 6-stage pipeline and main buffers]}}
+    \caption{Top-level block diagram of the designed superscalar processor}
+    \label{fig:processor_block_diagram}
+\end{figure}
+
+\subsection{Architectural Goals}\label{subsec:architectural_goals}
+
+The designed processor has been developed in accordance with four fundamental goals:
+
+\begin{itemize}
+    \item The superscalar execution goal enables multiple instructions to be processed in parallel per clock cycle.
+    \item The out-of-order execution goal enables ready instructions to be executed independent of program order.
+    \item The speculative execution goal allows instruction fetching and execution to proceed speculatively without waiting for branch outcomes.
+    \item The fast misprediction recovery goal enables the processor to return to the correct state in a single cycle when branch misprediction is detected.
+\end{itemize}
+
+In accordance with these goals, the processor eliminates false dependencies with register renaming technique, dynamically resolves data dependencies with tag-based operand waiting, and performs in-order commitment with the reorder buffer.
+
+\subsection{Pipeline Stages Overview}\label{subsec:pipeline_overview}
+
+The processor pipeline consists of six main stages. The instruction fetch stage fetches five instructions per clock cycle, but some instructions may become invalid due to branch and jump instructions. Fetched instructions are forwarded to subsequent stages three at a time through a buffer. This asymmetric design compensates for branch losses, ensuring continuous feeding of the pipeline. Table \ref{tab:pipeline_stages} summarizes the main tasks of the pipeline stages.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Processor pipeline stages and their main tasks.}
+    \label{tab:pipeline_stages}
+    \begin{tabular}{|m{0.25\textwidth}|m{0.68\textwidth}|}
+        \hline
+        \textbf{Stage} & \textbf{Main Tasks} \\
+        \hline
+        Instruction Fetch & This stage fetches five instructions from memory in parallel, predicts control flow with the branch prediction system, and buffers valid instructions. \\
+        \hline
+        Decode and Rename & This stage decodes three instructions in parallel, maps architectural registers to physical registers, and saves snapshots for branch speculation. \\
+        \hline
+        Data Control and Issue & This stage allocates instructions to reservation stations and the reorder buffer, reads operand values, and broadcasts results over the common data bus. \\
+        \hline
+        Execute & This stage performs arithmetic and logical operations with three parallel functional units, evaluates branch conditions, and detects mispredictions. \\
+        \hline
+        Memory & This stage manages load and store operations with three parallel ports, performs store-to-load forwarding, and ensures memory consistency. \\
+        \hline
+        Writeback & This stage writes results to architectural state, commits up to three instructions in order per cycle, and frees physical registers. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Detailed explanations of each stage are provided in the following sections of this chapter: Instruction Fetch (Section \ref{sec:fetch}), Decode and Rename (Section \ref{sec:decode_rename}), Data Control and Issue (Section \ref{sec:data_control}), Execute (Section \ref{sec:execute}), Memory (Section \ref{sec:memory}), and Writeback (Section \ref{sec:writeback}).
+
+\subsection{Design Features Summary}\label{subsec:design_summary}
+
+To provide an overview, the fundamental structural features of the designed processor are summarized in Table \ref{tab:processor_specs}. This table collectively presents the numerical parameters of components that will be explained in detail in subsequent subsections.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Technical specifications of the designed processor.}
+    \label{tab:processor_specs}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Feature} & \textbf{Value} \\
+        \hline
+        Architecture & RISC-V (RV32I) \\
+        \hline
+        Pipeline Depth & 6 Stages \\
+        \hline
+        Instruction Fetch Width & 5 Instructions/Cycle \\
+        \hline
+        Issue/Commit Width & 3 Instructions/Cycle \\
+        \hline
+        Physical Register Count & 64 (32 Architectural + 32 ROB) \\
+        \hline
+        Reservation Stations & 3 Units \\
+        \hline
+        Load Store Queue (LSQ) & 32 Entries \\
+        \hline
+        Branch Predictor & 256-Entry 2-bit Counter, RAS, JALR Cache \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Each of these features is explained in detail within the scope of the relevant pipeline stage in the following subsections.

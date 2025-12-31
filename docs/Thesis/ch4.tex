@@ -1,87 +1,333 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \phantomsection
-\chapter{(IF NECESSARY) CHAPTER 4}\label{ch:ifnecch4}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{ON-DEMAND REDUNDANCY TECHNIQUE}\label{ch:redundancy}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris.
+This chapter discusses in detail the on-demand redundancy technique applied to the designed superscalar RISC-V processor. First, the importance of fault tolerance and limitations of existing methods are explained, followed by the contributions of the designed processor in this field. This work constitutes the implementation of the research direction proposed in a previously published literature survey \cite{iskin_fault_tolerance_2024}.
 
+%------------------------------------------------------------------------
+\section{Motivation}\label{sec:motivation}
+%------------------------------------------------------------------------
 
-\section{Second Level Title: First Letters Capital}
+The reliability of modern electronic systems, especially in critical applications such as space, aviation, and automotive, is directly related to minimizing the effects of faults. In these fields, faults originating from environmental factors can threaten system stability. In such applications, fault tolerance has become an indispensable requirement for ensuring both system reliability and user safety \cite{rogenmoser_hmr_2023}.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. 
+As explained in Section \ref{sec:fault_tolerance}, transient faults (SEU, MBU) and permanent faults require different protection methods. Spatial redundancy (TMR, DCLS/TCLS), temporal redundancy, and information redundancy (ECC) are fundamental approaches developed for this purpose. In this chapter, the limitations of existing methods are analyzed and how the designed processor provides solutions to these limitations is explained.
 
-\subsection{Third level title: Only first letter capital}
+%------------------------------------------------------------------------
+\section{Limitations of Existing Methods}\label{sec:limitations}
+%------------------------------------------------------------------------
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem.
+\subsection{Disadvantages of DCLS and TCLS}\label{subsec:dcls_limitations}
 
-\subsubsection{Fourth level title: Only first letter capital}
+Core-level lock-step (DCLS/TCLS) methods have various limitations in practical applications:
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem.
+\begin{enumerate}
+    \item \textbf{Late fault detection:} DCLS and TCLS can only detect faults at the core output. This situation can cause the fault to propagate within the pipeline and affect multiple stages before detection. As mentioned in Dörflinger's work, detectors located at deeper levels of the pipeline can catch faults much earlier \cite{dorflinger_2022}.
+    
+    \item \textbf{High latency:} Core-level comparison waits for all pipeline stages to complete. This situation increases fault detection latency and extends recovery time.
+    
+    \item \textbf{Performance loss:} The TCLS method requires three cores to execute the same instruction, so only one-third of the potential processing power can be utilized. This resource waste continues even under normal conditions.
+    
+    \item \textbf{Fixed mode operation:} Traditional DCLS/TCLS implementations cannot dynamically switch between performance and security. The system either continuously operates in redundant mode or operates at full performance without protection.
+\end{enumerate}
 
-\subsubsubsection{Fifth level title: no numbering
-after fourth level titles}
+\subsection{Advantages of Pipeline-Level Protection}\label{subsec:pipeline_level_advantages}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem.
+As demonstrated in the DuckCore architecture developed by Li et al., pipeline-level fault detection offers significant advantages \cite{li_duckcore}:
 
-\begin{figure}[!ht]
- \centering
- \includegraphics[width=230pt,keepaspectratio=true]{./fig/sekil6}
- % sekil6.eps: 0x0 pixel, 300dpi, 0.00x0.00 cm, bb=14 14 555 489
- \vspace{4mm}
- \caption{For a multi-line figure captions, it is important that all the
-  lines of the caption are aligned.}
- \label{fig:4-1}
-\end{figure}
+\begin{itemize}
+    \item \textbf{Early detection:} Faults can be detected at the stage where they occur and their propagation can be prevented.
+    \item \textbf{Low latency:} Checks performed at each stage do not require waiting for core output.
+    \item \textbf{Targeted correction:} Since which stage the fault occurred in is known, the correction mechanism can work more effectively.
+\end{itemize}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit in Figure~\ref{fig:4-1}. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est lacinia velit, adipiscing elementum lectus felis at sem.
+In Dörflinger's work, it was shown that Deep Level Detectors reduced the average detection latency of transient logic faults by up to 79 percent \cite{dorflinger_2022}. This result proves the practical effectiveness of pipeline-level protection.
 
-\begin{table*}[!ht]
-{\setlength{\tabcolsep}{14pt}
-\caption{Example table.}
-\begin{center}
-\vspace{-6mm}
-\begin{tabular}{cccc}
-\hline\hline
-Column A & Column B & Column C & Column D \\
+\subsection{Need for On-Demand Redundancy}\label{subsec:odmr_need}
+
+The On-Demand Modular Redundancy (ODMR) approach developed by Rogenmoser et al. provides a solution to the above limitations \cite{rogenmoser_odrg_2022}. In this approach, the system can operate:
+
+\begin{itemize}
+    \item In full redundancy (TMR) mode during critical tasks,
+    \item In independent operation mode under normal conditions.
+\end{itemize}
+
+The Trikarenos project is a concrete implementation of this flexible structure. This microcontroller, manufactured with TSMC 28nm technology, achieves energy savings by switching to full redundancy mode only during critical tasks \cite{trikarenos_2023}.
+
+%------------------------------------------------------------------------
+\section{TMR Suitability of Three-Way Superscalar Design}\label{sec:superscalar_tmr}
+%------------------------------------------------------------------------
+
+One of the most fundamental features of the designed processor is its superscalar architecture with three parallel execution channels. This design decision was made considering both performance and fault tolerance goals.
+
+\subsection{Why Three-Way Superscalar?}\label{subsec:why_three_way}
+
+In superscalar processor design, determining the number of channels depends on the balance between performance and complexity. Two-way design is insufficient for TMR, while four or more ways bring unnecessary complexity.
+
+Reasons for selecting three-way design:
+
+\begin{enumerate}
+    \item \textbf{Natural compatibility with TMR:} Three channels directly correspond to the TMR structure. When each channel is considered as a module, the existing hardware infrastructure can be reused for redundancy purposes.
+    
+    \item \textbf{Performance and cost balance:} In normal operation, three instructions can be processed in parallel (IPC=3); in secure mode, the same hardware is used for fault masking.
+    
+    \item \textbf{Minimal overhead:} No additional hardware is required except for voter circuits needed for TMR. The existing superscalar infrastructure is used for both performance and security purposes.
+\end{enumerate}
+
+\subsection{Operating Modes}\label{subsec:operating_modes}
+
+The designed processor supports three different operating modes:
+
+\begin{table}[htbp]
+\centering
+\caption{Processor operating modes}
+\label{tab:operating_modes}
+\begin{tabular}{|l|c|c|c|p{5cm}|}
 \hline
-Row A & Row A & Row A & Row A \\
-Row B & Row B & Row B & Row B \\
-Row C & Row C & Row C & Row C \\
+\textbf{Mode} & \textbf{Channels} & \textbf{TMR} & \textbf{IPC} & \textbf{Description} \\
+\hline
+Superscalar & 3 independent & Off & 3 & Three channels process different instructions in parallel \\
+\hline
+Secure & 3 locked & On & 1 & Three channels process the same instruction, results are voted \\
+\hline
+Low Power & 1 active & Off & 1 & Other channels are disabled for energy savings \\
 \hline
 \end{tabular}
-\vspace{-6mm}
-\end{center}
-\label{tableforCh4-1}}
-\end{table*}
+\end{table}
 
-Table~\ref{tableforCh4-1} lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris.
+%------------------------------------------------------------------------
+\section{Contributions of the Design}\label{sec:contributions}
+%------------------------------------------------------------------------
+
+In the existing literature, designs implementing TMR at pipeline level like DuckCore \cite{li_duckcore}, designs implementing ODMR at core level like Trikarenos \cite{trikarenos_2023}, and high-performance open-source RISC-V cores like BOOM \cite{sonicboom} exist separately. However, combining these approaches has not been previously realized.
+
+The processor designed in this thesis presents the following novel contributions:
+
+\subsection{Combination of Pipeline-Level TMR with ODMR}\label{subsec:contribution_combined}
+
+The designed processor combines \textbf{both pipeline-level fault detection and ODMR support} in a single architecture. This combination presents:
+
+\begin{itemize}
+    \item DuckCore's pipeline-level protection advantages,
+    \item Trikarenos's flexible mode-switching capabilities
+\end{itemize}
+
+in a single design.
+
+\subsection{Low-Latency Mode Transition}\label{subsec:contribution_low_latency}
+
+Pipeline-level TMR implementation enables minimization of inter-mode transition latency. For transition:
+
+\begin{itemize}
+    \item Pipeline flushing is not required.
+    \item Core state synchronization is not required.
+    \item Only activation of voter circuits is sufficient.
+\end{itemize}
+
+This feature enables fast mode changes according to application needs.
+
+\subsection{Early Fault Detection}\label{subsec:contribution_early_detection}
+
+Unlike core-level DCLS/TCLS, the designed processor can detect faults at every stage of the pipeline. This enables:
+
+\begin{itemize}
+    \item Prevention of fault propagation.
+    \item Minimization of detection latency.
+    \item Shortening of recovery time.
+\end{itemize}
+
+\subsection{Dynamic Mode Transition Infrastructure}\label{subsec:contribution_dynamic}
+
+The designed architecture is planned to support automatic mode transition in the future. Although this feature has not yet been implemented, the infrastructure is designed to support the following scenario:
+
+\begin{enumerate}
+    \item While the processor is operating in superscalar mode, voters monitor mismatches.
+    \item When mismatches above a certain threshold are detected, the system can automatically switch to secure mode.
+    \item When radiation risk decreases, the system can return to superscalar mode.
+\end{enumerate}
+
+This approach has the potential to provide adaptive fault tolerance without requiring external intervention.
+
+%------------------------------------------------------------------------
+\section{TMR Implementation}\label{sec:tmr_implementation}
+%------------------------------------------------------------------------
+
+\subsection{Majority Voter}\label{subsec:voter}
+
+The majority voter, the fundamental component of TMR, selects the value that at least two of three inputs produce as output \cite{lyons_tmr}. Mathematically:
+
+\begin{equation}
+    \textit{Output} = (A \cdot B) + (B \cdot C) + (A \cdot C)
+    \label{eq:majority_vote}
+\end{equation}
+
+In this equation, $A$, $B$, and $C$ represent the outputs of three modules, the multiplication operation represents logical AND, and the addition operation represents logical OR.
+
+The voter module used in the design has the following features:
+
+\begin{itemize}
+    \item \textbf{Parametric data width:} Can be used with different widths from 1 bit to 32 bits.
+    \item \textbf{Bypass mode:} When secure mode is off, the primary input is directly transferred to the output.
+    \item \textbf{Error reporting:} Which input is in the minority is detected and reported.
+    \item \textbf{Critical error flag:} A warning is generated when all three inputs are different.
+\end{itemize}
+
+\subsection{Protected Structures}\label{subsec:protected_structures}
+
+In the design, as a result of cost-effectiveness analysis, critical control flow elements are protected with TMR. These structures cover points where a fault could corrupt processor state:
+
+\textbf{Instruction Fetch Stage:}
+\begin{itemize}
+    \item Program counter
+    \item Instruction buffer pointers (head and tail)
+    \item Fullness counter
+\end{itemize}
+
+\textbf{Decode and Rename Stage:}
+\begin{itemize}
+    \item Register alias table pointers
+    \item Free register list pointers
+    \item RAT Checkpoint pointers
+\end{itemize}
+
+\textbf{Dispatch Stage:}
+\begin{itemize}
+    \item Reorder buffer pointers
+    \item Dispatch signals (in secure mode)
+\end{itemize}
+
+\textbf{Execute and Memory Stages:}
+\begin{itemize}
+    \item ALU results (voting in secure mode)
+    \item Load-store queue pointers
+    \item Memory address calculations
+\end{itemize}
+
+\textbf{Writeback Stage:}
+\begin{itemize}
+    \item Commit decisions
+    \item Architectural state updates
+\end{itemize}
+
+Three copies are maintained for each protected structure and majority voting is performed for every read operation. In write operations, all three copies are updated with the same value.
+
+%------------------------------------------------------------------------
+\section{ECC Assumption for Large Memory Structures}\label{sec:ecc}
+%------------------------------------------------------------------------
+
+Applying TMR to large memory structures incurs 200 percent area cost. ECC provides a much more efficient alternative for these structures.
+
+As Dörflinger pointed out, using ECC instead of full data replicas for memories significantly reduces resource usage \cite{dorflinger_2022}. In Annink's work, it was stated that adding ECC reduced achievable frequency by 20 percent and area overhead was 33.7 percent \cite{annink}. These values are acceptable compared to TMR's 200 percent area overhead.
+
+In the design, the following large memory structures are assumed to be ECC protected:
+
+\begin{itemize}
+    \item Reorder buffer (ROB) data fields
+    \item Reservation stations (RS) data fields
+    \item Load-store queue (LSQ) data fields
+    \item Register file
+\end{itemize}
+
+ECC implementation has been decided to be kept outside the scope of this thesis and is recommended as an important research topic for future work.
+
+%------------------------------------------------------------------------
+\section{Critical Fault Recovery with RAT Checkpoint}\label{sec:rat_checkpoint_recovery}
+%------------------------------------------------------------------------
+
+The RAT Checkpoint explained in Section \ref{subsec:rat_checkpoint} is designed for fast recovery in case of branch misprediction. However, this structure can also be used for recovery from critical faults in secure mode. This approach constitutes a concrete example of reusing existing hardware infrastructure for fault tolerance purposes.
+
+\subsection{Dual Use of RAT Checkpoint}\label{subsec:rat_checkpoint_dual_use}
+
+RAT Checkpoint takes a checkpoint for every branch instruction in normal mode. However, in secure mode, faults can originate not only from mispredictions but also from radiation effects such as SEU and MBU.
+
+RAT Checkpoint requires more area compared to other eager misprediction recovery methods. However, the ability to use the same structure for recovery from radiation-induced faults justifies this additional area cost. Both branch speculation and fault tolerance are provided with a single hardware structure.
+
+\subsection{Secure Mode Checkpoint Strategy}\label{subsec:secure_checkpoint}
+
+In normal mode, snapshots are taken only for branch and jump instructions. In secure mode, the proposed approach is to \textbf{take a snapshot for every instruction}. Thanks to this strategy:
+
+\begin{itemize}
+    \item When a critical fault is detected in any instruction, it is possible to return to that instruction's state.
+    \item Recovery latency is minimized because the most recent snapshot is always available.
+    \item The same mechanism used for misprediction recovery is used.
+\end{itemize}
+
+The sixteen-entry RAT Checkpoint capacity is sufficient for this strategy. Since IPC value is 1 and instructions are processed in order in secure mode, checkpoints equal to pipeline depth are sufficient.
+
+\subsection{Critical Fault Detection Mechanism and Proposed Recovery Flow}\label{subsec:fatal_recovery_flow}
+
+While the processor is operating in secure mode, the TMR mechanism can mask single-bit faults. However, faults affecting multiple bits or corrupting related signals can cause all three copies to produce different values. This situation is classified as a ``fatal error'' that cannot be corrected by TMR.
+
+In the design, TMR modules distributed across different stages of the pipeline generate a signal when they detect a fatal error. In the current design, this signal enables the error to be reported and serves as a trigger for the proposed recovery mechanism. The proposed recovery flow is designed as follows:
+
+\begin{enumerate}
+    \item \textbf{Fatal error detection:} A TMR module at any stage detects that all three copies are different and activates the fatal error signal.
+    
+    \item \textbf{Identification of relevant instruction:} The physical register address assigned to the faulty instruction is used to access the relevant snapshot in RAT Checkpoint.
+    
+    \item \textbf{Restoration from snapshot:} The register alias table snapshot and program counter value are retrieved from RAT Checkpoint.
+    
+    \item \textbf{Pipeline flush:} All speculative instructions processed after the faulty instruction are flushed.
+    
+    \item \textbf{Restart:} The program counter is set to the faulty instruction's address and the instruction is re-fetched from memory.
+\end{enumerate}
+
+The central controller required for fully autonomous operation of this mechanism has not been implemented within the scope of this thesis, but the detection and reporting infrastructure has been completed. In the current system, the fatal error signal is successfully generated and transmitted to the simulation environment. Fully automatic recovery is planned as future work.
+
+\subsection{Advantage of Pipeline-Level Protection}\label{subsec:pipeline_protection_advantage}
+
+This approach demonstrates the concrete advantages of performing fault detection and recovery at the pipeline level:
+
+\begin{itemize}
+    \item \textbf{Fast detection:} The fault is detected immediately at the stage where it occurs. Waiting for core output is not necessary.
+    
+    \item \textbf{Low recovery latency:} Thanks to the RAT Checkpoint mechanism, recovery can be initiated in a single clock cycle.
+    
+    \item \textbf{Minimal performance loss:} Recovery penalty is lower than a typical misprediction penalty.
+    
+    \item \textbf{Existing infrastructure usage:} Instead of additional hardware, the already existing RAT Checkpoint structure is used.
+\end{itemize}
+
+\subsection{Physical Address Corruption Scenario}\label{subsec:address_corruption}
+
+In rare cases, the physical register address belonging to the faulty instruction may also be corrupted. In this case, which snapshot to return to cannot be determined. An alternative mechanism has been designed against this scenario:
+
+RAT Checkpoint entries are assumed to be under ECC protection together with large memory structures. Additionally, instructions that have not resolved for a certain timeout period at the head pointer of RAT Checkpoint can be considered as potentially corrupted.
+
+Even in this case, the program can be restarted with minimum loss using the oldest valid snapshot and correct program counter value in RAT Checkpoint. This approach provides much faster and more efficient recovery compared to a complete system restart.
+
+Testing of the timeout-based mechanism has not yet been performed, and this topic is recommended for future work.
+
+\subsection{Dynamic Mode Transition Potential}\label{subsec:dynamic_mode_potential}
+
+Although not yet implemented, the designed architecture is planned to support automatic mode transition in the future without requiring external intervention:
+
+\begin{enumerate}
+    \item While the processor is operating in superscalar mode, voters can detect mismatches (comparison can be performed even in bypass mode).
+    
+    \item When mismatches above a threshold value are detected within a certain time period, the system can automatically switch to secure mode.
+    
+    \item When radiation risk decreases and mismatch rate drops, the system can return to superscalar mode.
+\end{enumerate}
+
+This approach has the potential to provide adaptive fault tolerance and constitutes an important research direction for future work.
+
+%------------------------------------------------------------------------
+\section{Summary}\label{sec:ch4_conclusion}
+%------------------------------------------------------------------------
+
+This chapter presented the on-demand redundancy technique applied to the designed superscalar RISC-V processor. The main contributions of the design are:
+
+\begin{enumerate}
+    \item \textbf{Reuse of three-way superscalar architecture for TMR:} The existing hardware infrastructure can be used for both performance and security purposes with minimal overhead.
+    
+    \item \textbf{Combination of pipeline-level TMR with ODMR:} DuckCore's early fault detection advantages and Trikarenos's flexible mode-switching capabilities are combined in a single architecture.
+    
+    \item \textbf{Low-latency mode transition:} Pipeline-level implementation enables inter-mode transitions to be performed with minimum latency.
+    
+    \item \textbf{Critical fault recovery with RAT Checkpoint:} The RAT Checkpoint structure designed for misprediction recovery is also used for recovery from radiation-induced critical faults. Dual functionality is provided with a single hardware structure.
+    
+    \item \textbf{Dynamic mode transition infrastructure:} Architectural infrastructure supporting automatic fault detection and mode transition in the future has been prepared.
+\end{enumerate}
+
+This approach implements for the first time the idea of ``combining a superscalar core with pipeline-level TMR and ODMR'' proposed in the literature. As a result, a flexible processor architecture has been achieved that provides fault tolerance in critical tasks while offering full superscalar performance under normal conditions.

@@ -1,0 +1,161 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.5 EXECUTE STAGE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Execute Stage}\label{sec:execute}
+
+The execute stage is the pipeline stage where actual computational operations of instructions are performed. This stage receives ready instructions from reservation stations, performs arithmetic and logical operations, evaluates branch conditions, and performs misprediction detection. Computed results are broadcast to all waiting units through the common data bus.
+
+In the designed three-way superscalar structure, three independent functional units operate in parallel. Each functional unit has full arithmetic logic unit (ALU), shifter, and branch controller capacity and can execute one instruction per clock cycle. Since all operations for the RV32I base instruction set are completed in a single clock cycle, functional units can accept new instructions every cycle.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Execute Stage General Structure - 3 Functional Units, RS Inputs, CDB Outputs]}}
+    \caption{Execute stage general structure and component connections}
+    \label{fig:execute_overview}
+\end{figure}
+
+%------------------------------------------------------------------------
+
+\subsection{Functional Unit Structure}\label{subsec:fu_structure}
+
+Each functional unit consists of an ALU, a shifter, and a branch controller. These three subunits operate in parallel and their results are selected through a multiplexer according to the function selection signal. This design shortens the critical path and makes all RV32I arithmetic, logical, and control flow operations completable in a single cycle.
+
+The ALU consists of two subunits: arithmetic and logical. The arithmetic unit supports addition, subtraction, signed comparison, and unsigned comparison operations. The logical unit performs AND, OR, and XOR operations. Results of both subunits are calculated in parallel and selection is made according to the most significant bit of the function selection signal. Supported operations and selection values are shown in Table~\ref{tab:alu_ops}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{ALU function selection signals and supported operations.}
+    \label{tab:alu_ops}
+    \begin{tabular}{|c|l|l|}
+        \hline
+        \textbf{Selection Value} & \textbf{Operation} & \textbf{Description} \\
+        \hline
+        0 (3'b000) & ADD & Addition \\
+        \hline
+        1 (3'b001) & SUB & Subtraction \\
+        \hline
+        2 (3'b010) & SLT & Signed less-than comparison \\
+        \hline
+        3 (3'b011) & SLTU & Unsigned less-than comparison \\
+        \hline
+        4 (3'b100) & XOR & Exclusive OR \\
+        \hline
+        5 (3'b101) & OR & OR \\
+        \hline
+        6 (3'b110) & AND & AND \\
+        \hline
+    \end{tabular}
+\end{table}
+
+In addition to computation results, the ALU also produces status flags used in branch condition evaluation. The zero flag is active when the result is zero, the negative flag is active when the most significant bit of the result is one, the carry flag is active when a carry occurs in addition or subtraction operations, and the overflow flag is active in signed arithmetic overflow conditions.
+
+The shifter is designed in barrel shifter architecture and performs variable-amount shift operations in a single clock cycle. The logical left shift operation shifts the first operand left by the specified amount and fills with zeros from the right. The logical right shift operation shifts right and fills with zeros from the left. The arithmetic right shift operation preserves the sign bit while shifting right and fills with the sign bit from the left. The shift amount is processed as five bits and shifting from zero to thirty-one bits can be performed.
+
+The branch controller evaluates the branch condition using status flags from the ALU and the branch selection signal. The operating principle of this component is detailed in the next section.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Functional Unit Internal Structure - ALU, Shifter, Branch Controller and MUX]}}
+    \caption{Functional unit internal structure and data flow}
+    \label{fig:fu_structure}
+\end{figure}
+
+How all instructions in the RV32I base instruction set are processed in the functional unit is shown in Table~\ref{tab:asm_alu_map}. This table summarizes which subunit each instruction uses and the operation performed.
+
+\begin{table}[htbp]
+    \centering
+    \caption{RV32I instruction functional unit usage.}
+    \label{tab:asm_alu_map}
+    \begin{tabular}{|l|l|l|l|}
+        \hline
+        \textbf{Instruction} & \textbf{ALU Operation} & \textbf{Function} & \textbf{Block} \\
+        \hline
+        ADD/ADDI/LUI & G = A + B & ADD & \multirow{12}{*}{ALU} \\
+        \cline{1-3}
+        LB/LH/LW/LBU/LHU & G = A + B & ADD & \\
+        \cline{1-3}
+        SB/SH/SW & G = A + B & ADD & \\
+        \cline{1-3}
+        JAL/JALR/AUIPC & G = A + B & ADD & \\
+        \cline{1-3}
+        SUB & G = A - B & SUB & \\
+        \cline{1-3}
+        BEQ/BNE/BLT/BGE & G = A - B & SUB & \\
+        \cline{1-3}
+        SLT/SLTI & G = sign(A-B) & SLT & \\
+        \cline{1-3}
+        SLTU/SLTIU & G = usign(A) < usign(B) & SLTU & \\
+        \cline{1-3}
+        BLTU/BGEU & G = usign(A) < usign(B) & SLTU & \\
+        \cline{1-3}
+        XOR/XORI & G = A $\oplus$ B & XOR & \\
+        \cline{1-3}
+        OR/ORI & G = A $|$ B & OR & \\
+        \cline{1-3}
+        AND/ANDI & G = A \& B & AND & \\
+        \hline
+        SLL/SLLI & G = A $<<$ B[4:0] & SLL & \multirow{3}{*}{Shifter} \\
+        \cline{1-3}
+        SRL/SRLI & G = A $>>$ B[4:0] & SRL & \\
+        \cline{1-3}
+        SRA/SRAI & G = A $>>>$ B[4:0] & SRA & \\
+        \hline
+    \end{tabular}
+\end{table}
+
+%------------------------------------------------------------------------
+
+\subsection{Branch Resolution}\label{subsec:branch_resolution}
+
+Branch resolution encompasses the calculation of actual results of branch instructions and comparison with predictions. This process is the critical point where the correctness of speculative execution is verified.
+
+The branch controller determines the branch decision based on a three-bit selection signal and ALU status flags. Equality branch (BEQ) branches when the zero flag is active, while inequality branch (BNE) branches when the zero flag is inactive. Less-than branches (BLT/BLTU) branch when the negative flag is active, and greater-than-or-equal branches (BGE/BGEU) branch when the negative flag is inactive. For unconditional jump (JAL) and indirect jump (JALR) instructions, the branch condition is always evaluated as taken. These conditions are summarized in Table~\ref{tab:branch_cond}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Branch selection signals and branch decisions.}
+    \label{tab:branch_cond}
+    \begin{tabular}{|l|c|c|c|c|}
+        \hline
+        \textbf{Instruction} & \textbf{sel[2]} & \textbf{sel[1]} & \textbf{sel[0]} & \textbf{Decision} \\
+        \hline
+        No Branch & 0 & 0 & X & 0 \\
+        \hline
+        BEQ & 0 & 1 & 0 & Z \\
+        \hline
+        BNE & 0 & 1 & 1 & $\sim$Z \\
+        \hline
+        BLT/BLTU & 1 & 0 & 0 & N \\
+        \hline
+        BGE/BGEU & 1 & 0 & 1 & $\sim$N \\
+        \hline
+        JAL & 1 & 1 & 0 & 1 \\
+        \hline
+        JALR & 1 & 1 & 1 & 1 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+It is noteworthy that signed (BLT/BGE) and unsigned (BLTU/BGEU) branch instructions share the same selection values. The reason for this is that the ALU already produces the negative and zero flags considering unsigned arithmetic in unsigned comparison operations (SLTU). Therefore, the branch controller does not need to separately check carry or overflow flags.
+
+Misprediction detection is performed by comparing the actual branch result with the predicted result. For conditional branch instructions, the actual direction (taken or not taken) is compared with the predicted direction. For indirect jump instructions (JALR), the calculated target address is compared with the predicted target address. The reason for special handling of JALR instructions is that these instructions require not only direction but also target address prediction. The calculated target address is the four-byte aligned sum of the first source operand and the immediate value.
+
+When misprediction is detected, the correct program counter value must be calculated. For indirect jump instructions, the correct program counter is the calculated target address. For conditional branch instructions, the situation is handled in two ways: if the prediction was taken but actually not taken, the correct address is the current program counter plus four; if the prediction was not taken but actually taken, the correct address is the current program counter plus the branch offset.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Misprediction Detection Logic - Prediction vs Actual Comparison]}}
+    \caption{Misprediction detection mechanism}
+    \label{fig:misprediction_detect}
+\end{figure}
+
+%------------------------------------------------------------------------
+
+\subsection{Result Selection}\label{subsec:result_select}
+
+The execute stage produces different results for different instruction types, and these results are broadcast over the common data bus.
+
+For arithmetic and logical instructions, the result is the ALU computation result. For load and store instructions, the result is the memory address calculation; this value is forwarded to the load store queue. For unconditional jump (JAL) and indirect jump (JALR) instructions, the result is the return address and is calculated as the current program counter plus four. For conditional branch instructions, the result always returns as zero, but in case of misprediction detection, the misprediction flag is activated and the correct address is forwarded to previous stages.
+
+Result selection is performed through a multiplexer based on control signals. The selected result is written to the common data bus along with the target physical register address and other control information. The structure of the common data bus and the broadcast mechanism are detailed in Section~\ref{subsec:cdb}.

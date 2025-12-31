@@ -1,0 +1,152 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.6 MEMORY STAGE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Memory Stage}\label{sec:memory}
+
+The memory stage is the pipeline stage where load and store operations are managed. Maintaining memory operation consistency and correctly managing dependencies in an out-of-order execution environment is critically important. Store operations must appear in program order, a load may depend on a previous store, and speculative store operations must be able to be rolled back in case of misprediction.
+
+In the performance analyses presented in Chapter~\ref{ch:dogrulama}, memory operations were observed to be the mechanism that most reduces IPC value after misprediction. For this reason, unnecessary complexity was avoided when designing the memory stage, but performance optimizations were not foregone. In the designed system, the Load Store Queue (LSQ) enables out-of-order execution of memory operations while maintaining consistency.
+
+%------------------------------------------------------------------------
+
+\subsection{Load Store Queue Structure}\label{subsec:lsq}
+
+The LSQ is implemented as a thirty-two entry circular buffer. In a three-way superscalar processor, three memory instructions can be allocated per cycle. For memory operations of these instructions to be performed at the same throughput, the LSQ operates with three independent memory ports. Otherwise, the number of memory lanes becomes a bottleneck limiting IPC.
+
+A head pointer exists corresponding to each memory port. These three head pointers monitor different entries in the LSQ simultaneously and each determines which entry will be processed by its memory port.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: LSQ Circular Structure - 3 Head Pointers, Tail Pointer, CDB Connections]}}
+    \caption{Load store queue circular buffer structure}
+    \label{fig:lsq_structure}
+\end{figure}
+
+Each LSQ entry contains all information required for execution of the memory operation. These fields are listed in Table~\ref{tab:lsq_entry}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Load store queue entry fields.}
+    \label{tab:lsq_entry}
+    \begin{tabular}{|l|c|l|}
+        \hline
+        \textbf{Field Name} & \textbf{Size (bits)} & \textbf{Description} \\
+        \hline
+        Valid & 1 & Is entry valid \\
+        \hline
+        Type & 1 & Store (1) or Load (0) \\
+        \hline
+        Physical Register & 6 & Target ROB ID \\
+        \hline
+        Address Valid & 1 & Is address calculated \\
+        \hline
+        Address & 32 & Calculated memory address \\
+        \hline
+        Address Tag & 3 & Tag of address producer \\
+        \hline
+        Data Valid & 1 & Is store data ready \\
+        \hline
+        Data & 32 & Store data \\
+        \hline
+        Data Tag & 3 & Tag of data producer \\
+        \hline
+        Size & 2 & Byte (00), Halfword (01), Word (10) \\
+        \hline
+        Signed Load & 1 & Signed (1) or unsigned (0) \\
+        \hline
+        Sent to Memory & 1 & Has memory request been made \\
+        \hline
+        Memory Completed & 1 & Has memory response been received \\
+        \hline
+    \end{tabular}
+\end{table}
+
+When a memory operation completes, the relevant head pointer is updated. Each head pointer is shifted to the oldest incomplete entry, also considering the positions of the other two head pointers. For example, if three head pointers are pointing to indices 5, 7, and 9 respectively, when the operation in entry 5 completes, this head pointer is moved to entry 10 (one after the newest pointer). This mechanism guarantees that head pointers always point to different entries and will give priority to all entries according to allocation order. However, if an operation with priority does not block other operations, operations can run out of order despite being allocated later; this situation accelerates memory operations.
+
+%------------------------------------------------------------------------
+
+\subsection{LSQ Operations}\label{subsec:lsq_ops}
+
+LSQ entries are allocated for load and store instructions coming from the decode stage. During allocation, the validity flag is activated, operation type and physical register address are recorded, address validity is reset, and size and signed load information are stored. For store instructions, data may or may not be ready; if not ready, the data tag is recorded and set to wait from the common data bus. Since address information will be calculated at the earliest in the next clock cycle, address information is also expected to come from the common data bus.
+
+When the execute stage calculates the address, the result is broadcast over the common data bus. The LSQ monitors all six common data bus channels. Address update is performed in parallel across all LSQ entries: for each entry, the target register address on the common data bus is compared with the entry's physical register address; in case of a match, address validity is activated and the calculated address is stored.
+
+For store operations, data update is also performed in the same parallel structure. Data tags of all store entries are compared in parallel with common data bus channels; in case of a match, data validity is activated and data is stored.
+
+When an operation pointed to by any head pointer is ready and there is no incomplete store operation ahead that would block it, the operation can be sent to the relevant memory port. For load operations, the entry must be valid and address must be calculated. For store operations, additionally data must be ready and permission must have been received from the reorder buffer.
+
+The store permission mechanism is explained in Section~\ref{subsubsec:store_perm}. Briefly, the ROB indicates that a store operation with a particular physical register address is safe. The LSQ compares this address with its own entries and can send the matching store operation to memory. This mechanism allows only store operations guaranteed to commit to modify memory.
+
+%------------------------------------------------------------------------
+
+\subsection{Store-to-Load Forwarding}\label{subsec:stl_forward}
+
+The LSQ can forward store data to a load without going to memory. This mechanism significantly improves performance by bypassing memory latency.
+
+The forwarding decision is made based on the relationship between operations at the three head pointers. A load operation can receive data from a store operation that comes before it in program order and writes to the same address. For forwarding, four conditions must be satisfied: the load must come after the store (checked with age comparison), the store's address and data must be ready, addresses must match, and the store size must be equal to or greater than the load size.
+
+The necessity of size checking arises from the requirement that the store must contain all bytes that the load needs. For example, forwarding from a four-byte store to a one-byte load is possible. However, forwarding from a one-byte store to a four-byte load is not possible because the store does not contain all bytes that the load needs.
+
+If forwarding is not possible but a potential dependency exists, the load is stalled. Stall conditions and forwarding rules are summarized in Table~\ref{tab:fwd_stall_rules}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Store-to-load forwarding and stall rules.}
+    \label{tab:fwd_stall_rules}
+    \begin{tabular}{|l|c|c|l|}
+        \hline
+        \textbf{Address Match} & \textbf{Size Sufficient} & \textbf{Data Ready} & \textbf{Decision} \\
+        \hline
+        None & - & - & Read from memory \\
+        \hline
+        Yes & Yes & Yes & Forward \\
+        \hline
+        Yes & Yes & No & Stall \\
+        \hline
+        Yes & No & - & Stall \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Performing forwarding checks across all LSQ entries would incur high area cost because it would require many comparators. For this reason, forwarding checks are performed only between entries pointed to by the three head pointers. Each load operation at a head checks the store operations at the other two heads. Age comparison is done with distance values calculated from LSQ pointers; the newest store with a matching address is prioritized and selected as the forwarding source in case of address match. This approach keeps the complexity of forwarding logic at an acceptable level.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Forwarding Logic Between Three Head Pointers - Age Comparison, Address Matching]}}
+    \caption{Store-to-load forwarding logic}
+    \label{fig:stl_forwarding}
+\end{figure}
+
+%------------------------------------------------------------------------
+
+\subsection{Eager Misprediction Flush}\label{subsec:lsq_flush}
+
+In case of misprediction, speculative load and store entries are flushed. The flush mechanism in the LSQ works similarly to the mechanism in reservation stations but involves additional complexity.
+
+Each LSQ entry's physical register field also carries the corresponding reorder buffer index. Using this index, the distance from the reorder buffer's head pointer is calculated for each entry. Distance calculation is performed considering the circular buffer structure.
+
+The misprediction signal and the distance of the mispredicted instruction are received from the reorder buffer. The distance of each LSQ entry is compared with the distance of the mispredicted instruction. Entries with greater distance came after the mispredicted branch and must be flushed.
+
+The flush operation is performed in parallel across all entries in the same cycle. A comparator circuit exists for each entry and the result is fed to a priority encoder. The priority encoder finds the index of the first (oldest) entry that must be flushed. The LSQ tail pointer is updated to this index, logically invalidating speculative entries. The synthesis results presented in Chapter~\ref{ch:dogrulama} show that this parallel comparison structure forms the critical path.
+
+All three head pointers must also be updated. If a head pointer remains in the flushed region, this head pointer is also moved to the new LSQ tail position. This check is performed considering the wrap-around situation of the circular buffer.
+
+%------------------------------------------------------------------------
+
+\subsection{Memory Interface}\label{subsec:mem_interface}
+
+The LSQ supports three independent memory ports. Each port can independently send memory requests and receive responses.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Memory Interface - 3-Port Connection Between LSQ and Data Memory, Request/Response Signals]}}
+    \caption{LSQ and memory interface}
+    \label{fig:mem_interface}
+\end{figure}
+
+Request signals for each port include validity signal, write/read selection, memory address, write data, and byte enable signals. Response signals include ready signal, response validity, and read data.
+
+The byte enable signal specifies which bytes will be affected for different-sized operations. For byte operations, a single bit positioned according to address, for halfword operations two bits, and for word operations four bits are enabled.
+
+Load data is processed according to size and signed load information from the memory response. For byte operations, the relevant byte is extracted from the four-byte data coming from memory and filling with the seventh bit is performed for signed loads. For halfword operations, two bytes are extracted and filling with the fifteenth bit is applied. For word operations, data is used directly.

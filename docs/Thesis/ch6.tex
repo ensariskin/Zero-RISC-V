@@ -1,98 +1,96 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \phantomsection
-\chapter{CONCLUSIONS}\label{ch:ch6}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{CONCLUSIONS AND RECOMMENDATIONS}\label{ch:conclusions}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-a\-di\-pi\-scing pla\-ce\-rat et nec me\-tus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris.
+This chapter summarizes the results of the thesis work, evaluates the findings obtained, and presents recommendations for future work.
 
-\section{Practical Application of This Study}
+%------------------------------------------------------------------------
+\section{Summary of the Work}\label{sec:work_summary}
+%------------------------------------------------------------------------
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris.
+In this thesis work, a fault-tolerant superscalar out-of-order execution RISC-V processor was designed and implemented. The designed processor offers high performance through its three-way superscalar structure while providing flexible fault tolerance with the On-Demand Modular Redundancy (ODMR) approach.
 
-\section{Second Level Title: First Letters Capital}
+The processor supports the RV32I base instruction set and is designed as a modern adaptation of the Tomasulo algorithm. With its six-stage pipeline structure, speculative execution, and dynamic scheduling features, it efficiently utilizes instruction-level parallelism. In secure mode, the three parallel execution channels form a Triple Modular Redundancy (TMR) structure, masking single-bit faults.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. 
+%------------------------------------------------------------------------
+\section{Obtained Results}\label{sec:results_evaluation}
+%------------------------------------------------------------------------
 
-\subsection{Third level title: Only first letter capital}
+The comprehensive verification and physical design work performed demonstrates that the processor produces successful results in terms of both functional correctness and physical implementability.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem.
+\subsection{Functional Verification}
 
-\subsubsection{Fourth level title: Only first letter capital}
+The processor was comprehensively verified using the Google RISC-V DV framework and Berkeley Spike reference model. Both random and deterministic test programs were successfully completed, and all test results showed full compliance with the reference model. These results verify that the RV32I instruction set architecture is implemented completely, while also demonstrating that all targeted architectural decisions such as superscalar out-of-order execution structure, eager misprediction recovery, dynamic scheduling, and speculative execution have been successfully applied.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem.
+\subsection{Performance Analysis}
 
-{\bf Fifth level title: no numbering
-after fourth level titles}
+The superscalar architecture provides the expected performance gains. A maximum IPC value of 2.90 was achieved in random test scenarios, corresponding to ninety-seven percent of the theoretical maximum. In deterministic algorithm tests, an average IPC of 1.71 was obtained.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem as illustrated in Figure~\ref{fig:6-1}.
+When speedup ratios are examined, a maximum speedup of 2.90x was observed in arithmetic-heavy workloads, and a minimum speedup of 1.85x in mixed workloads. In deterministic tests, the three-way structure provided an average speedup of 2.04x compared to the single-way structure.
 
-\begin{figure}[!ht]
- \centering
- \includegraphics[width=230pt,keepaspectratio=true]{./fig/sekil7}
- % sekil7.eps: 0x0 pixel, 300dpi, 0.00x0.00 cm, bb=14 14 455 369
- \vspace{4mm}
- \caption{Example table in chapter 6.}
- \label{fig:6-1}
-\end{figure}
+Although the branch predictor was kept in a simple structure, it achieved prediction accuracy above eighty percent in deterministic tests representing real-world workloads.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem.
+\subsection{Fault Tolerance}
 
-\begin{table*}[!ht]
-{\setlength{\tabcolsep}{14pt}
-\caption{Example table in chapter 6.}
-\begin{center}
-\vspace{-6mm}
-\begin{tabular}{cccc}
-\hline\hline
-Column A & Column B & Column C & Column D \\
-\hline
-Row A & Row A & Row A & Row A \\
-Row B & Row B & Row B & Row B \\
-Row C & Row C & Row C & Row C \\
-\hline
-\end{tabular}
-\vspace{-6mm}
-\end{center}
-\label{tableforCh6-1}}
-\end{table*}
+Fault injection tests verified the effectiveness of TMR protection. Except for large memory structures assumed to be protected by ECC, all single-bit faults (SEU) injected into registers protected by TMR were successfully masked. For multi-bit faults (MBU), a one hundred percent detection rate was achieved, preventing silent data corruption.
 
-Table~\ref{tableforCh6-1} gives the details lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris.
+\subsection{Physical Implementation}
+
+Logic synthesis results show that approximately one hundred forty-two thousand cells are used in TSMC 16nm FinFET technology and 1 GHz frequency is achievable. At the physical design stage, when actual wire delays were taken into account, a timing violation of one hundred six picoseconds occurred, bringing the achievable frequency to approximately nine hundred megahertz. Under the assumption of twenty percent switching activity, total power consumption after physical design was measured as 131.6 mW.
+
+%------------------------------------------------------------------------
+\section{Contributions of the Thesis}\label{sec:ch6_contributions}
+%------------------------------------------------------------------------
+
+This thesis work presents the following novel contributions:
+
+\begin{enumerate}
+    \item A three-way superscalar architecture design suitable for ODMR was implemented. In normal operation, three channels can reach high IPC values by processing independent instructions in parallel; in secure mode, the same three channels form the TMR structure.
+    
+    \item Spatial redundancy was applied at the pipeline level. Unlike core-level lock-step methods, TMR protection was implemented inside the pipeline, and additional area cost remained limited only to voter circuits.
+    
+    \item Low-latency mode transition was provided. The application of redundancy at the pipeline level does not require pipeline flushing or state synchronization for inter-mode transitions.
+    
+    \item Dual-purpose use of the RAT Checkpoint structure was proposed. This structure, designed for branch misprediction recovery, provides the infrastructure that can also be used for recovery from radiation-induced critical faults.
+\end{enumerate}
+
+%------------------------------------------------------------------------
+\section{Limitations}\label{sec:limitations_final}
+%------------------------------------------------------------------------
+
+This work has some limitations:
+
+\begin{enumerate}
+    \item The 1 GHz target frequency was not fully achieved after physical design. A timing violation of one hundred six picoseconds occurred on the critical path.
+    
+    \item Memory integration was performed using ideal models. Integration of real SRAM macros will bring additional delay and area cost.
+    
+    \item ECC protection is assumed for large memory structures, but the physical implementation of ECC is outside the scope of this work.
+    
+    \item Only the RV32I base instruction set is supported. However, the current microarchitecture is designed to support multi-cycle operations, and integration of multiplication, division, and floating-point extensions can be performed with relatively low complexity.
+\end{enumerate}
+
+%------------------------------------------------------------------------
+\section{Future Work}\label{sec:future}
+%------------------------------------------------------------------------
+
+This work can be extended in the following directions:
+
+\begin{enumerate}
+    \item Implementation of the RAT Checkpoint-based automatic error recovery controller.
+    
+    \item Physical implementation of ECC protection and integration into the register file and reorder buffer.
+    
+    \item Extension of application scope by adding RV32M (multiplication/division) and RV32F (floating-point) extensions.
+    
+    \item Design of cache hierarchy and realistic modeling of memory access latencies.
+    
+    \item Critical path optimization or addition of additional pipeline stages to eliminate timing violation.
+    
+    \item Expansion to multi-core structure and inter-core ODMR grouping.
+    
+    \item Real-time verification and performance measurement on FPGA prototype.
+\end{enumerate}
+
+In conclusion, this thesis work presents a novel RISC-V processor architecture that combines superscalar out-of-order execution capacity with intra-core fault tolerance. Thanks to the ODMR approach, a dynamic balance can be established between performance and reliability, providing a flexible solution for applications requiring high reliability such as space, aviation, and automotive.

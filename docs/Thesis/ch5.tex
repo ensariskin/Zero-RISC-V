@@ -1,98 +1,454 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \phantomsection
-\chapter{(IF NECESSARY) CHAPTER 5}\label{ch:ifnecch5}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{VERIFICATION AND RESULTS}\label{ch:verification}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris.
+This chapter presents the comprehensive verification process, performance analysis, fault injection tests, and physical implementation results of the designed three-way superscalar out-of-order execution RISC-V processor.
 
-\section{Practical Application of This Study}
+Within the scope of functional verification, approximately 260,000 instructions were executed in total, consisting of nine different random test scenarios generated with the Google RISC-V DV framework and a deterministic test program containing eight different algorithms. All tests were verified by cycle-by-cycle comparison with the Berkeley Spike reference model.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris.
+In performance evaluation, comparative IPC analyses were performed with the single-way (scalar) version of the processor; the effects of pipeline bottlenecks, branch prediction performance, and memory access latencies on performance were examined using statistical methods.
 
-\section{Second Level Title: First Letters Capital}
+Within the scope of reliability verification, fault injection tests were applied to critical registers protected by TMR, and a 100\% masking rate against single-bit faults was achieved.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. 
+Finally, the design was synthesized to TSMC 16nm FinFET technology using Cadence tools and physical design results were reported.
 
-\subsection{Third level title: Only first letter capital}
+%------------------------------------------------------------------------
+\section{Verification Methodology}\label{sec:methodology}
+%------------------------------------------------------------------------
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem.
+Verification of superscalar processor designs requires a significantly more complex process compared to single-way designs. Many critical functions must be tested together, such as fetching, decoding, and executing multiple instructions simultaneously; dynamically managing data dependencies; and the correctness of speculative execution and recovery mechanisms in case of misprediction. In this work, a comprehensive verification strategy was followed, using both random test programs and deterministic algorithm-based test programs.
 
-\subsubsection{Fourth level title: Only first letter capital}
+\subsection{Simulation Environment and Tools}\label{subsec:sim_environment}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem.
+The DSIM simulation tool developed by Metrics Design Automation was used for functional verification of the design. A specialized tracing infrastructure was developed to monitor and record processor behavior during simulation.
 
-{\bf Fifth level title: No numbering after fourth level titles}
+In the verification environment, the processor core is tested within a specially designed test environment. The test environment includes a multi-port memory subsystem designed to meet the parallel access requirements of the superscalar architecture. A five-port SRAM model is used for instruction memory, and this structure supports three-way instruction fetch operations. On the data memory side, a three-port structure was preferred, enabling three independent load or store operations to be performed in the same cycle. Memory access operations are managed through the Wishbone protocol. Special adapter modules are positioned between the processor core and memory modules, and these adapters convert the core's simplified memory interface to Wishbone signals.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem.
+The developed tracing infrastructure records every instruction exiting from the processor's three-way commit stage. For each completed instruction, the program counter value, instruction code, destination register address with the written value, and in case of memory write operations, address and data information are recorded. These records are used for comparison with the reference model. The tracing module listens to three separate commit channels from the processor core and records completed instructions in program order.
 
-\begin{figure}[!ht]
- \centering
- \includegraphics[width=230pt,keepaspectratio=true]{./fig/sekil5}
- % sekil5.eps: 0x0 pixel, 300dpi, 0.00x0.00 cm, bb=14 14 1193 701
- \vspace{4mm}
- \caption{For a multi-line figure captions, it is important that all the
-  lines of the caption are aligned.}
+The memory models used exhibit ideal behavior and provide single-cycle access latency. This approach enables the functional correctness of the processor microarchitecture to be tested independently of cache or DRAM latencies.
 
- \label{fig:5-1}
+The Spike instruction set simulator, developed by Berkeley University and accepted as the official reference implementation of the RISC-V instruction set architecture, was used as the reference model \cite{spike_iss}. Spike is a golden model that fully defines the behavior of RISC-V instructions. The designed processor and Spike execute the same test programs, and the trace records produced by both sides are compared line by line.
+
+\subsection{Test Programs and Coverage}\label{subsec:test_vectors}
+
+Two different categories of test programs were used in the verification process. The first category is random instruction sequences generated using a constraint-based random test generation framework. The second category is deterministic C programs specially developed to represent real algorithmic workloads.
+
+\subsubsection{Constraint-Based Random Test Programs}
+
+Random test programs were generated using the RISC-V DV verification framework developed by Google and provided as open source \cite{riscv_dv}. This framework has the capability to create directed instruction streams targeting specific microarchitectural scenarios. Six different test configurations were prepared to stress different processor subsystems.
+
+Table \ref{tab:riscv_dv_tests} summarizes the random test programs used, the microarchitectural components each targets, and the number of instructions generated.
+
+\begin{table}[htbp]
+\centering
+\caption{Constraint-Based Random Test Programs}
+\label{tab:riscv_dv_tests}
+\begin{tabular}{p{4cm} r p{7cm}}
+\toprule
+\textbf{Test Program} & \textbf{Instr.} & \textbf{Targeted Scenario and Description} \\
+\midrule
+Basic Arithmetic & 30,000 & Contains only arithmetic and logical instructions with branch and memory access instructions disabled. ALU performance and data dependency resolution are tested. \\
+\midrule
+Complex Arithmetic & 10,000 & Special instruction streams containing boundary value cases of integer arithmetic (overflow, underflow, maximum and minimum values) are used. \\
+\midrule
+Basic Branching & 30,000 & Random instruction sequences containing conditional branch and unconditional jump instructions are generated. Basic correctness of the branch prediction mechanism is tested. \\
+\midrule
+Loop and Branching & 10,000 & Instruction streams containing loop structures with boundary value arithmetic are generated. Loop-based branch prediction patterns are tested. \\
+\midrule
+Complex Branching & 30,000 & Instruction streams containing intensive loop structures, boundary value arithmetic, and nested branch patterns together are used. The branch prediction update mechanism is stressed. \\
+\midrule
+Basic Memory & 10,000 & With branch instructions disabled, random memory access patterns containing only load and store instructions are generated. The LSQ is tested. \\
+\midrule
+Complex Memory & 10,000 & Intensive memory operations including page boundary crossings, memory region stress tests, and multi-page access patterns are performed. \\
+\midrule
+Simple Mixed Test & 30,000 & A basic combination test containing loop structures, jump instructions, and random memory accesses together is applied. \\
+\midrule
+Mixed Test & 30,000 & A comprehensive stress test covering boundary value arithmetic, loops, jumps, random memory accesses, and multi-page operations is performed. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Random test programs contain approximately 200,000 instructions in total and cover the majority of the processor's basic functional blocks. Complex scenarios critical for a superscalar architecture, such as data dependencies (RAW, WAW, WAR) and back-to-back branching, have been stressed through these random flows. Test coverage has been brought to a sufficient level to demonstrate the behavior of pipeline resources (ROB, RS, LSQ) at boundary values and the correctness of recovery mechanisms after speculative execution.
+
+\subsubsection{Algorithm-Based Deterministic Test Programs}
+
+In addition to random test programs, complex algorithmic C programs modeling real application scenarios were also developed. These programs were compiled using the RISC-V GCC compiler and executed on the processor.
+
+The most comprehensive test program generates approximately 60,000 instructions. This program contains a collection of fundamental algorithms from computer science and tests the processor's behavior under different computation patterns, memory access patterns, and control flow structures.
+
+The algorithms included in the program and the processor characteristics they target at the microarchitectural level are shown in Table \ref{tab:algorithm_tests}:
+
+\begin{table}[htbp]
+\centering
+\caption{Algorithm-Based Deterministic Test Programs}
+\label{tab:algorithm_tests}
+\begin{tabular}{p{4cm} p{8cm}}
+\toprule
+\textbf{Algorithm Group} & \textbf{Targeted Processor Characteristic} \\
+\midrule
+Dijkstra and Topological Sort & Intensive memory access and irregular branch patterns with LSQ and branch predictor loading. \\
+\midrule
+0/1 Knapsack and Edit Distance & Matrix-based data access and sequential data dependency chains with RS and CDB usage. \\
+\midrule
+Heap Sort & Intensive repetition of comparison and swap operations with speculative execution performance. \\
+\midrule
+KMP String Matching & Loop-based character comparisons and frequent branch operations. \\
+\midrule
+Sieve of Eratosthenes and Prime Factors & Intensive arithmetic operation capacity and ALU unit stress testing. \\
+\midrule
+Matrix Exponentiation (Fibonacci) & Recursive structures and intensive register usage with Rename/Physical Register File management. \\
+\midrule
+Bit Manipulation and XOR Linear Basis & Complex logical operation sequences and data path integrity. \\
+\midrule
+Minimax (Tic-Tac-Toe) & Deep recursive function calls (call/return) with RAS (Return Address Stack) performance. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These algorithms exhibit different computational characteristics. Graph algorithms contain intensive memory access and irregular branch patterns, while dynamic programming algorithms create matrix-based access patterns and intensive dependency chains. Sorting algorithms require intensive repetition of comparison and swap operations, while text processing algorithms contain loop-based character comparisons.
+
+%------------------------------------------------------------------------
+\section{Functional Verification Results}\label{sec:test_results}
+%------------------------------------------------------------------------
+
+All test programs were run comparatively with the Spike reference model and results were analyzed. Approximately 200,000 instructions within the scope of constraint-based random tests and approximately 60,000 instructions within the scope of algorithm-based deterministic tests, totaling 260,000 instructions, were executed. In both test categories, the designed out-of-order execution processor achieved full cycle-by-cycle compliance with the Spike reference model.
+
+Verification results demonstrate that the designed processor implements the RV32I instruction set architecture functionally completely and correctly. The completion order of each test instruction, calculated result values, and memory write operations exactly match the reference model.
+
+Ensuring functional correctness demonstrates that the fundamental mechanisms of the out-of-order execution structure are working correctly. These mechanisms are: resolving data dependencies through register renaming, preserving architectural state during speculative execution, returning to the correct recovery point in case of branch misprediction, and completing load-store operations without violating memory ordering.
+
+%------------------------------------------------------------------------
+\section{Performance Analysis}\label{sec:performance_analysis}
+%------------------------------------------------------------------------
+
+To evaluate the efficiency of the processor's superscalar architecture, the average number of instructions executed per cycle (IPC) and performance bottlenecks in the pipeline were analyzed under different workloads. The developed test environment has the capability to simultaneously report processor performance parameters during simulation.
+
+\subsection{IPC Comparison and Speedup Ratios}
+
+To quantify the performance improvement provided by the designed three-way superscalar processor, comparative tests were conducted with the single-way (scalar) version of the same architecture. To observe the behavior of the architecture under synthetic stress tests, the results of random tests generated with the RISC-V DV framework are summarized in Table \ref{tab:random_ipc_results}.
+
+\begin{table}[htbp]
+\centering
+\caption{IPC Comparison Under Random Test Scenarios}
+\label{tab:random_ipc_results}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Test Scenario} & \textbf{1-Way IPC} & \textbf{3-Way IPC} & \textbf{Speedup Factor} \\
+\midrule
+Basic Arithmetic & 1.00 & 2.90 & 2.90x \\
+Complex Arithmetic & 1.00 & 2.80 & 2.80x \\
+Basic Branching & 0.80 & 1.59 & 1.99x \\
+Loop and Branching & 0.93 & 2.23 & 2.40x \\
+Complex Branching & 0.94 & 2.33 & 2.48x \\
+Basic Memory & 0.95 & 1.87 & 1.97x \\
+Complex Memory & 0.76 & 1.47 & 1.93x \\
+Simple Mixed Test & 0.83 & 1.54 & 1.85x \\
+Mixed Test & 0.85 & 1.65 & 1.94x \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+When random test results are examined, it can be seen that the processor achieves a quite high theoretical efficiency of 97\% by reaching 2.90 IPC in arithmetic-heavy workloads. However, decreases in IPC values were observed in branch and memory-intensive scenarios. The main reason for this decrease is the difference in branch predictor performance. The absence of any statistical pattern or cyclic structure in randomly generated instruction sequences has led to the branch predictor exhibiting low success in the 32-43\% band.
+
+The average performance metrics obtained on the deterministic algorithm set defined in Section \ref{subsec:test_vectors} are presented in Table \ref{tab:ipc_results_deterministic}.
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison of 1-Way and 3-Way Configurations Under Deterministic Tests}
+\label{tab:ipc_results_deterministic}
+\begin{tabular}{l c c}
+\toprule
+\textbf{Architecture} & \textbf{Total Cycles} & \textbf{Average IPC} \\
+\midrule
+1-Way (Scalar) & 70,550 & 0.84 \\
+3-Way (Superscalar) & 34,580 & 1.71 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+According to the results obtained in deterministic tests, approximately 2.04x speedup was achieved compared to the scalar core thanks to the three-way parallel execution structure. The increase in average IPC value from 0.84 to 1.71 proves that the superscalar architecture efficiently utilizes instruction-level parallelism (ILP). In deterministic algorithm tests (representing real-world workloads), the branch predictor achieved prediction accuracy above 80\%, demonstrating that the branch predictor provides high efficiency in real applications.
+
+\subsection{Pipeline Stall and Bottleneck Analysis}
+
+To identify the factors limiting processor performance (bottlenecks) at the microarchitectural level, stalls occurring at each stage of the pipeline were examined in detail. Within this analysis, the reasons why reservation stations (RS) cannot feed execution units are addressed in two main categories:
+
+\begin{itemize}
+    \item \textbf{Not Occupied:} Covers cases where the reservation station is empty. This situation can arise from three different scenarios:
+    \begin{itemize}
+        \item \textbf{Branch Misprediction Penalty:} The pipeline has been flushed after misprediction and correct instructions have not yet reached the reservation station.
+        \item \textbf{Instruction Buffer Empty:} New instruction flow has been interrupted due to the instruction buffer being emptied without branch misprediction.
+        \item \textbf{Previous Stage Bottleneck:} Although there are instructions waiting in the instruction buffer, new instructions cannot be dispatched due to fill rates of structures such as reorder buffer (ROB) or load-store queue (LSQ).
+    \end{itemize}
+    \item \textbf{Operands Not Ready:} Although the reservation station has an instruction, one or more of the instruction's source operands have not yet been calculated, so it cannot be sent to the execution unit.
+\end{itemize}
+
+A specialized graphical user interface (GUI) was developed to visualize these bottleneck analyses. This interface interprets performance records generated during simulation and presents critical data such as IPC change graph, stall distribution percentages, and branch prediction performance for live or post-simulation analysis.
+
+Figure \ref{fig:perf_gui} shows the hierarchical stall analysis screen of the developed performance monitoring interface. In this screen, stall reasons for each reservation station (RS0, RS1, RS2) are presented according to the categories explained above. Thanks to the hierarchical structure, sub-reasons of each category can also be examined in detail.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig/rs_stall_analysis.png}
+    \caption{Developed Performance Monitoring Interface: Reservation Station Stall Analysis}
+    \label{fig:perf_gui}
 \end{figure}
 
-Figure~\ref{fig:5-1} shows lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Lorem ipsum dolor sit amet, consectetur adipiscing elit in Table~\ref{tableforCh5-1}. 
+Figure \ref{fig:prev_stage_bottleneck} presents the detailing of previous stage bottlenecks called ``Previous Stage Bottleneck.'' This analysis reveals why the dispatch stage is stalling. The ROB (Reorder Buffer) fill rate remaining at a low level of 2.6\% indicates that the reorder buffer has sufficient capacity for current workloads. LSQ (Load/Store Queue) fill rates also run at similarly low levels.
 
-\begin{table*}[!ht]
-{\setlength{\tabcolsep}{14pt}
-\caption{Example table in chapter 5.}
-\begin{center}
-\vspace{-6mm}
-\begin{tabular}{cccc}
-\hline\hline
-Column A & Column B & Column C & Column D \\
-\hline
-Row A & Row A & Row A & Row A \\
-Row B & Row B & Row B & Row B \\
-Row C & Row C & Row C & Row C \\
-\hline
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig/prev_stage_bottleneck.png}
+    \caption{Previous Stage Bottleneck Details: ROB and LSQ Fill Analysis}
+    \label{fig:prev_stage_bottleneck}
+\end{figure}
+
+Figure \ref{fig:instruction_mix} shows the change in instruction mix over time. The number of instructions completed (commit), misprediction count, and memory operation count per 100 cycles are monitored. Sudden drops in commit rate indicate periods of intensive branch misprediction or memory latency. This graph is critically important for understanding how the processor responds to different workload characteristics.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig/instruction_mix_timeline.png}
+    \caption{Instruction Mix Over Time: Instructions completed (commit), mispredictions, and memory operation counts per 100 cycles}
+    \label{fig:instruction_mix}
+\end{figure}
+
+Figure \ref{fig:operands_not_ready} shows how operand dependency stalls accumulate cumulatively for each reservation station. RS2 having the highest wait time reveals that instructions assigned to this station contain longer data dependency chains. This situation indicates that the types of instructions assigned to RS2 (e.g., memory operations or complex arithmetic operations) inherently contain more dependencies.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig/operands_not_ready_timeline.png}
+    \caption{Operand Dependency Stalls Over Time: Cumulative wait cycles for each reservation station}
+    \label{fig:operands_not_ready}
+\end{figure}
+
+Figure \ref{fig:misprediction_trend} reveals one of the most critical performance findings: the vast majority of reservation station idle time (Not Occupied) originates from branch misprediction penalty. As simulation progresses, this ratio rises above 80\%. This result proves that under current workloads, processor performance is predominantly determined by branch predictor accuracy. Branch predictor improvements stand out as the most effective optimization area that will directly translate to IPC increase.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig/misprediction_penalty_trend.png}
+    \caption{Branch Misprediction Penalty Trend: What percentage of Not Occupied time is misprediction penalty}
+    \label{fig:misprediction_trend}
+\end{figure}
+
+This developed tool has enabled rapid identification of bottlenecks in optimization work on the architecture and direct observation of the effects of changes made on the system.
+
+
+\subsection{Correlation Analysis and Performance Prediction}
+
+A statistical analysis method was followed to understand the relationships between factors affecting processor performance. Using the Pearson correlation coefficient on data obtained from simulations, the correlation between IPC value and branch misprediction and memory operations was calculated.
+
+In performance analysis, correlation values are obtained with the following approach:
+\begin{itemize}
+    \item \textbf{Pearson Correlation:} Measures the direct linear relationship between IPC and a specific metric (e.g., memory access).
+    \item \textbf{Partial Correlation:} Isolates the pure effect of another factor (e.g., memory latency) on performance by holding constant the effect of one factor (e.g., branch prediction error).
+\end{itemize}
+
+As a result of the statistical analyses performed, it was confirmed that the most fundamental performance constraint of the superscalar architecture is branch prediction errors. Pearson correlation revealed a strong negative relationship at the level of $-0.74$ between branch misprediction rate and IPC in the 3-way structure.
+
+A more notable finding was obtained from partial correlation analysis; the pure performance effect of memory operations, when branch prediction errors are removed, is $-0.21$ in the scalar core while rising to $-0.80$ level in the superscalar core. This situation shows that as the architecture expands, the effect of the memory system on performance (memory wall problem) becomes much more prominent and that after branch predictor improvements, memory latencies will become the main bottleneck.
+
+
+%------------------------------------------------------------------------
+\section{Fault Injection and Reliability Verification}\label{sec:fault_injection}
+%------------------------------------------------------------------------
+
+A specialized reliability analysis process was executed to verify the effectiveness of the hardware redundancy mechanisms explained in Chapter \ref{ch:redundancy}. The resistance of the design to physical faults was measured with fault injection tests performed at the microarchitectural level.
+
+\subsection{Fault Injection Mechanism}
+
+A specialized fault injection module was integrated into the design to verify the effectiveness of the hardware redundancy infrastructure. Preferred over commercial safety simulation tools due to license restrictions, this module has the capability to simulate transient hardware faults at the simulation level.
+
+The developed fault injection mechanism has the following features:
+
+\begin{itemize}
+    \item \textbf{Target Scope:} Except for memory structures assumed to be protected by ECC, all control and data registers in the design can be subjected to fault injection.
+    \item \textbf{Fault Model:} The injected fault is instantaneously placed in the target register but is designed not to prevent normal write operations to this register at the next clock edge. This behavior reflects real transient fault characteristics.
+    \item \textbf{Fault Types:} The module has the capacity to generate both single-bit errors and multi-bit errors. Additionally, the maximum number of multi-bit errors that can occur in one cycle is also configurable.
+    \item \textbf{Fault Rate Control:} The number of faults to be injected every thousand clock cycles can be set as a simulation parameter.
+\end{itemize}
+
+A fault injected into an unprotected register will remain in the register until the next write operation, and if a fault also occurs in one of the other replicas in the same TMR group during this period, the voting mechanism will fail, leading to an unrecoverable fatal error. All protected registers in the designed processor are configured to eliminate injected faults with TMR voting results within one clock cycle.
+
+\subsection{Fault Injection Test Results}
+
+Fault injection tests were performed to observe the effects of both single-bit (SEU) and multi-bit (MBU) faults on the system.
+
+In single-bit fault tests, simulations were performed with fault rates of 10\% and 100\% in a thousand cycles. In both scenarios, the processor successfully masked all injected single-bit faults through the TMR voting mechanism while maintaining functional correctness. No incompatibility was detected in comparisons made with the Spike reference model, and program flow was completed without interruption. A particularly notable point is that even under intensive fault injection, the processor maintained the IPC value of the single-way (1-way) configuration without experiencing performance loss.
+
+In tests for multi-bit faults (MBU), the system's detection capability was measured. Multi-bit faults were injected into protected registers. In all scenarios performed, the system noticed the mismatch in TMR voters and successfully generated the ``Fatal Error'' signal. Even if the system cannot mask, it prevents Silent Data Corruption by detecting faults at a 100\% rate.
+
+In the current design, the infrastructure required for recovery operation (RAT Checkpoint snapshots and error signal) has been provided, and an automatic restart controller is recommended as future work. The 100\% detection rate obtained proves that this future work can be built on a reliable foundation.
+
+
+%------------------------------------------------------------------------
+\section{Logic Synthesis Results}\label{sec:synthesis}
+%------------------------------------------------------------------------
+
+The design was synthesized to an industrial production technology using the Cadence Genus 23.11 logic synthesis tool. The low-threshold voltage (LVT) cell library of the TSMC 16nm FinFET process was selected as the target technology.
+
+The synthesis process was performed for typical operating conditions (TT corner) at 0.8V supply voltage and 25$^\circ$C temperature values. A 1 ns clock period was specified as the timing constraint, corresponding to a 1 GHz operating frequency.
+
+Timing results obtained from logic synthesis show that the specified 1 GHz target frequency is met. Table \ref{tab:synthesis_results} summarizes the basic metrics obtained at the synthesis stage.
+
+\begin{table}[htbp]
+\centering
+\caption{Logic Synthesis Results}
+\label{tab:synthesis_results}
+\begin{tabular}{p{6cm} r}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Target Technology & TSMC 16nm FinFET LVT \\
+\midrule
+Operating Conditions & TT, 0.8V, 25$^\circ$C \\
+\midrule
+Target Clock Period & 1 ns (1 GHz) \\
+\midrule
+Total Cell Count & 141,868 \\
+\midrule
+Worst-Case Slack Value & 0 ps (timing met) \\
+\midrule
+Total Power Consumption & 150.4 mW \\
+\bottomrule
 \end{tabular}
-\vspace{-6mm}
-\end{center}
-\label{tableforCh5-1}}
-\end{table*}
+\end{table}
 
-Sed ac augue vel dui adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris.
+The critical path identified at the synthesis stage occurs on the signal path extending from the load-store queue (LSQ) head pointer in the dispatch stage to the RAT snapshot memory within RAT Checkpoint. The total combinational delay of this path was measured as 937 ps, with the remaining 63 ps allocated for setup time and timing uncertainty.
+
+
+Power analysis performed at the synthesis stage reveals total power consumption under random test activity assumption. Table \ref{tab:power_syn} shows the distribution of power components.
+
+\begin{table}[htbp]
+\centering
+\caption{Synthesis Stage Power Distribution}
+\label{tab:power_syn}
+\begin{tabular}{p{5cm} r r}
+\toprule
+\textbf{Power Category} & \textbf{Value (mW)} & \textbf{Ratio} \\
+\midrule
+Internal Power & 87.3 & 58.0\% \\
+\midrule
+Switching Power & 63.0 & 41.9\% \\
+\midrule
+Leakage Power & 0.2 & 0.1\% \\
+\midrule
+\textbf{Total Power Consumption} & \textbf{150.4} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+When power distribution is analyzed, it can be seen that internal power is the dominant component. This situation reflects the density of sequential elements (flip-flops) within the processor. In the superscalar structure, structures such as the register file, reorder buffer, branch prediction history table, and load-store queue contain significant amounts of sequential elements.
+
+%------------------------------------------------------------------------
+\section{Physical Design Results}\label{sec:pnr}
+%------------------------------------------------------------------------
+
+The logic synthesis output was processed through the Place and Route stage using the Cadence Innovus 22.31 physical design tool. Clock tree synthesis, placement optimization, and signal routing were performed during the physical design process.
+
+Figure \ref{fig:innovus_layout} presents the physical view of the design after the placement stage. On the chip area of approximately 400 $\mu m$ $\times$ 400 $\mu m$, the placement of basic functional units (fetch, issue, RAT Checkpoint, etc.) and the areas they occupy can be seen.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{fig/innovus_placement.png}
+    \caption{Physical Layout View of Processor Core in Cadence Innovus Environment}
+    \label{fig:innovus_layout}
+\end{figure}
+
+Figure \ref{fig:innovus_routing} shows the complexity after signal routing is completed and the density of metal layers. At this stage, all signal nets and connections of the design were implemented in accordance with the specified geometric design rules (DRC).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{fig/innovus_routing.jpg}
+    \caption{Critical Connection Density and Metal Layers After Signal Routing}
+    \label{fig:innovus_routing}
+\end{figure}
+
+
+Post-physical design timing analysis reveals different results compared to logic synthesis due to calculation of actual wire delays. Table \ref{tab:pnr_results} summarizes the physical design results.
+
+\begin{table}[htbp]
+\centering
+\caption{Physical Design Results}
+\label{tab:pnr_results}
+\begin{tabular}{p{6cm} r}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total Cell Count & 146,500 \\
+\midrule
+Worst-Case Slack Value & -106 ps \\
+\midrule
+Achievable Operating Frequency & $\sim$900 MHz \\
+\midrule
+Total Power Consumption & 131.6 mW \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The main reason for the increase in cell count compared to logic synthesis at the physical design stage is buffer cells added for timing optimization and clock buffers placed during clock tree synthesis.
+
+The critical path after physical design was identified on the signal path extending from the head pointer within RAT Checkpoint to the load-store queue (LSQ) head pointer in the dispatch stage. As a result of physical design, the 1 GHz target frequency was not achieved, and a 106 ps timing violation occurred on the critical path.
+
+This result shows that the design cannot fully meet the 1 GHz target frequency but can safely operate at approximately 900 MHz. To eliminate the timing violation, restructuring the combinational logic on the critical path or applying more aggressive synthesis constraints can be considered.
+
+
+Post-physical design power analysis shows lower total power consumption compared to the logic synthesis stage. This difference arises from placement optimization providing shorter wire lengths and consequently reduced capacitive load. Table \ref{tab:power_pnr} shows post-physical design power distribution.
+
+\begin{table}[htbp]
+\centering
+\caption{Physical Design Stage Power Distribution (1 GHz, 0.8V)}
+\label{tab:power_pnr}
+\begin{tabular}{p{5cm} r r}
+\toprule
+\textbf{Power Category} & \textbf{Value (mW)} & \textbf{Ratio} \\
+\midrule
+Internal Power & 78.3 & 59.5\% \\
+\midrule
+Switching Power & 53.1 & 40.3\% \\
+\midrule
+Leakage Power & 0.24 & 0.2\% \\
+\midrule
+\textbf{Total Power Consumption} & \textbf{131.6} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These power analysis results are based on the design tool's default 20\% switching activity assumption. For more accurate power estimates, switching activity information obtained from real workloads (Value Change Dump - VCD file) needs to be fed to the power analysis tool.
+
+%------------------------------------------------------------------------
+\section{Critical Path Analysis and Evaluation}\label{sec:critical_path}
+%------------------------------------------------------------------------
+
+In both design stages, the critical path occurs in signal transmission between fundamental components of the speculative execution infrastructure. Table \ref{tab:critical_paths} compares the critical paths in synthesis and physical design stages.
+
+\begin{table}[htbp]
+\centering
+\caption{Critical Path Comparison}
+\label{tab:critical_paths}
+\begin{tabular}{p{3cm} p{5cm} r r}
+\toprule
+\textbf{Stage} & \textbf{Critical Path Description} & \textbf{Delay} & \textbf{Slack} \\
+\midrule
+Logic Synthesis & From LSQ head pointer to RAT Checkpoint snapshot & 937 ps & 0 ps \\
+\midrule
+Physical Design & From RAT Checkpoint head pointer to LSQ head pointer & 1054 ps & -106 ps \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+It is not coincidental that the critical path occurs within the speculative execution mechanism in both stages. In out-of-order execution architectures, all critical pointers must be updated in a single cycle for rapid restoration of processor state in case of branch misprediction. This requirement creates extensive combinational connections between the load-store queue, reorder buffer, and branch recovery structure.
+
+%------------------------------------------------------------------------
+\section{Discussion}\label{sec:discussion}
+%------------------------------------------------------------------------
+
+\subsection{Evaluation of Results}\label{subsec:evaluation}
+
+The verification and implementation results presented in this work enable evaluation of the designed three-way superscalar RISC-V processor in terms of both functional correctness and physical implementability.
+
+From a functional verification perspective, the test coverage of approximately 200,000 instructions includes both random and deterministic test programs. Full compliance of all tests with the Spike reference model verifies that the processor implements the RV32I instruction set architecture completely. Especially the successful completion of complex algorithm tests demonstrates that speculative execution and recovery mechanisms work correctly under different computation patterns.
+
+Logic synthesis results reveal that 1 GHz frequency is achievable using approximately 142,000 cells in 16nm FinFET technology. However, at the physical design stage, with actual wire delays taken into account, a 106 ps timing violation occurs, bringing the achievable frequency to approximately 900 MHz level.
+
+In terms of power consumption, the 131.6 mW value obtained after physical design should be evaluated. For comparison purposes, Berkeley's single-way in-order Rocket core shows 0.034 mW/MHz dynamic power consumption in TSMC 40nm technology \cite{rocket_power}. While direct comparison cannot be made considering the technology difference, the designed processor's three-way parallel execution capacity, speculative execution infrastructure, and reordering mechanisms can be evaluated as the main sources of power increase.

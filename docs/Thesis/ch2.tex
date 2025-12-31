@@ -1,144 +1,126 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \phantomsection
-\chapter{INTEGRATED DATA}\label{CH2}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{BACKGROUND AND LITERATURE}\label{ch:background}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Purpose}
+This chapter presents the fundamental concepts that form the basis of this thesis work and the related literature review. First, the RISC-V instruction set architecture is introduced, followed by an explanation of the fundamental concepts of superscalar processor design. The chapter continues with fault tolerance methods and finally examines related works.
 
-Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Maecenas mattis porta
-aliquet. Phasellus elit tortor, convallis vel gravida et, sollicitudin non metus. Etiam vel faucibus tortor. Morbi
-fringilla semper nisl, non eleifend ligula placerat ac. Sed auctor varius commodo. Etiam tempor blandit elementum. Sed
-pellentesque dolor id eros laoreet facilisis. Nunc orci magna, suscipit cursus luctus eget, venenatis nec libero.
-Praesent fermentum velit ut mauris rutrum dignissim.
+%------------------------------------------------------------------------
+\section{RISC-V Architecture}\label{sec:riscv}
+%------------------------------------------------------------------------
 
-Nunc at tellus vitae metus rutrum convallis. Donec sollicitudin gravida elementum. Ut laoreet orci turpis. Phasellus
-lectus erat, ullamcorper et pretium sed, venenatis quis justo. Nullam elementum, dui vitae egestas mollis, orci lorem
-ornare tortor, non tempor nulla odio a lectus. Aenean semper tincidunt nisi, tristique commodo justo mollis et. Ut in
-scelerisque nisl. Pellentesque quis velit augue. Suspendisse varius urna id quam egestas nec lacinia sapien dignissim.
-Vivamus scelerisque pharetra pharetra. Cras tortor sem, rutrum ac interdum et, cursus ut libero. Praesent volutpat nisl
-vel dui faucibus interdum vel vitae lectus. Morbi venenatis rutrum elit sit amet faucibus. Vestibulum lacinia nulla
-fringilla mi molestie tempus. In interdum dolor sit amet mi aliquam commodo. Aliquam erat volutpat. Nullam nisi erat,
-vestibulum sit amet molestie sit amet, accumsan quis dolor. 
+RISC-V is an open-source instruction set architecture developed at the University of California, Berkeley in 2010 \cite{riscv_spec}. Unlike traditional commercial architectures, RISC-V does not require royalty fees and offers designers complete customization freedom. These features have led to widespread adoption in research and educational applications as well as industrial applications.
 
-\section{Internet Service Networks}
+\subsection{Modular Structure}\label{subsec:riscv_modular}
 
-Curabitur sit amet quam quam, vitae accumsan arcu. Sed feugiat, risus non fringilla commodo, nisl eros fringilla ante,
-nec imperdiet enim justo sit amet diam. Etiam mollis vulputate urna, ut scelerisque neque consequat in. Phasellus
-luctus, turpis vel fermentum iaculis, felis nunc lacinia orci, sit amet rutrum nisi tellus eu risus. Mauris interdum
-tristique risus vel varius. Donec rutrum tincidunt lacinia. Vestibulum pretium viverra consequat. Nullam at interdum
-tellus. Aliquam tincidunt nulla vel massa lobortis sed aliquet orci elementum. Nullam non velit massa. Vivamus cursus
-consectetur suscipit. Duis eros purus, vehicula ac ullamcorper non, imperdiet eu dolor. Integer nec velit nisl
-\cite{moore91}. 
+The fundamental design philosophy of RISC-V is modularity. The architecture consists of a mandatory base instruction set and optional extensions. The base instruction set, called RV32I, supports 32-bit integer operations.
 
-\begin{figure}[!ht]
- \centering
- \includegraphics[width=10cm,keepaspectratio=true]{./fig/sekil2}
- % sekil2.eps: 0x0 pixel, 300dpi, 0.00x0.00 cm, bb=14 14 818 556
- \vspace*{4mm}
- \caption{Advanced Structures.}
- \label{fig:ch2-1}
-\end{figure}
+The base instruction set uses six different instruction formats: R-type (register-register operations), I-type (immediate value operations), S-type (store), B-type (branch), U-type (upper immediate), and J-type (jump). This regular format structure allows simplification of instruction decoding hardware \cite{patterson_hennessy}.
 
-Figure~\ref{fig:ch2-1} illustrated that lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris 
-\cite{Wegener2000629}.
+The RISC-V architecture defines three privilege levels: machine mode (M-mode), supervisor mode (S-mode), and user mode (U-mode) \cite{riscv_priv}. While only machine mode is typically used in embedded systems, all levels can be active in systems running an operating system. The processor designed in this thesis work supports only machine mode.
 
-Sed et est vestibulum felis sagittis congue. Phasellus fringilla sem eu purus 
-posuere ut viverra massa dignissim. Maecenas ornare neque velit. Vivamus interdum 
-euismod elementum. Ut sit amet luctus ligula. Vivamus porttitor venenatis sem nec 
-congue. Quisque sed lectus et nibh imperdiet vestibulum. Vivamus vel turpis leo. 
-Proin suscipit iaculis nibh, nec dictum augue aliquet in. Praesent fermentum sem 
-tempus orci molestie at facilisis dui sagittis. Etiam sit amet imperdiet sapien. 
+%------------------------------------------------------------------------
+\section{Processor Microarchitecture Concepts}\label{sec:microarchitecture}
+%------------------------------------------------------------------------
 
-\section{Network Based Project Development}
+Modern processors increase performance by exploiting Instruction Level Parallelism (ILP). This section explains the fundamental concepts of superscalar and out-of-order execution processors.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris.
+\subsection{Pipeline and Hazards}\label{subsec:pipeline_hazards}
 
-Subfigure example as shown in Figure \ref{fig:ch2-2} (a), Figure \ref{fig:ch2-2} (b), Figure \ref{fig:ch2-2}.
-\begin{figure}%
-    \centering
-    \begin{minipage}{60mm}% 
-            \includegraphics[width=\textwidth]{example-image-a}
-            \captionsetup{labelformat=empty} % Alt başlık etiketi boş
-            \caption*{(a)} % (a) etiketi manuel olarak ekleniyor
-            \label{fig:ch2-2a}
-    \end{minipage}%
-    \qquad
-    \begin{minipage}{60mm}%
-            \includegraphics[width=\textwidth]{example-image-b}
-            \captionsetup{labelformat=empty} % Alt başlık etiketi boş
-            \caption*{(b)} % (b) etiketi manuel olarak ekleniyor
-            \label{fig:ch2-2b}
-    \end{minipage}%
-    \caption{Main figure containing two subfigures.}
-    \label{fig:ch2-2}
-\end{figure}
+Pipelined processors can start a new instruction every clock cycle by dividing the instruction execution process into independent stages. The classic five-stage pipeline consists of instruction fetch (Fetch), decode (Decode), execute (Execute), memory access (Memory), and writeback (Writeback) stages \cite{patterson_hennessy}.
 
+Three fundamental hazard types exist in pipeline design. Data hazards occur when an instruction depends on a result that has not yet been computed. Control hazards arise from the need to determine program flow before the outcome of branch instructions is known. Structural hazards occur when multiple instructions want to access the same hardware resource simultaneously.
 
+Forwarding and stalling techniques are used to resolve data hazards. Branch prediction mechanisms have been developed to reduce the impact of control hazards \cite{smith_branch}. Two-bit saturating counter-based prediction is widely used as a simple and effective method.
 
-%\vspace{-6pt}
+\subsection{Superscalar Execution}\label{subsec:superscalar}
 
-Sed et est vestibulum felis sagittis congue. Phasellus fringilla sem eu purus 
-posuere ut viverra massa dignissim. Maecenas ornare neque velit. Vivamus interdum 
-euismod elementum. Ut sit amet luctus ligula. Vivamus porttitor venenatis sem nec 
-congue. Quisque sed lectus et nibh imperdiet vestibulum. Vivamus vel turpis leo. 
-Proin suscipit iaculis nibh, nec dictum augue aliquet in. Praesent fermentum sem 
-tempus orci molestie at facilisis dui sagittis. Etiam sit amet imperdiet sapien. 
-Donec convallis, quam in vestibulum cursus, nisl mi egestas felis, et porttitor 
-ante ipsum quis turpis. Etiam ligula leo, sodales eget mollis eget, scelerisque 
-vitae leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur 
-ridiculus mus. 
+Superscalar processors have the capacity to fetch, decode, and execute multiple instructions per clock cycle. An N-way superscalar processor can theoretically complete N instructions per cycle. However, actual performance falls below this theoretical maximum due to data dependencies and resource conflicts \cite{shen_lipasti}.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ac augue vel dui 
-adipiscing placerat et nec metus. Donec bibendum sodales mollis. Cras in lacus 
-justo, at vestibulum quam. Sed semper, est sit amet consectetur ornare, leo est 
-lacinia velit, adipiscing elementum lectus felis at sem. Aenean hendrerit erat eu 
-lacus malesuada at sodales arcu egestas. Maecenas euismod urna ut sem luctus et 
-congue metus vulputate. Ut pellentesque, neque eget fringilla elementum, ligula 
-massa aliquet lorem, et varius nisi lacus vel diam. Etiam vitae metus sed orci 
-rutrum fringilla. Phasellus sed velit quam. Mauris vestibulum, mauris a cursus 
-adipiscing, nulla est hendrerit justo, ut fringilla eros velit ut mauris.
+The effectiveness of superscalar execution depends on the instruction-level parallelism in the program. The ILP value in typical programs ranges between 2 and 5. Speculative execution and dynamic scheduling techniques are required to achieve higher parallelism.
 
-Sed et est vestibulum felis sagittis congue. Phasellus fringilla sem eu purus 
-posuere ut viverra massa dignissim. Maecenas ornare neque velit. Vivamus interdum euismod elementum. Ut sit amet luctus ligula. Vivamus porttitor venenatis sem nec congue. Quisque sed lectus et nibh imperdiet vestibulum. Vivamus vel turpis leo. Table~\ref{table_ex2} demonstrated the details about our results.  
+\subsection{Out-of-Order Execution}\label{subsec:ooo}
 
-\begin{table*}[!ht]
-{\setlength{\tabcolsep}{14pt}
-\caption{Table captions must be ended with a full stop.}
-\begin{center}
-\vspace{-6mm}
-\begin{tabular}{cccc}
-\hline\hline
-Column A & Column B & Column C & Column D \\
-\hline
-Row A & Row A & Row A & Row A \\
-Row B & Row B & Row B & Row B \\
-Row C & Row C & Row C & Row C \\
-\hline
-\end{tabular}
-\vspace{-6mm}
-\end{center}
-\label{table_ex2}}
-\end{table*}
+Out-of-order execution enables instructions to be executed as soon as their operands are ready, independent of program order. This approach increases ILP utilization by reducing stalls caused by data dependencies.
 
-Proin suscipit iaculis nibh, nec dictum augue aliquet in. Praesent fermentum sem 
-tempus orci molestie at facilisis dui sagittis. Etiam sit amet imperdiet sapien. 
-Donec convallis, quam in vestibulum cursus, nisl mi egestas felis, et porttitor 
-ante ipsum quis turpis. Etiam ligula leo, sodales eget mollis eget, scelerisque 
-vitae leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur 
-ridiculus mus \cite{Zuckerman199486}. 
+The Tomasulo algorithm is the dynamic scheduling method that forms the basis of out-of-order execution \cite{tomasulo}. The algorithm implements operand waiting and result broadcasting mechanisms through reservation stations.
+
+Register renaming plays a critical role in out-of-order execution. This technique eliminates false dependencies (WAW and WAR) that do not exist at the software level. Architectural registers are dynamically mapped to a larger physical register pool. The Register Alias Table (RAT) manages this mapping.
+
+The Reorder Buffer (ROB) ensures that out-of-order executed instructions are committed in program order. This structure is necessary for correct handling of interrupts and exceptions. Management of speculative execution is also performed through the ROB.
+
+\subsection{Branch Prediction and Recovery}\label{subsec:branch_prediction}
+
+Speculative execution enables instruction fetching and execution to continue before branch outcomes are determined. The branch predictor predicts the branch decision and target address in advance. If the prediction is correct, a performance gain is achieved; if incorrect, speculative instructions are cancelled.
+
+Two fundamental approaches exist for restoring processor state in case of misprediction. In the lazy recovery method, the mispredicted branch is waited until it reaches the ROB head, and the state is corrected by scanning backward. This approach causes high latency.
+
+In the eager recovery method, snapshots of the RAT state are saved while branch instructions are being processed. When a misprediction is detected, the state is immediately restored from the relevant snapshot. This approach requires additional hardware called RAT Checkpoint or Shadow RAT but significantly reduces recovery latency \cite{shen_lipasti}.
+
+%------------------------------------------------------------------------
+\section{Fault Tolerance Concepts}\label{sec:fault_tolerance}
+%------------------------------------------------------------------------
+
+Miniaturization in semiconductor technology has increased the susceptibility of circuits to environmental factors. This section explains fault types and protection methods developed against them.
+
+\subsection{Fault Types}\label{subsec:fault_types}
+
+Hardware faults are classified into two main categories according to their permanence. Permanent faults arise from manufacturing defects or aging and persist even if the system is restarted. Transient faults generally originate from environmental factors and correct themselves \cite{baumann}.
+
+Cosmic rays and high-energy particles can interact with semiconductor materials, causing bit-flips known as Single Event Upsets (SEU). As technology scales, the probability of a single particle affecting multiple cells increases, and Multiple Bit Upsets (MBU) occur \cite{rogenmoser_hmr_2023, annink}.
+
+In radiation tests conducted by Santos et al., it was observed that seventy-eight percent of faults occurred in memories and fifteen percent in register files \cite{santos_2023}. These results clearly indicate that large memory structures and register files need to be protected.
+
+\subsection{Spatial Redundancy}\label{subsec:spatial_redundancy}
+
+Spatial redundancy involves operating multiple copies of hardware in parallel. Double Modular Redundancy (DMR) provides fault detection by comparing the results of two copies. Triple Modular Redundancy (TMR) can both detect and mask faults through majority voting of three copies \cite{lyons_tmr}.
+
+The lock-step method applied at the core level operates multiple processor cores synchronously. DCLS (Dual Core Lock-Step) provides fault detection, while TCLS (Triple Core Lock-Step) provides fault masking. However, these approaches allow faults to propagate to the core output and increase recovery latency.
+
+Spatial redundancy applied at the pipeline level enables faults to be detected at the stage where they occur. DuckCore, developed by Li et al., is an example of this approach \cite{li_duckcore}. Intra-core protection prevents fault propagation, offering faster recovery \cite{dorflinger_2022}.
+
+\subsection{Temporal Redundancy}\label{subsec:temporal_redundancy}
+
+Temporal redundancy involves repeating the same operation at different times and comparing results. This approach does not require additional hardware but reduces performance. Tedeschi et al. developed a design that provides low-cost fault tolerance using temporal redundancy \cite{tedeschi_2025}. This method can be preferred when there are power and area constraints in embedded systems.
+
+\subsection{Information Redundancy}\label{subsec:information_redundancy}
+
+Information redundancy provides fault detection and correction by adding additional bits to data. Error Correcting Codes (ECC) can correct single-bit errors and detect double-bit errors \cite{hamming}.
+
+According to the work by Annink et al., ECC implementation can increase memory area by thirty-three and a half percent and power consumption by fourteen percent. However, with optimization techniques, this increase can be reduced to three percent \cite{annink}.
+
+\subsection{On-Demand Redundancy}\label{subsec:odmr}
+
+A significant disadvantage of traditional redundancy methods is the requirement for the system to continuously operate in redundant mode. This situation causes resource waste even during periods when fault risk is low.
+
+On-Demand Modular Redundancy (ODMR) is a flexible approach proposed by Rogenmoser et al. \cite{rogenmoser_odrg_2022}. In ODMR, the system can switch between redundant mode and independent operation mode according to task criticality. Fault protection is provided during critical tasks, while full performance is achieved under normal conditions.
+
+The Trikarenos project presents a concrete implementation of the ODMR approach \cite{trikarenos_2023}. This design, implemented in 28nm technology, provides flexible fault tolerance for CubeSats.
+
+%------------------------------------------------------------------------
+\section{Related Work}\label{sec:related_work}
+%------------------------------------------------------------------------
+
+This section examines superscalar RISC-V processor designs and fault-tolerant processor works.
+
+\subsection{Superscalar RISC-V Processors}\label{subsec:superscalar_designs}
+
+Berkeley Out-of-Order Machine (BOOM) is the most recognized open-source superscalar RISC-V processor \cite{boom}. The third-generation design, known as SonicBOOM, demonstrated 6.2 CoreMark performance per cycle \cite{sonicboom}.
+
+The Xiangshan project is a high-performance RISC-V processor developed by the Chinese Academy of Sciences \cite{xiangshan_2022}. This design, with six-way superscalar and out-of-order execution capabilities, targets industrial-level performance.
+
+\subsection{Fault-Tolerant RISC-V Processors}\label{subsec:ft_processors}
+
+DuckCore, developed by Li et al., is among the first RISC-V designs providing pipeline-level fault protection \cite{li_duckcore}. The design applies TMR for register files and critical control signals.
+
+Dörflinger et al. proposed a comprehensive fault tolerance framework for RISC-V \cite{dorflinger_2022}. This framework allows different protection levels to be applied modularly.
+
+Rogenmoser's Trikarenos project optimized the ODMR approach for small satellite applications \cite{trikarenos_2023}. It provides flexible redundancy using three CV32E40P cores.
+
+The approach developed by Mach and Kohútka proposes the pipeline splitting technique as an alternative to the traditional lock-step method \cite{mach_lockstep_2025}. This approach provides fault tolerance with only eight percent area overhead and saves resources by excluding large structures such as the branch predictor from protection. Faults in predictors are naturally corrected by the existing misprediction recovery mechanism.
+
+\subsection{Thesis Positioning}\label{subsec:thesis_positioning}
+
+When existing works are examined, fault-tolerant superscalar out-of-order execution RISC-V processor designs are not directly encountered. Works such as DuckCore provide pipeline-level protection but do not support out-of-order execution. High-performance designs such as BOOM do not include fault tolerance.
+
+This thesis presents a novel RISC-V processor design that combines superscalar out-of-order execution capacity with intra-core TMR protection using the ODMR method. Thanks to the ODMR approach, a dynamic balance between performance and reliability can be established.

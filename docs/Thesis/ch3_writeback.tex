@@ -1,0 +1,104 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3.7 WRITEBACK STAGE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Writeback Stage}\label{sec:writeback}
+
+The writeback stage is the final stage of out-of-order execution and ensures that instructions are committed in program order. During the commit operation, the results of instructions at the head of the Reorder Buffer (ROB) are reflected to architectural state and relevant resources are made available for reuse.
+
+%------------------------------------------------------------------------
+
+\subsection{Commit Operation}\label{subsec:commit}
+
+Commit is the processing of instructions at the head of the ROB in program order. Each clock cycle, up to three instructions at the head of the ROB are evaluated for commit.
+
+For an instruction to be committed, it must have been executed. This condition is verified by checking the executed flag in the ROB entry. For load operations, the data must have been received from memory; for store operations, dispatch permission to the LSQ must have been granted.
+
+In three-way commit, there is a chained dependency. For the first instruction to be committed, it is sufficient that it has been executed. The second instruction is evaluated only if the first instruction will be committed. The third instruction is evaluated only if both the first and second instructions will be committed. This chained structure guarantees preservation of program order.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Commit Flow - Evaluation of 3 instructions at ROB head, Chained dependency]}}
+    \caption{In-order commit process}
+    \label{fig:commit_process}
+\end{figure}
+
+Each cycle, the number of committed instructions is calculated and the ROB head pointer is advanced by this amount. For example, if all three instructions are committed, the head pointer is incremented by three.
+
+%------------------------------------------------------------------------
+
+\subsection{Register Alias Table Update}\label{subsec:rat_update}
+
+During commit, the Register Alias Table (RAT) is updated. This update ensures that the architectural register points from the reorder buffer to the register file.
+
+The update condition is important: the update is performed if the current mapping of the architectural register in the RAT points to the ROB index of the committed instruction. This check ensures that if there is a newer instruction writing to the same architectural register, the older instruction does not perform the update.
+
+For example, consider two instructions writing to register x5: the first instruction is allocated to ROB[3], and the second instruction to ROB[7]. When the first instruction is committed, the RAT[x5] value is checked. If RAT[x5] still points to 3, x5 is updated to its position in the register file (0,5). However, if RAT[x5] now points to 7 (since the second instruction was allocated), the update is not performed.
+
+This mechanism ensures correct management of successive writes to the same architectural register.
+
+%------------------------------------------------------------------------
+
+\subsection{Free List Update}\label{subsec:free_list}
+
+During commit, used ROB entry addresses are returned to the free list. The free list is maintained in a circular buffer structure and provides available ROB addresses for new instructions.
+
+Each commit signal is connected to a write port of the free list. When commit is valid, the relevant ROB index is added to the free list. With three parallel write ports, three addresses can be freed each cycle. There is no actual write operation here; as a result of this operation, only the pointer value of the circular buffer holding the free list is incremented.
+
+In case of misprediction, the free list pointer is also updated. It is set to the mispredicted branch's ROB index plus one, automatically reclaiming speculatively allocated addresses.
+
+%------------------------------------------------------------------------
+
+\subsection{Memory Operations Commit}\label{subsec:mem_commit}
+
+For memory operations, commit includes store permission and LSQ address release.
+
+The store permission mechanism is detailed in Section~\ref{subsec:lsq_ops}. The ROB produces a permission signal and the permitted store address for the store operation at its head. The LSQ uses this information to write only store operations guaranteed to commit to memory. Before granting store permission, the branch status of previous instructions is checked; if there is a branch instruction before the store operation, this branch instruction must have been executed and not mispredicted.
+
+LSQ address release is performed during commit. Although the LSQ works out of order, release is done in order. The reason for this is that LSQ address allocation is done with a circular buffer; since allocation is in order, release must also be in order. The LSQ quickly resolves data dependencies by working out of order, while the release operation is left to the ROB to ensure ordering.
+
+When a memory instruction is committed, the ROB produces an LSQ commit signal. This signal is conveyed both to the LSQ and to the LSQ free address circular buffer within the RAT. The LSQ receives this signal and frees the relevant entry, while the RAT provides an available LSQ address for new memory instructions.
+
+%------------------------------------------------------------------------
+
+\subsection{Pipeline Flush}\label{subsec:flush}
+
+The in-order commit structure allows for future addition of exception and interrupt handling. In the current design, only branch misprediction detection and pipeline flush operations are implemented.
+
+Pipeline flush is performed when misprediction is detected. Flush signals are sent simultaneously to all pipeline stages. Speculative entries are invalidated by setting the ROB's tail pointer to one after the mispredicted branch. All speculative entries in reservation stations and LSQ are flushed.
+
+RAT state is restored by loading the correct register mapping snapshot from RAT Checkpoint. This mechanism is explained in Section~\ref{subsec:rat_checkpoint}. The program counter is set to the correct address and a redirect signal is sent to the instruction fetch stage.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\textbf{[FIGURE: Pipeline Flush - Parallel flush signals to all stages after misprediction]}}
+    \caption{Pipeline flush mechanism}
+    \label{fig:flush_mechanism}
+\end{figure}
+
+%------------------------------------------------------------------------
+
+\subsection{Commit Signals}\label{subsec:commit_signals}
+
+ROB commit output signals provide state updates to other modules. Signals produced in parallel for three instructions each cycle are listed in Table~\ref{tab:commit_signals}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Commit output signals.}
+    \label{tab:commit_signals}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Signal} & \textbf{Target} & \textbf{Description} \\
+        \hline
+        commit\_valid & RAT & Instruction committed \\
+        \hline
+        commit\_addr & RAT & Architectural register address \\
+        \hline
+        commit\_rob\_idx & RAT & Committed ROB index \\
+        \hline
+        lsq\_commit\_valid & LSQ, RAT & LSQ commit signal \\
+        \hline
+        commit\_is\_branch & Branch predictor & Prediction update \\
+        \hline
+    \end{tabular}
+\end{table}
