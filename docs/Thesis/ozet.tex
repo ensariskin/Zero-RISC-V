@@ -1,146 +1,81 @@
-\"Ozet haz\i rlan\i rken 1 sat\i r bo\c{s}luk b\i rak\i l\i r. 
+% Türkçe Genişletilmiş Özet (ÖZET)
+% 3-5 sayfa gereklidir
 
-T\"urk\c{c}e hazırlanmış tezlerde, T\"urk\c{c}e \"ozet 300 kelimeden az olmamak kayd\i yla 1-3 sayfa olmalıdır. 
+Yarı iletken teknolojisindeki sürekli minyatürleşme, entegre devrelerin çevresel faktörlere karşı duyarlılığını önemli ölçüde artırmıştır. Kozmik ışınlar ve yüksek enerjili parçacıklar yarı iletken malzemelerle etkileşime girerek, bellek hücreleri ve yazmaçlarda bit dönüşlerine neden olan Tek Olay Oluşumlarına (SEU) yol açabilmektedir. Teknoloji daha küçük düğümlere ölçeklendikçe, tek bir parçacığın bitişik birden fazla hücreyi etkilediği Çoklu Bit Oluşumlarının (MBU) olasılığı da artmaktadır. Bu olgular, güvenilirliğin büyük önem taşıdığı uzay, havacılık ve otomotiv uygulamalarında konuşlandırılan sistemler için kritik zorluklar oluşturmaktadır.
 
-Türkçe hazırlanmış tezlerde İngilizce özet (genişletilmiş İngilizce özet) 3-5 sayfa aralığında olmalıdır (En az 3, en çok 5 sayfa.).
+Üçlü Modüler Yedeklilik (TMR) ve kilitli adım yürütme gibi geleneksel hata toleransı teknikleri, geçici hatalara karşı sağlam koruma sağlamaktadır. TMR, tek bit hatalarını maskelemek için çoğunluk oylama ile üç yedekli donanım kopyası kullanırken, kilitli adım yöntemleri tutarsızlıkları tespit etmek için birden fazla işlemci çekirdeğini senkronize etmektedir. Ancak bu yaklaşımlar önemli alan ve güç ek yükü getirmekte ve daha kritik olarak, hata korumasının gerekmediği durumlarda bile aktif kalmakta, bu da normal çalışma sırasında performans düşüşüne neden olmaktadır.
 
+İsteğe Bağlı Modüler Yedeklilik (ODMR), bu sınırlamaları ele alan esnek bir alternatif olarak ortaya çıkmıştır. ODMR sistemlerinde, yedeklilik görev kritikliğine göre dinamik olarak etkinleştirilebilir veya devre dışı bırakılabilmektedir. Kritik işlemler sırasında sistem tam yedeklilik ile korumalı modda çalışırken, normal işlemler sırasında yedekli kaynaklar performansı maksimize etmek için bağımsız olarak çalışabilmektedir. Bu tez, ODMR kavramını süperölçekli sıra dışı işlemcilere uygulamaktadır; bu kombinasyon daha önce literatürde araştırılmamıştır.
 
-{\.I}ngilizce hazırlanmış tezlerde ise, {\.I}ngilizce \"ozet 300 kelimeden az olmamak
-kayd\i yla 1-3 sayfa olmalıdır. 
+Bu tezin temel amacı, isteğe bağlı yedekliliği destekleyen hata toleranslı süperölçekli sıra dışı yürütme özellikli bir RISC-V işlemci tasarlamak ve gerçeklemektir. Spesifik hedefler şunlardır:
 
-İngilizce hazırlanmış tezlerde T\"urk\c{c}e özet (geni\c{s}letilmi\c{s} T\"urk\c{c}e \"ozet) de 
-3-5 sayfa aras\i nda olmal\i d\i r (en az 3, en çok 5 sayfa.). 
+\begin{itemize}
+    \item ODMR çalışmasına uygun üç yollu süperölçekli mimari tasarlamak; burada üç yürütme kanalı yüksek performans için bağımsız olarak veya hata toleransı için toplu olarak TMR birimi olarak çalışabilmektedir.
+    \item Çekirdek seviyesi yerine boruhattı seviyesinde çekirdek içi uzaysal yedeklilik gerçeklemek, geleneksel kilitli adım yöntemlerine kıyasla daha hızlı hata tespiti ve toparlanma sağlamak.
+    \item Boruhattı boşaltma veya durum senkronizasyonu gerektirmeyen düşük gecikmeli mod geçiş mekanizması geliştirmek.
+    \item Hem dal yanlış tahmini toparlanması hem de radyasyon kaynaklı hata toparlanması için altyapı olarak hizmet eden çift amaçlı RAT Checkpoint yapısı oluşturmak.
+\end{itemize}
 
-\"Ozetlerde tezde ele al\i nan konu k\i saca tan\i t\i larak, kullan\i lan
-y\"ontemler ve ula\c{s}\i lan sonu\c{c}lar belirtilir.
+İşlemci RV32I taban tamsayı komut setini desteklemekte ve yalnızca makine modunda çalışmaktadır. Tasarım, gelecek çalışmalar olarak belirlenen çarpma/bölme (M) ve kayan nokta (F) uzantılarını, önbellek hiyerarşisini ve çok çekirdekli yapılandırmaları hariç tutmaktadır.
 
-\"Ozetlerde kaynak, \c{s}ekil, \c{c}izelge verilmez.
+Tasarlanan işlemci altı aşamalı boruhattı mimarisi kullanmaktadır: Getirme, Kod Çözme/Yeniden Adlandırma, Dağıtım, Yürütme, Bellek ve Geri Yazma. Bu yapı, süperölçekli çalışma ve hata toleransı için ek geliştirmeler içeren Tomasulo algoritmasının modern bir gerçeklemesini temsil etmektedir.
 
-\"Ozetlerin ba\c{s}\i nda, birinci dereceden ba\c{s}l\i k format\i nda
-tezin ad{\i} (\"once 72, sonra 18 punto aral\i k b{\i}rak{\i}larak ve 1
-sat\i r aral\i kl{\i} olarak) yaz\i lacakt\i r. Ba\c{s}l\i \u{g}\i n
-alt\i na b\"uy\"uk harflerle sayfa ortalanarak (T\"urk\c{c}e \"ozet i\c{c}in)
-{\bf \"OZET} ve ({\.I}ngilizce \"ozet i\c{c}in) {\bf SUMMARY}
-yaz\i lmal\i d\i r.
+Getirme aşaması, üç yollu süperölçekli çalışma için yeterli bant genişliği sağlayarak, hizalanmış komut tamponundan çevrim başına beş adede kadar komut almaktadır. Turnuva dal tahmincisi, gerçekçi iş yüklerinde yüzde seksenden fazla tahmin doğruluğu elde etmek için bimodal ve GShare tahmincilerini birleştirmektedir. Dönüş Adresi Yığını (RAS), fonksiyon dönüşleri için doğru tahminler sağlamaktadır.
 
-T\"urk\c{c}e tezlerde T\"urk\c{c}e \"ozetin \.Ingilizce \"ozetten 
-\"once olmas{\i} \"onerilir.
+Kod çözme/yeniden adlandırma aşaması aynı anda üç adede kadar komutu işlemektedir. Her komut, kontrol sinyalleri ve operand bilgilerini çıkarmak için anlık kod çözmeye tabi tutulmaktadır. Yazmaç Takma Ad Tablosu (RAT), yalancı bağımlılıkları (WAW ve WAR tehlikelerini) ortadan kaldırmak için yazmaç yeniden adlandırma gerçekleştirmektedir. Mimari yazmaçlar, 64 giriş içeren daha büyük bir fiziksel yazmaç dosyasına dinamik olarak eşlenmektedir.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Dağıtım aşaması, her kod çözülen komut için kaynak tahsis etmektedir. Üç paralel kanal, komutları rezervasyon istasyonlarına, Yeniden Sıralama Arabelleğine (ROB) ve Yükleme/Saklama Kuyruğuna (LSQ) dağıtmaktadır. ROB, sıralı kesinleştirme ve hassas istisna işleme için program sırasını korumaktadır. Kaynak tahsisi, kilitlenmeleri önlemek için hem ROB hem de LSQ kullanılabilirliğini dikkate almaktadır.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Yürütme aşaması, her biri tamsayı aritmetik ve mantıksal işlemleri yürütebilen üç Aritmetik Mantık Birimi (ALU) içermektedir. Komutlar, tüm kaynak operandlar kullanılabilir hale geldiğinde rezervasyon istasyonlarından yayınlanmaktadır. Ortak Veri Yolu (CDB), Tomasulo algoritmasının sonuç iletme mekanizmasını gerçekleyerek sonuçları bekleyen komutlara yayınlamaktadır.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Bellek aşaması, LSQ aracılığıyla yükleme ve saklama işlemlerini yönetmektedir. Bellek erişim gecikmesini azaltmak için saklamadan yüklemeye iletme gerçeklenmiştir. Doğru program yürütmesini sağlamak için bellek sıralama kısıtlamaları korunmaktadır.
 
+Geri yazma aşaması, tamamlanan komutları program sırasına göre kesinleştirmektedir. Kesinleştirme üzerine sonuçlar mimari yazmaç dosyasına yazılmakta ve fiziksel yazmaçlar yeniden kullanım için serbest bırakılmaktadır. Dal yanlış tahmini tespiti, RAT Checkpoint mekanizmasını kullanarak boruhattı toparlanmasını tetiklemektedir.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+RAT Checkpoint mekanizması, tek çevrim gecikme ile hevesli yanlış tahmin toparlanması sağlamaktadır. Yanlış tahmin edilen dalın ROB başına ulaşmasını bekleyen tembel toparlanma yöntemlerinden farklı olarak, hevesli toparlanma kaydedilmiş bir checkpoint'ten doğru işlemci durumunu anında geri yüklemektedir. 16 girişlik dairesel tampon, her uçuştaki dal için Küresel Geçmiş Yazmacı (GHR) değerleri, Dönüş Adresi Yığını Tepe işaretçileri ve Program Sayacı değerleri ile birlikte RAT anlık görüntülerini saklamaktadır.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.
+Bir dal yanlış tahmini tespit edildiğinde, ilgili checkpoint alınmakta ve RAT tek çevrimde geri yüklenmektedir. Bu mekanizma, ardışık durum yeniden yapılandırması gerektiren geleneksel yaklaşımlara kıyasla yanlış tahmin cezasını önemli ölçüde azaltmaktadır.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Güvenli modda, üç süperölçekli kanal aynı komut akışını eş zamanlı olarak yürüterek TMR yapılandırması oluşturmaktadır. Çoğunluk oylayıcıları, her üç kanaldan gelen çıkışları karşılaştırmakta ve bir kanal hata yaşasa bile doğru sonucu üretmektedir. Kritik kontrol sinyalleri ve yazmaç değerleri bu yaklaşım kullanılarak korunmaktadır.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.
+TMR gerçeklemesi, radyasyon testi çalışmalarında belirlenen en savunmasız yapıları korumaya odaklanmaktadır. Araştırmalar, radyasyon kaynaklı hataların yaklaşık yüzde yetmiş sekizinin belleklerde, yüzde on beşinin ise yazmaç dosyalarında oluştuğunu göstermiştir. Buna göre, yazmaç dosyası, ROB girişleri ve kritik boruhattı yazmaçları TMR oylayıcıları ile korunmaktadır.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Fiziksel yazmaç dosyası ve komut tamponu gibi büyük bellek yapılarının, tek bit hatalarını düzeltebilen ve çift bit hatalarını tespit edebilen Hata Düzeltme Kodları (ECC) ile korunduğu varsayılmaktadır. Fiziksel ECC gerçeklemesi bu çalışmanın kapsamı dışındadır.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.
+Yedekliliği çekirdek seviyesi yerine boruhattı seviyesinde gerçeklemenin temel avantajı, basitleştirilmiş mod geçişidir. Geleneksel kilitli adım sistemleri, yedekli moda girmeden önce birden fazla çekirdeği senkronize etmeyi gerektirir; bu durum boruhatlarını boşaltmayı ve yazmaç durumlarını kopyalamayı içerebilmektedir. Buna karşılık, önerilen mimari, yalnızca TMR oylayıcılarını etkinleştirerek ve komut dağıtım mantığını değiştirerek mod geçişini sağlamaktadır. Boruhattı boşaltma veya durum senkronizasyonu gerekmemektedir.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Mod geçişi, özel bir kontrol yazmacı aracılığıyla yazılım tarafından ayarlanabilen güvenli mod etkinleştirme sinyali ile kontrol edilmektedir. Bu, işletim sistemi veya uygulamanın görev aşaması veya çevresel koşullara göre koruma seviyesini dinamik olarak ayarlamasına olanak tanımaktadır.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.
+İşlemci, hem kısıtlama tabanlı rastgele hem de deterministik testleri içeren kapsamlı bir test paketi kullanılarak doğrulanmıştır. Google RISC-V DV çerçevesi, çeşitli köşe durumları ve stres koşullarını uygulayan rastgele komut dizileri üretmiştir. Deterministik testler, çeşitli hesaplama desenlerini kapsayan algoritma gerçeklemelerinden oluşmuştur: graf algoritmaları (Dijkstra, topolojik sıralama), dinamik programlama (sırt çantası, edit uzaklığı), sıralama (yığın sıralaması), dizi eşleme (KMP) ve matematiksel hesaplamalar (Eratosthenes Kalburu, matris üstelleştirme).
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Tüm test sonuçları, Berkeley Spike referans simülatörü ile çevrim bazında karşılaştırılmıştır. Tüm testlerde tam uyum sağlanmış, RV32I komut setinin ve süperölçekli sıra dışı yürütme mekanizmalarının doğru gerçeklendiği teyit edilmiştir.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.
+Performans ölçümleri, süperölçekli mimarinin etkinliğini ortaya koymuştur. Aritmetik yoğun rastgele testlerde, işlemci teorik maksimumun yüzde doksan yedisini temsil eden maksimum 2,90 IPC değerine ulaşmıştır. Deterministik algoritma testleri, tek yayınlı skaler işlemciye kıyasla 2,04 kat hızlanmaya karşılık gelen ortalama 1,71 IPC değeri vermiştir.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Dal tahmincisi, gerçekçi iş yüklerini temsil eden deterministik testlerde yüzde seksenden fazla doğruluk elde etmiştir. Rastgele testler, rastgele üretilen komut dizilerinde istatistiksel desenlerin bulunmaması nedeniyle daha düşük tahmin doğruluğu (yüzde 32-43) sergilemiştir.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.
+Hata enjeksiyonu testleri, TMR korumasının etkinliğini doğrulamıştır. TMR korumalı yazmaçlara enjekte edilen tek bit hataları çoğunluk oylayıcıları tarafından başarıyla maskelenmiş, mimari duruma bozulma yayılmamıştır. Çoklu bit hataları yüzde yüz doğrulukla tespit edilmiş, sessiz veri bozulması önlenmiştir.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+İşlemci, standart-VT hücreleri ile TSMC 16nm FinFET teknolojisi kullanılarak sentezlenmiş ve yerleştirilmiştir. Lojik sentez yaklaşık 142.000 hücre üretmiş ve 1 GHz çalışmanın ulaşılabilir olduğunu göstermiştir. Yerleştirme sonrası zamanlama analizi, kritik yolda 106 ps'lik zamanlama ihlali ortaya koymuş, ulaşılabilir frekansı yaklaşık 900 MHz'e düşürmüştür.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Kritik yol, RAT Checkpoint yapısından, özellikle yanlış tahmin toparlanması sırasında checkpoint girişleri arasından seçim yapan çoğullayıcıdan geçmektedir. Gelecek çalışmalar bunu ek boruhattı aşamaları veya daha agresif sentez kısıtlamaları aracılığıyla ele alabilir.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim.
+Yüzde 20 değiştirme aktivitesi varsayımı altında güç analizi, yerleştirme sonrası aşamada toplam 131,6 mW güç tüketimi vermiştir. Bu, hem dinamik hem de kaçak güç bileşenlerini içermektedir.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. 
+Bu tez aşağıdaki özgün katkıları sunmaktadır:
+
+\begin{enumerate}
+    \item ODMR uyumluluğu için tasarlanmış üç yollu süperölçekli mimari; burada aynı üç kanal, çalışma moduna bağlı olarak ya paralel komut yürütme ya da TMR koruması sağlamaktadır.
+    
+    \item Çekirdek seviyesi kilitli adım yöntemlerine kıyasla daha hızlı hata tespiti ve toparlanma sağlayan, oylayıcı devreleriyle sınırlı minimal alan ek yükü ile boruhattı seviyesi uzaysal yedeklilik gerçeklemesi.
+    
+    \item Boruhattı boşaltma veya durum senkronizasyonu olmadan yalnızca oylayıcıların etkinleştirilmesini ve dağıtım mantığının değiştirilmesini gerektiren düşük gecikmeli mod geçiş mekanizması.
+    
+    \item Tek çevrimli dal yanlış tahmini toparlanması sağlayan ve radyasyon kaynaklı hata toparlanması için altyapı olarak hizmet eden çift amaçlı RAT Checkpoint yapısı.
+\end{enumerate}
+
+Bu tez, ODMR yaklaşımını kullanarak süperölçekli sıra dışı yürütmenin çekirdek içi hata toleransı ile birleştirilmesinin uygulanabilirliğini göstermiştir. Tasarlanan RISC-V işlemci, normal modda üç yollu süperölçekli yürütme ile yüksek performans elde ederken, güvenli modda TMR oylama ile sağlam SEU koruması sağlamaktadır.
+
+Deneysel sonuçlar, önerilen mimarinin hem fonksiyonel doğruluğunu hem de fiziksel gerçeklenebilirliğini doğrulamaktadır. Performans ölçümleri, komut seviyesi paralelliğinin etkin kullanımını teyit ederken, hata enjeksiyonu testleri TMR korumalı yapılarda tam SEU maskeleme göstermektedir.
+
+Gelecek çalışma yönleri şunları içermektedir: RAT Checkpoint mekanizmasına dayalı otomatik hata toparlanma denetleyicisinin gerçeklenmesi; bellek yapıları için fiziksel ECC korumasının eklenmesi; RV32M ve RV32F komut seti uzantılarına desteğin genişletilmesi; gerçekçi bellek modelleri ile önbellek hiyerarşisinin entegrasyonu; kritik yol optimizasyonu yoluyla zamanlama ihlalinin çözülmesi; ve çekirdekler arası ODMR gruplandırması ile çok çekirdekli yapılandırmaların araştırılması.

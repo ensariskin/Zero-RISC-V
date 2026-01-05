@@ -1,39 +1,16 @@
-1 line spacing must be set for summaries. For theses in Turkish, the summary in
-Turkish must have 300 words minimum and span 1 to 3 pages, whereas the extended
-summary in English must span 3-5 pages.
-For theses in English, the summary in English must have 300 words minimum and
-span 1-3 pages, whereas the extended summary in Turkish must span 3-5 pages.
-A summary must briefly mention the subject of the thesis, the method(s) used and 
-the conclusions derived.
-References, figures and tables must not be given in Summary.
-Above the Summary, the thesis title in first level title format 
-(i.e., 72 pt before and 18 pt after paragraph spacing, and 1 line 
-spacing) must be placed. Below the title, expression {\bf \"OZET} 
-(for summary in Turkish) and {\bf SUMMARY} (for summary in English)
-must be written horizontally centered.
-It is recommended that the summary in English is placed before
-the summary in Turkish.
+% English Summary (SUMMARY)
+% 300+ words, 1-3 pages
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. Morbi massa orci, luctus at vulputate lacinia, 
-vestibulum sed libero. Ut accumsan tortor vulputate dolor semper id dignissim 
-augue semper. Proin ac purus mi. 
+Miniaturization in semiconductor technology has significantly increased the susceptibility of processors to environmental factors. Protection of systems used especially in space, aviation, and automotive applications against radiation-induced transient faults is critically important. Traditional fault tolerance methods, Triple Modular Redundancy (TMR) and lock-step approaches, provide high reliability but cause significant performance and area costs due to their continuous active state.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. Morbi massa orci, luctus at vulputate lacinia, 
-vestibulum sed libero. Ut accumsan tortor vulputate dolor semper id dignissim 
-augue semper. Proin ac purus mi. 
+In this thesis work, a fault-tolerant superscalar out-of-order execution RISC-V processor was designed and implemented. The designed processor supports the RV32I base instruction set and offers high performance through its three-way superscalar structure. Using the On-Demand Modular Redundancy (ODMR) approach, the system can dynamically switch between high-performance mode and secure mode based on mission criticality.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent imperdiet, nisi 
-nec aliquam cursus, dui turpis mollis nisl, ac consequat tellus sapien sit amet 
-magna. Duis vel venenatis velit. Vestibulum ante ipsum primis in faucibus orci 
-luctus et ultrices posuere cubilia Curae; Proin malesuada risus nec metus dapibus 
-eu tincidunt lectus dignissim. Morbi massa orci, luctus at vulputate lacinia, 
-vestibulum sed libero. Ut accumsan tortor vulputate dolor semper id dignissim 
-augue semper. Proin ac purus mi. 
+The processor architecture has a six-stage pipeline structure: instruction fetch, decode and rename, dispatch, execute, memory access, and writeback. Out-of-order execution is implemented as a modern adaptation of the Tomasulo algorithm. The Register Alias Table (RAT) is used for register renaming, and the Reorder Buffer (ROB) is used for speculative execution management. The RAT Checkpoint mechanism provides single-cycle state restoration in case of branch misprediction.
+
+In secure mode, the three parallel execution channels form the TMR structure, masking single-bit faults. Redundancy applied at the pipeline level offers faster fault detection and recovery compared to core-level lock-step methods. Pipeline flushing or state synchronization is not required for mode transition.
+
+Verification work was performed using the Google RISC-V DV framework and Berkeley Spike reference model. All test results showed full compliance with the reference model. In performance analysis, an average IPC value of 1.71 and a maximum IPC value of 2.90 were obtained. The three-way structure provided a 2.04x average speedup compared to the single-way structure. In fault injection tests, all single-bit faults injected into TMR-protected registers were successfully masked, and a one hundred percent detection rate was achieved for multi-bit faults.
+
+Physical design was performed in TSMC 16nm FinFET technology. Logic synthesis results show that approximately one hundred forty-two thousand cells are used and 1 GHz frequency is achievable. Total power consumption was measured as 131.6 mW under a twenty percent activity assumption after physical design.
+
+This work presents a novel RISC-V processor architecture that combines superscalar out-of-order execution capacity with intra-core fault tolerance using the ODMR method. The obtained results demonstrate that a flexible and efficient solution is provided for applications requiring high reliability.
