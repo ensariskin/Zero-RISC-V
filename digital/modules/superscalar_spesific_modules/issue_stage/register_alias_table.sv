@@ -492,10 +492,12 @@ module register_alias_table #(
     //==========================================================================
 
     always_comb begin
-        // Push: Add new branch to BRAT
-        brat_push_en[0] = decode_valid[0] && branch_0 && !brat_full && !brat_restore_en;
-        brat_push_en[1] = decode_valid[1] && branch_1 && !brat_full && !brat_restore_en;
-        brat_push_en[2] = decode_valid[2] && branch_2 && !brat_full && !brat_restore_en;
+        // Push: Add new entry to BRAT
+        // Secure mode: checkpoint ALL instructions (for fault recovery)
+        // Normal mode: checkpoint only branches (for misprediction recovery)
+        brat_push_en[0] = decode_valid[0] && (secure_mode || branch_0) && !brat_full && !brat_restore_en;
+        brat_push_en[1] = decode_valid[1] && (secure_mode || branch_1) && !brat_full && !brat_restore_en;
+        brat_push_en[2] = decode_valid[2] && (secure_mode || branch_2) && !brat_full && !brat_restore_en;
 
         // Push snapshots - Store RAT state AFTER the branch instruction
         // This includes same-cycle commits + the branch's own allocation

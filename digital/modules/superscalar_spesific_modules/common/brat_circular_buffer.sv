@@ -255,11 +255,61 @@ module brat_circular_buffer #(
     // Push/Pop Count Logic
     //==========================================================================
 
+    // Commit-based pop matching for secure mode (non-branch instructions)
+    logic commit_0_match_head_0, commit_0_match_head_1, commit_0_match_head_2;
+    logic commit_1_match_head_0, commit_1_match_head_1, commit_1_match_head_2;
+    logic commit_2_match_head_0, commit_2_match_head_1, commit_2_match_head_2;
+
+    // Check if commit ROB ID matches head entries (for secure mode pop)
+    assign commit_0_match_head_0 = commit_valid_0 && peek_valid_0 && (peek_branch_phys_0[4:0] == commit_rob_idx_0);
+    assign commit_0_match_head_1 = commit_valid_0 && peek_valid_1 && (peek_branch_phys_1[4:0] == commit_rob_idx_0);
+    assign commit_0_match_head_2 = commit_valid_0 && peek_valid_2 && (peek_branch_phys_2[4:0] == commit_rob_idx_0);
+
+    assign commit_1_match_head_0 = commit_valid_1 && peek_valid_0 && (peek_branch_phys_0[4:0] == commit_rob_idx_1);
+    assign commit_1_match_head_1 = commit_valid_1 && peek_valid_1 && (peek_branch_phys_1[4:0] == commit_rob_idx_1);
+    assign commit_1_match_head_2 = commit_valid_1 && peek_valid_2 && (peek_branch_phys_2[4:0] == commit_rob_idx_1);
+
+    assign commit_2_match_head_0 = commit_valid_2 && peek_valid_0 && (peek_branch_phys_0[4:0] == commit_rob_idx_2);
+    assign commit_2_match_head_1 = commit_valid_2 && peek_valid_1 && (peek_branch_phys_1[4:0] == commit_rob_idx_2);
+    assign commit_2_match_head_2 = commit_valid_2 && peek_valid_2 && (peek_branch_phys_2[4:0] == commit_rob_idx_2);
+
+    // Commit-based pop count for secure mode
+    logic [2:0] commit_pop_count;
+    logic commit_pop_head_0, commit_pop_head_1, commit_pop_head_2;
+
+    always_comb begin
+        // Head 0 pops if any commit matches and it's not a branch (no resolution needed)
+        commit_pop_head_0 = (commit_0_match_head_0 || commit_1_match_head_0 || commit_2_match_head_0) &&
+            !resolved_mem[peek_idx_0];  // Not already resolved (non-branch)
+
+        // Head 1 pops only if head 0 also pops/is resolved
+        commit_pop_head_1 = commit_pop_head_0 &&
+            (commit_0_match_head_1 || commit_1_match_head_1 || commit_2_match_head_1) &&
+            !resolved_mem[peek_idx_1];
+
+        // Head 2 pops only if head 0 and 1 also pop
+        commit_pop_head_2 = commit_pop_head_1 &&
+            (commit_0_match_head_2 || commit_1_match_head_2 || commit_2_match_head_2) &&
+            !resolved_mem[peek_idx_2];
+
+        commit_pop_count = {2'b00, commit_pop_head_0} + {2'b00, commit_pop_head_1} + {2'b00, commit_pop_head_2};
+    end
+
     always_comb begin
         push_count = {2'b00, push_en_0} + {2'b00, push_en_1} + {2'b00, push_en_2};
-        pop_count = {2'b00, branch_resolved_o_0 & !branch_mispredicted_o_0} +
-            {2'b00, branch_resolved_o_1 & !branch_mispredicted_o_1} +
-            {2'b00, branch_resolved_o_2 & !branch_mispredicted_o_2};
+
+        if (secure_mode) begin
+            // Secure mode: pop via branch resolution OR commit (for non-branch)
+            pop_count = {2'b00, branch_resolved_o_0 & !branch_mispredicted_o_0} +
+                {2'b00, branch_resolved_o_1 & !branch_mispredicted_o_1} +
+                {2'b00, branch_resolved_o_2 & !branch_mispredicted_o_2} +
+                commit_pop_count;
+        end else begin
+            // Normal mode: pop only via branch resolution (mevcut davranış)
+            pop_count = {2'b00, branch_resolved_o_0 & !branch_mispredicted_o_0} +
+                {2'b00, branch_resolved_o_1 & !branch_mispredicted_o_1} +
+                {2'b00, branch_resolved_o_2 & !branch_mispredicted_o_2};
+        end
     end
 
     //==========================================================================
