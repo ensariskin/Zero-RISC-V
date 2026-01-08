@@ -399,9 +399,9 @@ module reorder_buffer #(
     // entries_used >= N ensures head+N-1 is within valid range
     assign commit_valid_0 = buffer[head_idx].executed && (entries_used >= 1);
 
-    assign commit_valid_1 = commit_valid_0 & buffer[head_plus_1_idx].executed & (entries_used >= 2);
+    assign commit_valid_1 = secure_mode? 1'b0 : commit_valid_0 & buffer[head_plus_1_idx].executed & (entries_used >= 2);
 
-    assign commit_valid_2 = commit_valid_0 & commit_valid_1 & buffer[head_plus_2_idx].executed & (entries_used >= 3);
+    assign commit_valid_2 = secure_mode? 1'b0 : commit_valid_0 & commit_valid_1 & buffer[head_plus_2_idx].executed & (entries_used >= 3);
 
 
     assign lsq_commit_valid_0 = commit_valid_0 & buffer[head_idx].is_store;

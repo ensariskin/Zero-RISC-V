@@ -94,6 +94,9 @@ module register_alias_table #(
         //==========================================================================
         // Branch resolution outputs (in-order, from BRAT - go to other modules)
         //==========================================================================
+
+        output logic brat_full_o,
+
         output logic [2:0] branch_resolved_o,               // In-order resolved branches
         output logic [2:0] branch_mispredicted_o,           // In-order misprediction flags
         output logic [PHYS_ADDR_WIDTH-1:0] resolved_phys_reg_0_o,  // ROB ID of oldest resolved
@@ -159,7 +162,7 @@ module register_alias_table #(
     logic [PHYS_ADDR_WIDTH-1:0] brat_restore_snapshot [ARCH_REGS-1:0];
 
     // Status
-    logic brat_empty, brat_full;
+    logic brat_empty;
 
     // Free List - available physical registers
     logic [5:0] free_count;
@@ -479,7 +482,7 @@ module register_alias_table #(
 
         // Status
         .buffer_empty(brat_empty),
-        .buffer_full(brat_full),
+        .buffer_full(brat_full_o),
         .buffer_count(),
 
         // TMR Fatal Error Outputs
@@ -495,9 +498,9 @@ module register_alias_table #(
         // Push: Add new entry to BRAT
         // Secure mode: checkpoint ALL instructions (for fault recovery)
         // Normal mode: checkpoint only branches (for misprediction recovery)
-        brat_push_en[0] = decode_valid[0] && (secure_mode || branch_0) && !brat_full && !brat_restore_en;
-        brat_push_en[1] = decode_valid[1] && (secure_mode || branch_1) && !brat_full && !brat_restore_en;
-        brat_push_en[2] = decode_valid[2] && (secure_mode || branch_2) && !brat_full && !brat_restore_en;
+        brat_push_en[0] = decode_valid[0] && (secure_mode || branch_0) && !brat_restore_en;
+        brat_push_en[1] = decode_valid[1] && (secure_mode || branch_1) && !brat_restore_en;
+        brat_push_en[2] = decode_valid[2] && (secure_mode || branch_2) && !brat_restore_en;
 
         // Push snapshots - Store RAT state AFTER the branch instruction
         // This includes same-cycle commits + the branch's own allocation
@@ -703,7 +706,7 @@ module register_alias_table #(
     end
 
     always_ff @(posedge clk) begin
-        if (|brat_push_en && brat_full) begin
+        if (|brat_push_en && brat_full_o) begin
             $error("RAT: BRAT buffer overflow!");
         end
     end

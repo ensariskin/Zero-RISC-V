@@ -168,6 +168,8 @@ module issue_stage #(
     logic [2:0] alloc_tag_reg_0, alloc_tag_reg_1, alloc_tag_reg_2;
     logic lsq_alloc_0_valid_reg, lsq_alloc_1_valid_reg, lsq_alloc_2_valid_reg;
 
+    logic brat_full;
+
     logic internal_flush;
     assign internal_flush = |branch_mispredicted_o;
 
@@ -267,6 +269,7 @@ module issue_stage #(
 
 
         // Branch resolution outputs (in-order, from BRAT)
+        .brat_full_o(brat_full),
         .branch_resolved_o(branch_resolved_o),
         .branch_mispredicted_o(branch_mispredicted_o),
         .resolved_phys_reg_0_o(resolved_phys_reg_0_o),
@@ -370,7 +373,10 @@ module issue_stage #(
     always_comb begin
         decode_ready_o = 3'b000;
         if(secure_mode & max_available_entries != 0) begin
-            decode_ready_o = {2'b00, issue_to_dispatch_0.dispatch_ready};
+            if(!brat_full)
+                decode_ready_o = {2'b00, issue_to_dispatch_0.dispatch_ready};
+            else
+                decode_ready_o = 3'b000;
         end else if(max_available_entries == 3) begin
             decode_ready_o = {issue_to_dispatch_2.dispatch_ready, issue_to_dispatch_1.dispatch_ready, issue_to_dispatch_0.dispatch_ready};
         end else begin
